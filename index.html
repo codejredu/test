@@ -12,13 +12,26 @@
     </header>
     <main>
         <div id="sidebar">
-            <!-- כאן יהיו הקטגוריות של הבלוקים -->
+            <h2>קטגוריות</h2>
+            <button class="category-btn" data-category="triggers">הפעלה</button>
+            <button class="category-btn" data-category="motion">תנועה</button>
+            <button class="category-btn" data-category="looks">מראה</button>
+            <button class="category-btn" data-category="sound">צליל</button>
+            <button class="category-btn" data-category="control">בקרה</button>
+            <button class="category-btn" data-category="end">סיום</button>
         </div>
-        <div id="canvas-area">
-            <!-- כאן יהיה אזור הציור העיקרי -->
-        </div>
-        <div id="script-area">
-            <!-- כאן יהיה אזור בניית הסקריפט -->
+        <div id="main-area">
+            <div id="canvas-area">
+                <!-- כאן יהיה אזור הציור העיקרי -->
+            </div>
+            <div id="blocks-area">
+                <h3>בלוקים</h3>
+                <div id="blocks-container"></div>
+            </div>
+            <div id="script-area">
+                <h3>הסקריפט שלי</h3>
+                <div id="script-container"></div>
+            </div>
         </div>
     </main>
     <footer>
