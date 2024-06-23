@@ -82,6 +82,21 @@ main {
     font-weight: bold;
 }
 
+.block input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid white;
+    color: white;
+    font-size: 14px;
+    width: 30px;
+    margin-left: 5px;
+}
+
+.block input:focus {
+    outline: none;
+    border-bottom: 2px solid white;
+}
+
 footer {
     background-color: #34495e;
     color: white;
