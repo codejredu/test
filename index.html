@@ -11,25 +11,22 @@
         <h1>ScratchJr-like Web App</h1>
     </header>
     <main>
-        <div id="sidebar">
-            <h2>קטגוריות</h2>
-            <button class="category-btn" data-category="triggers">הפעלה</button>
-            <button class="category-btn" data-category="motion">תנועה</button>
-            <button class="category-btn" data-category="looks">מראה</button>
-            <button class="category-btn" data-category="sound">צליל</button>
-            <button class="category-btn" data-category="control">בקרה</button>
-            <button class="category-btn" data-category="end">סיום</button>
+        <div id="canvas-area">
+            <canvas id="main-canvas" width="480" height="360"></canvas>
         </div>
-        <div id="main-area">
-            <div id="canvas-area">
-                <!-- כאן יהיה אזור הציור העיקרי -->
+        <div id="control-area">
+            <div id="categories">
+                <button class="category-btn" data-category="triggers">הפעלה</button>
+                <button class="category-btn" data-category="motion">תנועה</button>
+                <button class="category-btn" data-category="looks">מראה</button>
+                <button class="category-btn" data-category="sound">צליל</button>
+                <button class="category-btn" data-category="control">בקרה</button>
+                <button class="category-btn" data-category="end">סיום</button>
             </div>
             <div id="blocks-area">
-                <h3>בלוקים</h3>
                 <div id="blocks-container"></div>
             </div>
             <div id="script-area">
-                <h3>הסקריפט שלי</h3>
                 <div id="script-container"></div>
             </div>
         </div>
