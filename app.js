@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const blocksByCategory = {
-        triggers: ['כשלוחצים על דגל', 'כשלוחצים על דמות'],
+        triggers: ['המתן', 'עצור', 'קבע מהירות', 'חזור'],
         motion: ['זוז 10 צעדים', 'פנה ימינה 15 מעלות', 'פנה שמאלה 15 מעלות'],
         looks: ['אמור "שלום"', 'החלף תלבושת ל...', 'הגדל ב-10%'],
         sound: ['נגן צליל "מיאו"', 'נגן תופים למשך 0.25 שניות'],
@@ -20,6 +20,17 @@ document.addEventListener('DOMContentLoaded', () => {
         block.style.backgroundColor = getComputedStyle(document.querySelector(`[data-category="${category}"]`)).backgroundColor;
         block.draggable = true;
         block.addEventListener('dragstart', drag);
+        
+        if (text === 'המתן' || text === 'קבע מהירות' || text === 'חזור') {
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.min = '0';
+            input.value = '1';
+            input.style.width = '30px';
+            input.style.marginLeft = '5px';
+            block.appendChild(input);
+        }
+
         return block;
     }
 
