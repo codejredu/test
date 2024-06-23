@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const blocksContainer = document.getElementById('blocks-container');
     const scriptContainer = document.getElementById('script-container');
+    const canvas = document.getElementById('main-canvas');
+    const ctx = canvas.getContext('2d');
 
     function createBlock(text, category) {
         const block = document.createElement('div');
@@ -54,4 +56,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // הצג את הבלוקים של הקטגוריה הראשונה כברירת מחדל
     showBlocksForCategory('triggers');
+
+    // פונקציה בסיסית לציור על הקנבס
+    function drawOnCanvas() {
+        ctx.fillStyle = 'lightblue';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'black';
+        ctx.font = '20px Arial';
+        ctx.fillText('אזור הציור', 10, 30);
+    }
+
+    // קריאה לפונקציית הציור
+    drawOnCanvas();
 });
