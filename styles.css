@@ -5,6 +5,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    background-color: #f0f0f0;
 }
 
 header {
@@ -20,54 +21,92 @@ main {
 }
 
 #sidebar {
-    width: 200px;
-    background-color: #f0f0f0;
+    width: 150px;
+    background-color: #2c3e50;
     padding: 10px;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+#sidebar h2 {
+    color: white;
+    margin-bottom: 15px;
+}
+
+.category-btn {
+    margin-bottom: 10px;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.category-btn:hover {
+    opacity: 0.8;
+}
+
+#main-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
 }
 
 #canvas-area {
-    flex: 1;
-    background-color: #ffffff;
+    flex: 2;
+    background-color: white;
     border: 1px solid #ddd;
+    margin-bottom: 10px;
 }
 
-#script-area {
-    height: 200px;
-    background-color: #e0e0e0;
+#blocks-area, #script-area {
+    flex: 1;
+    background-color: white;
+    border: 1px solid #ddd;
     padding: 10px;
-    overflow-x: auto;
-    white-space: nowrap;
+    margin-bottom: 10px;
+    overflow-y: auto;
+}
+
+#blocks-container, #script-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.block {
+    padding: 10px;
+    border-radius: 5px;
+    cursor: move;
+    color: white;
+    font-weight: bold;
 }
 
 footer {
-    background-color: #333;
+    background-color: #34495e;
     color: white;
     padding: 10px;
     text-align: center;
 }
 
-.block {
-    display: inline-block;
-    margin: 5px;
-    padding: 5px 10px;
-    background-color: #4CAF50;
-    color: white;
+button {
+    margin: 0 10px;
+    padding: 10px 20px;
+    border: none;
     border-radius: 5px;
-    cursor: move;
-}
-
-.sprite-thumbnail {
-    margin: 5px;
-    padding: 5px;
-    background-color: #ddd;
     cursor: pointer;
+    transition: background-color 0.3s;
 }
 
-#drop-zone {
-    min-height: 100px;
-    border: 2px dashed #ccc;
-    border-radius: 5px;
-    padding: 10px;
-    margin-top: 10px;
+button:hover {
+    opacity: 0.8;
 }
+
+/* צבעים לקטגוריות */
+[data-category="triggers"] { background-color: #yellow; }
+[data-category="motion"] { background-color: #4a90e2; }
+[data-category="looks"] { background-color: #9b59b6; }
+[data-category="sound"] { background-color: #e67e22; }
+[data-category="control"] { background-color: #f1c40f; }
+[data-category="end"] { background-color: #e74c3c; }
