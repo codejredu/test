@@ -108,20 +108,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // סגירת כל הקטגוריות הפתוחות
             document.querySelectorAll('.blockCategory').forEach(cat => {
-                if (cat !== blockCategory) {
-                    cat.style.display = 'none';
-                    const icon = cat.parentNode.querySelector('.categoryHeader i');
-                    icon.classList.remove('fa-chevron-up');
-                    icon.classList.add('fa-chevron-down');
-                }
+                cat.style.display = 'none';
             });
 
             // פתיחה/סגירה של הקטגוריה הנוכחית
-            if (blockCategory) {
-                blockCategory.style.display = blockCategory.style.display === 'block' ? 'none' : 'block';
-                const icon = header.querySelector('i');
-                icon.classList.toggle('fa-chevron-down');
-                icon.classList.toggle('fa-chevron-up');
+            if (blockCategory.style.display === 'block') {
+                blockCategory.style.display = 'none';
+            } else {
+                blockCategory.style.display = 'block';
             }
         });
     });
