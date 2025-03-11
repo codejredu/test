@@ -191,30 +191,33 @@ body {
 
 /* -- קטגוריות בלוקים -- */
 .categoryHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    cursor: pointer;
     margin-bottom: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.categoryHeader h3 {
-    margin: 0;
-    font-size: 1.2em;
-    color: #333;
-}
-
-.categoryHeader i {
-    font-size: 1.2em;
-    color: #666;
+.categoryButton {
+    width: 60px; /* גודל כפתור */
+    height: 60px; /* גודל כפתור */
+    border: none;
+    border-radius: 15px; /* פינות מעוגלות */
+    cursor: pointer;
+    font-size: 2em;
+    color: white;
+    text-shadow: 1px 1px 2px #000000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .blockCategory {
     display: none; /* הסתרת הבלוקים כברירת מחדל */
     padding: 5px;
 }
+
+/* צבעים ללחצני קטגוריה */
+.triggerButton { background-color: #fdd835; }
+.motionButton { background-color: #03a9f4; }
+.looksButton { background-color: #ab47bc; }
+.soundsButton { background-color: #4caf50; }
+.controlButton { background-color: #ff9800; }
+.endButton { background-color: #f44336; }
