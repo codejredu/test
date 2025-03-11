@@ -1,86 +1,37 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="he">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScratchJr כמו שלי</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <title>ScratchJr Web</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<div id="appContainer">
-    <div id="topBar">
-        <div id="scratchJrLogo">
-            ScratchJr
-        </div>
-        <div id="topBarActions">
-            <!-- פעולות בשורת הכותרת -->
-            <button><i class="fas fa-save"></i></button>
-            <button><i class="fas fa-folder-open"></i></button>
-        </div>
-    </div>
-
-    <div id="mainContent">
+    <div class="container">
         <div id="stage">
-            <!-- כאן תוצג הבמה -->
+            <!-- כאן הדמויות והרקע יוצגו -->
         </div>
 
-        <div id="blockPalette">
-            <div id="categoryButtons">
-                <button class="categoryButton triggerButton">Triggers</button>
-                <button class="categoryButton motionButton">Motion</button>
-                <button class="categoryButton looksButton">Looks</button>
-                <button class="categoryButton soundsButton">Sound</button>
-                <button class="categoryButton controlButton">Control</button>
+        <div id="block-palette">
+            <!-- כאן יוצגו הבלוקים השונים -->
+            <h2>לבני תכנות</h2>
+            <div id="triggering-blocks" class="block-category" data-category="triggering">
+                <h3>הפעלת סקריפטים</h3>
             </div>
+            <div id="motion-blocks" class="block-category" data-category="motion">
+                <h3>תנועה</h3>
+            </div>
+            <!-- הוסף כאן את שאר הקטגוריות -->
+        </div>
 
-            <!-- אזור תצוגת הלבנים -->
-            <div class="blockCategory trigger" style="display: none;">
-                <div class="block">→</div>
-                <div class="block">↓</div>
-                <div class="block">←</div>
-                <div class="block">↑</div>
-                <div class="block">깃</div>
-            </div>
-              <div class="blockCategory motion" style="display: none;">
-                <div class="block">→</div>
-                <div class="block">↓</div>
-                <div class="block">←</div>
-                <div class="block">↑</div>
-                <div class="block">깃</div>
-            </div>
-              <div class="blockCategory looks" style="display: none;">
-                <div class="block">→</div>
-                <div class="block">↓</div>
-                <div class="block">←</div>
-                <div class="block">↑</div>
-                <div class="block">깃</div>
-            </div>
-              <div class="blockCategory sound" style="display: none;">
-                <div class="block">→</div>
-                <div class="block">↓</div>
-                <div class="block">←</div>
-                <div class="block">↑</div>
-                <div class="block">깃</div>
-            </div>
-              <div class="blockCategory control" style="display: none;">
-                <div class="block">→</div>
-                <div class="block">↓</div>
-                <div class="block">←</div>
-                <div class="block">↑</div>
-                <div class="block">깃</div>
-            </div>
+        <div id="programming-area">
+            <!-- כאן המשתמש יגרור ויחבר בלוקים -->
+            <h2>אזור תכנות</h2>
         </div>
     </div>
 
-    <div id="scriptArea">
-        <h2>Program</h2>
-        <!-- כאן הבלוקים יורכבו לסקריפטים -->
-        <button>Clear All</button>
-    </div>
-</div>
-
-    <script src="script.js"></script>
+    
+    <script src="js/script.js"></script>
 </body>
 </html>
