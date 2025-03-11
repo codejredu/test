@@ -23,11 +23,12 @@ header {
 
 main {
     display: flex;
-    flex-direction: column; /* Stack top section and programming area vertically */
+    flex-direction: column; /* Stack content wrapper and programming area vertically */
     flex-grow: 1; /* Allow main to take up remaining vertical space */
 }
 
-.top-section {
+/* Wrapper for stage and block palette */
+.content-wrapper {
     display: flex; /* Place stage and block palette side by side */
     flex: 1; /* Distribute available space */
 }
