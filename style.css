@@ -1,4 +1,4 @@
- body {
+body {
     font-family: 'Arial', sans-serif;
     margin: 0;
     overflow: hidden;
@@ -150,24 +150,25 @@
 
 /* -- סגנונות בסיסיים לבלוקים -- */
 .block {
-    width: 100%;
-    height: 40px; /* גובה קטן יותר */
-    margin: 5px 0;
+    width: 80px; /* גודל קבוע */
+    height: 80px; /* גודל קבוע */
+    margin: 5px; /* מרווח */
     border: 1px solid #999;
-    border-radius: 8px;
+    border-radius: 10px; /* פינות מעוגלות */
     cursor: grab;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1em;
+    font-size: 2em; /* גודל אייקון */
     color: white;
     text-shadow: 1px 1px 2px #000000;
-    padding: 5px;
-    box-sizing: border-box;
+    box-sizing: border-box; /* כדי שה padding לא ישפיע על הרוחב */
+    position: relative; /* למיקום אלמנטים בתוך הבלוק */
 }
 
 .block i {
-    margin-left: 5px; /* הזזת האייקון לשמאל */
+    /* הסרת הטקסט - משאירים רק אייקונים */
+    margin: 0; /* מוחק margin */
 }
 
 /* -- צבעים לקטגוריות -- */
