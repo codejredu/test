@@ -221,14 +221,20 @@ const blockCategories = document.querySelectorAll(".block-category");
 
 categoryTabs.forEach(tab => {
     tab.addEventListener("click", () => {
-          // הסרת ה-active מכל הקטגוריות
-            blockCategories.forEach(c => c.classList.remove("active"));
+        const category = tab.dataset.category;
+
+        // סגירת הקטגוריה הפתוחה (אם יש)
+        blockCategories.forEach(otherCategory => {
+            otherCategory.classList.remove('active');
+        });
+        categoryTabs.forEach(otherTab => {
+            otherTab.classList.remove('active');
+        });
+
         // הוספת ה-active לטאב שנלחץ ולקטגוריה המתאימה
         tab.classList.add("active");
-        const category = tab.dataset.category;
         document.getElementById(`${category}-blocks`).classList.add("active");
-        populateBlockPalette(category)
-
+        populateBlockPalette(category);
 
     });
 });
