@@ -158,12 +158,18 @@ main {
     height: 80px;
     margin: 5px;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
     color: white;
     font-size: 16px;
     border-radius: 10px;
     cursor: grab;
+    text-align: center; /* Ensure text is centered if it exists */
+}
+
+.block img {
+    max-width: 60%; /* Adjust the size as needed */
+    max-height: 60%;
 }
 
 /* Block Colors */
