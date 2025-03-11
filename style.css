@@ -194,14 +194,24 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 5px;
-    background-color: #ddd;
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
     cursor: pointer;
-    border-bottom: 1px solid #ccc;
+    margin-bottom: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .categoryHeader h3 {
     margin: 0;
+    font-size: 1.2em;
+    color: #333;
+}
+
+.categoryHeader i {
+    font-size: 1.2em;
+    color: #666;
 }
 
 .blockCategory {
