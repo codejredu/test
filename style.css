@@ -1,15 +1,66 @@
-body {
+ body {
     font-family: 'Arial', sans-serif;
+    margin: 0;
+    overflow: hidden;
+    background-color: #f0f0f0;
+    direction: rtl; /* כיוון טקסט מימין לשמאל */
+}
+
+#appContainer {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    margin: 0;
-    overflow: hidden; /* מניעת גלילה */
 }
 
-#stage {
+#topBar {
+    display: flex;
     flex: 2;
-    background-color: #4dd0e1; /* תכלת בהיר כמו ברקע של ScratchJr */
+    background-color: #fff;
+}
+
+#bottomBar {
+    display: flex;
+    flex: 1;
+    background-color: #eee;
+    border-top: 2px solid #ccc;
+}
+
+/* -- אזור הדמויות -- */
+#characterPalette {
+    width: 150px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-right: 2px solid #ccc;
+}
+
+#characterPalette h3 {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.characterItem {
+    padding: 8px;
+    margin-bottom: 5px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.characterItem i {
+    margin-left: 5px;
+}
+
+.addCharacter {
+    background-color: #e0e0e0;
+    text-align: center;
+}
+
+/* -- הבמה -- */
+#stage {
+    flex: 1;
+    background-color: #4dd0e1;
     border: 2px solid #b2ebf2;
     display: flex;
     justify-content: center;
@@ -19,28 +70,57 @@ body {
     text-shadow: 2px 2px 4px #000000;
 }
 
-#navigation {
-    background-color: #fff;
+/* -- ניווט בין עמודים -- */
+#pageNavigator {
+    width: 150px;
     padding: 10px;
-    border-bottom: 2px solid #b2ebf2;
-    display: flex;
-    justify-content: space-around;
+    background-color: #f9f9f9;
+    border-left: 2px solid #ccc;
 }
 
-#navigation button {
-    background-color: #00bcd4;
-    color: white;
-    border: none;
-    padding: 10px 20px;
+#pageNavigator h3 {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.pagePreview {
+    padding: 8px;
+    margin-bottom: 5px;
+    border: 1px solid #ddd;
     border-radius: 5px;
     cursor: pointer;
-    font-size: 1.1em;
+    text-align: center;
 }
 
-#programmingArea {
-    flex: 3;
+.pagePreview i {
+    margin-left: 5px;
+}
+
+.addPage {
+    background-color: #e0e0e0;
+    text-align: center;
+}
+
+/* -- כפתורי פונקציות -- */
+#functionButtons {
     display: flex;
-    overflow: hidden;
+    justify-content: space-around;
+    align-items: center;
+    width: 200px;
+}
+
+#functionButtons button {
+    background-color: transparent;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+    color: #555;
+}
+
+/* -- אזור התכנות -- */
+#programmingArea {
+    flex: 1;
+    display: flex;
 }
 
 #blockPalette {
@@ -48,7 +128,7 @@ body {
     background-color: #eee;
     border-right: 2px solid #b2ebf2;
     padding: 10px;
-    overflow-y: auto; /* הוספת גלילה אם התוכן ארוך מדי */
+    overflow-y: auto;
 }
 
 #blockPalette h3 {
@@ -64,13 +144,14 @@ body {
     background-color: #fafafa;
     padding: 10px;
     overflow: auto;
-    min-height: 200px; /* גובה מינימלי */
+    min-height: 200px;
+    border: 2px dashed #ccc;
 }
 
-/* סגנונות בסיסיים לבלוקים */
+/* -- סגנונות בסיסיים לבלוקים -- */
 .block {
-    width: 100%; /* רוחב מלא */
-    height: 60px; /* גובה אחיד */
+    width: 100%;
+    height: 40px; /* גובה קטן יותר */
     margin: 5px 0;
     border: 1px solid #999;
     border-radius: 8px;
@@ -82,22 +163,27 @@ body {
     color: white;
     text-shadow: 1px 1px 2px #000000;
     padding: 5px;
-    box-sizing: border-box; /* כדי שה padding לא ישפיע על הרוחב */
+    box-sizing: border-box;
 }
 
 .block i {
-    margin-right: 5px;
+    margin-left: 5px; /* הזזת האייקון לשמאל */
 }
 
-/* צבעים לקטגוריות */
-.blockCategory[data-category="trigger"] .block { background-color: #fdd835; color: #212121; } /* צהוב */
-.blockCategory[data-category="motion"] .block { background-color: #03a9f4; } /* כחול */
-.blockCategory[data-category="looks"] .block { background-color: #ab47bc; } /* סגול */
-.blockCategory[data-category="sounds"] .block { background-color: #4caf50; } /* ירוק */
-.blockCategory[data-category="control"] .block { background-color: #ff9800; } /* כתום */
-.blockCategory[data-category="end"] .block { background-color: #f44336; } /* אדום */
+/* -- צבעים לקטגוריות -- */
+.blockCategory[data-category="trigger"] .block { background-color: #fdd835; color: #212121; }
+.blockCategory[data-category="motion"] .block { background-color: #03a9f4; }
+.blockCategory[data-category="looks"] .block { background-color: #ab47bc; }
+.blockCategory[data-category="sounds"] .block { background-color: #4caf50; }
+.blockCategory[data-category="control"] .block { background-color: #ff9800; }
+.blockCategory[data-category="end"] .block { background-color: #f44336; }
 
-/* סגנון לאזור שאליו גוררים בלוקים */
-#scriptArea {
-    border: 2px dashed #ccc;
+/* -- תצוגת דמות -- */
+#characterPreview {
+    width: 100px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2em;
+    color: #555;
 }
