@@ -48,6 +48,7 @@ main {
     grid-template-columns: repeat(10, 1fr); /* 10 columns */
     grid-template-rows: repeat(10, 1fr); /* 10 rows */
     gap: 1px; /* Small gap between grid cells */
+     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Add a shadow around the stage */
 }
 
 /* Add grid lines */
