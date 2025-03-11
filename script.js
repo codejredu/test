@@ -5,13 +5,13 @@
 const blocks = {
     triggering: [
         {
-            name: "התחל בלחיצה על דגל ירוק",
+            name: "→ 1",
             color: "yellow",
             type: "startOnGreenFlag",
             icon: "flag.png", // נניח שיש לך אייקון לדגל
         },
         {
-            name: "התחל בלחיצה על דמות",
+            name: "🚩 0",
             color: "yellow",
             type: "startOnTap",
             icon: "tap.png",
@@ -20,13 +20,40 @@ const blocks = {
     ],
     motion: [
         {
-            name: "זוז ימינה",
+            name: "→ 1",
             color: "blue",
             type: "moveRight",
             icon: "right.png",
         },
         // הוסף בלוקים נוספים כאן
     ],
+    looks:[
+        {
+            name: "← 1",
+            color: "purple",
+            type: "moveRight",
+            icon: "right.png",
+        },
+         // הוסף בלוקים נוספים כאן
+    ],
+    sound:[
+        {
+            name: "↑ 1",
+            color: "green",
+            type: "moveRight",
+            icon: "right.png",
+        },
+         // הוסף בלוקים נוספים כאן
+    ],
+    control:[
+        {
+            name: "← 1",
+            color: "orange",
+            type: "moveRight",
+            icon: "right.png",
+        },
+         // הוסף בלוקים נוספים כאן
+    ]
     // הוסף כאן הגדרות בלוקים לשאר הקטגוריות
 };
 
@@ -67,8 +94,8 @@ populateBlockPalette(); // הפעלת הפונקציה ליצירת הבלוקי
 //  לוגיקת גרירה ושחרור (Drag and Drop)
 // ========================================================================
 
-const programmingArea = document.getElementById("programming-area");
-
+const programmingArea = document.getElementById("program-blocks");
+const blockPalette = document.getElementById("block-palette");
 // טיפול באירוע גרירה מעל אזור התכנות (dragover)
 programmingArea.addEventListener("dragover", (event) => {
     event.preventDefault(); // מונע התנהגות ברירת מחדל
@@ -91,15 +118,22 @@ programmingArea.addEventListener("drop", (event) => {
     newBlock.dataset.type = blockType;
     newBlock.draggable = false; //העתק לא ניתן לגרירה
 
-    // מיקום הבלוק החדש
-    newBlock.style.position = "absolute";
-    newBlock.style.left = `${event.clientX - programmingArea.offsetLeft}px`;
-    newBlock.style.top = `${event.clientY - programmingArea.offsetTop}px`;
-
+    // הוספת הבלוק החדש לאזור התכנות
     programmingArea.appendChild(newBlock);
 });
 
-//פונקציה לחיבור בין בלוקים
-function connectBlocks(block1, block2){
-  //To Do
-}
+const categoryTabs = document.querySelectorAll(".category-tab");
+const blockCategories = document.querySelectorAll(".block-category");
+
+categoryTabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+        // הסרת ה-active מכל הטאבים והקטגוריות
+        categoryTabs.forEach(t => t.classList.remove("active"));
+        blockCategories.forEach(c => c.classList.remove("active"));
+
+        // הוספת ה-active לטאב שנלחץ ולקטגוריה המתאימה
+        tab.classList.add("active");
+        const category = tab.dataset.category;
+        document.getElementById(`${category}-blocks`).classList.add("active");
+    });
+});
