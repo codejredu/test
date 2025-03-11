@@ -38,17 +38,17 @@ main {
 
 #stage {
     flex: 0 0 auto; /* Do not grow, do not shrink, and take up only intrinsic size */
-    width: 550px;  /* Adjust the width to fit the screen */
-    height: 450px; /* Adjust the height to fit the screen */
+    width: 550px;
+    height: 450px;
     background-color: #fff;
     border: 1px solid #e0e0e0;
     border-radius: 10px;
-    position: relative; /* Needed for character positioning */
+    position: relative;
     display: grid;
     grid-template-columns: repeat(10, 1fr); /* 10 columns */
     grid-template-rows: repeat(10, 1fr); /* 10 rows */
-    gap: 1px; /* Small gap between grid cells */
-     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Add a shadow around the stage */
+    gap: 1px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Add a shadow around the stage */
 }
 
 /* Add grid lines */
@@ -66,8 +66,8 @@ main {
 }
 
 #character {
-    width: 50px; /* Adjust as needed */
-    height: 50px; /* Adjust as needed */
+    width: 50px;
+    height: 50px;
     background-color: #ffcc00; /* Example color */
     border-radius: 50%;
     position: absolute;
@@ -165,11 +165,7 @@ main {
     border-radius: 10px;
     cursor: grab;
     text-align: center; /* Ensure text is centered if it exists */
-}
-
-.block img {
-    max-width: 60%; /* Adjust the size as needed */
-    max-height: 60%;
+    font-size: 45px; /* Set a fixed size for the icons */
 }
 
 /* Block Colors */
@@ -197,4 +193,16 @@ main {
     font-size: 24px;
     color: #999;
     cursor: pointer;
+}
+
+/* Styles for the Block Palette - Horizontal */
+#triggering-blocks,
+#motion-blocks,
+#looks-blocks,
+#sound-blocks,
+#control-blocks,
+#end-blocks {
+    display: flex; /* Display blocks horizontally */
+    flex-wrap: wrap; /* Allow blocks to wrap to the next line */
+    padding: 10px;
 }
