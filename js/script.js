@@ -190,7 +190,7 @@ function createBlockElement(block, category) {
     const blockElement = document.createElement("div");
     blockElement.classList.add("block");
     blockElement.style.backgroundColor = block.color;
-    blockElement.textContent = block.name;
+    //blockElement.textContent = block.name; // הסרת הכתובית
     blockElement.dataset.type = block.type; // שמור את סוג הבלוק כ-data attribute
     blockElement.draggable = true; // הופך את הבלוק לניתן לגרירה
 
@@ -242,7 +242,7 @@ programmingArea.addEventListener("drop", (event) => {
     const newBlock = document.createElement("div");
     newBlock.classList.add("block");
     newBlock.style.backgroundColor = blocks[blockCategory].find(b => b.type === blockType).color; // מציאת הצבע הנכון
-    newBlock.textContent = blocks[blockCategory].find(b => b.type === blockType).name; // מציאת השם הנכון
+    //newBlock.textContent = blocks[blockCategory].find(b => b.type === blockType).name; // מציאת השם הנכון
     newBlock.dataset.type = blockType;
     newBlock.draggable = false; //העתק לא ניתן לגרירה
 
