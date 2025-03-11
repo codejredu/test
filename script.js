@@ -1,4 +1,4 @@
- document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     const blockPalette = document.getElementById('blockPalette');
     const scriptArea = document.getElementById('scriptArea');
 
@@ -98,4 +98,20 @@
             default: return '#999';
         }
     }
+
+    // הוספת אירוע לחיצה לכותרות הקטגוריות
+    const categoryHeaders = document.querySelectorAll('.categoryHeader');
+    categoryHeaders.forEach(header => {
+        header.addEventListener('click', () => {
+            const category = header.dataset.category;
+            const blockCategory = document.querySelector(`.blockCategory[data-category="${category}"]`);
+            if (blockCategory) {
+                blockCategory.style.display = blockCategory.style.display === 'block' ? 'none' : 'block';
+                // שינוי כיוון החץ
+                const icon = header.querySelector('i');
+                icon.classList.toggle('fa-chevron-down');
+                icon.classList.toggle('fa-chevron-up');
+            }
+        });
+    });
 });
