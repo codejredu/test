@@ -1,60 +1,72 @@
-// הגדרת מידע על הבלוקים השונים
+// הגדרת מידע על הבלוקים השונים - עודכנו האייקונים והתיאורים
 const blockDefinitions = {
     trigger: [
-        { id: 'start-green-flag', name: 'התחל בלחיצה על הדגל הירוק', icon: '🏁' },
-        { id: 'start-tap', name: 'התחל בלחיצה על הדמות', icon: '👆' },
-        { id: 'start-on-bump', name: 'התחל בהתנגשות', icon: '💥' },
-        { id: 'send-message', name: 'שלח הודעה', icon: '📤' },
-        { id: 'start-on-message', name: 'התחל בקבלת הודעה', icon: '📨' }
+        { id: 'start-green-flag', name: 'התחל עם דגל ירוק', icon: '🏁', description: 'התחל את הסקריפט כשלוחצים על הדגל הירוק' },
+        { id: 'start-tap', name: 'התחל בלחיצה', icon: '👆', description: 'התחל את הסקריפט כשלוחצים על הדמות' },
+        { id: 'start-on-bump', name: 'התחל בהתנגשות', icon: '💥', description: 'התחל את הסקריפט כשהדמות מתנגשת בדמות אחרת' },
+        { id: 'send-message', name: 'שלח הודעה', icon: '📤', description: 'שלח הודעה בצבע מסוים', value: 'red' },
+        { id: 'start-on-message', name: 'התחל עם הודעה', icon: '📨', description: 'התחל את הסקריפט כשמתקבלת הודעה בצבע מסוים', value: 'red' }
     ],
     motion: [
-        { id: 'move-right', name: 'זוז ימינה', icon: '➡️', value: 1 },
-        { id: 'move-left', name: 'זוז שמאלה', icon: '⬅️', value: 1 },
-        { id: 'move-up', name: 'זוז למעלה', icon: '⬆️', value: 1 },
-        { id: 'move-down', name: 'זוז למטה', icon: '⬇️', value: 1 },
-        { id: 'turn-right', name: 'פנה ימינה', icon: '↩️', value: 1 },
-        { id: 'turn-left', name: 'פנה שמאלה', icon: '↪️', value: 1 },
-        { id: 'hop', name: 'קפוץ', icon: '⤴️' },
-        { id: 'go-home', name: 'חזור הביתה', icon: '🏠' }
+        { id: 'move-right', name: 'זוז ימינה', icon: '➡️', description: 'זוז מספר צעדים ימינה', value: 1 },
+        { id: 'move-left', name: 'זוז שמאלה', icon: '⬅️', description: 'זוז מספר צעדים שמאלה', value: 1 },
+        { id: 'move-up', name: 'זוז למעלה', icon: '⬆️', description: 'זוז מספר צעדים למעלה', value: 1 },
+        { id: 'move-down', name: 'זוז למטה', icon: '⬇️', description: 'זוז מספר צעדים למטה', value: 1 },
+        { id: 'turn-right', name: 'פנה ימינה', icon: '↩️', description: 'פנה ימינה במספר צעדים', value: 1 },
+        { id: 'turn-left', name: 'פנה שמאלה', icon: '↪️', description: 'פנה שמאלה במספר צעדים', value: 1 },
+        { id: 'hop', name: 'קפוץ', icon: '⤴️', description: 'קפוץ במקום' },
+        { id: 'go-home', name: 'חזור הביתה', icon: '🏠', description: 'חזור למיקום ההתחלתי' }
     ],
     looks: [
-        { id: 'say', name: 'אמור', icon: '💬', value: 'שלום!' },
-        { id: 'grow', name: 'גדל', icon: '🔍+' },
-        { id: 'shrink', name: 'הקטן', icon: '🔍-' },
-        { id: 'reset-size', name: 'אפס גודל', icon: '🔍=' },
-        { id: 'hide', name: 'הסתר', icon: '👻' },
-        { id: 'show', name: 'הצג', icon: '👁️' }
+        { id: 'say', name: 'אמור', icon: '💬', description: 'הצג בועת דיבור עם טקסט', value: 'שלום!' },
+        { id: 'grow', name: 'גדל', icon: '🔍+', description: 'הגדל את הדמות' },
+        { id: 'shrink', name: 'הקטן', icon: '🔍-', description: 'הקטן את הדמות' },
+        { id: 'reset-size', name: 'אפס גודל', icon: '🔍=', description: 'החזר את הדמות לגודל המקורי' },
+        { id: 'hide', name: 'הסתר', icon: '👻', description: 'הסתר את הדמות' },
+        { id: 'show', name: 'הצג', icon: '👁️', description: 'הצג את הדמות אם היא מוסתרת' }
     ],
     sound: [
-        { id: 'play-pop', name: 'השמע צליל פופ', icon: '🔊' },
-        { id: 'play-recorded', name: 'השמע הקלטה', icon: '🎵' }
+        { id: 'play-pop', name: 'השמע פופ', icon: '🔊', description: 'השמע צליל פופ' },
+        { id: 'play-recorded', name: 'השמע הקלטה', icon: '🎵', description: 'השמע צליל מוקלט' },
+        { id: 'play-note', name: 'נגן תו', icon: '🎼', description: 'נגן תו מוזיקלי', value: 'do' },
+        { id: 'stop-sounds', name: 'עצור צלילים', icon: '🔇', description: 'עצור את כל הצלילים' }
     ],
     control: [
-        { id: 'wait', name: 'המתן', icon: '⏱️', value: 1 },
-        { id: 'set-speed', name: 'קבע מהירות', icon: '⚡', value: 'normal' },
-        { id: 'repeat', name: 'חזור', icon: '🔄', value: 2 },
-        { id: 'repeat-forever', name: 'חזור לנצח', icon: '♾️' },
-        { id: 'go-to-page', name: 'עבור לעמוד', icon: '📄', value: 1 }
+        { id: 'wait', name: 'המתן', icon: '⏱️', description: 'המתן מספר שניות', value: 1 },
+        { id: 'set-speed', name: 'קבע מהירות', icon: '⚡', description: 'קבע את מהירות הריצה', value: 'normal' },
+        { id: 'repeat', name: 'חזור', icon: '🔄', description: 'חזור על הבלוקים שבתוך הלולאה מספר פעמים', value: 2 },
+        { id: 'repeat-forever', name: 'חזור לנצח', icon: '♾️', description: 'חזור על הבלוקים שבתוך הלולאה ללא הגבלה' },
+        { id: 'go-to-page', name: 'עבור לעמוד', icon: '📄', description: 'עבור לעמוד אחר בפרויקט', value: 1 }
     ],
     end: [
-        { id: 'stop', name: 'עצור', icon: '🛑' },
-        { id: 'end', name: 'סיום', icon: '🏁' }
+        { id: 'stop', name: 'עצור', icon: '🛑', description: 'עצור את ריצת כל הסקריפטים' },
+        { id: 'end', name: 'סיים', icon: '🏁', description: 'סיים את ריצת הסקריפט הנוכחי' }
     ]
 };
 
 // משתנים גלובליים למערכת
 let currentCategory = 'trigger';
 let currentPage = 1;
-let scripts = []; // מערך שמכיל את כל הסקריפטים
+let scripts = {}; // מילון שמכיל את הסקריפטים לפי דמות
 let isRunning = false;
 let activeCharacter = 'character1';
 let draggedBlock = null;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
 let blockIdCounter = 1;
+let charactersData = {}; // נתונים על הדמויות במערכת
+let runningScripts = []; // סקריפטים שרצים כרגע
+let executionSpeed = 'normal'; // מהירות ריצה: slow, normal, fast
+let soundEffects = {
+    pop: new Audio('data:audio/wav;base64,UklGRrwIAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YZgIAACBhYqFbF1fdJOnqnlpZHWOkaGqlX9yY15kiJacmIV0aWRgYG6Ij5uooYt2aGBid4iXm5uYhHBlYmh1hI+ZoJ+ajnttZGFlcX+JkJSZmZePhnx1cHJ3gIWLkZWWlZGMhn96eHp9goaLjpKTkY+LiIN/fHx9f4GFh4qMjIuKiIaEgYB/f4CBg4WGh4eGhYSCgYB/f3+AgICBgYGBgICAgH9/f39/f4CAgICAgICAf39/f39/f3+AgICAgICAgIB/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f4B/gH+AgIB/f39/f39/f3+AgICAgICAgIB/f39/f39/f4CAgICAgICAgIB/f39/f3+AgICAgICAgICAgH9/f39/f4CAgICAgICAgICAf39/f39/gICAgICAgICAgIB/f39/f3+AgICAgICAgICAgH9/f39/f4CAgICAgICAgICAf39/f39/gICAgICAgICAgIB/f39/f3+AgICAgICAgICAgIB/f4CAgICAgIB/gICAgICBgICAgH9/gICBgoOEgX9+gIODhIN/goaEgH+AhIaHhIB+fX1+gYKDg4KAf3+AgoSGh4eDgH58e3p7fH1+f4GDhYeHh4WDgX99e3p6e3x+gIKEhoiIiIeGhIF/fXt7e3t9f4GDhYeJiYmIhoWCgH58e3t8fX+Bg4aIiYmJiIeGg4F/fXx7fH1/gYOFh4iIiIiHhYSCgH59fHx9f4GDhYeIiIiHhoWEgoB+fXx8fX+Bg4WGh4iHh4aFg4KAfn18fH1/gIKEhoaHh4eGhYOCgX9+fX19fn+Bg4SFhoaGhoWEg4GAfn19fX5/gIKDhIWFhYWEg4KBgH9+fX1+f4CBgoOEhISEg4OCgYB/fn5+fn+AgYKDg4SEhIOCgoGAf35+fn5/gIGCgoODg4OCgYGAf39+fn5/gIGBgoKDg4OCgoGBgH9/fn5/f4CBgYKCgoKCgoGBgH9/f39/f4CAgYGBgoKCgoGBgIB/f39/f4CAgYGBgYGBgYGAgIB/f39/f4CAgICBgYGBgYCAgIB/f39/f4CAgICAgYGBgYCAgIB/f39/f4CAgICAgICBgICAgH9/f39/f4CAgICAgICAgICAgH9/f39/f4CAgICAgICAgICAgIB/f39/f4CAgICAgICAgICAgIB/f39/f4CAgICAgICAgICAgIB/f39/f4CAgICAgICAgICAgIB/f39/f4CAgICAgICAgICAgIB/f39/f4CAgICAgICAgICAgIB/f39/f4CAgICAgICAgICAgIB/f39/f3+AgICAgICAgICAgIB/f39/f3+AgICAgICAgICAgIB/f39/f3+AgICAgICAgICAgIB/f39/f3+AgICAgICAgICAgIB/f39/f3+AgICAgICAgICAgIB/f39/f3+AgICAgICAgICAgH9/f39/f3+AgICAgICAgICAgH9/f39/f3+AgICAgICAgICAgH9/f39/f3+AgICAgICAgICAgH9/f39/f3+AgICAgICAgICAgH9/f39/f3+AgICAgICAgICAf39/f39/f3+AgICAgICAgICAf39/f39/f3+AgICAgICAgICAf39/f39/f3+AgICAgICAgICAf39/f39/f3+AgICAgICAgICAf39/f39/f3+AgICAgICAgICAf39/f39/f3+AgICAgICAgICAf39/f39/f3+AgICAgICAgICAf39/f39/f3+AgICAgICAgICAf39/f39/f3+AgICAgICAgICAf39/f39/f3+AgICAgICAgICAf39/f39/f3+AgICAgICAgICAf39/f39/f3+AgICAgICAgICAf39/f39/f39/gICAgICAgICAf39/f39/f39/gICAgICAgICAf39/f39/f39/gICAgICAgICAf39/f39/f39/gICAgICAgICAf39/f39/f39/gICAgICAgICAf39/f39/f39/gICAgICAgICAf39/f39/f39/gICAgICAgICAf39/f39/f39/gICAgICAgICAf39/f39/f39/gICAgICAgICAf39/f39/f39/gICAgICAgICAf39/f39/f39/gICAgICAgICAf39/f39/f39/gICAgICAgICAf39/f39/f39/gICAgICAgICAf39/f39/f39/gICAgICAgICAf39/f39/f39/gICAgICAgICAf39/f39/f39/gICAgICAgICAf39/f39/f39/f4CAgICAgICAf39/f39/f39/f4CAgICAgICAf39/f39/f39/f4CAgICAgICAf39/f39/f39/f4CAgICAgICAf39/f39/f39/f4CAgICAgICAf39/f39/f39/f4CAgICAgICAf39/f39/f39/f4CAgICAgICAf39/f39/f39/f4CAgICAgICAf39/f39/f39/f4CAgICAgICAf39/f39/f39/f4CA'),
+    note: new Audio('data:audio/wav;base64,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')
+};
 
 // אתחול המערכת
 document.addEventListener('DOMContentLoaded', function() {
+    // אתחול מערכת הדמויות
+    initializeCharacters();
+    
     // הצג בלוקים מהקטגוריה הראשונה
     displayBlocksForCategory(currentCategory);
     
@@ -83,104 +95,141 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // הגדרת אירועים לספריית הדמויות
     setupCharacterLibrary();
+    
+    // הוספת אירועים לדמויות בשלב
+    setupCharacterEvents();
+    
+    // יצירת אזור התכנות לגרירת בלוקים
+    setupProgrammingArea();
 });
 
-// הצגת הבלוקים עבור קטגוריה מסוימת
-function displayBlocksForCategory(category) {
-    const blocksContainer = document.getElementById('blocks-container');
-    blocksContainer.innerHTML = '';
+// אתחול נתוני הדמויות
+function initializeCharacters() {
+    // הגדרת דמות ברירת המחדל
+    charactersData['character1'] = {
+        id: 'character1',
+        x: 160,
+        y: 160,
+        initialX: 160,
+        initialY: 160,
+        width: 80,
+        height: 80,
+        rotation: 0,
+        scale: 1,
+        visible: true,
+        type: 'default'
+    };
     
-    blockDefinitions[category].forEach(blockDef => {
-        const block = document.createElement('div');
-        block.className = `block ${category}`;
-        block.dataset.blockType = blockDef.id;
-        block.dataset.category = category;
-        block.title = blockDef.name;
+    // אתחול אוסף הסקריפטים לכל דמות
+    scripts['character1'] = [];
+}
+
+// הגדרת אירועים לדמויות בשלב
+function setupCharacterEvents() {
+    document.querySelectorAll('.character').forEach(character => {
+        // אירוע לחיצה על דמות
+        character.addEventListener('click', function(e) {
+            if (!isRunning) {
+                // הפעלה של כל הסקריפטים שמגיבים ללחיצה על דמות
+                activateCharacter(this.id);
+                e.stopPropagation();
+            } else {
+                // הפעלה של סקריפטים שמופעלים בלחיצה על דמות
+                runScriptsWithTrigger('start-tap', this.id);
+                e.stopPropagation();
+            }
+        });
         
-        // הוספת צלמית לבלוק
-        block.innerHTML = `<div class="block-icon">${blockDef.icon}</div>`;
-        
-        // הוספת ערך לבלוק אם יש כזה
-        if (blockDef.value !== undefined) {
-            block.dataset.value = blockDef.value;
+        // אירוע לגרירת דמות (רק למצב עריכה)
+        character.addEventListener('mousedown', function(e) {
+            if (!isRunning) {
+                const charId = this.id;
+                activateCharacter(charId);
+                
+                // חישוב נקודת ההתחלה של הגרירה
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const charRect = this.getBoundingClientRect();
+                const offsetX = startX - charRect.left;
+                const offsetY = startY - charRect.top;
+                
+                // פונקציה להזזת הדמות
+                const moveCharacter = function(e) {
+                    const x = e.clientX - offsetX;
+                    const y = e.clientY - offsetY;
+                    const stageRect = document.getElementById('stage').getBoundingClientRect();
+                    
+                    // חישוב המיקום בתוך השלב
+                    const relativeX = x - stageRect.left;
+                    const relativeY = y - stageRect.top;
+                    
+                    // עדכון מיקום הדמות
+                    if (relativeX >= 0 && relativeX <= stageRect.width - charRect.width &&
+                        relativeY >= 0 && relativeY <= stageRect.height - charRect.height) {
+                        document.getElementById(charId).style.left = relativeX + 'px';
+                        document.getElementById(charId).style.top = relativeY + 'px';
+                        
+                        // עדכון נתוני הדמות
+                        charactersData[charId].x = relativeX;
+                        charactersData[charId].y = relativeY;
+                    }
+                };
+                
+                // פונקציה לסיום הגרירה
+                const stopMoving = function() {
+                    document.removeEventListener('mousemove', moveCharacter);
+                    document.removeEventListener('mouseup', stopMoving);
+                };
+                
+                // הוספת מאזיני אירועים זמניים
+                document.addEventListener('mousemove', moveCharacter);
+                document.addEventListener('mouseup', stopMoving);
+                
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+    });
+    
+    // הוספת אירוע לחיצה על השלב
+    document.getElementById('stage').addEventListener('click', function() {
+        // בדיקת התנגשויות בין דמויות
+        if (isRunning) {
+            checkCollisions();
         }
-        
-        // הגדרת אירועי גרירה לבלוק
-        block.draggable = true;
-        block.addEventListener('dragstart', handleBlockDragStart);
-        block.addEventListener('mousedown', handleBlockMouseDown);
-        
-        blocksContainer.appendChild(block);
     });
 }
 
-// בחירת קטגוריה
-function selectCategory(category) {
-    // הסר את הסימון מכל הקטגוריות
-    document.querySelectorAll('.category-button').forEach(button => {
-        button.classList.remove('active');
-    });
-    
-    // סמן את הקטגוריה הנבחרת
-    document.querySelector(`.category-button[data-category="${category}"]`).classList.add('active');
-    
-    // עדכן את הקטגוריה הנוכחית והצג את הבלוקים שלה
-    currentCategory = category;
-    displayBlocksForCategory(category);
-}
-
-// טיפול בהתחלת גרירת בלוק
-function handleBlockDragStart(e) {
-    e.dataTransfer.setData('text/plain', e.target.dataset.blockType);
-    e.dataTransfer.effectAllowed = 'copy';
-}
-
-// טיפול בלחיצה על בלוק
-function handleBlockMouseDown(e) {
-    // יצירת בלוק חדש לגרירה (העתק של הבלוק המקורי)
-    const original = e.currentTarget;
-    draggedBlock = original.cloneNode(true);
-    draggedBlock.style.position = 'absolute';
-    draggedBlock.style.zIndex = 1000;
-    
-    // חישוב ההיסט בין נקודת הלחיצה למיקום הבלוק
-    const rect = original.getBoundingClientRect();
-    dragOffsetX = e.clientX - rect.left;
-    dragOffsetY = e.clientY - rect.top;
-    
-    // הוספת מזהה ייחודי לבלוק
-    draggedBlock.id = 'block-' + blockIdCounter++;
-    
-    // הוספת הבלוק לגוף המסמך
-    document.body.appendChild(draggedBlock);
-    
-    // עדכון מיקום הבלוק
-    updateDraggedBlockPosition(e);
-    
-    // הוספת מאזיני אירועים לתנועת העכבר ושחרור הלחצן
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    
-    // מניעת התנהגות ברירת המחדל
-    e.preventDefault();
-}
-
-// עדכון מיקום הבלוק הנגרר
-function updateDraggedBlockPosition(e) {
-    if (draggedBlock) {
-        draggedBlock.style.left = (e.clientX - dragOffsetX) + 'px';
-        draggedBlock.style.top = (e.clientY - dragOffsetY) + 'px';
-    }
-}
-
-// טיפול בתנועת העכבר בזמן גרירה
-function handleMouseMove(e) {
-    updateDraggedBlockPosition(e);
-    
-    // בדיקה אם הבלוק נמצא מעל אזור התכנות
+// הגדרת אזור התכנות לגרירת בלוקים
+function setupProgrammingArea() {
     const programmingArea = document.getElementById('programming-area');
-    const programmingAreaRect = programmingArea.getBoundingClientRect();
     
-    if (e.clientX >= programmingAreaRect.left && e.clientX <= programmingAreaRect.right &&
-        e.clientY >= programmingAreaRect.top && e.clientY <= programmingAreaRect.bottom) {
-        programmingArea.
+    // הוספת אירועים לגרירת בלוקים
+    programmingArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+    });
+    
+    programmingArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        const blockType = e.dataTransfer.getData('text/plain');
+        
+        // יצירת בלוק חדש
+        if (blockType) {
+            createNewScript(blockType, e.clientX, e.clientY);
+        }
+    });
+}
+
+// פונקציה ליצירת סקריפט חדש בהתאם לסוג הבלוק
+function createNewScript(blockType, clientX, clientY) {
+    // מצא את הגדרת הבלוק
+    let blockDef = null;
+    let category = null;
+    
+    // חיפוש הבלוק בכל הקטגוריות
+    for (const cat in blockDefinitions) {
+        const found = blockDefinitions[cat].find(block => block.id === blockType);
+        if (found) {
+            blockDef = found;
+            category = cat
