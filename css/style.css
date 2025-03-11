@@ -1,139 +1,172 @@
-// ========================================================================
-//  הגדרת בלוקים (Blocks)
-// ========================================================================
-
-const blocks = {
-    triggering: [
-        {
-            name: "→ 1",
-            color: "yellow",
-            type: "startOnGreenFlag",
-            icon: "flag.png", // נניח שיש לך אייקון לדגל
-        },
-        {
-            name: "🚩 0",
-            color: "yellow",
-            type: "startOnTap",
-            icon: "tap.png",
-        },
-        // הוסף בלוקים נוספים כאן
-    ],
-    motion: [
-        {
-            name: "→ 1",
-            color: "blue",
-            type: "moveRight",
-            icon: "right.png",
-        },
-        // הוסף בלוקים נוספים כאן
-    ],
-    looks:[
-        {
-            name: "← 1",
-            color: "purple",
-            type: "moveRight",
-            icon: "right.png",
-        },
-         // הוסף בלוקים נוספים כאן
-    ],
-    sound:[
-        {
-            name: "↑ 1",
-            color: "green",
-            type: "moveRight",
-            icon: "right.png",
-        },
-         // הוסף בלוקים נוספים כאן
-    ],
-    control:[
-        {
-            name: "← 1",
-            color: "orange",
-            type: "moveRight",
-            icon: "right.png",
-        },
-         // הוסף בלוקים נוספים כאן
-    ]
-    // הוסף כאן הגדרות בלוקים לשאר הקטגוריות
-};
-
-// פונקציה ליצירת HTML עבור בלוק
-function createBlockElement(block, category) {
-    const blockElement = document.createElement("div");
-    blockElement.classList.add("block");
-    blockElement.style.backgroundColor = block.color;
-    blockElement.textContent = block.name;
-    blockElement.dataset.type = block.type; // שמור את סוג הבלוק כ-data attribute
-    blockElement.draggable = true; // הופך את הבלוק לניתן לגרירה
-
-    // טיפול באירוע התחלת גרירה (dragstart) - חשוב מאוד!
-    blockElement.addEventListener("dragstart", (event) => {
-        event.dataTransfer.setData("text/plain", JSON.stringify({ type: block.type, category: category })); // העברת מידע על הבלוק
-        event.dataTransfer.effectAllowed = "move"; // מציין שהפעולה היא העברה (move)
-    });
-
-    return blockElement;
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f4ff; /* רקע כחלחל בהיר */
+    direction: rtl; /* כיוון טקסט מימין לשמאל */
 }
 
-// הוספת הבלוקים ללוח הלבנים
-function populateBlockPalette() {
-    for (const category in blocks) {
-        const categoryDiv = document.getElementById(`${category}-blocks`);
-        if (categoryDiv) {
-            blocks[category].forEach(block => {
-                const blockElement = createBlockElement(block, category);
-                categoryDiv.appendChild(blockElement);
-            });
-        }
-    }
+.container {
+    display: flex;
+    flex-direction: column; /* סידור אנכי */
+    height: 100vh;
 }
 
-populateBlockPalette(); // הפעלת הפונקציה ליצירת הבלוקים
+header {
+    background-color: #fff;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e0e0e0;
+}
 
-// ========================================================================
-//  לוגיקת גרירה ושחרור (Drag and Drop)
-// ========================================================================
+main {
+    display: flex;
+    flex-grow: 1; /* Allow main to take up remaining vertical space */
+}
 
-const programmingArea = document.getElementById("program-blocks");
-const blockPalette = document.getElementById("block-palette");
-// טיפול באירוע גרירה מעל אזור התכנות (dragover)
-programmingArea.addEventListener("dragover", (event) => {
-    event.preventDefault(); // מונע התנהגות ברירת מחדל
-    event.dataTransfer.dropEffect = "move"; // מציין שהפעולה היא העברה (move)
-});
+#stage {
+  flex: 2;
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  margin: 10px;
+  border-radius: 10px;
+  position: relative; /* Needed for character positioning */
+  display: grid;
+  grid-template-columns: repeat(10, 1fr); /* 10 columns */
+  grid-template-rows: repeat(10, 1fr); /* 10 rows */
+  gap: 1px; /* Small gap between grid cells */
+}
 
-// טיפול באירוע שחרור באזור התכנות (drop)
-programmingArea.addEventListener("drop", (event) => {
-    event.preventDefault(); // מונע התנהגות ברירת מחדל
+/* Add grid lines */
+#stage::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Allow clicks to pass through */
+    background: repeating-linear-gradient(0deg, #f0f0f0, #f0f0f0 10%, transparent 10%, transparent 20%),
+                repeating-linear-gradient(90deg, #f0f0f0, #f0f0f0 10%, transparent 10%, transparent 20%);
+    border-radius: 10px;
+}
 
-    const data = JSON.parse(event.dataTransfer.getData("text/plain")); // קבלת המידע על הבלוק
-    const blockType = data.type;
-    const blockCategory = data.category;
+#character {
+    width: 50px; /* Adjust as needed */
+    height: 50px; /* Adjust as needed */
+    background-color: #ffcc00; /* Example color */
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
 
-    // יצירת אלמנט בלוק חדש (שיבוט)
-    const newBlock = document.createElement("div");
-    newBlock.classList.add("block");
-    newBlock.style.backgroundColor = blocks[blockCategory].find(b => b.type === blockType).color; // מציאת הצבע הנכון
-    newBlock.textContent = blocks[blockCategory].find(b => b.type === blockType).name; // מציאת השם הנכון
-    newBlock.dataset.type = blockType;
-    newBlock.draggable = false; //העתק לא ניתן לגרירה
+#block-palette {
+    width: 250px; /* Fixed width for the block palette */
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+}
 
-    // הוספת הבלוק החדש לאזור התכנות
-    programmingArea.appendChild(newBlock);
-});
+.category-tabs {
+    display: flex;
+    flex-wrap: wrap; /* Allow tabs to wrap to the next line */
+    margin-bottom: 10px;
+}
 
-const categoryTabs = document.querySelectorAll(".category-tab");
-const blockCategories = document.querySelectorAll(".block-category");
+.category-tab {
+    background-color: #eee;
+    border: none;
+    padding: 5px 10px;
+    margin-right: 5px;
+    margin-bottom: 5px; /* Add some spacing between tabs */
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
 
-categoryTabs.forEach(tab => {
-    tab.addEventListener("click", () => {
-        // הסרת ה-active מכל הטאבים והקטגוריות
-        categoryTabs.forEach(t => t.classList.remove("active"));
-        blockCategories.forEach(c => c.classList.remove("active"));
+.category-tab.active {
+    background-color: #ddd;
+}
 
-        // הוספת ה-active לטאב שנלחץ ולקטגוריה המתאימה
-        tab.classList.add("active");
-        const category = tab.dataset.category;
-        document.getElementById(`${category}-blocks`).classList.add("active");
-    });
-});
+.block-category {
+    display: none;
+    padding: 10px;
+}
+
+.block-category.active {
+    display: block;
+}
+
+#programming-area {
+    flex: 1; /* Take up remaining horizontal space */
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.program-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+#clear-all {
+    color: #e74c3c; /* Reddish color for "Clear All" */
+    cursor: pointer;
+}
+
+#program-blocks {
+    min-height: 100px; /* Ensure some initial height */
+    border: 1px dashed #ccc; /* Visual cue for the programming area */
+    padding: 10px;
+}
+
+/* סגנונות בסיסיים לבלוקים */
+.block {
+    width: 80px;
+    height: 80px;
+    margin: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 16px;
+    border-radius: 10px;
+    cursor: grab;
+}
+
+/* Block Colors */
+#triggering-blocks .block { background-color: yellow; }
+#motion-blocks .block { background-color: blue; }
+#looks-blocks .block { background-color: purple; }
+#sound-blocks .block { background-color: green; }
+#control-blocks .block { background-color: orange; }
+#end-blocks .block { background-color: red; }
+
+/* Logo */
+.logo {
+    font-size: 20px;
+    font-weight: bold;
+    color: #4a90e2; /* כחול של ScratchJr */
+}
+
+/*Header Icons*/
+.header-icons {
+    display: flex;
+}
+
+.icon {
+    margin-left: 10px;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+}
