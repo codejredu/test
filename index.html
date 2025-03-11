@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ScratchJr כמו שלי</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
 
@@ -23,54 +24,54 @@
             <!-- קטלוג הבלוקים -->
             <h3>טריגרים (צהוב)</h3>
             <div class="blockCategory" data-category="trigger">
-                <button class="block" data-block-type="startOnGreenFlag">דגל ירוק</button>
-                <button class="block" data-block-type="startOnTap">לחיצה על דמות</button>
-                <button class="block" data-block-type="startOnBump">התנגשות</button>
-                <button class="block" data-block-type="sendMessage">שליחת הודעה</button>
-                <button class="block" data-block-type="startOnMessage">קבלת הודעה</button>
+                <div class="block" draggable="true" data-block-type="startOnGreenFlag"><i class="fas fa-flag-checkered"></i> דגל ירוק</div>
+                <div class="block" draggable="true" data-block-type="startOnTap"><i class="fas fa-hand-pointer"></i> לחיצה על דמות</div>
+                <div class="block" draggable="true" data-block-type="startOnBump"><i class="fas fa-exclamation-triangle"></i> התנגשות</div>
+                <div class="block" draggable="true" data-block-type="sendMessage"><i class="fas fa-arrow-right"></i> שליחת הודעה</div>
+                <div class="block" draggable="true" data-block-type="startOnMessage"><i class="fas fa-envelope"></i> קבלת הודעה</div>
             </div>
 
             <h3>תנועה (כחול)</h3>
             <div class="blockCategory" data-category="motion">
-                <button class="block" data-block-type="moveRight">ימינה</button>
-                <button class="block" data-block-type="moveLeft">שמאלה</button>
-                <button class="block" data-block-type="moveUp">למעלה</button>
-                <button class="block" data-block-type="moveDown">למטה</button>
-                <button class="block" data-block-type="turnRight">סוב ימינה</button>
-                <button class="block" data-block-type="turnLeft">סוב שמאלה</button>
-                <button class="block" data-block-type="hop">קפוץ</button>
-                <button class="block" data-block-type="goHome">חזור הביתה</button>
+                <div class="block" draggable="true" data-block-type="moveRight"><i class="fas fa-arrow-right"></i> ימינה</div>
+                <div class="block" draggable="true" data-block-type="moveLeft"><i class="fas fa-arrow-left"></i> שמאלה</div>
+                <div class="block" draggable="true" data-block-type="moveUp"><i class="fas fa-arrow-up"></i> למעלה</div>
+                <div class="block" draggable="true" data-block-type="moveDown"><i class="fas fa-arrow-down"></i> למטה</div>
+                <div class="block" draggable="true" data-block-type="turnRight"><i class="fas fa-redo"></i> סוב ימינה</div>
+                <div class="block" draggable="true" data-block-type="turnLeft"><i class="fas fa-undo"></i> סוב שמאלה</div>
+                <div class="block" draggable="true" data-block-type="hop"><i class="fas fa-arrow-up"></i> קפוץ</div>
+                <div class="block" draggable="true" data-block-type="goHome"><i class="fas fa-home"></i> חזור הביתה</div>
             </div>
 
              <h3>מראה (סגול)</h3>
             <div class="blockCategory" data-category="looks">
-                <button class="block" data-block-type="say">אמור</button>
-                <button class="block" data-block-type="grow">הגדל</button>
-                <button class="block" data-block-type="shrink">הקטן</button>
-                <button class="block" data-block-type="resetSize">אפס גודל</button>
-                <button class="block" data-block-type="hide">הסתר</button>
-                <button class="block" data-block-type="show">הצג</button>
+                <div class="block" draggable="true" data-block-type="say"><i class="fas fa-comment"></i> אמור</div>
+                <div class="block" draggable="true" data-block-type="grow"><i class="fas fa-search-plus"></i> הגדל</div>
+                <div class="block" draggable="true" data-block-type="shrink"><i class="fas fa-search-minus"></i> הקטן</div>
+                <div class="block" draggable="true" data-block-type="resetSize"><i class="fas fa-sync-alt"></i> אפס גודל</div>
+                <div class="block" draggable="true" data-block-type="hide"><i class="fas fa-eye-slash"></i> הסתר</div>
+                <div class="block" draggable="true" data-block-type="show"><i class="fas fa-eye"></i> הצג</div>
             </div>
 
               <h3>צלילים (ירוק)</h3>
             <div class="blockCategory" data-category="sounds">
-                <button class="block" data-block-type="playSound">נגן צליל</button>
-                <button class="block" data-block-type="recordSound">הקלט צליל</button>
+                <div class="block" draggable="true" data-block-type="playSound"><i class="fas fa-volume-up"></i> נגן צליל</div>
+                <div class="block" draggable="true" data-block-type="recordSound"><i class="fas fa-microphone"></i> הקלט צליל</div>
             </div>
 
               <h3>בקרה (כתום)</h3>
             <div class="blockCategory" data-category="control">
-                <button class="block" data-block-type="wait">חכה</button>
-                <button class="block" data-block-type="setSpeed">קבע מהירות</button>
-                <button class="block" data-block-type="repeat">חזור</button>
-                <button class="block" data-block-type="repeatForever">חזור לנצח</button>
-                 <button class="block" data-block-type="goToPage">עבור לדף</button>
+                <div class="block" draggable="true" data-block-type="wait"><i class="fas fa-hourglass-half"></i> חכה</div>
+                <div class="block" draggable="true" data-block-type="setSpeed"><i class="fas fa-tachometer-alt"></i> קבע מהירות</div>
+                <div class="block" draggable="true" data-block-type="repeat"><i class="fas fa-redo-alt"></i> חזור</div>
+                <div class="block" draggable="true" data-block-type="repeatForever"><i class="fas fa-infinity"></i> חזור לנצח</div>
+                 <div class="block" draggable="true" data-block-type="goToPage"><i class="fas fa-file-alt"></i> עבור לדף</div>
             </div>
 
                <h3>סיום (אדום)</h3>
             <div class="blockCategory" data-category="end">
-                <button class="block" data-block-type="stop">עצור הכל</button>
-                <button class="block" data-block-type="end">סוף</button>
+                <div class="block" draggable="true" data-block-type="stop"><i class="fas fa-stop-circle"></i> עצור הכל</div>
+                <div class="block" draggable="true" data-block-type="end"><i class="fas fa-flag-checkered"></i> סוף</div>
             </div>
         </div>
 
