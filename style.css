@@ -1,59 +1,103 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Arial', sans-serif;
     display: flex;
     flex-direction: column;
     height: 100vh;
     margin: 0;
+    overflow: hidden; /* מניעת גלילה */
 }
 
 #stage {
     flex: 2;
-    background-color: #eee;
-    border: 1px solid #ccc;
+    background-color: #4dd0e1; /* תכלת בהיר כמו ברקע של ScratchJr */
+    border: 2px solid #b2ebf2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2em;
+    color: white;
+    text-shadow: 2px 2px 4px #000000;
 }
 
 #navigation {
-    background-color: #f9f9f9;
+    background-color: #fff;
     padding: 10px;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 2px solid #b2ebf2;
+    display: flex;
+    justify-content: space-around;
+}
+
+#navigation button {
+    background-color: #00bcd4;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.1em;
 }
 
 #programmingArea {
     flex: 3;
     display: flex;
+    overflow: hidden;
 }
 
 #blockPalette {
     width: 250px;
-    background-color: #f0f0f0;
-    border-right: 1px solid #ccc;
+    background-color: #eee;
+    border-right: 2px solid #b2ebf2;
     padding: 10px;
+    overflow-y: auto; /* הוספת גלילה אם התוכן ארוך מדי */
+}
+
+#blockPalette h3 {
+    margin-top: 0;
+    color: #546e7a;
+    text-align: center;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #90a4ae;
 }
 
 #scriptArea {
     flex: 1;
-    background-color: #fff;
+    background-color: #fafafa;
     padding: 10px;
+    overflow: auto;
+    min-height: 200px; /* גובה מינימלי */
 }
 
-/* סגנונות בסיסיים לבלוקים (יש להרחיב) */
+/* סגנונות בסיסיים לבלוקים */
 .block {
-    width: 80px;
-    height: 80px;
-    margin: 5px;
+    width: 100%; /* רוחב מלא */
+    height: 60px; /* גובה אחיד */
+    margin: 5px 0;
     border: 1px solid #999;
-    border-radius: 5px;
+    border-radius: 8px;
     cursor: grab;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 0.8em;
+    font-size: 1em;
+    color: white;
+    text-shadow: 1px 1px 2px #000000;
+    padding: 5px;
+    box-sizing: border-box; /* כדי שה padding לא ישפיע על הרוחב */
+}
+
+.block i {
+    margin-right: 5px;
 }
 
 /* צבעים לקטגוריות */
-.blockCategory[data-category="trigger"] .block { background-color: yellow; }
-.blockCategory[data-category="motion"] .block { background-color: lightblue; }
-.blockCategory[data-category="looks"] .block { background-color: violet; }
-.blockCategory[data-category="sounds"] .block { background-color: lightgreen; }
-.blockCategory[data-category="control"] .block { background-color: orange; }
-.blockCategory[data-category="end"] .block { background-color: red; }
+.blockCategory[data-category="trigger"] .block { background-color: #fdd835; color: #212121; } /* צהוב */
+.blockCategory[data-category="motion"] .block { background-color: #03a9f4; } /* כחול */
+.blockCategory[data-category="looks"] .block { background-color: #ab47bc; } /* סגול */
+.blockCategory[data-category="sounds"] .block { background-color: #4caf50; } /* ירוק */
+.blockCategory[data-category="control"] .block { background-color: #ff9800; } /* כתום */
+.blockCategory[data-category="end"] .block { background-color: #f44336; } /* אדום */
+
+/* סגנון לאזור שאליו גוררים בלוקים */
+#scriptArea {
+    border: 2px dashed #ccc;
+}
