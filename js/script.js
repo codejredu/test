@@ -213,6 +213,7 @@ function populateBlockPalette(category) {
         categoryDiv.appendChild(blockElement);
     });
 }
+
 // ========================================================================
 //  לוגיקת גרירה ושחרור (Drag and Drop)
 // ========================================================================
@@ -248,17 +249,17 @@ const categoryTabs = document.querySelectorAll(".category-tab");
 const blockCategories = document.querySelectorAll(".block-category");
 
 categoryTabs.forEach(tab => {
-    tab.addEventListener("click", () => {
-          // הסרת ה-active מכל הקטגוריות
-        //categoryTabs.forEach(t => t.classList.remove("active"));
-        blockCategories.forEach(c => c.classList.remove("active"));
+    tab.addEventListener("click",  () => {
+        const category = tab.dataset.category;
+          blockCategories.forEach(c => {
+            c.classList.remove("active");
+        });
         // הוספת ה-active לטאב שנלחץ ולקטגוריה המתאימה
         categoryTabs.forEach(t => t.classList.remove("active"));
         tab.classList.add("active");
-        const category = tab.dataset.category;
+       //הוספת הבלוקים 
         document.getElementById(`${category}-blocks`).classList.add("active");
-        populateBlockPalette(category);
-  
+        populateBlockPalette(category)
 
     });
 });
