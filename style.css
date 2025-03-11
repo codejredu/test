@@ -3,185 +3,88 @@ body {
     margin: 0;
     overflow: hidden;
     background-color: #f0f0f0;
-    direction: rtl; /* כיוון טקסט מימין לשמאל */
-    height: 100vh; /* גובה מלא של המסך */
-    display: flex;
-    flex-direction: column;
+    direction: ltr; /* Direction */
+    height: 100vh;
 }
 
 #appContainer {
     display: flex;
     flex-direction: column;
     height: 100%;
+    background-color: #f0f4ff;
 }
 
+/* -- שורת הכותרת -- */
 #topBar {
-    display: flex;
     background-color: #fff;
-    height: 20%;
-}
-
-#bottomBar {
+    height: 50px;
     display: flex;
-    background-color: #eee;
-    border-top: 2px solid #ccc;
-    height: 20%;
     justify-content: space-between;
     align-items: center;
+    padding: 0 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* -- אזור הדמויות -- */
-#characterPalette {
-    width: 15%;
-    padding: 10px;
-    background-color: #f9f9f9;
-    border-right: 2px solid #ccc;
+#scratchJrLogo {
+    font-size: 1.5em;
+    color: #5e6ad2;
 }
 
-#characterPalette h3 {
-    text-align: center;
-    margin-bottom: 10px;
-}
-
-.characterItem {
-    padding: 8px;
-    margin-bottom: 5px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+#topBarActions button {
+    background: none;
+    border: none;
+    font-size: 1.2em;
     cursor: pointer;
+    margin-left: 10px;
+    color: #5e6ad2;
+}
+
+/* -- אזור התוכן העיקרי -- */
+#mainContent {
     display: flex;
-    align-items: center;
-}
-
-.characterItem i {
-    margin-left: 5px;
-}
-
-.addCharacter {
-    background-color: #e0e0e0;
-    text-align: center;
+    flex: 1;
+    padding: 20px;
 }
 
 /* -- הבמה -- */
 #stage {
-    flex: 1;
-    background-color: #4dd0e1;
-    border: 2px solid #b2ebf2;
+    flex: 2;
+    background-color: #fff;
+    border: 2px solid #eee;
+    border-radius: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
     font-size: 2em;
-    color: white;
-    text-shadow: 2px 2px 4px #000000;
-}
-
-/* -- ניווט בין עמודים -- */
-#pageNavigator {
-    width: 15%;
-    padding: 10px;
-    background-color: #f9f9f9;
-    border-left: 2px solid #ccc;
-}
-
-#pageNavigator h3 {
-    text-align: center;
-    margin-bottom: 10px;
-}
-
-.pagePreview {
-    padding: 8px;
-    margin-bottom: 5px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    cursor: pointer;
-    text-align: center;
-}
-
-.pagePreview i {
-    margin-left: 5px;
-}
-
-.addPage {
-    background-color: #e0e0e0;
-    text-align: center;
-}
-
-/* -- כפתורי פונקציות -- */
-#functionButtons {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    width: 200px;
-}
-
-#functionButtons button {
-    background-color: transparent;
-    border: none;
-    font-size: 1.5em;
-    cursor: pointer;
-    color: #555;
+    color: #444;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-right: 20px;
 }
 
 /* -- אזור הלבנים -- */
-#programmingArea {
+#blockPalette {
+    flex: 1;
+    background-color: #fff;
+    border: 2px solid #eee;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#categoryButtons {
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    overflow-x: auto;
-    padding: 5px;
-    white-space: nowrap;
-    order: -1; /* מעלה את אזור הלבנים לתחילת ה bottomBar */
-    height: 100%;  /* הגדרת גובה מלא */
+    justify-content: space-around;
+    margin-bottom: 15px;
 }
 
-/* סגנון לכותרת הקטגוריה */
-.categoryHeader {
-    display: inline-block;
-    margin: 0 5px;
-}
-
-/* סגנון ללחצן הקטגוריה */
 .categoryButton {
-    width: 70px;
-    height: 70px;
+    background-color: #eee;
     border: none;
-    border-radius: 15px;
+    padding: 8px 15px;
+    border-radius: 20px;
     cursor: pointer;
-    font-size: 2.5em;
-    color: white;
-    text-shadow: 1px 1px 2px #000000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-/* סגנון ללבני התכנות */
-.blockCategory {
-    display: none;
-    position: absolute; /* מיקום אבסולוטי כדי שיופיע מעל האזור */
-    top: auto;  /* יישור לחלק התחתון */
-    left: 0; /* הצמדה לשמאל */
-    background-color: rgba(255, 255, 255, 0.9); /* רקע שקוף */
-    padding: 5px;
-    border-radius: 10px;
-    z-index: 10; /* מיקום מעל שאר הרכיבים */
-    white-space: nowrap;
-    overflow-x: auto;
-}
-
-.block {
-    display: inline-block;
-    width: 80px;
-    height: 80px;
-    margin: 5px;
-    border: 1px solid #999;
-    border-radius: 10px;
-    cursor: grab;
-    font-size: 2em;
-    color: white;
-    text-shadow: 1px 1px 2px #000000;
-    box-sizing: border-box;
+    color: #555;
+    font-size: 0.9em;
 }
 
 /* צבעים ללחצני קטגוריה */
@@ -190,22 +93,31 @@ body {
 .looksButton { background-color: #ab47bc; }
 .soundsButton { background-color: #4caf50; }
 .controlButton { background-color: #ff9800; }
-.endButton { background-color: #f44336; }
 
-#characterPreview {
-    width: 15%;
+.blockCategory {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 10px;
+}
+
+.block {
+    width: 50px;
+    height: 50px;
+    background-color: #03a9f4;
+    color: white;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 2em;
-    color: #555;
+    border-radius: 10px;
+    cursor: grab;
 }
 
+/* -- אזור הסקריפט -- */
 #scriptArea {
-    background-color: #fafafa;
-    padding: 10px;
-    overflow: auto;
-    min-height: 200px;
-    border: 2px dashed #ccc;
-    width: 60%;
+    background-color: #fff;
+    border: 2px solid #eee;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
 }
