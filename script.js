@@ -1,3 +1,72 @@
+// ========================================================================
+//  הגדרת בלוקים (Blocks)
+// ========================================================================
+
+const blocks = {
+    triggering: [
+        {
+            name: "התחל בלחיצה על דגל ירוק",
+            color: "yellow",
+            type: "startOnGreenFlag",
+            icon: "flag.png", // נניח שיש לך אייקון לדגל
+        },
+        {
+            name: "התחל בלחיצה על דמות",
+            color: "yellow",
+            type: "startOnTap",
+            icon: "tap.png",
+        },
+        // הוסף בלוקים נוספים כאן
+    ],
+    motion: [
+        {
+            name: "זוז ימינה",
+            color: "blue",
+            type: "moveRight",
+            icon: "right.png",
+        },
+        // הוסף בלוקים נוספים כאן
+    ],
+    // הוסף כאן הגדרות בלוקים לשאר הקטגוריות
+};
+
+// פונקציה ליצירת HTML עבור בלוק
+function createBlockElement(block, category) {
+    const blockElement = document.createElement("div");
+    blockElement.classList.add("block");
+    blockElement.style.backgroundColor = block.color;
+    blockElement.textContent = block.name;
+    blockElement.dataset.type = block.type; // שמור את סוג הבלוק כ-data attribute
+    blockElement.draggable = true; // הופך את הבלוק לניתן לגרירה
+
+    // טיפול באירוע התחלת גרירה (dragstart) - חשוב מאוד!
+    blockElement.addEventListener("dragstart", (event) => {
+        event.dataTransfer.setData("text/plain", JSON.stringify({ type: block.type, category: category })); // העברת מידע על הבלוק
+        event.dataTransfer.effectAllowed = "move"; // מציין שהפעולה היא העברה (move)
+    });
+
+    return blockElement;
+}
+
+// הוספת הבלוקים ללוח הלבנים
+function populateBlockPalette() {
+    for (const category in blocks) {
+        const categoryDiv = document.getElementById(`${category}-blocks`);
+        if (categoryDiv) {
+            blocks[category].forEach(block => {
+                const blockElement = createBlockElement(block, category);
+                categoryDiv.appendChild(blockElement);
+            });
+        }
+    }
+}
+
+populateBlockPalette(); // הפעלת הפונקציה ליצירת הבלוקים
+
+// ========================================================================
+//  לוגיקת גרירה ושחרור (Drag and Drop)
+// ========================================================================
+
 const programmingArea = document.getElementById("programming-area");
 
 // טיפול באירוע גרירה מעל אזור התכנות (dragover)
