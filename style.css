@@ -1,4 +1,4 @@
- body {
+body {
     font-family: 'Arial', sans-serif;
     margin: 0;
     overflow: hidden;
@@ -23,6 +23,9 @@
     flex: 1;
     background-color: #eee;
     border-top: 2px solid #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* סידור רכיבים משני קצוות */
 }
 
 /* -- אזור הדמויות -- */
@@ -117,67 +120,77 @@
     color: #555;
 }
 
-/* -- אזור התכנות -- */
-#programmingArea {
-    flex: 1;
-    display: flex;
-}
-
-#blockPalette {
-    width: 250px;
-    background-color: #eee;
-    border-right: 2px solid #b2ebf2;
-    padding: 10px;
-    overflow-y: auto;
-}
-
-#blockPalette h3 {
-    margin-top: 0;
-    color: #546e7a;
-    text-align: center;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #90a4ae;
-}
-
 #scriptArea {
-    flex: 1;
     background-color: #fafafa;
     padding: 10px;
     overflow: auto;
     min-height: 200px;
     border: 2px dashed #ccc;
+     width: 60%; /* רוחב גדול יותר */
 }
 
-/* -- סגנונות בסיסיים לבלוקים -- */
-.block {
-    width: 80px; /* גודל קבוע */
-    height: 80px; /* גודל קבוע */
-    margin: 5px; /* מרווח */
-    border: 1px solid #999;
-    border-radius: 10px; /* פינות מעוגלות */
-    cursor: grab;
+/* -- אזור הלבנים -- */
+#programmingArea {
+    width: 30%;  /* רוחב מצומצם יותר */
+    height: 100%;
+    display: flex;
+    flex-direction: column;  /* עמודות */
+    align-items: center;
+    overflow-y: auto; /* גלילה אנכית */
+}
+
+#blockPalette {
+    display: flex;
+    flex-direction: column; /* פריסה אנכית */
+    width: 100%;
+    padding: 10px;
+    overflow-y: auto;  /* אפשרות גלילה אנכית */
+}
+
+/* סגנון לכותרת הקטגוריה */
+.categoryHeader {
+    margin-bottom: 5px;
+    width: 100%; /* כפתור ברוחב מלא */
+}
+
+/* סגנון ללחצן הקטגוריה */
+.categoryButton {
+    width: 70px;  /* גודל כפתור */
+    height: 70px; /* גודל כפתור */
+    border: none;
+    border-radius: 15px; /* פינות מעוגלות */
+    cursor: pointer;
+    font-size: 2.5em;
+    color: white;
+    text-shadow: 1px 1px 2px #000000;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 2em; /* גודל אייקון */
-    color: white;
-    text-shadow: 1px 1px 2px #000000;
-    box-sizing: border-box; /* כדי שה padding לא ישפיע על הרוחב */
-    position: relative; /* למיקום אלמנטים בתוך הבלוק */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.block i {
-    /* הסרת הטקסט - משאירים רק אייקונים */
-    margin: 0; /* מוחק margin */
+/* סגנון ללבני התכנות */
+.blockCategory {
+    display: none; /* הסתרת הבלוקים כברירת מחדל */
+    padding: 5px;
+    display: flex; /* פריסה אופקית */
+    overflow-x: auto; /* אפשרות גלילה אופקית */
+    overflow-y: hidden; /* הסתרת גלילה אנכית */
+    white-space: nowrap; /* מניעת שבירת שורות */
 }
 
-/* -- צבעים לקטגוריות -- */
-.blockCategory[data-category="trigger"] .block { background-color: #fdd835; color: #212121; }
-.blockCategory[data-category="motion"] .block { background-color: #03a9f4; }
-.blockCategory[data-category="looks"] .block { background-color: #ab47bc; }
-.blockCategory[data-category="sounds"] .block { background-color: #4caf50; }
-.blockCategory[data-category="control"] .block { background-color: #ff9800; }
-.blockCategory[data-category="end"] .block { background-color: #f44336; }
+.block {
+    margin: 5px;
+    flex-shrink: 0; /* מניעת כיווץ */
+}
+
+/* צבעים ללחצני קטגוריה */
+.triggerButton { background-color: #fdd835; }
+.motionButton { background-color: #03a9f4; }
+.looksButton { background-color: #ab47bc; }
+.soundsButton { background-color: #4caf50; }
+.controlButton { background-color: #ff9800; }
+.endButton { background-color: #f44336; }
 
 /* -- תצוגת דמות -- */
 #characterPreview {
@@ -188,36 +201,3 @@
     font-size: 2em;
     color: #555;
 }
-
-/* -- קטגוריות בלוקים -- */
-.categoryHeader {
-    margin-bottom: 5px;
-}
-
-.categoryButton {
-    width: 70px;  /* גודל כפתור */
-    height: 70px; /* גודל כפתור */
-    border: none;
-    border-radius: 15px; /* פינות מעוגלות */
-    cursor: pointer;
-    font-size: 2.5em; /* גודל אייקון */
-    color: white;
-    text-shadow: 1px 1px 2px #000000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.blockCategory {
-    display: none; /* הסתרת הבלוקים כברירת מחדל */
-    padding: 5px;
-}
-
-/* צבעים ללחצני קטגוריה */
-.triggerButton { background-color: #fdd835; }
-.motionButton { background-color: #03a9f4; }
-.looksButton { background-color: #ab47bc; }
-.soundsButton { background-color: #4caf50; }
-.controlButton { background-color: #ff9800; }
-.endButton { background-color: #f44336; }
