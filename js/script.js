@@ -162,13 +162,16 @@ function createBlockElement(block, category) {
     const blockElement = document.createElement("div");
     blockElement.classList.add("block");
     blockElement.style.backgroundColor = block.color;
+    blockElement.textContent = block.name;
+
+    // הוספת אייקון
     blockElement.textContent = block.icon;
     blockElement.dataset.type = block.type;
     blockElement.draggable = true;
 
     // טיפול באירוע התחלת גרירה (dragstart) - חשוב מאוד!
     blockElement.addEventListener("dragstart", (event) => {
-        event.dataTransfer.setData("text/plain", JSON.stringify({ type: block.type, category: category }));
+        event.dataTransfer.setData("text/plain", JSON.stringify({ type: block.type, category }));
         event.dataTransfer.effectAllowed = "move";
     });
 
@@ -178,14 +181,12 @@ function createBlockElement(block, category) {
 // הוספת הבלוקים ללוח הלבנים
 function populateBlockPalette(category) {
     const categoryDiv = document.getElementById(`${category}-blocks`);
-    categoryDiv.innerHTML = ""; // Clean existing blocks
-        blocks[category].forEach(block => {
-                const blockElement = createBlockElement(block, category);
-                categoryDiv.appendChild(blockElement);
-            });
+    categoryDiv.innerHTML = ""; // ניקוי הבלוקים הקיימים
+    blocks[category].forEach(block => {
+        const blockElement = createBlockElement(block, category);
+        categoryDiv.appendChild(blockElement);
+    });
 }
-
-//populateBlockPalette(); // הפעלת הפונקציה ליצירת הבלוקים
 
 // ========================================================================
 //  לוגיקת גרירה ושחרור (Drag and Drop)
@@ -211,14 +212,13 @@ programmingArea.addEventListener("drop", (event) => {
     const newBlock = document.createElement("div");
     newBlock.classList.add("block");
     newBlock.style.backgroundColor = blocks[blockCategory].find(b => b.type === blockType).color; // מציאת הצבע הנכון
-    newBlock.textContent = blocks[blockCategory].find(b => b.type === blockType).name; // מציאת השם הנכון
+    //newBlock.textContent = blocks[blockCategory].find(b => b.type === blockType).name; // מציאת השם הנכון
     newBlock.dataset.type = blockType;
     newBlock.draggable = false; //העתק לא ניתן לגרירה
 
     // הוספת הבלוק החדש לאזור התכנות
     programmingArea.appendChild(newBlock);
 });
-
 const categoryTabs = document.querySelectorAll(".category-tab");
 const blockCategories = document.querySelectorAll(".block-category");
 
@@ -232,6 +232,11 @@ categoryTabs.forEach(tab => {
         tab.classList.add("active");
         const category = tab.dataset.category;
         document.getElementById(`${category}-blocks`).classList.add("active");
-        populateBlockPalette(category)
+        blockCategories.forEach(otherCategory => {
+        if (otherCategory.id !== `${category}-blocks`) {
+            otherCategory.classList.remove('active');
+        }
+    });
+       populateBlockPalette(category)
     });
 });
