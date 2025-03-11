@@ -9,74 +9,106 @@
 </head>
 <body>
 
-    <div id="stage">
-        <!-- כאן יוצגו הדמויות והרקעים -->
-    </div>
-
-    <div id="navigation">
-        <button id="saveBtn">שמור</button>
-        <button id="loadBtn">טען</button>
-        <!-- כפתורים למעבר בין עמודים, בחירת דמויות ורקעים -->
-    </div>
-
-    <div id="programmingArea">
-        <div id="blockPalette">
-            <!-- קטלוג הבלוקים -->
-            <h3>טריגרים (צהוב)</h3>
-            <div class="blockCategory" data-category="trigger">
-                <div class="block" draggable="true" data-block-type="startOnGreenFlag"><i class="fas fa-flag-checkered"></i> דגל ירוק</div>
-                <div class="block" draggable="true" data-block-type="startOnTap"><i class="fas fa-hand-pointer"></i> לחיצה על דמות</div>
-                <div class="block" draggable="true" data-block-type="startOnBump"><i class="fas fa-exclamation-triangle"></i> התנגשות</div>
-                <div class="block" draggable="true" data-block-type="sendMessage"><i class="fas fa-arrow-right"></i> שליחת הודעה</div>
-                <div class="block" draggable="true" data-block-type="startOnMessage"><i class="fas fa-envelope"></i> קבלת הודעה</div>
+    <div id="appContainer">
+        <div id="topBar">
+            <div id="characterPalette">
+                <!-- רשימת דמויות ורקעים -->
+                <h3>דמויות</h3>
+                <div class="characterItem"><i class="fas fa-cat"></i> חתול</div>
+                <div class="characterItem"><i class="fas fa-warehouse"></i> אסם</div>
+                <div class="characterItem"><i class="fas fa-kiwi-bird"></i> תרנגולת</div>
+                <div class="characterItem addCharacter"><i class="fas fa-plus"></i> הוסף דמות</div>
             </div>
 
-            <h3>תנועה (כחול)</h3>
-            <div class="blockCategory" data-category="motion">
-                <div class="block" draggable="true" data-block-type="moveRight"><i class="fas fa-arrow-right"></i> ימינה</div>
-                <div class="block" draggable="true" data-block-type="moveLeft"><i class="fas fa-arrow-left"></i> שמאלה</div>
-                <div class="block" draggable="true" data-block-type="moveUp"><i class="fas fa-arrow-up"></i> למעלה</div>
-                <div class="block" draggable="true" data-block-type="moveDown"><i class="fas fa-arrow-down"></i> למטה</div>
-                <div class="block" draggable="true" data-block-type="turnRight"><i class="fas fa-redo"></i> סוב ימינה</div>
-                <div class="block" draggable="true" data-block-type="turnLeft"><i class="fas fa-undo"></i> סוב שמאלה</div>
-                <div class="block" draggable="true" data-block-type="hop"><i class="fas fa-arrow-up"></i> קפוץ</div>
-                <div class="block" draggable="true" data-block-type="goHome"><i class="fas fa-home"></i> חזור הביתה</div>
+            <div id="stage">
+                <!-- כאן תוצג הבמה -->
             </div>
 
-             <h3>מראה (סגול)</h3>
-            <div class="blockCategory" data-category="looks">
-                <div class="block" draggable="true" data-block-type="say"><i class="fas fa-comment"></i> אמור</div>
-                <div class="block" draggable="true" data-block-type="grow"><i class="fas fa-search-plus"></i> הגדל</div>
-                <div class="block" draggable="true" data-block-type="shrink"><i class="fas fa-search-minus"></i> הקטן</div>
-                <div class="block" draggable="true" data-block-type="resetSize"><i class="fas fa-sync-alt"></i> אפס גודל</div>
-                <div class="block" draggable="true" data-block-type="hide"><i class="fas fa-eye-slash"></i> הסתר</div>
-                <div class="block" draggable="true" data-block-type="show"><i class="fas fa-eye"></i> הצג</div>
-            </div>
-
-              <h3>צלילים (ירוק)</h3>
-            <div class="blockCategory" data-category="sounds">
-                <div class="block" draggable="true" data-block-type="playSound"><i class="fas fa-volume-up"></i> נגן צליל</div>
-                <div class="block" draggable="true" data-block-type="recordSound"><i class="fas fa-microphone"></i> הקלט צליל</div>
-            </div>
-
-              <h3>בקרה (כתום)</h3>
-            <div class="blockCategory" data-category="control">
-                <div class="block" draggable="true" data-block-type="wait"><i class="fas fa-hourglass-half"></i> חכה</div>
-                <div class="block" draggable="true" data-block-type="setSpeed"><i class="fas fa-tachometer-alt"></i> קבע מהירות</div>
-                <div class="block" draggable="true" data-block-type="repeat"><i class="fas fa-redo-alt"></i> חזור</div>
-                <div class="block" draggable="true" data-block-type="repeatForever"><i class="fas fa-infinity"></i> חזור לנצח</div>
-                 <div class="block" draggable="true" data-block-type="goToPage"><i class="fas fa-file-alt"></i> עבור לדף</div>
-            </div>
-
-               <h3>סיום (אדום)</h3>
-            <div class="blockCategory" data-category="end">
-                <div class="block" draggable="true" data-block-type="stop"><i class="fas fa-stop-circle"></i> עצור הכל</div>
-                <div class="block" draggable="true" data-block-type="end"><i class="fas fa-flag-checkered"></i> סוף</div>
+            <div id="pageNavigator">
+                <!-- מעבר בין עמודים -->
+                <h3>עמודים</h3>
+                <div class="pagePreview">
+                    <i class="fas fa-pager"></i>
+                    <span>1</span>
+                </div>
+                <div class="addPage"><i class="fas fa-plus"></i> הוסף עמוד</div>
             </div>
         </div>
 
-        <div id="scriptArea">
-            <!-- כאן הבלוקים יורכבו לסקריפטים -->
+        <div id="bottomBar">
+            <div id="functionButtons">
+                <!-- כפתורי פונקציות -->
+                <button><i class="fas fa-undo"></i></button>
+                <button><i class="fas fa-arrow-right"></i></button>
+                <button><i class="fas fa-male"></i></button>
+                <button><i class="fas fa-volume-up"></i></button>
+                <button><i class="fas fa-square"></i></button>
+            </div>
+
+            <div id="programmingArea">
+                <div id="blockPalette">
+                    <!-- קטלוג הבלוקים -->
+                    <h3>טריגרים (צהוב)</h3>
+                    <div class="blockCategory" data-category="trigger">
+                        <div class="block" draggable="true" data-block-type="startOnGreenFlag"><i class="fas fa-flag-checkered"></i></div>
+                        <div class="block" draggable="true" data-block-type="startOnTap"><i class="fas fa-hand-pointer"></i></div>
+                        <div class="block" draggable="true" data-block-type="startOnBump"><i class="fas fa-exclamation-triangle"></i></div>
+                        <div class="block" draggable="true" data-block-type="sendMessage"><i class="fas fa-arrow-right"></i></div>
+                        <div class="block" draggable="true" data-block-type="startOnMessage"><i class="fas fa-envelope"></i></div>
+                    </div>
+
+                    <h3>תנועה (כחול)</h3>
+                    <div class="blockCategory" data-category="motion">
+                        <div class="block" draggable="true" data-block-type="moveRight"><i class="fas fa-arrow-right"></i></div>
+                        <div class="block" draggable="true" data-block-type="moveLeft"><i class="fas fa-arrow-left"></i></div>
+                        <div class="block" draggable="true" data-block-type="moveUp"><i class="fas fa-arrow-up"></i></div>
+                        <div class="block" draggable="true" data-block-type="moveDown"><i class="fas fa-arrow-down"></i></div>
+                        <div class="block" draggable="true" data-block-type="turnRight"><i class="fas fa-redo"></i></div>
+                        <div class="block" draggable="true" data-block-type="turnLeft"><i class="fas fa-undo"></i></div>
+                        <div class="block" draggable="true" data-block-type="hop"><i class="fas fa-arrow-up"></i></div>
+                        <div class="block" draggable="true" data-block-type="goHome"><i class="fas fa-home"></i></div>
+                    </div>
+
+                    <h3>מראה (סגול)</h3>
+                    <div class="blockCategory" data-category="looks">
+                        <div class="block" draggable="true" data-block-type="say"><i class="fas fa-comment"></i></div>
+                        <div class="block" draggable="true" data-block-type="grow"><i class="fas fa-search-plus"></i></div>
+                        <div class="block" draggable="true" data-block-type="shrink"><i class="fas fa-search-minus"></i></div>
+                        <div class="block" draggable="true" data-block-type="resetSize"><i class="fas fa-sync-alt"></i></div>
+                        <div class="block" draggable="true" data-block-type="hide"><i class="fas fa-eye-slash"></i></div>
+                        <div class="block" draggable="true" data-block-type="show"><i class="fas fa-eye"></i></div>
+                    </div>
+
+                    <h3>צלילים (ירוק)</h3>
+                    <div class="blockCategory" data-category="sounds">
+                        <div class="block" draggable="true" data-block-type="playSound"><i class="fas fa-volume-up"></i></div>
+                        <div class="block" draggable="true" data-block-type="recordSound"><i class="fas fa-microphone"></i></div>
+                    </div>
+
+                    <h3>בקרה (כתום)</h3>
+                    <div class="blockCategory" data-category="control">
+                        <div class="block" draggable="true" data-block-type="wait"><i class="fas fa-hourglass-half"></i></div>
+                        <div class="block" draggable="true" data-block-type="setSpeed"><i class="fas fa-tachometer-alt"></i></div>
+                        <div class="block" draggable="true" data-block-type="repeat"><i class="fas fa-redo-alt"></i></div>
+                        <div class="block" draggable="true" data-block-type="repeatForever"><i class="fas fa-infinity"></i></div>
+                        <div class="block" draggable="true" data-block-type="goToPage"><i class="fas fa-file-alt"></i></div>
+                    </div>
+
+                    <h3>סיום (אדום)</h3>
+                    <div class="blockCategory" data-category="end">
+                        <div class="block" draggable="true" data-block-type="stop"><i class="fas fa-stop-circle"></i></div>
+                        <div class="block" draggable="true" data-block-type="end"><i class="fas fa-flag-checkered"></i></div>
+                    </div>
+                </div>
+
+                <div id="scriptArea">
+                    <!-- כאן הבלוקים יורכבו לסקריפטים -->
+                </div>
+            </div>
+
+            <div id="characterPreview">
+                <i class="fas fa-cat fa-4x"></i>
+            </div>
         </div>
     </div>
 
