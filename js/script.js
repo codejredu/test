@@ -5,182 +5,182 @@
 const blocks = {
     triggering: [
         {
-            name: "🚩 התחל בלחיצה על דגל ירוק",
+            name: "התחל בלחיצה על דגל ירוק",
             color: "yellow",
             type: "startOnGreenFlag",
-            icon: "flag.png", // נניח שיש לך אייקון לדגל
+            icon: "🚩", // דגל
         },
         {
-            name: "👆 התחל בלחיצה על דמות",
+            name: "התחל בלחיצה על דמות",
             color: "yellow",
             type: "startOnTap",
-            icon: "tap.png",
+            icon: "👆", // יד מצביעה
         },
         {
-            name: "💥 התנגשות",
+            name: "התנגשות",
             color: "yellow",
             type: "startOnBump",
-            icon: "bump.png",
+            icon: "💥", // התנגשות
         },
         {
-            name: "✉️ שלח הודעה",
+            name: "שלח הודעה",
             color: "yellow",
             type: "sendMessage",
-            icon: "message.png",
+            icon: "✉️", // מעטפה
         },
         {
-            name: "📩 קבל הודעה",
+            name: "קבל הודעה",
             color: "yellow",
             type: "startOnMessage",
-            icon: "receive_message.png",
+            icon: "📩", // מעטפה נכנסת
         },
     ],
     motion: [
         {
-            name: "➡️ זוז ימינה",
+            name: "זוז ימינה",
             color: "blue",
             type: "moveRight",
-            icon: "right.png",
+            icon: "➡️", // חץ ימינה
         },
         {
-            name: "⬅️ זוז שמאלה",
+            name: "זוז שמאלה",
             color: "blue",
             type: "moveLeft",
-            icon: "left.png",
+            icon: "⬅️", // חץ שמאלה
         },
         {
-            name: "⬆️ זוז למעלה",
+            name: "זוז למעלה",
             color: "blue",
             type: "moveUp",
-            icon: "up.png",
+            icon: "⬆️", // חץ למעלה
         },
         {
-            name: "⬇️ זוז למטה",
+            name: "זוז למטה",
             color: "blue",
             type: "moveDown",
-            icon: "down.png",
+            icon: "⬇️", // חץ למטה
         },
         {
-            name: "↩️ סובב ימינה",
+            name: "סובב ימינה",
             color: "blue",
             type: "turnRight",
-            icon: "turn_right.png",
+            icon: "↩️", // חץ מסתובב ימינה
         },
         {
-            name: "↪️ סובב שמאלה",
+            name: "סובב שמאלה",
             color: "blue",
             type: "turnLeft",
-            icon: "turn_left.png",
+            icon: "↪️", // חץ מסתובב שמאלה
         },
         {
-            name: "🤸 קפוץ",
+            name: "קפוץ",
             color: "blue",
             type: "hop",
-            icon: "hop.png",
+            icon: "🤸", // אקרובט
         },
         {
-            name: "🏠 חזור הביתה",
+            name: "חזור הביתה",
             color: "blue",
             type: "goHome",
-            icon: "home.png",
+            icon: "🏠", // בית
         },
     ],
     looks: [
         {
-            name: "💬 אמור",
+            name: "אמור",
             color: "purple",
             type: "say",
-            icon: "say.png",
+            icon: "💬", // בועת דיבור
         },
         {
-            name: "📈 הגדל",
+            name: "הגדל",
             color: "purple",
             type: "grow",
-            icon: "grow.png",
+            icon: "📈", // גרף עולה
         },
         {
-            name: "📉 הקטן",
+            name: "הקטן",
             color: "purple",
             type: "shrink",
-            icon: "shrink.png",
+            icon: "📉", // גרף יורד
         },
         {
-            name: "🔄 אפס גודל",
+            name: "אפס גודל",
             color: "purple",
             type: "resetSize",
-            icon: "reset_size.png",
+            icon: "🔄", // חצים מסתובבים
         },
         {
-            name: "🙈 הסתר",
+            name: "הסתר",
             color: "purple",
             type: "hide",
-            icon: "hide.png",
+            icon: "🙈", // קוף מסתיר עיניים
         },
         {
-            name: "👁️ הצג",
+            name: "הצג",
             color: "purple",
             type: "show",
-            icon: "show.png",
+            icon: "👁️", // עין
         },
     ],
     sound: [
         {
-            name: "🎵 צליל פופ",
+            name: "צליל פופ",
             color: "green",
             type: "popSound",
-            icon: "pop.png",
+            icon: "🎵", // תו מוזיקלי
         },
         {
-            name: "🎤 הקלטת קול",
+            name: "הקלטת קול",
             color: "green",
             type: "playRecordedSound",
-            icon: "record.png",
+            icon: "🎤", // מיקרופון
         },
     ],
     control: [
         {
-            name: "⏱️ המתן",
+            name: "המתן",
             color: "orange",
             type: "wait",
-            icon: "wait.png",
+            icon: "⏱️", // שעון עצר
         },
         {
-            name: "⚡ שנה מהירות",
+            name: "שנה מהירות",
             color: "orange",
             type: "setSpeed",
-            icon: "speed.png",
+            icon: "⚡", // ברק
         },
         {
-            name: "🔁 חזור",
+            name: "חזור",
             color: "orange",
             type: "repeat",
-            icon: "repeat.png",
+            icon: "🔁", // חזור
         },
         {
-            name: "♾️ חזור לנצח",
+            name: "חזור לנצח",
             color: "orange",
             type: "repeatForever",
-            icon: "repeat_forever.png",
+            icon: "♾️", // אינסוף
         },
         {
-            name: "🚪 עבור לעמוד",
+            name: "עבור לעמוד",
             color: "orange",
             type: "goToPage",
-            icon: "page.png",
+            icon: "🚪", // דלת
         },
     ],
     end: [
         {
-            name: "🛑 עצור",
+            name: "עצור",
             color: "red",
             type: "stop",
-            icon: "stop.png",
+            icon: "🛑", // עיגול עצור
         },
         {
-            name: "🏁 סוף",
+            name: "סוף",
             color: "red",
             type: "end",
-            icon: "end.png",
+            icon: "🏁", // דגל סיום
         },
     ],
 };
@@ -190,13 +190,8 @@ function createBlockElement(block, category) {
     const blockElement = document.createElement("div");
     blockElement.classList.add("block");
     blockElement.style.backgroundColor = block.color;
-
-    // הוספת תמונה
-    const imgElement = document.createElement("img");
-    imgElement.src = `assets/images/${block.icon}`; // הנחה שהאייקונים נמצאים בתיקייה assets/images
-    imgElement.alt = block.name; // טקסט אלטרנטיבי לתמונה
-    blockElement.appendChild(imgElement);
-
+   // הוספת אייקון
+   blockElement.textContent = block.icon;
     //blockElement.textContent = block.name; // הסרת הכתובית
     blockElement.dataset.type = block.type; // שמור את סוג הבלוק כ-data attribute
     blockElement.draggable = true; // הופך את הבלוק לניתן לגרירה
