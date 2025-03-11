@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="he">
 <head>
     <meta charset="UTF-8">
@@ -9,29 +9,51 @@
 <body>
 
     <div class="container">
+        <header>
+            <div class="logo">ScratchJr</div>
+            <div class="header-icons">
+                <span class="icon">💾</span>
+                <span class="icon">📄</span>
+            </div>
+        </header>
         <div id="stage">
             <!-- כאן הדמויות והרקע יוצגו -->
+            <div id="character"></div>
         </div>
 
-        <div id="block-palette">
-            <!-- כאן יוצגו הבלוקים השונים -->
-            <h2>לבני תכנות</h2>
-            <div id="triggering-blocks" class="block-category" data-category="triggering">
-                <h3>הפעלת סקריפטים</h3>
+        <div class="toolbox-container">
+            <div id="block-palette">
+                <!-- כאן יוצגו הבלוקים השונים -->
+                <div class="category-tabs">
+                    <button class="category-tab active" data-category="triggering">Triggers</button>
+                    <button class="category-tab" data-category="motion">Motion</button>
+                    <button class="category-tab" data-category="looks">Looks</button>
+                    <button class="category-tab" data-category="sound">Sound</button>
+                    <button class="category-tab" data-category="control">Control</button>
+                </div>
+                <div id="triggering-blocks" class="block-category active" data-category="triggering">
+                   </div>
+                <div id="motion-blocks" class="block-category" data-category="motion">
+                   </div>
+                <div id="looks-blocks" class="block-category" data-category="looks">
+                  </div>
+                <div id="sound-blocks" class="block-category" data-category="sound">
+                 </div>
+                <div id="control-blocks" class="block-category" data-category="control">
+                  </div>
+                <!-- הוסף כאן את שאר הקטגוריות -->
             </div>
-            <div id="motion-blocks" class="block-category" data-category="motion">
-                <h3>תנועה</h3>
-            </div>
-            <!-- הוסף כאן את שאר הקטגוריות -->
         </div>
 
         <div id="programming-area">
             <!-- כאן המשתמש יגרור ויחבר בלוקים -->
-            <h2>אזור תכנות</h2>
+            <div class="program-header">Program <span id="clear-all">Clear All</span></div>
+            <div id="program-blocks">
+
+            </div>
         </div>
     </div>
 
-    
     <script src="js/script.js"></script>
 </body>
 </html>
