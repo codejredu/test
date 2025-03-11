@@ -105,9 +105,20 @@ document.addEventListener('DOMContentLoaded', () => {
         header.addEventListener('click', () => {
             const category = header.dataset.category;
             const blockCategory = document.querySelector(`.blockCategory[data-category="${category}"]`);
+
+            // סגירת כל הקטגוריות הפתוחות
+            document.querySelectorAll('.blockCategory').forEach(cat => {
+                if (cat !== blockCategory) {
+                    cat.style.display = 'none';
+                    const icon = cat.parentNode.querySelector('.categoryHeader i');
+                    icon.classList.remove('fa-chevron-up');
+                    icon.classList.add('fa-chevron-down');
+                }
+            });
+
+            // פתיחה/סגירה של הקטגוריה הנוכחית
             if (blockCategory) {
                 blockCategory.style.display = blockCategory.style.display === 'block' ? 'none' : 'block';
-                // שינוי כיוון החץ
                 const icon = header.querySelector('i');
                 icon.classList.toggle('fa-chevron-down');
                 icon.classList.toggle('fa-chevron-up');
