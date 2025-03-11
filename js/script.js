@@ -190,6 +190,13 @@ function createBlockElement(block, category) {
     const blockElement = document.createElement("div");
     blockElement.classList.add("block");
     blockElement.style.backgroundColor = block.color;
+
+    // הוספת תמונה
+    const imgElement = document.createElement("img");
+    imgElement.src = `assets/images/${block.icon}`; // הנחה שהאייקונים נמצאים בתיקייה assets/images
+    imgElement.alt = block.name; // טקסט אלטרנטיבי לתמונה
+    blockElement.appendChild(imgElement);
+
     //blockElement.textContent = block.name; // הסרת הכתובית
     blockElement.dataset.type = block.type; // שמור את סוג הבלוק כ-data attribute
     blockElement.draggable = true; // הופך את הבלוק לניתן לגרירה
