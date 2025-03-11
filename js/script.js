@@ -90,37 +90,37 @@ const blocks = {
             name: "💬",
             color: "purple",
             type: "say",
-            icon: "💬",
+            icon: "👁️",
         },
         {
             name: "📈",
             color: "purple",
             type: "grow",
-            icon: "📈",
+            icon: "🙈",
         },
         {
             name: "📉",
             color: "purple",
             type: "shrink",
-            icon: "📉",
+            icon: "🔄",
         },
         {
             name: "🔄",
             color: "purple",
             type: "resetSize",
-            icon: "🔄",
+            icon: "📈",
         },
         {
             name: "🙈",
             color: "purple",
             type: "hide",
-            icon: "🙈",
+            icon: "📉",
         },
         {
             name: "👁️",
             color: "purple",
             type: "show",
-            icon: "👁️",
+            icon: "💬",
         },
     ],
     sound: [
@@ -190,8 +190,7 @@ function createBlockElement(block, category) {
     const blockElement = document.createElement("div");
     blockElement.classList.add("block");
     blockElement.style.backgroundColor = block.color;
-    blockElement.textContent = block.icon; // הוספת האייקון
-
+    blockElement.textContent = block.icon;
     blockElement.dataset.type = block.type;
     blockElement.draggable = true;
 
@@ -250,14 +249,16 @@ const blockCategories = document.querySelectorAll(".block-category");
 
 categoryTabs.forEach(tab => {
     tab.addEventListener("click", () => {
-             // הסרת ה-active מכל הקטגוריות
-        categoryTabs.forEach(t => t.classList.remove("active"));
+          // הסרת ה-active מכל הקטגוריות
+        //categoryTabs.forEach(t => t.classList.remove("active"));
         blockCategories.forEach(c => c.classList.remove("active"));
         // הוספת ה-active לטאב שנלחץ ולקטגוריה המתאימה
+        categoryTabs.forEach(t => t.classList.remove("active"));
         tab.classList.add("active");
         const category = tab.dataset.category;
         document.getElementById(`${category}-blocks`).classList.add("active");
         populateBlockPalette(category);
+  
 
     });
 });
