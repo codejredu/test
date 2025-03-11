@@ -5,65 +5,184 @@
 const blocks = {
     triggering: [
         {
-            name: "→ 1",
+            name: "🚩 התחל בלחיצה על דגל ירוק",
             color: "yellow",
             type: "startOnGreenFlag",
             icon: "flag.png", // נניח שיש לך אייקון לדגל
         },
         {
-            name: "🚩 0",
+            name: "👆 התחל בלחיצה על דמות",
             color: "yellow",
             type: "startOnTap",
             icon: "tap.png",
         },
-        // הוסף בלוקים נוספים כאן
+        {
+            name: "💥 התנגשות",
+            color: "yellow",
+            type: "startOnBump",
+            icon: "bump.png",
+        },
+        {
+            name: "✉️ שלח הודעה",
+            color: "yellow",
+            type: "sendMessage",
+            icon: "message.png",
+        },
+        {
+            name: "📩 קבל הודעה",
+            color: "yellow",
+            type: "startOnMessage",
+            icon: "receive_message.png",
+        },
     ],
     motion: [
         {
-            name: "→ 1",
+            name: "➡️ זוז ימינה",
             color: "blue",
             type: "moveRight",
             icon: "right.png",
         },
-        // הוסף בלוקים נוספים כאן
-    ],
-    looks:[
         {
-            name: "← 1",
+            name: "⬅️ זוז שמאלה",
+            color: "blue",
+            type: "moveLeft",
+            icon: "left.png",
+        },
+        {
+            name: "⬆️ זוז למעלה",
+            color: "blue",
+            type: "moveUp",
+            icon: "up.png",
+        },
+        {
+            name: "⬇️ זוז למטה",
+            color: "blue",
+            type: "moveDown",
+            icon: "down.png",
+        },
+        {
+            name: "↩️ סובב ימינה",
+            color: "blue",
+            type: "turnRight",
+            icon: "turn_right.png",
+        },
+        {
+            name: "↪️ סובב שמאלה",
+            color: "blue",
+            type: "turnLeft",
+            icon: "turn_left.png",
+        },
+        {
+            name: "🤸 קפוץ",
+            color: "blue",
+            type: "hop",
+            icon: "hop.png",
+        },
+        {
+            name: "🏠 חזור הביתה",
+            color: "blue",
+            type: "goHome",
+            icon: "home.png",
+        },
+    ],
+    looks: [
+        {
+            name: "💬 אמור",
             color: "purple",
-            type: "moveRight",
-            icon: "right.png",
+            type: "say",
+            icon: "say.png",
         },
-         // הוסף בלוקים נוספים כאן
-    ],
-    sound:[
         {
-            name: "↑ 1",
+            name: "📈 הגדל",
+            color: "purple",
+            type: "grow",
+            icon: "grow.png",
+        },
+        {
+            name: "📉 הקטן",
+            color: "purple",
+            type: "shrink",
+            icon: "shrink.png",
+        },
+        {
+            name: "🔄 אפס גודל",
+            color: "purple",
+            type: "resetSize",
+            icon: "reset_size.png",
+        },
+        {
+            name: "🙈 הסתר",
+            color: "purple",
+            type: "hide",
+            icon: "hide.png",
+        },
+        {
+            name: "👁️ הצג",
+            color: "purple",
+            type: "show",
+            icon: "show.png",
+        },
+    ],
+    sound: [
+        {
+            name: "🎵 צליל פופ",
             color: "green",
-            type: "moveRight",
-            icon: "right.png",
+            type: "popSound",
+            icon: "pop.png",
         },
-         // הוסף בלוקים נוספים כאן
-    ],
-    control:[
         {
-            name: "← 1",
-            color: "orange",
-            type: "moveRight",
-            icon: "right.png",
+            name: "🎤 הקלטת קול",
+            color: "green",
+            type: "playRecordedSound",
+            icon: "record.png",
         },
-         // הוסף בלוקים נוספים כאן
     ],
-    end:[
-      {
-          name: "End",
-          color: "red",
-          type: "end",
-          icon: "end.png",
-      },
-       // הוסף בלוקים נוספים כאן
-  ]
-    // הוסף כאן הגדרות בלוקים לשאר הקטגוריות
+    control: [
+        {
+            name: "⏱️ המתן",
+            color: "orange",
+            type: "wait",
+            icon: "wait.png",
+        },
+        {
+            name: "⚡ שנה מהירות",
+            color: "orange",
+            type: "setSpeed",
+            icon: "speed.png",
+        },
+        {
+            name: "🔁 חזור",
+            color: "orange",
+            type: "repeat",
+            icon: "repeat.png",
+        },
+        {
+            name: "♾️ חזור לנצח",
+            color: "orange",
+            type: "repeatForever",
+            icon: "repeat_forever.png",
+        },
+        {
+            name: "🚪 עבור לעמוד",
+            color: "orange",
+            type: "goToPage",
+            icon: "page.png",
+        },
+    ],
+    end: [
+        {
+            name: "🛑 עצור",
+            color: "red",
+            type: "stop",
+            icon: "stop.png",
+        },
+        {
+            name: "🏁 סוף",
+            color: "red",
+            type: "end",
+            icon: "end.png",
+        },
+    ],
 };
 
 // פונקציה ליצירת HTML עבור בלוק
