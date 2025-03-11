@@ -2,13 +2,13 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f0f4ff; /* רקע כחלחל בהיר */
-    direction: rtl; /* כיוון טקסט מימין לשמאל */
+    background-color: #f0f4ff;
+    direction: rtl;
 }
 
 .container {
     display: flex;
-    flex-direction: column; /* סידור אנכי */
+    flex-direction: column;
     height: 100vh;
 }
 
@@ -23,11 +23,10 @@ header {
 
 main {
     display: flex;
-    flex-direction: column; /* Stack the stage and palette/programming area */
+    flex-direction: column;
     flex-grow: 1;
 }
 
-/* Styles for the Stage Area */
 .stage-container {
     flex: 1;
     display: flex;
@@ -37,7 +36,7 @@ main {
 }
 
 #stage {
-    flex: 0 0 auto; /* Do not grow, do not shrink, and take up only intrinsic size */
+    flex: 0 0 auto;
     width: 550px;
     height: 450px;
     background-color: #fff;
@@ -45,13 +44,12 @@ main {
     border-radius: 10px;
     position: relative;
     display: grid;
-    grid-template-columns: repeat(10, 1fr); /* 10 columns */
-    grid-template-rows: repeat(10, 1fr); /* 10 rows */
+    grid-template-columns: repeat(10, 1fr);
+    grid-template-rows: repeat(10, 1fr);
     gap: 1px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Add a shadow around the stage */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
-/* Add grid lines */
 #stage::before {
     content: '';
     position: absolute;
@@ -59,7 +57,7 @@ main {
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none; /* Allow clicks to pass through */
+    pointer-events: none;
     background: repeating-linear-gradient(0deg, #f0f0f0, #f0f0f0 10%, transparent 10%, transparent 20%),
                 repeating-linear-gradient(90deg, #f0f0f0, #f0f0f0 10%, transparent 10%, transparent 20%);
     border-radius: 10px;
@@ -68,7 +66,7 @@ main {
 #character {
     width: 50px;
     height: 50px;
-    background-color: #ffcc00; /* Example color */
+    background-color: #ffcc00;
     border-radius: 50%;
     position: absolute;
     top: 50%;
@@ -76,14 +74,12 @@ main {
     transform: translate(-50%, -50%);
 }
 
-/* Palette and Programming Area */
 .palette-and-programming {
     display: flex;
     flex-direction: column;
-    flex: 1; /* Allow this to grow and take space */
+    flex: 1;
 }
 
-/* Styles for the Block Palette */
 #block-palette {
     background-color: #fff;
     border: 1px solid #e0e0e0;
@@ -91,21 +87,20 @@ main {
     padding: 10px;
     border-radius: 10px;
     flex: 1;
-    overflow-y: auto; /* Allow scrolling */
+    overflow-y: auto;
 }
 
 .category-tabs {
     display: flex;
-    flex-wrap: wrap; /* Allow tabs to wrap to the next line */
+    flex-wrap: wrap;
     margin-bottom: 10px;
 }
 
 .category-tab {
-    background-color: #eee;
     border: none;
     padding: 5px 10px;
     margin-right: 5px;
-    margin-bottom: 5px; /* Add some spacing between tabs */
+    margin-bottom: 5px;
     border-radius: 5px;
     cursor: pointer;
     font-size: 14px;
@@ -115,16 +110,70 @@ main {
     background-color: #ddd;
 }
 
+#end-blocks .block {
+    background-color: red;
+}
+
+#control-blocks .block {
+    background-color: orange;
+}
+
+#sound-blocks .block {
+    background-color: green;
+}
+
+#looks-blocks .block {
+    background-color: purple;
+}
+
+#motion-blocks .block {
+    background-color: blue;
+}
+
+#triggering-blocks .block {
+    background-color: yellow;
+}
+
+#end .category-tab{
+    background-color: red;
+    color: #ffffff;
+}
+
+#control .category-tab {
+     background-color: orange;
+    color: #ffffff;
+}
+
+#sound .category-tab{
+    background-color: green;
+    color: #ffffff;
+}
+
+#looks .category-tab{
+    background-color: purple;
+    color: #ffffff;
+}
+
+#motion.category-tab{
+      background-color: blue;
+    color: #ffffff;
+}
+
+#triggering .category-tab{
+    background-color: yellow;
+}
+
 .block-category {
     display: none;
     padding: 10px;
 }
 
 .block-category.active {
-    display: block;
+    display: flex;
+    flex-wrap: wrap;
+    padding: 10px;
 }
 
-/* Styles for the Programming Area */
 #programming-area {
     background-color: #fff;
     border: 1px solid #e0e0e0;
@@ -142,48 +191,65 @@ main {
 }
 
 #clear-all {
-    color: #e74c3c; /* Reddish color for "Clear All" */
+    color: #e74c3c;
     cursor: pointer;
 }
 
 #program-blocks {
-    min-height: 100px; /* Ensure some initial height */
-    border: 1px dashed #ccc; /* Visual cue for the programming area */
+    min-height: 100px;
+    border: 1px dashed #ccc;
     padding: 10px;
 }
 
-/* Styles for the Blocks */
 .block {
     width: 80px;
     height: 80px;
     margin: 5px;
     display: flex;
-    justify-content: center; /* Center horizontally */
-    align-items: center; /* Center vertically */
-    color: white;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
     font-size: 16px;
     border-radius: 10px;
     cursor: grab;
-    text-align: center; /* Ensure text is centered if it exists */
-    font-size: 45px; /* Set a fixed size for the icons */
+    font-size: 45px;
 }
 
-/* Block Colors */
-#triggering-blocks .block { background-color: yellow; }
-#motion-blocks .block { background-color: blue; }
-#looks-blocks .block { background-color: purple; }
-#sound-blocks .block { background-color: green; }
-#control-blocks .block { background-color: orange; }
-#end-blocks .block { background-color: red; }
+.block img {
+    max-width: 60%;
+    max-height: 60%;
+}
 
-/* Logo */
+#triggering-blocks .block {
+    background-color: yellow;
+}
+
+#motion-blocks .block {
+    background-color: blue;
+}
+
+#looks-blocks .block {
+    background-color: purple;
+}
+
+#sound-blocks .block {
+    background-color: green;
+}
+
+#control-blocks .block {
+    background-color: orange;
+}
+
+#end-blocks .block {
+    background-color: red;
+}
+
 .logo {
     font-size: 20px;
     font-weight: bold;
-    color: #4a90e2; /* כחול של ScratchJr */
+    color: #4a90e2;
 }
 
-/*Header Icons*/
 .header-icons {
     display: flex;
 }
@@ -195,14 +261,14 @@ main {
     cursor: pointer;
 }
 
-/* Styles for the Block Palette - Horizontal */
-#triggering-blocks,
-#motion-blocks,
-#looks-blocks,
-#sound-blocks,
-#control-blocks,
-#end-blocks {
-    display: flex; /* Display blocks horizontally */
-    flex-wrap: wrap; /* Allow blocks to wrap to the next line */
-    padding: 10px;
+.category-tab {
+    background-color: #eee;
+    border: none;
+    padding: 5px 10px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #000000;
 }
