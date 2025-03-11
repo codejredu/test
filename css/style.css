@@ -98,81 +98,48 @@ main {
 
 .category-tab {
     border: none;
-    padding: 0; /* הסרת ריווח פנימי */
+    padding: 0;
     margin-right: 5px;
     margin-bottom: 5px;
-    border-radius: 10px; /* הגדלת העיגול */
+    border-radius: 10px;
     cursor: pointer;
     font-size: 14px;
     color: #000000;
-    width: 60px;  /* רוחב קבוע */
-    height: 60px; /* גובה קבוע */
+    width: 60px;
+    height: 60px;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
 .category-tab img {
-    max-width: 100%; /* Make the SVG fill the button */
+    max-width: 100%;
     max-height: 100%;
-    pointer-events: none; /* Prevent the img from interfering with clicks */
+    pointer-events: none;
 }
 
-.category-tab.active {
-   background-color: #ddd;
+.category-tab[data-category="triggering"] {
+    background-color: yellow;
 }
 
-#end-blocks .block {
-    background-color: red;
-}
-
-#control-blocks .block {
-    background-color: orange;
-}
-
-#sound-blocks .block {
-    background-color: green;
-}
-
-#looks-blocks .block {
-    background-color: purple;
-}
-
-#motion-blocks .block {
+.category-tab[data-category="motion"] {
     background-color: blue;
 }
 
-#triggering-blocks .block {
-    background-color: yellow;
+.category-tab[data-category="looks"] {
+    background-color: lavender;
 }
 
-#end .category-tab{
-    background-color: red;
-    color: #ffffff;
-}
-
-#control .category-tab {
-     background-color: orange;
-    color: #ffffff;
-}
-
-#sound .category-tab{
+.category-tab[data-category="sound"] {
     background-color: green;
-    color: #ffffff;
 }
 
-#looks .category-tab{
-    background-color: purple;
-    color: #ffffff;
+.category-tab[data-category="control"] {
+    background-color: orange;
 }
 
-#motion.category-tab{
-      background-color: blue;
-    color: #ffffff;
-}
-
-#triggering .category-tab{
-    background-color: yellow;
+.category-tab[data-category="end"] {
+    background-color: red;
 }
 
 .block-category {
@@ -271,31 +238,4 @@ main {
     font-size: 24px;
     color: #999;
     cursor: pointer;
-}
-
-.category-tab {
-    border: none;
-    padding: 5px 10px;
-    margin-right: 5px;
-    margin-bottom: 5px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 14px;
-    color: #000000;
-}
-
-.category-tab {
-    border: none;
-    padding: 0; /* הסרת ריווח פנימי */
-    margin-right: 5px;
-    margin-bottom: 5px;
-    border-radius: 10px; /* הגדלת העיגול */
-    cursor: pointer;
-    font-size: 14px;
-    color: #000000;
-    width: 60px;  /* רוחב קבוע */
-    height: 60px; /* גובה קבוע */
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
