@@ -188,3 +188,23 @@ body {
     font-size: 2em;
     color: #555;
 }
+
+/* -- קטגוריות בלוקים -- */
+.categoryHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px;
+    background-color: #ddd;
+    cursor: pointer;
+    border-bottom: 1px solid #ccc;
+}
+
+.categoryHeader h3 {
+    margin: 0;
+}
+
+.blockCategory {
+    display: none; /* הסתרת הבלוקים כברירת מחדל */
+    padding: 5px;
+}
