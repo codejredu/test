@@ -35,6 +35,87 @@
             </div>
         </div>
 
+        <div id="programmingArea">
+            <div id="blockPalette">
+                <!-- קטלוג הבלוקים -->
+                 <div class="categoryHeader" data-category="trigger">
+                    <button class="categoryButton triggerButton">
+                        <i class="fas fa-power-off"></i>
+                    </button>
+                </div>
+                <div class="blockCategory" data-category="trigger">
+                    <div class="block" draggable="true" data-block-type="startOnGreenFlag"><i class="fas fa-flag-checkered"></i></div>
+                    <div class="block" draggable="true" data-block-type="startOnTap"><i class="fas fa-hand-pointer"></i></div>
+                    <div class="block" draggable="true" data-block-type="startOnBump"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div class="block" draggable="true" data-block-type="sendMessage"><i class="fas fa-arrow-right"></i></div>
+                    <div class="block" draggable="true" data-block-type="startOnMessage"><i class="fas fa-envelope"></i></div>
+                </div>
+
+                <div class="categoryHeader" data-category="motion">
+                    <button class="categoryButton motionButton">
+                        <i class="fas fa-running"></i>
+                    </button>
+                </div>
+                <div class="blockCategory" data-category="motion">
+                    <div class="block" draggable="true" data-block-type="moveRight"><i class="fas fa-arrow-right"></i></div>
+                    <div class="block" draggable="true" data-block-type="moveLeft"><i class="fas fa-arrow-left"></i></div>
+                    <div class="block" draggable="true" data-block-type="moveUp"><i class="fas fa-arrow-up"></i></div>
+                    <div class="block" draggable="true" data-block-type="moveDown"><i class="fas fa-arrow-down"></i></div>
+                    <div class="block" draggable="true" data-block-type="turnRight"><i class="fas fa-redo"></i></div>
+                    <div class="block" draggable="true" data-block-type="turnLeft"><i class="fas fa-undo"></i></div>
+                    <div class="block" draggable="true" data-block-type="hop"><i class="fas fa-arrow-up"></i></div>
+                    <div class="block" draggable="true" data-block-type="goHome"><i class="fas fa-home"></i></div>
+                </div>
+
+                <div class="categoryHeader" data-category="looks">
+                    <button class="categoryButton looksButton">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="blockCategory" data-category="looks">
+                    <div class="block" draggable="true" data-block-type="say"><i class="fas fa-comment"></i></div>
+                    <div class="block" draggable="true" data-block-type="grow"><i class="fas fa-search-plus"></i></div>
+                    <div class="block" draggable="true" data-block-type="shrink"><i class="fas fa-search-minus"></i></div>
+                    <div class="block" draggable="true" data-block-type="resetSize"><i class="fas fa-sync-alt"></i></div>
+                    <div class="block" draggable="true" data-block-type="hide"><i class="fas fa-eye-slash"></i></div>
+                    <div class="block" draggable="true" data-block-type="show"><i class="fas fa-eye"></i></div>
+                </div>
+
+                 <div class="categoryHeader" data-category="sounds">
+                    <button class="categoryButton soundsButton">
+                        <i class="fas fa-volume-up"></i>
+                    </button>
+                </div>
+                <div class="blockCategory" data-category="sounds">
+                    <div class="block" draggable="true" data-block-type="playSound"><i class="fas fa-volume-up"></i></div>
+                    <div class="block" draggable="true" data-block-type="recordSound"><i class="fas fa-microphone"></i></div>
+                </div>
+
+                 <div class="categoryHeader" data-category="control">
+                    <button class="categoryButton controlButton">
+                        <i class="fas fa-cogs"></i>
+                    </button>
+                </div>
+                <div class="blockCategory" data-category="control">
+                    <div class="block" draggable="true" data-block-type="wait"><i class="fas fa-hourglass-half"></i></div>
+                    <div class="block" draggable="true" data-block-type="setSpeed"><i class="fas fa-tachometer-alt"></i></div>
+                    <div class="block" draggable="true" data-block-type="repeat"><i class="fas fa-redo-alt"></i></div>
+                    <div class="block" draggable="true" data-block-type="repeatForever"><i class="fas fa-infinity"></i></div>
+                    <div class="block" draggable="true" data-block-type="goToPage"><i class="fas fa-file-alt"></i></div>
+                </div>
+
+                 <div class="categoryHeader" data-category="end">
+                    <button class="categoryButton endButton">
+                        <i class="fas fa-stop-circle"></i>
+                    </button>
+                </div>
+                <div class="blockCategory" data-category="end">
+                    <div class="block" draggable="true" data-block-type="stop"><i class="fas fa-stop-circle"></i></div>
+                    <div class="block" draggable="true" data-block-type="end"><i class="fas fa-flag-checkered"></i></div>
+                </div>
+            </div>
+        </div>
+
         <div id="bottomBar">
             <div id="functionButtons">
                 <!-- כפתורי פונקציות -->
@@ -47,87 +128,6 @@
 
             <div id="scriptArea">
                 <!-- כאן הבלוקים יורכבו לסקריפטים -->
-            </div>
-
-            <div id="programmingArea">
-                <div id="blockPalette">
-                    <!-- קטלוג הבלוקים -->
-                    <div class="categoryHeader" data-category="trigger">
-                        <button class="categoryButton triggerButton">
-                            <i class="fas fa-power-off"></i>
-                        </button>
-                    </div>
-                    <div class="blockCategory" data-category="trigger">
-                        <div class="block" draggable="true" data-block-type="startOnGreenFlag"><i class="fas fa-flag-checkered"></i></div>
-                        <div class="block" draggable="true" data-block-type="startOnTap"><i class="fas fa-hand-pointer"></i></div>
-                        <div class="block" draggable="true" data-block-type="startOnBump"><i class="fas fa-exclamation-triangle"></i></div>
-                        <div class="block" draggable="true" data-block-type="sendMessage"><i class="fas fa-arrow-right"></i></div>
-                        <div class="block" draggable="true" data-block-type="startOnMessage"><i class="fas fa-envelope"></i></div>
-                    </div>
-
-                    <div class="categoryHeader" data-category="motion">
-                        <button class="categoryButton motionButton">
-                            <i class="fas fa-running"></i>
-                        </button>
-                    </div>
-                    <div class="blockCategory" data-category="motion">
-                        <div class="block" draggable="true" data-block-type="moveRight"><i class="fas fa-arrow-right"></i></div>
-                        <div class="block" draggable="true" data-block-type="moveLeft"><i class="fas fa-arrow-left"></i></div>
-                        <div class="block" draggable="true" data-block-type="moveUp"><i class="fas fa-arrow-up"></i></div>
-                        <div class="block" draggable="true" data-block-type="moveDown"><i class="fas fa-arrow-down"></i></div>
-                        <div class="block" draggable="true" data-block-type="turnRight"><i class="fas fa-redo"></i></div>
-                        <div class="block" draggable="true" data-block-type="turnLeft"><i class="fas fa-undo"></i></div>
-                        <div class="block" draggable="true" data-block-type="hop"><i class="fas fa-arrow-up"></i></div>
-                        <div class="block" draggable="true" data-block-type="goHome"><i class="fas fa-home"></i></div>
-                    </div>
-
-                    <div class="categoryHeader" data-category="looks">
-                        <button class="categoryButton looksButton">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </div>
-                    <div class="blockCategory" data-category="looks">
-                        <div class="block" draggable="true" data-block-type="say"><i class="fas fa-comment"></i></div>
-                        <div class="block" draggable="true" data-block-type="grow"><i class="fas fa-search-plus"></i></div>
-                        <div class="block" draggable="true" data-block-type="shrink"><i class="fas fa-search-minus"></i></div>
-                        <div class="block" draggable="true" data-block-type="resetSize"><i class="fas fa-sync-alt"></i></div>
-                        <div class="block" draggable="true" data-block-type="hide"><i class="fas fa-eye-slash"></i></div>
-                        <div class="block" draggable="true" data-block-type="show"><i class="fas fa-eye"></i></div>
-                    </div>
-
-                    <div class="categoryHeader" data-category="sounds">
-                        <button class="categoryButton soundsButton">
-                            <i class="fas fa-volume-up"></i>
-                        </button>
-                    </div>
-                    <div class="blockCategory" data-category="sounds">
-                        <div class="block" draggable="true" data-block-type="playSound"><i class="fas fa-volume-up"></i></div>
-                        <div class="block" draggable="true" data-block-type="recordSound"><i class="fas fa-microphone"></i></div>
-                    </div>
-
-                    <div class="categoryHeader" data-category="control">
-                        <button class="categoryButton controlButton">
-                            <i class="fas fa-cogs"></i>
-                        </button>
-                    </div>
-                    <div class="blockCategory" data-category="control">
-                        <div class="block" draggable="true" data-block-type="wait"><i class="fas fa-hourglass-half"></i></div>
-                        <div class="block" draggable="true" data-block-type="setSpeed"><i class="fas fa-tachometer-alt"></i></div>
-                        <div class="block" draggable="true" data-block-type="repeat"><i class="fas fa-redo-alt"></i></div>
-                        <div class="block" draggable="true" data-block-type="repeatForever"><i class="fas fa-infinity"></i></div>
-                        <div class="block" draggable="true" data-block-type="goToPage"><i class="fas fa-file-alt"></i></div>
-                    </div>
-
-                    <div class="categoryHeader" data-category="end">
-                        <button class="categoryButton endButton">
-                            <i class="fas fa-stop-circle"></i>
-                        </button>
-                    </div>
-                    <div class="blockCategory" data-category="end">
-                        <div class="block" draggable="true" data-block-type="stop"><i class="fas fa-stop-circle"></i></div>
-                        <div class="block" draggable="true" data-block-type="end"><i class="fas fa-flag-checkered"></i></div>
-                    </div>
-                </div>
             </div>
 
             <div id="characterPreview">
