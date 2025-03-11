@@ -1,0 +1,59 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    margin: 0;
+}
+
+#stage {
+    flex: 2;
+    background-color: #eee;
+    border: 1px solid #ccc;
+}
+
+#navigation {
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+#programmingArea {
+    flex: 3;
+    display: flex;
+}
+
+#blockPalette {
+    width: 250px;
+    background-color: #f0f0f0;
+    border-right: 1px solid #ccc;
+    padding: 10px;
+}
+
+#scriptArea {
+    flex: 1;
+    background-color: #fff;
+    padding: 10px;
+}
+
+/* סגנונות בסיסיים לבלוקים (יש להרחיב) */
+.block {
+    width: 80px;
+    height: 80px;
+    margin: 5px;
+    border: 1px solid #999;
+    border-radius: 5px;
+    cursor: grab;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8em;
+}
+
+/* צבעים לקטגוריות */
+.blockCategory[data-category="trigger"] .block { background-color: yellow; }
+.blockCategory[data-category="motion"] .block { background-color: lightblue; }
+.blockCategory[data-category="looks"] .block { background-color: violet; }
+.blockCategory[data-category="sounds"] .block { background-color: lightgreen; }
+.blockCategory[data-category="control"] .block { background-color: orange; }
+.blockCategory[data-category="end"] .block { background-color: red; }
