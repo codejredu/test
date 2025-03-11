@@ -1,4 +1,4 @@
-body {
+ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -64,14 +64,15 @@ main {
 }
 
 #character {
-    width: 50px;
-    height: 50px;
-    background-color: #ffcc00;
-    border-radius: 50%;
+   width: auto; /* הסרת רוחב קבוע */
+    height: auto; /* הסרת גובה קבוע */
+    font-size: 50px; /* גודל הטקסט */
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    background-color: transparent; /* הסרת צבע רקע */
+    border-radius: 0; /* הסרת עיגול */
 }
 
 .palette-and-programming {
@@ -110,7 +111,7 @@ main {
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+      box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
     border-bottom: 2px solid rgba(0, 0, 0, 0.1);
 }
 
@@ -205,27 +206,27 @@ main {
 }
 
 #triggering-blocks .block {
-    background-color: #F9D74C; /* צהוב */
+    background-color: #F9D74C;
 }
 
 #motion-blocks .block {
-    background-color: #3D81CC; /* כחול */
+    background-color: #3D81CC;
 }
 
 #looks-blocks .block {
-    background-color: #D86FBA; /* סגול בהיר/לבנדר */
+    background-color: #D86FBA;
 }
 
 #sound-blocks .block {
-    background-color: #4DC251; /* ירוק */
+    background-color: #4DC251;
 }
 
 #control-blocks .block {
-    background-color: #F8AA4C; /* כתום */
+    background-color: #F8AA4C;
 }
 
 #end-blocks .block {
-    background-color: #F15959; /* אדום */
+    background-color: #F15959;
 }
 
 .logo {
