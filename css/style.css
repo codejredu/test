@@ -23,21 +23,25 @@ header {
 
 main {
     display: flex;
-    flex-direction: column; /* Stack content wrapper and programming area vertically */
-    flex-grow: 1; /* Allow main to take up remaining vertical space */
+    flex-direction: column; /* Stack the stage and palette/programming area */
+    flex-grow: 1;
 }
 
-/* Wrapper for stage and block palette */
-.content-wrapper {
-    display: flex; /* Place stage and block palette side by side */
-    flex: 1; /* Distribute available space */
+/* Styles for the Stage Area */
+.stage-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
 }
 
 #stage {
-    flex: 2;
+    flex: 0 0 auto; /* Do not grow, do not shrink, and take up only intrinsic size */
+    width: 600px;  /* Adjust the width to fit the screen */
+    height: 400px; /* Adjust the height to fit the screen */
     background-color: #fff;
     border: 1px solid #e0e0e0;
-    margin: 10px;
     border-radius: 10px;
     position: relative; /* Needed for character positioning */
     display: grid;
@@ -71,13 +75,22 @@ main {
     transform: translate(-50%, -50%);
 }
 
+/* Palette and Programming Area */
+.palette-and-programming {
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* Allow this to grow and take space */
+}
+
+/* Styles for the Block Palette */
 #block-palette {
-    width: 250px; /* Fixed width for the block palette */
     background-color: #fff;
     border: 1px solid #e0e0e0;
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
+    flex: 1;
+    overflow-y: auto; /* Allow scrolling */
 }
 
 .category-tabs {
@@ -110,12 +123,14 @@ main {
     display: block;
 }
 
+/* Styles for the Programming Area */
 #programming-area {
     background-color: #fff;
     border: 1px solid #e0e0e0;
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
+    flex: 1;
 }
 
 .program-header {
@@ -136,7 +151,7 @@ main {
     padding: 10px;
 }
 
-/* סגנונות בסיסיים לבלוקים */
+/* Styles for the Blocks */
 .block {
     width: 80px;
     height: 80px;
