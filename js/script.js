@@ -162,9 +162,6 @@ function createBlockElement(block, category) {
     const blockElement = document.createElement("div");
     blockElement.classList.add("block");
     blockElement.style.backgroundColor = block.color;
-    blockElement.textContent = block.name;
-
-    // הוספת אייקון
     blockElement.textContent = block.icon;
     blockElement.dataset.type = block.type;
     blockElement.draggable = true;
@@ -224,19 +221,14 @@ const blockCategories = document.querySelectorAll(".block-category");
 
 categoryTabs.forEach(tab => {
     tab.addEventListener("click", () => {
-        // הסרת ה-active מכל הטאבים והקטגוריות
-        categoryTabs.forEach(t => t.classList.remove("active"));
-        blockCategories.forEach(c => c.classList.remove("active"));
-
+          // הסרת ה-active מכל הקטגוריות
+            blockCategories.forEach(c => c.classList.remove("active"));
         // הוספת ה-active לטאב שנלחץ ולקטגוריה המתאימה
         tab.classList.add("active");
         const category = tab.dataset.category;
         document.getElementById(`${category}-blocks`).classList.add("active");
-        blockCategories.forEach(otherCategory => {
-        if (otherCategory.id !== `${category}-blocks`) {
-            otherCategory.classList.remove('active');
-        }
-    });
-       populateBlockPalette(category)
+        populateBlockPalette(category)
+
+
     });
 });
