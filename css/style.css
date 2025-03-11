@@ -38,8 +38,8 @@ main {
 
 #stage {
     flex: 0 0 auto; /* Do not grow, do not shrink, and take up only intrinsic size */
-    width: 600px;  /* Adjust the width to fit the screen */
-    height: 400px; /* Adjust the height to fit the screen */
+    width: 550px;  /* Adjust the width to fit the screen */
+    height: 450px; /* Adjust the height to fit the screen */
     background-color: #fff;
     border: 1px solid #e0e0e0;
     border-radius: 10px;
