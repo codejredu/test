@@ -23,20 +23,26 @@ header {
 
 main {
     display: flex;
+    flex-direction: column; /* Stack top section and programming area vertically */
     flex-grow: 1; /* Allow main to take up remaining vertical space */
 }
 
+.top-section {
+    display: flex; /* Place stage and block palette side by side */
+    flex: 1; /* Distribute available space */
+}
+
 #stage {
-  flex: 2;
-  background-color: #fff;
-  border: 1px solid #e0e0e0;
-  margin: 10px;
-  border-radius: 10px;
-  position: relative; /* Needed for character positioning */
-  display: grid;
-  grid-template-columns: repeat(10, 1fr); /* 10 columns */
-  grid-template-rows: repeat(10, 1fr); /* 10 rows */
-  gap: 1px; /* Small gap between grid cells */
+    flex: 2;
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    margin: 10px;
+    border-radius: 10px;
+    position: relative; /* Needed for character positioning */
+    display: grid;
+    grid-template-columns: repeat(10, 1fr); /* 10 columns */
+    grid-template-rows: repeat(10, 1fr); /* 10 rows */
+    gap: 1px; /* Small gap between grid cells */
 }
 
 /* Add grid lines */
@@ -104,7 +110,6 @@ main {
 }
 
 #programming-area {
-    flex: 1; /* Take up remaining horizontal space */
     background-color: #fff;
     border: 1px solid #e0e0e0;
     margin: 10px;
