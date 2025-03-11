@@ -8,26 +8,31 @@ const blocks = {
             name: "🚩",
             color: "yellow",
             type: "startOnGreenFlag",
+            icon: "🚩",
         },
         {
             name: "👆",
             color: "yellow",
             type: "startOnTap",
+            icon: "👆",
         },
         {
             name: "💥",
             color: "yellow",
             type: "startOnBump",
+            icon: "💥",
         },
         {
             name: "✉️",
             color: "yellow",
             type: "sendMessage",
+            icon: "✉️",
         },
         {
             name: "📩",
             color: "yellow",
             type: "startOnMessage",
+            icon: "📩",
         },
     ],
     motion: [
@@ -35,41 +40,49 @@ const blocks = {
             name: "➡️",
             color: "blue",
             type: "moveRight",
+            icon: "➡️",
         },
         {
             name: "⬅️",
             color: "blue",
             type: "moveLeft",
+            icon: "⬅️",
         },
         {
             name: "⬆️",
             color: "blue",
             type: "moveUp",
+            icon: "⬆️",
         },
         {
             name: "⬇️",
             color: "blue",
             type: "moveDown",
+            icon: "⬇️",
         },
         {
             name: "↩️",
             color: "blue",
             type: "turnRight",
+            icon: "↩️",
         },
         {
             name: "↪️",
             color: "blue",
             type: "turnLeft",
+            icon: "↪️",
         },
         {
             name: "🤸",
             color: "blue",
             type: "hop",
+            icon: "🤸",
         },
         {
             name: "🏠",
             color: "blue",
             type: "goHome",
+            icon: "🏠",
         },
     ],
     looks: [
@@ -77,31 +90,37 @@ const blocks = {
             name: "💬",
             color: "purple",
             type: "say",
+            icon: "💬",
         },
         {
             name: "📈",
             color: "purple",
             type: "grow",
+            icon: "📈",
         },
         {
             name: "📉",
             color: "purple",
             type: "shrink",
+            icon: "📉",
         },
         {
             name: "🔄",
             color: "purple",
             type: "resetSize",
+            icon: "🔄",
         },
         {
             name: "🙈",
             color: "purple",
             type: "hide",
+            icon: "🙈",
         },
         {
             name: "👁️",
             color: "purple",
             type: "show",
+            icon: "👁️",
         },
     ],
     sound: [
@@ -109,11 +128,13 @@ const blocks = {
             name: "🎵",
             color: "green",
             type: "popSound",
+            icon: "🎵",
         },
         {
             name: "🎤",
             color: "green",
             type: "playRecordedSound",
+            icon: "🎤",
         },
     ],
     control: [
@@ -121,26 +142,31 @@ const blocks = {
             name: "⏱️",
             color: "orange",
             type: "wait",
+            icon: "⏱️",
         },
         {
             name: "⚡",
             color: "orange",
             type: "setSpeed",
+            icon: "⚡",
         },
         {
             name: "🔁",
             color: "orange",
             type: "repeat",
+            icon: "🔁",
         },
         {
             name: "♾️",
             color: "orange",
             type: "repeatForever",
+            icon: "♾️",
         },
         {
             name: "🚪",
             color: "orange",
             type: "goToPage",
+            icon: "🚪",
         },
     ],
     end: [
@@ -148,11 +174,13 @@ const blocks = {
             name: "🛑",
             color: "red",
             type: "stop",
+            icon: "🛑",
         },
         {
             name: "🏁",
             color: "red",
             type: "end",
+            icon: "🏁",
         },
     ],
 };
@@ -162,7 +190,8 @@ function createBlockElement(block, category) {
     const blockElement = document.createElement("div");
     blockElement.classList.add("block");
     blockElement.style.backgroundColor = block.color;
-    blockElement.textContent = block.icon;
+    blockElement.textContent = block.icon; // הוספת האייקון
+
     blockElement.dataset.type = block.type;
     blockElement.draggable = true;
 
@@ -179,12 +208,12 @@ function createBlockElement(block, category) {
 function populateBlockPalette(category) {
     const categoryDiv = document.getElementById(`${category}-blocks`);
     categoryDiv.innerHTML = ""; // ניקוי הבלוקים הקיימים
+
     blocks[category].forEach(block => {
         const blockElement = createBlockElement(block, category);
         categoryDiv.appendChild(blockElement);
     });
 }
-
 // ========================================================================
 //  לוגיקת גרירה ושחרור (Drag and Drop)
 // ========================================================================
@@ -221,18 +250,12 @@ const blockCategories = document.querySelectorAll(".block-category");
 
 categoryTabs.forEach(tab => {
     tab.addEventListener("click", () => {
-        const category = tab.dataset.category;
-
-        // סגירת הקטגוריה הפתוחה (אם יש)
-        blockCategories.forEach(otherCategory => {
-            otherCategory.classList.remove('active');
-        });
-        categoryTabs.forEach(otherTab => {
-            otherTab.classList.remove('active');
-        });
-
+             // הסרת ה-active מכל הקטגוריות
+        categoryTabs.forEach(t => t.classList.remove("active"));
+        blockCategories.forEach(c => c.classList.remove("active"));
         // הוספת ה-active לטאב שנלחץ ולקטגוריה המתאימה
         tab.classList.add("active");
+        const category = tab.dataset.category;
         document.getElementById(`${category}-blocks`).classList.add("active");
         populateBlockPalette(category);
 
