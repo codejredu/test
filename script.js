@@ -5,56 +5,184 @@
 const blocks = {
     triggering: [
         {
-            name: "→ 1",
+            name: "🚩",
             color: "yellow",
             type: "startOnGreenFlag",
-            icon: "flag.png", // נניח שיש לך אייקון לדגל
+            icon: "🚩",
         },
         {
-            name: "🚩 0",
+            name: "👆",
             color: "yellow",
             type: "startOnTap",
-            icon: "tap.png",
+            icon: "👆",
         },
-        // הוסף בלוקים נוספים כאן
+        {
+            name: "💥",
+            color: "yellow",
+            type: "startOnBump",
+            icon: "💥",
+        },
+        {
+            name: "✉️",
+            color: "yellow",
+            type: "sendMessage",
+            icon: "✉️",
+        },
+        {
+            name: "📩",
+            color: "yellow",
+            type: "startOnMessage",
+            icon: "📩",
+        },
     ],
     motion: [
         {
-            name: "→ 1",
+            name: "➡️",
             color: "blue",
             type: "moveRight",
-            icon: "right.png",
+            icon: "➡️",
         },
-        // הוסף בלוקים נוספים כאן
-    ],
-    looks:[
         {
-            name: "← 1",
+            name: "⬅️",
+            color: "blue",
+            type: "moveLeft",
+            icon: "⬅️",
+        },
+        {
+            name: "⬆️",
+            color: "blue",
+            type: "moveUp",
+            icon: "⬆️",
+        },
+        {
+            name: "⬇️",
+            color: "blue",
+            type: "moveDown",
+            icon: "⬇️",
+        },
+        {
+            name: "↩️",
+            color: "blue",
+            type: "turnRight",
+            icon: "↩️",
+        },
+        {
+            name: "↪️",
+            color: "blue",
+            type: "turnLeft",
+            icon: "↪️",
+        },
+        {
+            name: "🤸",
+            color: "blue",
+            type: "hop",
+            icon: "🤸",
+        },
+        {
+            name: "🏠",
+            color: "blue",
+            type: "goHome",
+            icon: "🏠",
+        },
+    ],
+    looks: [
+        {
+            name: "💬",
             color: "purple",
-            type: "moveRight",
-            icon: "right.png",
+            type: "say",
+            icon: "👁️",
         },
-         // הוסף בלוקים נוספים כאן
-    ],
-    sound:[
         {
-            name: "↑ 1",
+            name: "📈",
+            color: "purple",
+            type: "grow",
+            icon: "🙈",
+        },
+        {
+            name: "📉",
+            color: "purple",
+            type: "shrink",
+            icon: "🔄",
+        },
+        {
+            name: "🔄",
+            color: "purple",
+            type: "resetSize",
+            icon: "📈",
+        },
+        {
+            name: "🙈",
+            color: "purple",
+            type: "hide",
+            icon: "📉",
+        },
+        {
+            name: "👁️",
+            color: "purple",
+            type: "show",
+            icon: "💬",
+        },
+    ],
+    sound: [
+        {
+            name: "🎵",
             color: "green",
-            type: "moveRight",
-            icon: "right.png",
+            type: "popSound",
+            icon: "🎵",
         },
-         // הוסף בלוקים נוספים כאן
-    ],
-    control:[
         {
-            name: "← 1",
-            color: "orange",
-            type: "moveRight",
-            icon: "right.png",
+            name: "🎤",
+            color: "green",
+            type: "playRecordedSound",
+            icon: "🎤",
         },
-         // הוסף בלוקים נוספים כאן
-    ]
-    // הוסף כאן הגדרות בלוקים לשאר הקטגוריות
+    ],
+    control: [
+        {
+            name: "⏱️",
+            color: "orange",
+            type: "wait",
+            icon: "⏱️",
+        },
+        {
+            name: "⚡",
+            color: "orange",
+            type: "setSpeed",
+            icon: "⚡",
+        },
+        {
+            name: "🔁",
+            type: "repeat",
+            icon: "🔁",
+            color: "orange"
+        },
+        {
+            name: "♾️",
+            type: "repeatForever",
+            icon: "♾️",
+            color: "orange"
+        },
+        {
+            name: "🚪",
+            color: "orange",
+            type: "goToPage",
+            icon: "🚪",
+        },
+    ],
+    end: [
+        {
+            name: "🛑",
+            color: "red",
+            type: "stop",
+            icon: "🛑",
+        },
+        {
+            name: "🏁",
+            color: "red",
+            type: "end",
+            icon: "🏁",
+        },
+    ],
 };
 
 // פונקציה ליצירת HTML עבור בלוק
@@ -62,34 +190,29 @@ function createBlockElement(block, category) {
     const blockElement = document.createElement("div");
     blockElement.classList.add("block");
     blockElement.style.backgroundColor = block.color;
-    blockElement.textContent = block.name;
-    blockElement.dataset.type = block.type; // שמור את סוג הבלוק כ-data attribute
-    blockElement.draggable = true; // הופך את הבלוק לניתן לגרירה
+    blockElement.textContent = block.icon;
+    blockElement.dataset.type = block.type;
+    blockElement.draggable = true;
 
     // טיפול באירוע התחלת גרירה (dragstart) - חשוב מאוד!
     blockElement.addEventListener("dragstart", (event) => {
-        event.dataTransfer.setData("text/plain", JSON.stringify({ type: block.type, category: category })); // העברת מידע על הבלוק
-        event.dataTransfer.effectAllowed = "move"; // מציין שהפעולה היא העברה (move)
+        event.dataTransfer.setData("text/plain", JSON.stringify({ type: block.type, category }));
+        event.dataTransfer.effectAllowed = "move";
     });
 
     return blockElement;
 }
 
 // הוספת הבלוקים ללוח הלבנים
-function populateBlockPalette() {
-    for (const category in blocks) {
-        const categoryDiv = document.getElementById(`${category}-blocks`);
-        if (categoryDiv) {
-            blocks[category].forEach(block => {
-                const blockElement = createBlockElement(block, category);
-                categoryDiv.appendChild(blockElement);
-            });
-        }
-    }
+function populateBlockPalette(category) {
+    const categoryDiv = document.getElementById(`${category}-blocks`);
+    categoryDiv.innerHTML = ""; // ניקוי הבלוקים הקיימים
+
+    blocks[category].forEach(block => {
+        const blockElement = createBlockElement(block, category);
+        categoryDiv.appendChild(blockElement);
+    });
 }
-
-populateBlockPalette(); // הפעלת הפונקציה ליצירת הבלוקים
-
 // ========================================================================
 //  לוגיקת גרירה ושחרור (Drag and Drop)
 // ========================================================================
@@ -114,26 +237,25 @@ programmingArea.addEventListener("drop", (event) => {
     const newBlock = document.createElement("div");
     newBlock.classList.add("block");
     newBlock.style.backgroundColor = blocks[blockCategory].find(b => b.type === blockType).color; // מציאת הצבע הנכון
-    newBlock.textContent = blocks[blockCategory].find(b => b.type === blockType).name; // מציאת השם הנכון
+    //newBlock.textContent = blocks[blockCategory].find(b => b.type === blockType).name; // מציאת השם הנכון
     newBlock.dataset.type = blockType;
     newBlock.draggable = false; //העתק לא ניתן לגרירה
 
     // הוספת הבלוק החדש לאזור התכנות
     programmingArea.appendChild(newBlock);
 });
-
 const categoryTabs = document.querySelectorAll(".category-tab");
 const blockCategories = document.querySelectorAll(".block-category");
 
 categoryTabs.forEach(tab => {
     tab.addEventListener("click", () => {
-        // הסרת ה-active מכל הטאבים והקטגוריות
-        categoryTabs.forEach(t => t.classList.remove("active"));
-        blockCategories.forEach(c => c.classList.remove("active"));
-
-        // הוספת ה-active לטאב שנלחץ ולקטגוריה המתאימה
-        tab.classList.add("active");
+         blockCategories.forEach(function(element){
+            element.classList.remove("active")
+         })
         const category = tab.dataset.category;
+          categoryTabs.forEach(t => t.classList.remove("active"));
+           tab.classList.add("active");
         document.getElementById(`${category}-blocks`).classList.add("active");
+        populateBlockPalette(category);
     });
 });
