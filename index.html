@@ -16,12 +16,13 @@
                 <span class="icon">📄</span>
             </div>
         </header>
-        <div id="stage">
-            <!-- כאן הדמויות והרקע יוצגו -->
-            <div id="character"></div>
-        </div>
 
-        <div class="toolbox-container">
+        <main>
+            <div id="stage">
+                <!-- כאן הדמויות והרקע יוצגו -->
+                <div id="character"></div>
+            </div>
+
             <div id="block-palette">
                 <!-- כאן יוצגו הבלוקים השונים -->
                 <div class="category-tabs">
@@ -30,28 +31,22 @@
                     <button class="category-tab" data-category="looks">Looks</button>
                     <button class="category-tab" data-category="sound">Sound</button>
                     <button class="category-tab" data-category="control">Control</button>
+                    <button class="category-tab" data-category="end">End</button>
                 </div>
-                <div id="triggering-blocks" class="block-category active" data-category="triggering">
-                   </div>
-                <div id="motion-blocks" class="block-category" data-category="motion">
-                   </div>
-                <div id="looks-blocks" class="block-category" data-category="looks">
-                  </div>
-                <div id="sound-blocks" class="block-category" data-category="sound">
-                 </div>
-                <div id="control-blocks" class="block-category" data-category="control">
-                  </div>
-                <!-- הוסף כאן את שאר הקטגוריות -->
+                <div id="triggering-blocks" class="block-category active" data-category="triggering"></div>
+                <div id="motion-blocks" class="block-category" data-category="motion"></div>
+                <div id="looks-blocks" class="block-category" data-category="looks"></div>
+                <div id="sound-blocks" class="block-category" data-category="sound"></div>
+                <div id="control-blocks" class="block-category" data-category="control"></div>
+                  <div id="end-blocks" class="block-category" data-category="end"></div>
             </div>
-        </div>
 
-        <div id="programming-area">
-            <!-- כאן המשתמש יגרור ויחבר בלוקים -->
-            <div class="program-header">Program <span id="clear-all">Clear All</span></div>
-            <div id="program-blocks">
-
+            <div id="programming-area">
+                <!-- כאן המשתמש יגרור ויחבר בלוקים -->
+                <div class="program-header">Program <span id="clear-all">Clear All</span></div>
+                <div id="program-blocks"></div>
             </div>
-        </div>
+        </main>
     </div>
 
     <script src="js/script.js"></script>
