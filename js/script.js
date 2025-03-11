@@ -5,182 +5,154 @@
 const blocks = {
     triggering: [
         {
-            name: "התחל בלחיצה על דגל ירוק",
+            name: "🚩",
             color: "yellow",
             type: "startOnGreenFlag",
-            icon: "🚩", // דגל
         },
         {
-            name: "התחל בלחיצה על דמות",
+            name: "👆",
             color: "yellow",
             type: "startOnTap",
-            icon: "👆", // יד מצביעה
         },
         {
-            name: "התנגשות",
+            name: "💥",
             color: "yellow",
             type: "startOnBump",
-            icon: "💥", // התנגשות
         },
         {
-            name: "שלח הודעה",
+            name: "✉️",
             color: "yellow",
             type: "sendMessage",
-            icon: "✉️", // מעטפה
         },
         {
-            name: "קבל הודעה",
+            name: "📩",
             color: "yellow",
             type: "startOnMessage",
-            icon: "📩", // מעטפה נכנסת
         },
     ],
     motion: [
         {
-            name: "זוז ימינה",
+            name: "➡️",
             color: "blue",
             type: "moveRight",
-            icon: "➡️", // חץ ימינה
         },
         {
-            name: "זוז שמאלה",
+            name: "⬅️",
             color: "blue",
             type: "moveLeft",
-            icon: "⬅️", // חץ שמאלה
         },
         {
-            name: "זוז למעלה",
+            name: "⬆️",
             color: "blue",
             type: "moveUp",
-            icon: "⬆️", // חץ למעלה
         },
         {
-            name: "זוז למטה",
+            name: "⬇️",
             color: "blue",
             type: "moveDown",
-            icon: "⬇️", // חץ למטה
         },
         {
-            name: "סובב ימינה",
+            name: "↩️",
             color: "blue",
             type: "turnRight",
-            icon: "↩️", // חץ מסתובב ימינה
         },
         {
-            name: "סובב שמאלה",
+            name: "↪️",
             color: "blue",
             type: "turnLeft",
-            icon: "↪️", // חץ מסתובב שמאלה
         },
         {
-            name: "קפוץ",
+            name: "🤸",
             color: "blue",
             type: "hop",
-            icon: "🤸", // אקרובט
         },
         {
-            name: "חזור הביתה",
+            name: "🏠",
             color: "blue",
             type: "goHome",
-            icon: "🏠", // בית
         },
     ],
     looks: [
         {
-            name: "אמור",
+            name: "💬",
             color: "purple",
             type: "say",
-            icon: "💬", // בועת דיבור
         },
         {
-            name: "הגדל",
+            name: "📈",
             color: "purple",
             type: "grow",
-            icon: "📈", // גרף עולה
         },
         {
-            name: "הקטן",
+            name: "📉",
             color: "purple",
             type: "shrink",
-            icon: "📉", // גרף יורד
         },
         {
-            name: "אפס גודל",
+            name: "🔄",
             color: "purple",
             type: "resetSize",
-            icon: "🔄", // חצים מסתובבים
         },
         {
-            name: "הסתר",
+            name: "🙈",
             color: "purple",
             type: "hide",
-            icon: "🙈", // קוף מסתיר עיניים
         },
         {
-            name: "הצג",
+            name: "👁️",
             color: "purple",
             type: "show",
-            icon: "👁️", // עין
         },
     ],
     sound: [
         {
-            name: "צליל פופ",
+            name: "🎵",
             color: "green",
             type: "popSound",
-            icon: "🎵", // תו מוזיקלי
         },
         {
-            name: "הקלטת קול",
+            name: "🎤",
             color: "green",
             type: "playRecordedSound",
-            icon: "🎤", // מיקרופון
         },
     ],
     control: [
         {
-            name: "המתן",
+            name: "⏱️",
             color: "orange",
             type: "wait",
-            icon: "⏱️", // שעון עצר
         },
         {
-            name: "שנה מהירות",
+            name: "⚡",
             color: "orange",
             type: "setSpeed",
-            icon: "⚡", // ברק
         },
         {
-            name: "חזור",
+            name: "🔁",
             color: "orange",
             type: "repeat",
-            icon: "🔁", // חזור
         },
         {
-            name: "חזור לנצח",
+            name: "♾️",
             color: "orange",
             type: "repeatForever",
-            icon: "♾️", // אינסוף
         },
         {
-            name: "עבור לעמוד",
+            name: "🚪",
             color: "orange",
             type: "goToPage",
-            icon: "🚪", // דלת
         },
     ],
     end: [
         {
-            name: "עצור",
+            name: "🛑",
             color: "red",
             type: "stop",
-            icon: "🛑", // עיגול עצור
         },
         {
-            name: "סוף",
+            name: "🏁",
             color: "red",
             type: "end",
-            icon: "🏁", // דגל סיום
         },
     ],
 };
@@ -190,35 +162,30 @@ function createBlockElement(block, category) {
     const blockElement = document.createElement("div");
     blockElement.classList.add("block");
     blockElement.style.backgroundColor = block.color;
-   // הוספת אייקון
-   blockElement.textContent = block.icon;
-    //blockElement.textContent = block.name; // הסרת הכתובית
-    blockElement.dataset.type = block.type; // שמור את סוג הבלוק כ-data attribute
-    blockElement.draggable = true; // הופך את הבלוק לניתן לגרירה
+    blockElement.textContent = block.icon;
+    blockElement.dataset.type = block.type;
+    blockElement.draggable = true;
 
     // טיפול באירוע התחלת גרירה (dragstart) - חשוב מאוד!
     blockElement.addEventListener("dragstart", (event) => {
-        event.dataTransfer.setData("text/plain", JSON.stringify({ type: block.type, category: category })); // העברת מידע על הבלוק
-        event.dataTransfer.effectAllowed = "move"; // מציין שהפעולה היא העברה (move)
+        event.dataTransfer.setData("text/plain", JSON.stringify({ type: block.type, category: category }));
+        event.dataTransfer.effectAllowed = "move";
     });
 
     return blockElement;
 }
 
 // הוספת הבלוקים ללוח הלבנים
-function populateBlockPalette() {
-    for (const category in blocks) {
-        const categoryDiv = document.getElementById(`${category}-blocks`);
-        if (categoryDiv) {
-            blocks[category].forEach(block => {
+function populateBlockPalette(category) {
+    const categoryDiv = document.getElementById(`${category}-blocks`);
+    categoryDiv.innerHTML = ""; // Clean existing blocks
+        blocks[category].forEach(block => {
                 const blockElement = createBlockElement(block, category);
                 categoryDiv.appendChild(blockElement);
             });
-        }
-    }
 }
 
-populateBlockPalette(); // הפעלת הפונקציה ליצירת הבלוקים
+//populateBlockPalette(); // הפעלת הפונקציה ליצירת הבלוקים
 
 // ========================================================================
 //  לוגיקת גרירה ושחרור (Drag and Drop)
@@ -244,7 +211,7 @@ programmingArea.addEventListener("drop", (event) => {
     const newBlock = document.createElement("div");
     newBlock.classList.add("block");
     newBlock.style.backgroundColor = blocks[blockCategory].find(b => b.type === blockType).color; // מציאת הצבע הנכון
-    //newBlock.textContent = blocks[blockCategory].find(b => b.type === blockType).name; // מציאת השם הנכון
+    newBlock.textContent = blocks[blockCategory].find(b => b.type === blockType).name; // מציאת השם הנכון
     newBlock.dataset.type = blockType;
     newBlock.draggable = false; //העתק לא ניתן לגרירה
 
@@ -265,5 +232,6 @@ categoryTabs.forEach(tab => {
         tab.classList.add("active");
         const category = tab.dataset.category;
         document.getElementById(`${category}-blocks`).classList.add("active");
+        populateBlockPalette(category)
     });
 });
