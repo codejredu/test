@@ -1,123 +1,44 @@
 body {
-    font-family: 'Arial', sans-serif;
+    font-family: Arial, sans-serif;
     margin: 0;
-    overflow: hidden;
+    padding: 0;
     background-color: #f0f0f0;
-    direction: ltr; /* Direction */
+    direction: rtl; /* כיוון טקסט מימין לשמאל */
+}
+
+.container {
+    display: flex;
     height: 100vh;
 }
 
-#appContainer {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    background-color: #f0f4ff;
-}
-
-/* -- שורת הכותרת -- */
-#topBar {
-    background-color: #fff;
-    height: 50px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-#scratchJrLogo {
-    font-size: 1.5em;
-    color: #5e6ad2;
-}
-
-#topBarActions button {
-    background: none;
-    border: none;
-    font-size: 1.2em;
-    cursor: pointer;
-    margin-left: 10px;
-    color: #5e6ad2;
-}
-
-/* -- אזור התוכן העיקרי -- */
-#mainContent {
-    display: flex;
-    flex: 1;
-    padding: 20px;
-}
-
-/* -- הבמה -- */
 #stage {
     flex: 2;
     background-color: #fff;
-    border: 2px solid #eee;
-    border-radius: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 2em;
-    color: #444;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin-right: 20px;
+    border: 1px solid #ccc;
+    margin: 10px;
 }
 
-/* -- אזור הלבנים -- */
-#blockPalette {
+#block-palette {
     flex: 1;
-    background-color: #fff;
-    border: 2px solid #eee;
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-#categoryButtons {
-    display: flex;
-    justify-content: space-around;
-    margin-bottom: 15px;
-}
-
-.categoryButton {
     background-color: #eee;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 20px;
-    cursor: pointer;
-    color: #555;
-    font-size: 0.9em;
+    border: 1px solid #ccc;
+    margin: 10px;
+    padding: 10px;
 }
 
-/* צבעים ללחצני קטגוריה */
-.triggerButton { background-color: #fdd835; }
-.motionButton { background-color: #03a9f4; }
-.looksButton { background-color: #ab47bc; }
-.soundsButton { background-color: #4caf50; }
-.controlButton { background-color: #ff9800; }
-
-.blockCategory {
-    display: flex;
-    justify-content: space-around;
-    margin-bottom: 10px;
+#programming-area {
+    flex: 2;
+    background-color: #ddd;
+    border: 1px solid #ccc;
+    margin: 10px;
+    padding: 10px;
 }
 
-.block {
-    width: 50px;
-    height: 50px;
-    background-color: #03a9f4;
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-radius: 10px;
-    cursor: grab;
-}
-
-/* -- אזור הסקריפט -- */
-#scriptArea {
+.block-category {
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #bbb;
     background-color: #fff;
-    border: 2px solid #eee;
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin-top: 20px;
 }
+
+/* הוסף כאן סגנונות נוספים לבלוקים, כותרות וכו' */
