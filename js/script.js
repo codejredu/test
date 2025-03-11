@@ -152,15 +152,15 @@ const blocks = {
         },
         {
             name: "🔁",
-            color: "orange",
             type: "repeat",
             icon: "🔁",
+            color: "orange"
         },
         {
             name: "♾️",
-            color: "orange",
             type: "repeatForever",
             icon: "♾️",
+            color: "orange"
         },
         {
             name: "🚪",
@@ -213,7 +213,6 @@ function populateBlockPalette(category) {
         categoryDiv.appendChild(blockElement);
     });
 }
-
 // ========================================================================
 //  לוגיקת גרירה ושחרור (Drag and Drop)
 // ========================================================================
@@ -249,17 +248,14 @@ const categoryTabs = document.querySelectorAll(".category-tab");
 const blockCategories = document.querySelectorAll(".block-category");
 
 categoryTabs.forEach(tab => {
-    tab.addEventListener("click",  () => {
+    tab.addEventListener("click", () => {
+         blockCategories.forEach(function(element){
+            element.classList.remove("active")
+         })
         const category = tab.dataset.category;
-          blockCategories.forEach(c => {
-            c.classList.remove("active");
-        });
-        // הוספת ה-active לטאב שנלחץ ולקטגוריה המתאימה
-        categoryTabs.forEach(t => t.classList.remove("active"));
-        tab.classList.add("active");
-       //הוספת הבלוקים 
+          categoryTabs.forEach(t => t.classList.remove("active"));
+           tab.classList.add("active");
         document.getElementById(`${category}-blocks`).classList.add("active");
-        populateBlockPalette(category)
-
+        populateBlockPalette(category);
     });
 });
