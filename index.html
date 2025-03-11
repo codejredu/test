@@ -1,12 +1,300 @@
- <!DOCTYPE html>
-<html>
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
 <head>
-    <title>Scratch Junior Interface</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>סביבת תכנות לילדים</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            direction: rtl;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 5px 5px 0 0;
+        }
+        .navigation-bar {
+            display: flex;
+            justify-content: space-between;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .navigation-button {
+            padding: 8px 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 0 5px;
+        }
+        .navigation-button:hover {
+            background-color: #45a049;
+        }
+        .main-content {
+            display: flex;
+            min-height: 500px;
+        }
+        .stage {
+            flex: 2;
+            position: relative;
+            background-color: white;
+            border: 2px solid #ddd;
+            height: 400px;
+            overflow: hidden;
+            margin: 10px;
+        }
+        .programming-area {
+            flex: 1;
+            padding: 10px;
+            background-color: #f5f5f5;
+            min-height: 400px;
+            margin: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            overflow-y: auto;
+        }
+        .blocks-palette {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #f5f5f5;
+            margin: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            overflow-y: auto;
+        }
+        .category-selector {
+            display: flex;
+            justify-content: space-around;
+            padding: 5px;
+            background-color: #e0e0e0;
+        }
+        .category-button {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid white;
+            cursor: pointer;
+        }
+        .category-button.active {
+            border-color: black;
+        }
+        .blocks-container {
+            padding: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            min-height: 300px;
+        }
+        .block {
+            width: 80px;
+            height: 80px;
+            margin: 5px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: move;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+        .block-icon {
+            width: 50px;
+            height: 50px;
+        }
+        .character {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            cursor: pointer;
+        }
+        .script {
+            margin: 10px 0;
+            padding: 5px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 5px;
+        }
+        /* Block Categories Colors */
+        .trigger { background-color: #FFC107; } /* Yellow */
+        .motion { background-color: #2196F3; } /* Blue */
+        .looks { background-color: #9C27B0; } /* Purple */
+        .sound { background-color: #4CAF50; } /* Green */
+        .control { background-color: #FF9800; } /* Orange */
+        .end { background-color: #F44336; } /* Red */
+        
+        /* Block connection styles */
+        .block.in-script {
+            margin: 2px 0;
+        }
+        .block.in-script::before {
+            content: "";
+            position: absolute;
+            width: 20px;
+            height: 10px;
+            background-color: inherit;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 5px 5px 0 0;
+        }
+        .block.in-script::after {
+            content: "";
+            position: absolute;
+            width: 20px;
+            height: 10px;
+            background-color: inherit;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 0 0 5px 5px;
+        }
+        .character-library {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 10px;
+            background-color: #f0f0f0;
+            margin-top: 10px;
+            border-radius: 5px;
+            justify-content: center;
+        }
+        .character-option {
+            width: 60px;
+            height: 60px;
+            margin: 5px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .character-option:hover {
+            border-color: #4CAF50;
+        }
+        .green-flag {
+            background-color: #4CAF50;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .green-flag::after {
+            content: "▶";
+            color: white;
+            font-size: 20px;
+        }
+        .stop-button {
+            background-color: #F44336;
+            width: 40px;
+            height: 40px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        .stop-button::after {
+            content: "■";
+            color: white;
+            font-size: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-    <h1>Scratch Junior Interface</h1>
-    <p>הקוד שלכם אמור לפעול כאן.</p>
-
-    <script src="scratch-junior-interface-updated.js"></script>
+    <div class="container">
+        <div class="header">
+            <h1>סביבת תכנות לילדים</h1>
+            <div style="display: flex;">
+                <div class="green-flag" id="start-button" title="הפעל"></div>
+                <div class="stop-button" id="stop-button" title="עצור"></div>
+            </div>
+        </div>
+        
+        <div class="navigation-bar">
+            <div>
+                <button class="navigation-button" id="save-button">שמור</button>
+                <button class="navigation-button" id="load-button">טען</button>
+            </div>
+            <div>
+                <button class="navigation-button" id="prev-page">עמוד קודם</button>
+                <span id="page-indicator">עמוד 1</span>
+                <button class="navigation-button" id="next-page">עמוד הבא</button>
+            </div>
+            <div>
+                <button class="navigation-button" id="add-character">הוסף דמות</button>
+                <button class="navigation-button" id="change-background">שנה רקע</button>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="blocks-palette">
+                <div class="category-selector">
+                    <div class="category-button trigger active" data-category="trigger" title="בלוקי הפעלה"></div>
+                    <div class="category-button motion" data-category="motion" title="בלוקי תנועה"></div>
+                    <div class="category-button looks" data-category="looks" title="בלוקי מראה"></div>
+                    <div class="category-button sound" data-category="sound" title="בלוקי צליל"></div>
+                    <div class="category-button control" data-category="control" title="בלוקי בקרה"></div>
+                    <div class="category-button end" data-category="end" title="בלוקי סיום"></div>
+                </div>
+                <div class="blocks-container" id="blocks-container"></div>
+            </div>
+            
+            <div class="programming-area" id="programming-area">
+                <!-- Scripts will be added here -->
+            </div>
+            
+            <div class="stage" id="stage">
+                <!-- Characters will be added here -->
+                <div class="character" id="character1" style="top: 160px; left: 160px;">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj48Y2lyY2xlIGN4PSI0MCIgY3k9IjQwIiByPSIzNSIgZmlsbD0ib3JhbmdlIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjIiLz48Y2lyY2xlIGN4PSIyNSIgY3k9IjMwIiByPSI1IiBmaWxsPSJibGFjayIvPjxjaXJjbGUgY3g9IjU1IiBjeT0iMzAiIHI9IjUiIGZpbGw9ImJsYWNrIi8+PHBhdGggZD0iTTI1LDUwIFE0MCw2NSA1NSw1MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIzIi8+PC9zdmc+" alt="דמות" width="80" height="80">
+                </div>
+            </div>
+        </div>
+        
+        <div id="character-library" class="character-library hidden">
+            <div class="character-option" data-character="cat">
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDYwIDYwIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyNSIgZmlsbD0iI0ZGQTUwMCIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIyIi8+PHBhdGggZD0iTTEyLDE1IEwxLDUiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMiIvPjxwYXRoIGQ9Ik00OCwxNSBMNTksNSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIyIi8+PGNpcmNsZSBjeD0iMjAiIGN5PSIyNSIgcj0iMyIgZmlsbD0iYmxhY2siLz48Y2lyY2xlIGN4PSI0MCIgY3k9IjI1IiByPSIzIiBmaWxsPSJibGFjayIvPjxwYXRoIGQ9Ik0yMCwzOCBRMzAsNDggNDAsNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMiIvPjxjaXJjbGUgY3g9IjMwIiBjeT0iMzIiIHI9IjIiIGZpbGw9ImJsYWNrIi8+PC9zdmc+" alt="חתול" width="60" height="60">
+            </div>
+            <div class="character-option" data-character="dog">
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDYwIDYwIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyNSIgZmlsbD0iI0JBOEI4QiIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIyIi8+PGNpcmNsZSBjeD0iMjAiIGN5PSIyNSIgcj0iMyIgZmlsbD0iYmxhY2siLz48Y2lyY2xlIGN4PSI0MCIgY3k9IjI1IiByPSIzIiBmaWxsPSJibGFjayIvPjxwYXRoIGQ9Ik0yMCwzOCBRMzAsNDggNDAsNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMiIvPjxwYXRoIGQ9Ik0xMCwzMCBMMSwxNSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIyIi8+PHBhdGggZD0iTTUwLDMwIEw1OSwxNSIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIyIi8+PGNpcmNsZSBjeD0iMzAiIGN5PSIzNSIgcj0iMyIgZmlsbD0iYmxhY2siLz48L3N2Zz4=" alt="כלב" width="60" height="60">
+            </div>
+            <div class="character-option" data-character="robot">
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDYwIDYwIj48cmVjdCB4PSIxMCIgeT0iMTAiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0iIzg4OCIgc3Ryb2tlPSJibGFjayIgc3Ryb2tlLXdpZHRoPSIyIiByeD0iNSIvPjxjaXJjbGUgY3g9IjIwIiBjeT0iMjUiIHI9IjUiIGZpbGw9IiMwMEYiLz48Y2lyY2xlIGN4PSI0MCIgY3k9IjI1IiByPSI1IiBmaWxsPSIjMDBGIi8+PHJlY3QgeD0iMjAiIHk9IjQwIiB3aWR0aD0iMjAiIGhlaWdodD0iNSIgZmlsbD0iIzQ0NCIvPjxyZWN0IHg9IjI1IiB5PSI1IiB3aWR0aD0iMTAiIGhlaWdodD0iNSIgZmlsbD0iIzg4OCIvPjwvc3ZnPg==" alt="רובוט" width="60" height="60">
+            </div>
+            <div class="character-option" data-character="fish">
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDYwIDYwIj48cGF0aCBkPSJNMTAsMzAgQzIwLDE1IDQwLDE1IDUwLDMwIEM0MCw0NSAyMCw0NSAxMCwzMCBaIiBmaWxsPSIjMDBBQUZGIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjIiLz48Y2lyY2xlIGN4PSIyMCIgY3k9IjI1IiByPSIzIiBmaWxsPSJibGFjayIvPjxwYXRoIGQ9Ik01MCwzMCBMNjAsNDAgTDUwLDQwIFoiIGZpbGw9IiMwMEFBRkYiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMiIvPjxwYXRoIGQ9Ik01MCwzMCBMNjAsMjAgTDUwLDIwIFoiIGZpbGw9IiMwMEFBRkYiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg==" alt="דג" width="60" height="60">
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
 </body>
 </html>
