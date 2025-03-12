@@ -1,7 +1,6 @@
  // ========================================================================
 //  הגדרת בלוקים (Blocks)
 // ========================================================================
-
 const blocks = {
     triggering: [
         {
@@ -196,7 +195,7 @@ function createBlockElement(block, category) {
 
     // טיפול באירוע התחלת גרירה (dragstart) - חשוב מאוד!
     blockElement.addEventListener("dragstart", (event) => {
-        event.dataTransfer.setData("text/plain", JSON.stringify({ type: block.type, icon: block.icon, color: block.color }));
+        event.dataTransfer.setData("text/plain", JSON.stringify({ type: block.type, icon: block.icon, color: block.color, source: "blockPalette" })); // הוספת מקור
         event.dataTransfer.effectAllowed = "move";
     });
 
@@ -235,29 +234,25 @@ programmingArea.addEventListener("drop", (event) => {
     const blockCategory = data.category;
     const blockIcon = data.icon; //קבלת האייקון
     const blockColor = data.color;//קבלת הצבע
+    const source = data.source || "programmingArea"; // קבלת מקור הבלוק
 
     // יצירת אלמנט בלוק חדש (שיבוט)
     const newBlock = document.createElement("div");
     newBlock.classList.add("block");
-    newBlock.style.backgroundColor = blockColor; // מציאת הצבע הנכון
-    newBlock.textContent = blockIcon;//data.icon; // מציאת השם הנכון
+    newBlock.style.backgroundColor = blockColor; // שימוש בצבע שהועבר
+    newBlock.textContent = blockIcon; //הוספת האייקון
     newBlock.dataset.type = blockType;
-    newBlock.draggable = false; //העתק לא ניתן לגרירה
+    newBlock.draggable = true;
 
-    // מיקום הבלוק החדש - מוגבל לתחומי אזור התכנות
-    const offsetX = event.clientX - programmingArea.offsetLeft;
-    const offsetY = event.clientY - programmingArea.offsetTop;
-
-    // וידוא שהמיקום בתוך גבולות אזור התכנות
-    const maxX = programmingArea.offsetWidth - newBlock.offsetWidth;
-    const maxY = programmingArea.offsetHeight - newBlock.offsetHeight;
-
-    const blockX = Math.min(Math.max(offsetX, 0), maxX);
-    const blockY = Math.min(Math.max(offsetY, 0), maxY);
-
+      //הוספת האפשרות לגרירה גם אם הוא קיים
+    newBlock.addEventListener("dragstart", (event) => {
+      event.dataTransfer.setData("text/plain", JSON.stringify({ type: blockType, icon: blockIcon, color: blockColor, source: "programmingArea" }));
+      event.dataTransfer.effectAllowed = "move";
+  });
+    // מיקום הבלוק החדש
     newBlock.style.position = "absolute";
-    newBlock.style.left = `${blockX}px`;
-    newBlock.style.top = `${blockY}px`;
+    newBlock.style.left = `${event.clientX - programmingArea.offsetLeft}px`;
+    newBlock.style.top = `${event.clientY - programmingArea.offsetTop}px`;
 
     // הוספת הבלוק החדש לאזור התכנות
     programmingArea.appendChild(newBlock);
