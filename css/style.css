@@ -247,10 +247,10 @@ main {
 }
 
 .block img {
-    max-width: 60%;
-    max-height: 60%;
-          border: none;
-    outline: none;
+    max-width: 30px;
+    max-height: 30px;
+     border: none;
+   outline: none;
 }
 
 /* הסרה ספציפית של גבול מ SVG בכל הקטגוריות */
