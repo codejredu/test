@@ -66,13 +66,38 @@ main {
 #character {
     width: auto;
     height: auto;
-    font-size: 50px;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     background-color: transparent;
     border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#character .head {
+    font-size: 50px;
+}
+
+#character .body {
+    width: 60px;
+    height: 40px;
+    background-color: #ffcc00;
+    border-radius: 20px;
+    margin-top: -10px;
+}
+
+#character .tail {
+    width: 10px;
+    height: 30px;
+    background-color: #ffcc00;
+    border-radius: 5px;
+    position: relative;
+    top: -5px;
+    left: 30px;
+    transform: rotate(45deg);
 }
 
 .palette-and-programming {
@@ -119,8 +144,7 @@ main {
     max-width: 100%;
     max-height: 100%;
     pointer-events: none;
-       filter: invert(100%);
-
+     filter: invert(100%);
 }
 
 .category-tab[data-category="triggering"] {
