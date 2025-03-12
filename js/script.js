@@ -47,7 +47,7 @@ const blocks = {
             color: "blue",
             type: "moveLeft",
             icon: "⬅️",
-            },
+        },
         {
             name: "⬆️",
             color: "blue",
