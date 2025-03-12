@@ -190,13 +190,15 @@ function createBlockElement(block, category) {
     const blockElement = document.createElement("div");
     blockElement.classList.add("block");
     blockElement.style.backgroundColor = block.color;
-    blockElement.textContent = block.icon;
     blockElement.dataset.type = block.type;
     blockElement.draggable = true;
 
+       // הוספת אייקון
+       blockElement.textContent = block.icon;
+
     // טיפול באירוע התחלת גרירה (dragstart) - חשוב מאוד!
     blockElement.addEventListener("dragstart", (event) => {
-        event.dataTransfer.setData("text/plain", JSON.stringify({ type: block.type, category }));
+        event.dataTransfer.setData("text/plain", JSON.stringify({ type: block.type, icon: block.icon, color: block.color }));
         event.dataTransfer.effectAllowed = "move";
     });
 
@@ -213,12 +215,14 @@ function populateBlockPalette(category) {
         categoryDiv.appendChild(blockElement);
     });
 }
+
 // ========================================================================
 //  לוגיקת גרירה ושחרור (Drag and Drop)
 // ========================================================================
 
 const programmingArea = document.getElementById("program-blocks");
 const blockPalette = document.getElementById("block-palette");
+
 // טיפול באירוע גרירה מעל אזור התכנות (dragover)
 programmingArea.addEventListener("dragover", (event) => {
     event.preventDefault(); // מונע התנהגות ברירת מחדל
@@ -232,29 +236,32 @@ programmingArea.addEventListener("drop", (event) => {
     const data = JSON.parse(event.dataTransfer.getData("text/plain")); // קבלת המידע על הבלוק
     const blockType = data.type;
     const blockCategory = data.category;
+    const blockIcon = data.icon;
+    const blockColor = data.color;
 
     // יצירת אלמנט בלוק חדש (שיבוט)
     const newBlock = document.createElement("div");
     newBlock.classList.add("block");
-    newBlock.style.backgroundColor = blocks[blockCategory].find(b => b.type === blockType).color; // מציאת הצבע הנכון
-    //newBlock.textContent = blocks[blockCategory].find(b => b.type === blockType).name; // מציאת השם הנכון
+    newBlock.style.backgroundColor = blockColor; // מציאת הצבע הנכון
+    newBlock.textContent = blockIcon;//data.icon; // מציאת השם הנכון
     newBlock.dataset.type = blockType;
     newBlock.draggable = false; //העתק לא ניתן לגרירה
 
     // הוספת הבלוק החדש לאזור התכנות
     programmingArea.appendChild(newBlock);
 });
+
 const categoryTabs = document.querySelectorAll(".category-tab");
 const blockCategories = document.querySelectorAll(".block-category");
 
 categoryTabs.forEach(tab => {
     tab.addEventListener("click", () => {
-         blockCategories.forEach(function(element){
+        blockCategories.forEach(function(element){
             element.classList.remove("active")
-         })
+        })
         const category = tab.dataset.category;
-          categoryTabs.forEach(t => t.classList.remove("active"));
-           tab.classList.add("active");
+        categoryTabs.forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
         document.getElementById(`${category}-blocks`).classList.add("active");
         populateBlockPalette(category);
     });
