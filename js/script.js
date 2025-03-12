@@ -1,4 +1,4 @@
-// ========================================================================
+ // ========================================================================
 //  הגדרת בלוקים (Blocks)
 // ========================================================================
 
@@ -196,8 +196,13 @@ function createBlockElement(block, category) {
     // טיפול באירוע התחלת גרירה (dragstart) - חשוב מאוד!
     blockElement.addEventListener("dragstart", function(event) {
         draggedBlock = this; // שמירת הפניה לבלוק הנגרר
-        event.dataTransfer.setData("text/plain", JSON.stringify({ type: block.type, icon: block.icon, color: block.color }));
+        blockElement.classList.add("dragging"); // הוספת אפקט ויזואלי
+        event.dataTransfer.setData("text/plain", JSON.stringify({ type: block.type, icon: block.icon, color: block.color, source: "blockPalette" })); // הוספת מקור
         event.dataTransfer.effectAllowed = "move";
+    });
+
+    blockElement.addEventListener("dragend", () => {
+        blockElement.classList.remove("dragging"); // הסרת האפקט הויזואלי
     });
 
     return blockElement;
@@ -219,7 +224,7 @@ function populateBlockPalette(category) {
 // ========================================================================
 
 const programmingArea = document.getElementById("program-blocks");
-let draggedBlock = null
+let draggedBlock = null;
 
 // טיפול באירוע גרירה מעל אזור התכנות (dragover)
 programmingArea.addEventListener("dragover", (event) => {
@@ -235,41 +240,42 @@ programmingArea.addEventListener("drop", (event) => {
     const blockType = data.type;
     const blockIcon = data.icon; //קבלת האייקון
     const blockColor = data.color;//קבלת הצבע
-
+    const source = data.source || "programmingArea"; // קבלת מקור הבלוק
+//שינוי קל בהצהרה على מקור על מנת למנוע תקלות שגיאה לטיפול טוב יותר    
     const offsetX = event.clientX - programmingArea.offsetLeft;
     const offsetY = event.clientY - programmingArea.offsetTop;
 
     if (draggedBlock) {
         // עדכון מיקום הבלוק הנגרר
-        draggedBlock.style.position = "absolute";
+
+        // הוספת תנאי תקינות
+         if (source === "programmingArea") {
         draggedBlock.style.left = `${offsetX}px`;
         draggedBlock.style.top = `${offsetY}px`;
-
-        // איפוס הבלוק הנגרר
-        draggedBlock = null;
     }
-    else {
-        const newBlock = document.createElement("div");
+           else {
+         const newBlock = document.createElement("div");
         newBlock.classList.add("block");
         newBlock.style.backgroundColor = blockColor; // מציאת הצבע הנכון
         newBlock.textContent = blockIcon; // מציאת השם הנכון
         newBlock.dataset.type = blockType;
         newBlock.draggable = true;
+           newBlock.style.position = "absolute";
+           newBlock.style.left = `${offsetX}px`;
+           newBlock.style.top = `${offsetY}px`;
+                 newBlock.addEventListener("dragstart", function(event) {
+                   draggedBlock = this; // שמירת הפניה לבלוק הנגרר
+                   event.dataTransfer.setData("text/plain", JSON.stringify({ type: blockType, icon: blockIcon, color: blockColor, source: "programmingArea" }));
+                   event.dataTransfer.effectAllowed = "move";
+                });
 
-        newBlock.style.position = "absolute";
-        newBlock.style.left = `${offsetX}px`;
-        newBlock.style.top = `${offsetY}px`;
-
-        programmingArea.appendChild(newBlock);
-
-        // Attach dragstart event to the new block
-        newBlock.addEventListener("dragstart", function(event) {
-        draggedBlock = this; // שמירת הפניה לבלוק הנגרר
-        event.dataTransfer.setData("text/plain", JSON.stringify({ type: blockType, icon: blockIcon, color: blockColor, source: "programmingArea" }));
-        event.dataTransfer.effectAllowed = "move";
-    });
+                programmingArea.appendChild(newBlock);
     }
 
+        draggedBlock.classList.remove("dragging");
+        draggedBlock = null;
+
+    }
 });
 
 const categoryTabs = document.querySelectorAll(".category-tab");
@@ -277,13 +283,13 @@ const blockCategories = document.querySelectorAll(".block-category");
 
 categoryTabs.forEach(tab => {
     tab.addEventListener("click", () => {
-        blockCategories.forEach(c => c.classList.remove("active"));
-       
+        blockCategories.forEach(function(element){
+            element.classList.remove("active")
+        })
+        const category = tab.dataset.category;
         categoryTabs.forEach(t => t.classList.remove("active"));
         tab.classList.add("active");
-        const category = tab.dataset.category;
         document.getElementById(`${category}-blocks`).classList.add("active");
         populateBlockPalette(category);
-
     });
 });
