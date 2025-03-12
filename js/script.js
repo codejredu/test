@@ -1,4 +1,4 @@
-// ========================================================================
+ // ========================================================================
 //  הגדרת בלוקים (Blocks)
 // ========================================================================
 
@@ -239,15 +239,25 @@ programmingArea.addEventListener("drop", (event) => {
     // יצירת אלמנט בלוק חדש (שיבוט)
     const newBlock = document.createElement("div");
     newBlock.classList.add("block");
-    newBlock.style.backgroundColor = blockColor; // שימוש בצבע שהועבר
-     newBlock.textContent = blockIcon; //הוספת האייקון
+    newBlock.style.backgroundColor = blockColor; // מציאת הצבע הנכון
+    newBlock.textContent = blockIcon;//data.icon; // מציאת השם הנכון
     newBlock.dataset.type = blockType;
     newBlock.draggable = false; //העתק לא ניתן לגרירה
-        
-    // מיקום הבלוק החדש
+
+    // מיקום הבלוק החדש - מוגבל לתחומי אזור התכנות
+    const offsetX = event.clientX - programmingArea.offsetLeft;
+    const offsetY = event.clientY - programmingArea.offsetTop;
+
+    // וידוא שהמיקום בתוך גבולות אזור התכנות
+    const maxX = programmingArea.offsetWidth - newBlock.offsetWidth;
+    const maxY = programmingArea.offsetHeight - newBlock.offsetHeight;
+
+    const blockX = Math.min(Math.max(offsetX, 0), maxX);
+    const blockY = Math.min(Math.max(offsetY, 0), maxY);
+
     newBlock.style.position = "absolute";
-    newBlock.style.left = `${event.clientX - programmingArea.offsetLeft}px`;
-    newBlock.style.top = `${event.clientY - programmingArea.offsetTop}px`;
+    newBlock.style.left = `${blockX}px`;
+    newBlock.style.top = `${blockY}px`;
 
     // הוספת הבלוק החדש לאזור התכנות
     programmingArea.appendChild(newBlock);
