@@ -164,7 +164,8 @@ main {
     max-width: 100%;
     max-height: 100%;
     pointer-events: none;
-   filter: invert(100%);
+       filter: invert(100%);
+
 }
 
 .category-tab[data-category="triggering"] {
@@ -243,13 +244,14 @@ main {
     font-size: 45px;
      box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
     border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+        font-size: 15px;
 }
 
 .block img {
     max-width: 60%;
     max-height: 60%;
-         border: none; /*Remove the border */
-      outline: none; /* הסרת קו מתאר */
+        border: none;
+   outline: none;
 }
 
 #triggering-blocks .block {
