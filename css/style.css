@@ -247,12 +247,12 @@ main {
 }
 
 .block img {
-    max-width: 30px;
-    max-height: 30px;
-     border: none;
-   outline: none;
+    width: 35px; /* גודל חדש */
+    height: 35px; /* גודל חדש */
+    border: none;
+    outline: none;
+    background-color: transparent;
 }
-
 /* הסרה ספציפית של גבול מ SVG בכל הקטגוריות */
 #triggering-blocks .block img,
 #motion-blocks .block img,
