@@ -1,4 +1,4 @@
- body {
+body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -164,7 +164,7 @@ main {
     max-width: 100%;
     max-height: 100%;
     pointer-events: none;
-        filter: invert(100%);
+   filter: invert(100%);
 }
 
 .category-tab[data-category="triggering"] {
@@ -227,6 +227,12 @@ main {
     min-height: 100px;
     border: 1px dashed #ccc;
     padding: 10px;
+    position: relative; /* כדי למקם אלמנטים באופן אבסולוטי בתוכו */
+}
+
+#program-blocks .block {
+    position: absolute; /* כדי למקם את הבלוקים באופן חופשי */
+    /* כאן אפשר להוסיף עוד סגנונות */
 }
 
 .block {
@@ -241,327 +247,18 @@ main {
     border-radius: 10px;
     cursor: grab;
     font-size: 45px;
-     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
-        font-size: 15px;
-}
-
-.block img {
-   width: 30px !important;
-    height: 30px !important;
-        border: none;
-    outline: none;
-    background-color: transparent;
-     object-fit: contain;
-
-}
-
-/* הסרה ספציפית של גבול מ SVG בכל הקטגוריות */
-#triggering-blocks .block img,
-#motion-blocks .block img,
-#looks-blocks .block img,
-#sound-blocks .block img,
-#control-blocks .block img,
-#end-blocks .block img {
-    border: none;
-    outline: none;
-}
-
-#triggering-blocks .block {
-    background-color: #F9D74C;
-}
-
-#motion-blocks .block {
-    background-color: #3D81CC;
-}
-
-#looks-blocks .block {
-    background-color: #D86FBA;
-}
-
-#sound-blocks .block {
-    background-color: #4DC251;
-}
-
-#control-blocks .block {
-    background-color: #F8AA4C;
-}
-
-#end-blocks .block {
-    background-color: #F15959;
-}
-
-.logo {
-    font-size: 20px;
-    font-weight: bold;
-    color: #4a90e2;
-}
-
-.header-icons {
-    display: flex;
-}
-
-.icon {
-    margin-left: 10px;
-    font-size: 24px;
-    color: #999;
-    cursor: pointer;
-}body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f0f4ff;
-    direction: rtl;
-}
-
-.container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-}
-
-header {
-    background-color: #fff;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #e0e0e0;
-}
-
-main {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-}
-
-.stage-container {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 10px;
-}
-
-#stage {
-    flex: 0 0 auto;
-    width: 550px;
-    height: 450px;
-    background-color: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    position: relative;
-    display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    grid-template-rows: repeat(10, 1fr);
-    gap: 1px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-}
-
-#stage::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    background: repeating-linear-gradient(0deg, #f0f0f0, #f0f0f0 10%, transparent 10%, transparent 20%),
-                repeating-linear-gradient(90deg, #f0f0f0, #f0f0f0 10%, transparent 10%, transparent 20%);
-    border-radius: 10px;
-}
-
-#character {
-    width: auto;
-    height: auto;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: transparent;
-    border-radius: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-#character .head {
-    font-size: 50px;
-}
-
-#character .body {
-    width: 60px;
-    height: 40px;
-    background-color: #ffcc00;
-    border-radius: 20px;
-    margin-top: -10px;
-}
-
-#character .tail {
-    width: 10px;
-    height: 30px;
-    background-color: #ffcc00;
-    border-radius: 5px;
-    position: relative;
-    top: -5px;
-    left: 30px;
-    transform: rotate(45deg);
-}
-
-#character .ear {
-    width: 0;
-    height: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-bottom: 15px solid #ffcc00; /* צבע אוזניים */
-    position: absolute;
-    top: 5px;
-}
-
-#character .ear.left {
-    left: -5px;
-    transform: rotate(-30deg);
-}
-
-#character .ear.right {
-    right: -5px;
-    transform: rotate(30deg);
-}
-
-.palette-and-programming {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-}
-
-#block-palette {
-    background-color: #fff;
-    border: 1px solid #e0e0e0;
-    margin: 10px;
-    padding: 10px;
-    border-radius: 10px;
-    flex: 1;
-    overflow-y: auto;
-}
-
-.category-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    margin-bottom: 10px;
-}
-
-.category-tab {
-    border: none;
-    padding: 0;
-    margin-right: 5px;
-    margin-bottom: 5px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    color: #000000;
-    width: 60px;
-    height: 60px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
     border-bottom: 2px solid rgba(0, 0, 0, 0.1);
-}
-
-.category-tab img {
-    max-width: 100%;
-    max-height: 100%;
-    pointer-events: none;
-        filter: invert(100%);
-}
-
-.category-tab[data-category="triggering"] {
-    background-color: yellow;
-}
-
-.category-tab[data-category="motion"] {
-    background-color: blue;
-}
-
-.category-tab[data-category="looks"] {
-    background-color: lavender;
-}
-
-.category-tab[data-category="sound"] {
-    background-color: green;
-}
-
-.category-tab[data-category="control"] {
-    background-color: orange;
-}
-
-.category-tab[data-category="end"] {
-    background-color: red;
-}
-
-.block-category {
-    display: none;
-    padding: 10px;
-}
-
-.block-category.active {
-    display: flex;
-    flex-wrap: wrap;
-    padding: 10px;
-}
-
-#programming-area {
-    background-color: #fff;
-    border: 1px solid #e0e0e0;
-    margin: 10px;
-    padding: 10px;
-    border-radius: 10px;
-    flex: 1;
-}
-
-.program-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-#clear-all {
-    color: #e74c3c;
-    cursor: pointer;
-}
-
-#program-blocks {
-    min-height: 100px;
-    border: 1px dashed #ccc;
-    padding: 10px;
-}
-
-.block {
-    width: 80px;
-    height: 80px;
-    margin: 5px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #fff;
-    font-size: 16px;
-    border-radius: 10px;
-    cursor: grab;
-    font-size: 45px;
-     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
-        font-size: 15px;
+    font-size: 15px;
 }
 
 .block img {
-   width: 30px !important;
+    width: 30px !important;
     height: 30px !important;
-        border: none;
+    border: none;
     outline: none;
     background-color: transparent;
      object-fit: contain;
-
 }
 
 /* הסרה ספציפית של גבול מ SVG בכל הקטגוריות */
