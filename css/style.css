@@ -1,4 +1,4 @@
- body {
+body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -80,6 +80,8 @@ main {
     position: absolute; /* חשוב! */
     object-fit: contain;
     cursor: grab;
+    /* הוספה של transition כדי לתת תחושה יותר נעימה */
+    transition: all 0.1s ease-out;
 }
 
 .palette-and-programming {
