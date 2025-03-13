@@ -324,5 +324,13 @@ categoryTabs.forEach(tab => {
     });
 });
 
+// הוספת כפתור קווי GRID
+const gridToggle = document.getElementById("grid-toggle");
+const stage = document.getElementById("stage");
+
+gridToggle.addEventListener("click", () => {
+    stage.classList.toggle("show-grid");
+});
+
 // אתחול הלוח עם הקטגוריה הפעילה הראשונה
 populateBlockPalette("triggering");
