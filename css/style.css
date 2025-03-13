@@ -1,4 +1,4 @@
-body {
+ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -252,7 +252,9 @@ main {
     cursor: pointer;
 }
 
-.block-container {
+/* הוספתי את זה כדי שהגודל ישפיע על הבלוקים בפלטה */
+#block-palette .block-container,
+#programming-area .block-container {
     position: relative;
     width: 45px; /* שינוי הרוחב ל-45px */
     height: 45px; /* שינוי הגובה ל-45px */
@@ -260,7 +262,9 @@ main {
     cursor: pointer;
 }
 
-.scratch-block {
+/* הוספתי את זה כדי שהגודל ישפיע על הבלוקים בפלטה */
+#block-palette .scratch-block,
+#programming-area .scratch-block {
     position: absolute;
     top: 0;
     left: 0;
@@ -276,14 +280,6 @@ main {
     font-weight: bold;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.1); /* הוספת צללית פנימית */
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out; /* הוספת transition ל-background-color */
-}
-
-.scratch-block:hover {
-    transform: scale(1.05);
-}
-
-.scratch-block:active {
-    transform: scale(0.95);
 }
 
 .right-connector {
