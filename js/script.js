@@ -187,20 +187,41 @@ const blocks = {
 
 // פונקציה ליצירת HTML עבור בלוק
 function createBlockElement(block, category) {
-    const blockElement = document.createElement("div");
-    blockElement.classList.add("block");
-    blockElement.style.backgroundColor = block.color;
-    blockElement.textContent = block.icon;
-    blockElement.dataset.type = block.type;
-    blockElement.draggable = true;
+    // יצירת אלמנט container לבלוק
+    const blockContainer = document.createElement("div");
+    blockContainer.classList.add("block-container");
 
-    // יצירת השקע
-    const socketElement = document.createElement("div");
-    socketElement.classList.add("socket");
-    blockElement.appendChild(socketElement);
+    // יצירת אלמנט scratch-block
+    const scratchBlock = document.createElement("div");
+    scratchBlock.classList.add("scratch-block");
+    scratchBlock.textContent = block.icon; // הצגת הטקסט בתוך הבלוק
+    scratchBlock.style.backgroundColor = block.color; //הצבע
+
+    //יצירת אלמנט right-connector
+    const rightConnector = document.createElement("div");
+    rightConnector.classList.add("right-connector");
+    rightConnector.style.backgroundColor = block.color;
+
+    //יצירת אלמנט left-connector-wrapper
+    const leftConnectorWrapper = document.createElement("div");
+    leftConnectorWrapper.classList.add("left-connector-wrapper");
+
+     //יצירת אלמנט left-connector
+    const leftConnector = document.createElement("div");
+    leftConnector.classList.add("left-connector");
+
+    leftConnectorWrapper.appendChild(leftConnector);
+
+    // הוספת הכל ל container
+    blockContainer.appendChild(scratchBlock);
+    blockContainer.appendChild(rightConnector);
+    blockContainer.appendChild(leftConnectorWrapper);
+
+    blockContainer.dataset.type = block.type;
+    blockContainer.draggable = true;
 
     // טיפול באירוע התחלת גרירה (dragstart) - חשוב מאוד!
-    blockElement.addEventListener("dragstart", (event) => {
+    blockContainer.addEventListener("dragstart", (event) => {
         event.dataTransfer.setData("text/plain", JSON.stringify({
             type: block.type,
             icon: block.icon,
@@ -210,7 +231,7 @@ function createBlockElement(block, category) {
         event.dataTransfer.effectAllowed = "move";
     });
 
-    return blockElement;
+    return blockContainer;
 }
 
 // הוספת הבלוקים ללוח הלבנים
@@ -248,11 +269,34 @@ programmingArea.addEventListener("drop", (event) => {
 
     // יצירת אלמנט בלוק חדש (שיבוט)
     const newBlock = document.createElement("div");
-    newBlock.classList.add("block");
-    newBlock.style.backgroundColor = blockColor; // שימוש בצבע שהועבר
-    newBlock.textContent = blockIcon; //הוספת האייקון
+    newBlock.classList.add("block-container");
+
+    const scratchBlock = document.createElement("div");
+    scratchBlock.classList.add("scratch-block");
+    scratchBlock.textContent = blockIcon; // הצגת הטקסט בתוך הבלוק
+    scratchBlock.style.backgroundColor = blockColor; //הצבע
+
+    //יצירת אלמנט right-connector
+    const rightConnector = document.createElement("div");
+    rightConnector.classList.add("right-connector");
+    rightConnector.style.backgroundColor = blockColor;
+
+    //יצירת אלמנט left-connector-wrapper
+    const leftConnectorWrapper = document.createElement("div");
+    leftConnectorWrapper.classList.add("left-connector-wrapper");
+
+     //יצירת אלמנט left-connector
+    const leftConnector = document.createElement("div");
+    leftConnector.classList.add("left-connector");
+
+    leftConnectorWrapper.appendChild(leftConnector);
+
+    // הוספת הכל ל container
+    newBlock.appendChild(scratchBlock);
+    newBlock.appendChild(rightConnector);
+    newBlock.appendChild(leftConnectorWrapper);
     newBlock.dataset.type = blockType;
-    newBlock.draggable = false; //העתק לא ניתן לגרירה
+    newBlock.draggable = false;
 
     // הוספת הבלוק החדש לאזור התכנות
     programmingArea.appendChild(newBlock);
