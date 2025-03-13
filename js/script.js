@@ -237,11 +237,6 @@ function createBlockElement(block, category) {
 // הוספת הבלוקים ללוח הלבנים
 function populateBlockPalette(category) {
     const categoryDiv = document.getElementById(`${category}-blocks`);
-    if (!categoryDiv) {
-        console.error(`Element with ID "${category}-blocks" not found.`);
-        return;
-    }
-
     categoryDiv.innerHTML = ""; // ניקוי הבלוקים הקיימים
 
     blocks[category].forEach(block => {
@@ -335,42 +330,6 @@ const stage = document.getElementById("stage");
 
 gridToggle.addEventListener("click", () => {
     stage.classList.toggle("show-grid");
-});
-
-// אפשור גרירה ושחרור של החתול
-const character = document.getElementById("character");
-const stage = document.getElementById("stage");
-let isDragging = false;
-let offsetX = 0;
-let offsetY = 0;
-
-character.addEventListener("mousedown", (e) => {
-    isDragging = true;
-    offsetX = e.clientX - character.offsetLeft;
-    offsetY = e.clientY - character.offsetTop;
-    character.style.cursor = "grabbing"; // סמן גרירה
-});
-
-stage.addEventListener("mouseup", () => {
-    isDragging = false;
-    character.style.cursor = "grab"; // סמן רגיל
-});
-
-stage.addEventListener("mousemove", (e) => {
-    if (!isDragging) return;
-
-    const stageRect = stage.getBoundingClientRect();
-    const charRect = character.getBoundingClientRect();
-
-    let x = e.clientX - stageRect.left - offsetX;
-    let y = e.clientY - stageRect.top - offsetY;
-
-    // שמירה שהחתול לא יצא מגבולות הבמה
-    x = Math.max(0, Math.min(x, stageRect.width - charRect.width));
-    y = Math.max(0, Math.min(y, stageRect.height - charRect.height));
-
-    character.style.left = `${x}px`;
-    character.style.top = `${y}px`;
 });
 
 // אתחול הלוח עם הקטגוריה הפעילה הראשונה
