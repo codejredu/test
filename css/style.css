@@ -1,4 +1,4 @@
-body {
+ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -82,7 +82,11 @@ main {
     left: 50%;
     transform: translate(-50%, -50%);
     object-fit: contain; /* גורם לתמונה להתאים בתוך השטח המוקצה לה */
-    cursor: grab; /* שינוי הסמן לגרירה */
+   cursor: grab; /* שינוי הסמן לגרירה */
+}
+
+#character:active {
+    cursor: grabbing; /* סמן אחר כאשר לוחצים */
 }
 
 .palette-and-programming {
