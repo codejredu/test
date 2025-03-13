@@ -15,6 +15,10 @@
             cursor: grab;
             /* הוספה של transition כדי לתת תחושה יותר נעימה */
             transition: all 0.1s ease-out;
+            /* הוספה כדי שהדמות תתחיל באמצע */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
         }
     </style>
 </head>
@@ -89,23 +93,6 @@
         let isDragging = false;
         let offsetX = 0;
         let offsetY = 0;
-
-        // הגדרת מיקום התחלתי רנדומלי לדמות
-        function setRandomPosition() {
-            const stageWidth = stage.offsetWidth;
-            const stageHeight = stage.offsetHeight;
-            const characterWidth = character.offsetWidth;
-            const characterHeight = character.offsetHeight;
-
-            const randomX = Math.random() * (stageWidth - characterWidth);
-            const randomY = Math.random() * (stageHeight - characterHeight);
-
-            character.style.left = randomX + 'px';
-            character.style.top = randomY + 'px';
-        }
-
-        // קריאה לפונקציה כדי לקבוע את המיקום ההתחלתי
-        setRandomPosition();
 
         character.addEventListener('mousedown', (e) => {
             isDragging = true;
