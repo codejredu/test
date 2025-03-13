@@ -333,8 +333,9 @@ gridToggle.addEventListener("click", () => {
 });
 
 
-// אפשור גרירה ושחרור של החתול
+ // אפשור גרירה ושחרור של החתול
 const character = document.getElementById("character");
+const stage = document.getElementById("stage"); // קבלת אלמנט הבמה
 let isDragging = false;
 let offsetX = 0;
 let offsetY = 0;
@@ -343,34 +344,27 @@ character.addEventListener("mousedown", (e) => {
     isDragging = true;
     offsetX = e.clientX - character.offsetLeft;
     offsetY = e.clientY - character.offsetTop;
-    character.style.cursor = "grabbing"; // שינוי הסמן לגרירה
 });
 
-document.addEventListener("mouseup", () => {
+stage.addEventListener("mouseup", () => {
     isDragging = false;
-    character.style.cursor = "grab"; // שינוי הסמן חזרה
 });
 
-stage.addEventListener("mousemove", (e) => { // שינוי: האזנה על הבמה
+stage.addEventListener("mousemove", (e) => {
     if (!isDragging) return;
 
-    const x = e.clientX - offsetX;
-    const y = e.clientY - offsetY;
-
-    // שמירה שהחתול לא יצא מגבולות הבמה
     const stageRect = stage.getBoundingClientRect();
     const charRect = character.getBoundingClientRect();
 
-    const minX = stageRect.left;
-    const maxX = stageRect.right - charRect.width;
-    const minY = stageRect.top;
-    const maxY = stageRect.bottom - charRect.height;
+    let x = e.clientX - stageRect.left - offsetX;
+    let y = e.clientY - stageRect.top - offsetY;
 
-    const boundedX = Math.max(minX, Math.min(x, maxX));
-    const boundedY = Math.max(minY, Math.min(y, maxY));
+    // הגבלת התנועה לגבולות הבמה
+    x = Math.max(0, Math.min(x, stageRect.width - charRect.width));
+    y = Math.max(0, Math.min(y, stageRect.height - charRect.height));
 
-    character.style.left = `${boundedX - stageRect.left}px`;
-    character.style.top = `${boundedY - stageRect.top}px`;
+    character.style.left = `${x}px`;
+    character.style.top = `${y}px`;
 });
 
 // אתחול הלוח עם הקטגוריה הפעילה הראשונה
