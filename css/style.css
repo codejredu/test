@@ -164,7 +164,7 @@ main {
     max-width: 100%;
     max-height: 100%;
     pointer-events: none;
-     filter: invert(100%);
+   filter: invert(100%);
 }
 
 .category-tab[data-category="triggering"] {
@@ -236,8 +236,8 @@ main {
 }
 
 .block {
-    width: 80px;
-    height: 80px;
+    width: 60px;
+    height: 60px;
     margin: 5px;
     display: flex;
     justify-content: center;
@@ -286,7 +286,7 @@ main {
     max-height: 60%;
     width: 35px !important;
     height: 35px !important;
-        border: none;
+         border: none;
     outline: none;
 }
 
