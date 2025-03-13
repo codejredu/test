@@ -194,6 +194,11 @@ function createBlockElement(block, category) {
     blockElement.dataset.type = block.type;
     blockElement.draggable = true;
 
+    // יצירת השקע
+    const socketElement = document.createElement("div");
+    socketElement.classList.add("socket");
+    blockElement.appendChild(socketElement);
+
     // טיפול באירוע התחלת גרירה (dragstart) - חשוב מאוד!
     blockElement.addEventListener("dragstart", (event) => {
         event.dataTransfer.setData("text/plain", JSON.stringify({
