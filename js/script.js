@@ -1,4 +1,4 @@
- // ========================================================================
+// ========================================================================
 //  הגדרת בלוקים (Blocks)
 // ========================================================================
 
@@ -184,41 +184,7 @@ const blocks = {
         },
     ],
 };
- // אפשור גרירה ושחרור של החתול - קוד מינימלי
-// ========================================================================
-const character = document.getElementById("character");
-const stage = document.getElementById("stage");
-let isDragging = false;
-let offsetX = 0;
-let offsetY = 0;
 
-character.addEventListener("mousedown", (e) => {
-  isDragging = true;
-  offsetX = e.clientX - character.offsetLeft;
-  offsetY = e.clientY - character.offsetTop;
-  e.stopPropagation(); // עצירת הפצת האירוע
-});
-
-stage.addEventListener("mouseup", () => {
-  isDragging = false;
-});
-
-stage.addEventListener("mousemove", (e) => {
-  if (!isDragging) return;
-
-  const stageRect = stage.getBoundingClientRect();
-  const charRect = character.getBoundingClientRect();
-
-  let x = e.clientX - stageRect.left - offsetX;
-  let y = e.clientY - stageRect.top - offsetY;
-
-  // שמירה שהחתול לא יצא מגבולות הבמה
-  x = Math.max(0, Math.min(x, stageRect.width - charRect.width));
-  y = Math.max(0, Math.min(y, stageRect.height - charRect.height));
-
-  character.style.left = `${x}px`;
-  character.style.top = `${y}px`;
-});
 // פונקציה ליצירת HTML עבור בלוק
 function createBlockElement(block, category) {
     // יצירת אלמנט container לבלוק
@@ -241,7 +207,8 @@ function createBlockElement(block, category) {
     leftConnectorWrapper.classList.add("left-connector-wrapper");
 
      //יצירת אלמנט left-connector
-    const leftConnector.classList.add("left-connector");
+    const leftConnector = document.createElement("div");
+    leftConnector.classList.add("left-connector");
 
     leftConnectorWrapper.appendChild(leftConnector);
 
@@ -270,11 +237,6 @@ function createBlockElement(block, category) {
 // הוספת הבלוקים ללוח הלבנים
 function populateBlockPalette(category) {
     const categoryDiv = document.getElementById(`${category}-blocks`);
-    if (!categoryDiv) {
-        console.error(`Element with ID "${category}-blocks" not found.`);
-        return;
-    }
-
     categoryDiv.innerHTML = ""; // ניקוי הבלוקים הקיימים
 
     blocks[category].forEach(block => {
@@ -324,7 +286,8 @@ programmingArea.addEventListener("drop", (event) => {
     leftConnectorWrapper.classList.add("left-connector-wrapper");
 
      //יצירת אלמנט left-connector
-    const leftConnector.classList.add("left-connector");
+    const leftConnector = document.createElement("div");
+    leftConnector.classList.add("left-connector");
 
     leftConnectorWrapper.appendChild(leftConnector);
 
@@ -348,17 +311,14 @@ programmingArea.addEventListener("drop", (event) => {
 const categoryTabs = document.querySelectorAll(".category-tab");
 const blockCategories = document.querySelectorAll(".block-category");
 
-categoryTabs.forEach((tab) => {
+categoryTabs.forEach(tab => {
     tab.addEventListener("click", () => {
-        // הסרת active מכל הטאבים והקטגוריות
-        categoryTabs.forEach((t) => t.classList.remove("active"));
-        blockCategories.forEach((cat) => cat.classList.remove("active"));
-
-        // הוספת active לטאב הנוכחי
-        tab.classList.add("active");
-
-        //הוספת active לקטגוריה
+        blockCategories.forEach(function(element){
+            element.classList.remove("active")
+        })
         const category = tab.dataset.category;
+        categoryTabs.forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
         document.getElementById(`${category}-blocks`).classList.add("active");
         populateBlockPalette(category);
     });
