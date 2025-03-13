@@ -82,6 +82,7 @@ main {
     left: 50%;
     transform: translate(-50%, -50%);
     object-fit: contain; /* גורם לתמונה להתאים בתוך השטח המוקצה לה */
+    cursor: grab; /* הוספת סמן עכבר */
 }
 
 .palette-and-programming {
