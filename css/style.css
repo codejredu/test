@@ -1,4 +1,4 @@
-body {
+ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -42,7 +42,7 @@ main {
     background-color: #f5f5f5; /* רקע בהיר יותר */
     border: 1px solid #e0e0e0;
     border-radius: 10px;
-    position: relative;
+    position: relative; /* חשוב! */
     /* display: grid; הסרתי את זה כי אנחנו יוצרים קווי רשת אחרת */
     /* grid-template-columns: repeat(10, 1fr); */
     /* grid-template-rows: repeat(10, 1fr); */
@@ -75,13 +75,11 @@ main {
 }
 
 #character {
-    width: 100px; /* שינוי הרוחב ל-100px */
-    height: 100px; /* שינוי הגובה ל-100px */
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    object-fit: contain; /* גורם לתמונה להתאים בתוך השטח המוקצה לה */
-    cursor: grab; /* הוספת סמן עכבר */
+    width: 100px;
+    height: 100px;
+    position: absolute; /* חשוב! */
+    object-fit: contain;
+    cursor: grab;
 }
 
 .palette-and-programming {
