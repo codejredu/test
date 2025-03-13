@@ -237,11 +237,6 @@ function createBlockElement(block, category) {
 // הוספת הבלוקים ללוח הלבנים
 function populateBlockPalette(category) {
     const categoryDiv = document.getElementById(`${category}-blocks`);
-    if (!categoryDiv) {
-        console.error(`Element with ID "${category}-blocks" not found.`);
-        return;
-    }
-
     categoryDiv.innerHTML = ""; // ניקוי הבלוקים הקיימים
 
     blocks[category].forEach(block => {
@@ -291,7 +286,8 @@ programmingArea.addEventListener("drop", (event) => {
     leftConnectorWrapper.classList.add("left-connector-wrapper");
 
      //יצירת אלמנט left-connector
-    const leftConnector.classList.add("left-connector");
+    const leftConnector = document.createElement("div");
+    leftConnector.classList.add("left-connector");
 
     leftConnectorWrapper.appendChild(leftConnector);
 
@@ -334,45 +330,6 @@ const stage = document.getElementById("stage");
 
 gridToggle.addEventListener("click", () => {
     stage.classList.toggle("show-grid");
-});
-
-// ========================================================================
-//  אפשור גרירה ושחרור של החתול - קוד מינימלי
-// ========================================================================
-const character = document.getElementById("character");
-const stage = document.getElementById("stage");
-let isDragging = false;
-let startX = 0;
-let startY = 0;
-
-character.addEventListener("mousedown", (e) => {
-    isDragging = true;
-    startX = e.clientX - character.offsetLeft;
-    startY = e.clientY - character.offsetTop;
-});
-
-stage.addEventListener("mouseup", () => {
-    isDragging = false;
-});
-
-stage.addEventListener("mousemove", (e) => {
-    if (!isDragging) return;
-
-    const x = e.clientX - startX - stage.offsetLeft;  // תיקון: התחשבות במיקום הבמה
-    const y = e.clientY - startY - stage.offsetTop;  // תיקון: התחשבות במיקום הבמה
-
-    // שמירה שהחתול לא יצא מגבולות הבמה
-    const stageRect = stage.getBoundingClientRect();
-    const charRect = character.getBoundingClientRect();
-
-    let boundedX = x;
-    let boundedY = y;
-
-    boundedX = Math.max(0, Math.min(boundedX, stageRect.width - charRect.width));
-    boundedY = Math.max(0, Math.min(boundedY, stageRect.height - charRect.height));
-
-    character.style.left = boundedX + "px";
-    character.style.top = boundedY + "px";
 });
 
 // אתחול הלוח עם הקטגוריה הפעילה הראשונה
