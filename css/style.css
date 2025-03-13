@@ -39,13 +39,13 @@ main {
     flex: 0 0 auto;
     width: 550px;
     height: 450px;
-    background-color: #f5f5f5;  /* רקע בהיר יותר */
+    background-color: #f5f5f5; /* רקע בהיר יותר */
     border: 1px solid #e0e0e0;
     border-radius: 10px;
     position: relative;
     /* display: grid; הסרתי את זה כי אנחנו יוצרים קווי רשת אחרת */
-   /* grid-template-columns: repeat(10, 1fr); */
-   /* grid-template-rows: repeat(10, 1fr); */
+    /* grid-template-columns: repeat(10, 1fr); */
+    /* grid-template-rows: repeat(10, 1fr); */
     gap: 1px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
@@ -67,11 +67,11 @@ main {
 }
 
 #stage.show-grid {
-  background-image: 
-    linear-gradient(to right, lightgrey 1px, transparent 1px),
-    linear-gradient(to bottom, lightgrey 1px, transparent 1px);
-  background-size: 56px 46px; /* Set the size of the grid lines */
-  background-position: top left; /* Align the grid to the top left */
+    background-image:
+            linear-gradient(to right, lightgrey 1px, transparent 1px),
+            linear-gradient(to bottom, lightgrey 1px, transparent 1px);
+    background-size: 56px 46px; /* Set the size of the grid lines */
+    background-position: top left; /* Align the grid to the top left */
 }
 
 #character {
@@ -80,7 +80,6 @@ main {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
     object-fit: contain; /* גורם לתמונה להתאים בתוך השטח המוקצה לה */
     cursor: grab; /* הוספת סמן עכבר */
 }
@@ -129,7 +128,7 @@ main {
     max-width: 100%;
     max-height: 100%;
     pointer-events: none;
-   filter: invert(100%);
+    filter: invert(100%);
 }
 
 .category-tab[data-category="triggering"] {
