@@ -164,7 +164,7 @@ main {
     max-width: 100%;
     max-height: 100%;
     pointer-events: none;
-   filter: invert(100%);
+    filter: invert(100%);
 }
 
 .category-tab[data-category="triggering"] {
@@ -282,13 +282,12 @@ main {
 }
 
 .block img {
-    max-width: 60%;
-    max-height: 60%;
+    max-width: 30px;
+    max-height: 30px;
     width: 35px !important;
     height: 35px !important;
-    border: none;
+         border: none;
     outline: none;
-        object-fit: contain;
 }
 
 /* הסרה ספציפית של גבול מ SVG בכל הקטגוריות */
