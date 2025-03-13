@@ -1,4 +1,4 @@
-// ========================================================================
+ // ========================================================================
 //  הגדרת בלוקים (Blocks)
 // ========================================================================
 
@@ -51,6 +51,8 @@ const blocks = {
         {
             name: "⬆️",
             color: "blue",
+            type: "moveUp",
+            icon: "⬆️",
             type: "moveUp",
             icon: "⬆️",
         },
@@ -227,16 +229,17 @@ function populateBlockPalette(category) {
 }
 
 // ========================================================================
-//  אזור הקוד
+//  לוגיקת גרירה ושחרור (Drag and Drop)
 // ========================================================================
-const programBlocks = document.getElementById("program-blocks");
 
-programBlocks.addEventListener("dragover", function(event) {
+const programmingArea = document.getElementById("program-blocks");
+
+programmingArea.addEventListener("dragover", function(event) {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
 });
 
-programBlocks.addEventListener("drop", function(event) {
+programmingArea.addEventListener("drop", function(event) {
     event.preventDefault();
 
     const data = JSON.parse(event.dataTransfer.getData("text/plain"));
@@ -245,8 +248,8 @@ programBlocks.addEventListener("drop", function(event) {
     const blockColor = data.color;
     const source = data.source;
 
-    const offsetX = event.clientX - programBlocks.offsetLeft;
-    const offsetY = event.clientY - programBlocks.offsetTop;
+    const offsetX = event.clientX - programmingArea.offsetLeft;
+    const offsetY = event.clientY - programmingArea.offsetTop;
 
     if (draggedBlock) {
         draggedBlock.style.left = `${offsetX}px`;
@@ -260,16 +263,16 @@ programBlocks.addEventListener("drop", function(event) {
         newBlock.textContent = blockIcon;
         newBlock.dataset.type = blockType;
         newBlock.draggable = true;
-         newBlock.style.position = "absolute";
-    newBlock.style.left = `${offsetX}px`;
-    newBlock.style.top = `${offsetY}px`;
+        newBlock.style.position = "absolute";
+        newBlock.style.left = `${offsetX}px`;
+        newBlock.style.top = `${offsetY}px`;
 
         newBlock.addEventListener("dragstart", function(event) {
             draggedBlock = this;
             event.dataTransfer.setData("text/plain", JSON.stringify({ type: blockType, icon: blockIcon, color: blockColor, source: "programmingArea" }));
             event.dataTransfer.effectAllowed = "move";
         });
-         programBlocks.appendChild(newBlock);
+        programBlocks.appendChild(newBlock);
     }
 
 });
@@ -280,7 +283,6 @@ const blockCategories = document.querySelectorAll(".block-category");
 categoryTabs.forEach(tab => {
     tab.addEventListener("click", () => {
         blockCategories.forEach(c => c.classList.remove("active"));
-       
         categoryTabs.forEach(t => t.classList.remove("active"));
         tab.classList.add("active");
         const category = tab.dataset.category;
