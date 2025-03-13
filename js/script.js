@@ -233,46 +233,41 @@ programmingArea.addEventListener("dragover", function(event) {
 });
 
 // טיפול באירוע שחרור באזור התכנות (drop)
-programmingArea.addEventListener("drop", function(event) {
-  event.preventDefault();
+programmingArea.addEventListener("drop", (event) => {
+    event.preventDefault();
 
-  const data = JSON.parse(event.dataTransfer.getData("text/plain"));
-  const blockType = data.type;
-  const blockIcon = data.icon;
-  const blockColor = data.color;
-  const source = data.source;
+    const data = JSON.parse(event.dataTransfer.getData("text/plain"));
+    const blockType = data.type;
+    const blockIcon = data.icon;
+    const blockColor = data.color;
+    const source = data.source;
 
-  const offsetX = event.clientX - programmingArea.offsetLeft;
-  const offsetY = event.clientY - programmingArea.offsetTop;
+    const offsetX = event.clientX - programmingArea.offsetLeft;
+    const offsetY = event.clientY - programmingArea.offsetTop;
 
     if (draggedBlock) {
-       draggedBlock.style.left = `${offsetX}px`;
+        draggedBlock.style.left = `${offsetX}px`;
         draggedBlock.style.top = `${offsetY}px`;
         draggedBlock.classList.remove("dragging");
-    } else
-    {
-      //יצירת אלמנט במידה ויצא מקטגוריה
-                const newBlock = document.createElement("div");
-                 newBlock.classList.add("block");
-                  newBlock.style.backgroundColor = blockColor; 
-                  newBlock.textContent = blockIcon; 
-                  newBlock.dataset.type = blockType;
-                  newBlock.draggable = true;
-                  newBlock.style.position = "absolute";
-                  newBlock.style.left = `${offsetX}px`;
-                  newBlock.style.top = `${offsetY}px`;
+        draggedBlock = null;
+    } else {
+        const newBlock = document.createElement("div");
+        newBlock.classList.add("block");
+        newBlock.style.backgroundColor = blockColor;
+        newBlock.textContent = blockIcon;
+        newBlock.dataset.type = blockType;
+        newBlock.draggable = true;
+           newBlock.style.position = "absolute";
+    newBlock.style.left = `${offsetX}px`;
+    newBlock.style.top = `${offsetY}px`;
 
-               newBlock.addEventListener("dragstart", function(event) {
-                    draggedBlock = this;
-                  event.dataTransfer.setData("text/plain", JSON.stringify({ type: blockType, icon: blockIcon, color: blockColor, source: "programmingArea" }));
-                  event.dataTransfer.effectAllowed = "move";
-               });
-                  programmingArea.appendChild(newBlock);
-
+        newBlock.addEventListener("dragstart", function(event) {
+            draggedBlock = this;
+            event.dataTransfer.setData("text/plain", JSON.stringify({ type: blockType, icon: blockIcon, color: blockColor, source: "programmingArea" }));
+            event.dataTransfer.effectAllowed = "move";
+        });
+     programmingArea.appendChild(newBlock);
     }
-
-       draggedBlock = null;
-   
 });
 
 const categoryTabs = document.querySelectorAll(".category-tab");
@@ -287,5 +282,6 @@ categoryTabs.forEach(tab => {
         const category = tab.dataset.category;
         document.getElementById(`${category}-blocks`).classList.add("active");
         populateBlockPalette(category);
+
     });
 });
