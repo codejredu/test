@@ -1,4 +1,8 @@
- const blocks = {
+ // ========================================================================
+//  הגדרת בלוקים (Blocks)
+// ========================================================================
+
+const blocks = {
     triggering: [
         {
             name: "🚩",
@@ -10,6 +14,7 @@
             name: "👆",
             color: "yellow",
             type: "startOnTap",
+            type: "startOnGreenFlag",
             icon: "👆",
         },
         {
@@ -156,6 +161,7 @@
             name: "♾️",
             type: "repeatForever",
             icon: "♾️",
+            color: "orange"
         },
         {
             name: "🚪",
@@ -228,108 +234,47 @@ const programBlocks = document.getElementById("program-blocks");
 
 programBlocks.addEventListener("dragover", function(event) {
     event.preventDefault();
-    if(!isDragging) return;
-    const draggedOverElement = event.target
-
+    event.dataTransfer.dropEffect = "move";
 });
 
 programBlocks.addEventListener("drop", function(event) {
-    if(!isDragging) return;
-      event.preventDefault();
+    event.preventDefault();
 
     const data = JSON.parse(event.dataTransfer.getData("text/plain"));
+    const blockType = data.type;
+    const blockIcon = data.icon;
+    const blockColor = data.color;
+    const source = data.source;
 
-        if (data.source === "blockPalette") {
+    const offsetX = event.clientX - programmingArea.offsetLeft;
+    const offsetY = event.clientY - programmingArea.offsetTop;
+
+    if (draggedBlock) {
+        draggedBlock.style.left = `${offsetX}px`;
+        draggedBlock.style.top = `${offsetY}px`;
+        draggedBlock.classList.remove("dragging");
+        draggedBlock = null;
+    } else {
         const newBlock = document.createElement("div");
         newBlock.classList.add("block");
-        newBlock.style.backgroundColor = data.color;
-        newBlock.textContent = data.icon;
-        newBlock.dataset.type = data.type;
+        newBlock.style.backgroundColor = blockColor;
+        newBlock.textContent = blockIcon;
+        newBlock.dataset.type = blockType;
         newBlock.draggable = true;
-          newBlock.style.position = "absolute";
-         newBlock.style.left = `${event.clientX - programBlocks.offsetLeft}px`;
-         newBlock.style.top = `${event.clientY - programBlocks.offsetTop}px`;
+         newBlock.style.position = "absolute";
+    newBlock.style.left = `${offsetX}px`;
+    newBlock.style.top = `${offsetY}px`;
 
-         newBlock.addEventListener("dragstart", function(event) {
-             draggedBlock = this; // שמירת הפניה לבלוק הנגרר
-             isDragging = true;
-             event.dataTransfer.setData("text/plain", JSON.stringify({ type: blockType, icon: blockIcon, color: blockColor, source: "programmingArea" }));
-                event.dataTransfer.effectAllowed = "move";
-           });
-           programBlocks.appendChild(newBlock);
-        checkAndAttach(newBlock);
+        newBlock.addEventListener("dragstart", function(event) {
+            draggedBlock = this;
+            event.dataTransfer.setData("text/plain", JSON.stringify({ type: blockType, icon: blockIcon, color: blockColor, source: "programmingArea" }));
+            event.dataTransfer.effectAllowed = "move";
+        });
+          programmingArea.appendChild(newBlock);
     }
-    function checkAndAttach(currentElement) {
-  const proximityThreshold = 50;
-
-  const rect1 = currentElement.getBoundingClientRect();
-  const allBlocks = document.querySelectorAll('.block');
-
-  allBlocks.forEach((existingElement) => {
-  if(currentElement === existingElement) return;
-
-      const rect2 = existingElement.getBoundingClientRect();
-
-          let test=  Math.abs(rect1.right - rect2.left) < proximityThreshold &&
-              Math.abs(rect1.top - rect2.top) < proximityThreshold &&
-               rect1.dataset.type !== "pepe";
-
-      if (test){
-
-               if (currentElement.parentNode){
-
-            }
-          console.log( "اتصال");
-
-          //מחק לטובת יצירת אחד חדש
-         addBefore(currentElement,existingElement)
-         // currentElement = null;
-          existingElement = null;
-
-
-        }
-          //לייעד אוביקט אחר כך ולשנותו-במידת הצורך
-
-
-          });
-          function addBefore(el, target) {
-            target.parentNode.insertBefore(el, target);
-          }
-
-
-}
 
 });
 
-// פונקציה למציאת בלוק קרוב ביותר לחיבור
-function findClosestBlock(block) {
-    const blockPosition = block.getBoundingClientRect();
-    const allBlocks = programBlocks.querySelectorAll('.block:not(.dragging)');
-    let closestBlock = null;
-    let closestDistance = Infinity;
-
-    allBlocks.forEach(otherBlock => {
-        const otherBlockPosition = otherBlock.getBoundingClientRect();
-        const distance = Math.sqrt(
-            Math.pow(blockPosition.x - otherBlockPosition.x, 2) +
-            Math.pow(blockPosition.y - otherBlockPosition.y, 2)
-        );
-        if (distance < closestDistance) {
-            closestDistance = distance;
-            closestBlock = otherBlock;
-        }
-    });
-
-    return closestBlock;
-}
-
-// הסרה ה"סימון"
-function resetHighlight() {
-    const highlightedBlocks = programBlocks.querySelectorAll('.block.highlight');
-    highlightedBlocks.forEach(block => block.classList.remove('highlight'));
-}
-
-// הפעלת הקוד
 const categoryTabs = document.querySelectorAll(".category-tab");
 const blockCategories = document.querySelectorAll(".block-category");
 
