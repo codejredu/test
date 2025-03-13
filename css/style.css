@@ -1,4 +1,4 @@
- body {
+body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -64,60 +64,13 @@ main {
 }
 
 #character {
-    width: auto;
-    height: auto;
+    width: 100px; /* התאם את הרוחב לפי הצורך */
+    height: auto; /* שמירה על יחס גובה-רוחב */
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: transparent;
-    border-radius: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-#character .head {
-    font-size: 50px;
-}
-
-#character .body {
-    width: 60px;
-    height: 40px;
-    background-color: #ffcc00;
-    border-radius: 20px;
-    margin-top: -10px;
-}
-
-#character .tail {
-    width: 10px;
-    height: 30px;
-    background-color: #ffcc00;
-    border-radius: 5px;
-    position: relative;
-    top: -5px;
-    left: 30px;
-    transform: rotate(45deg);
-}
-
-#character .ear {
-    width: 0;
-    height: 0;
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-bottom: 15px solid #ffcc00; /* צבע אוזניים */
-    position: absolute;
-    top: 5px;
-}
-
-#character .ear.left {
-    left: -5px;
-    transform: rotate(-30deg);
-}
-
-#character .ear.right {
-    right: -5px;
-    transform: rotate(30deg);
+    object-fit: contain; /* גורם לתמונה להתאים בתוך השטח המוקצה לה */
 }
 
 .palette-and-programming {
