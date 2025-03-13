@@ -230,71 +230,9 @@ main {
     position: relative; /* כדי למקם אלמנטים באופן אבסולוטי בתוכו */
 }
 
-#program-blocks .block {
+#program-blocks .block-container {
     position: absolute; /* כדי למקם את הבלוקים באופן חופשי */
     /* כאן אפשר להוסיף עוד סגנונות */
-}
-
-.block {
-    width: 80px;
-    height: 80px;
-    margin: 5px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #fff;
-    font-size: 16px;
-    border-radius: 10px;
-    cursor: grab;
-    font-size: 45px;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
-    font-size: 15px;
-    position: relative; /* הוספנו את זה כדי למקם את השקע באופן אבסולוטי בתוך הבלוק */
-}
-
-.block img {
-    width: 30px !important;
-    height: 30px !important;
-    border: none;
-    outline: none;
-    background-color: transparent;
-     object-fit: contain;
-}
-
-/* הסרה ספציפית של גבול מ SVG בכל הקטגוריות */
-#triggering-blocks .block img,
-#motion-blocks .block img,
-#looks-blocks .block img,
-#sound-blocks .block img,
-#control-blocks .block img,
-#end-blocks .block img {
-    border: none;
-    outline: none;
-}
-
-#triggering-blocks .block {
-    background-color: #F9D74C;
-}
-
-#motion-blocks .block {
-    background-color: #3D81CC;
-}
-
-#looks-blocks .block {
-    background-color: #D86FBA;
-}
-
-#sound-blocks .block {
-    background-color: #4DC251;
-}
-
-#control-blocks .block {
-    background-color: #F8AA4C;
-}
-
-#end-blocks .block {
-    background-color: #F15959;
 }
 
 .logo {
@@ -314,13 +252,105 @@ main {
     cursor: pointer;
 }
 
-.socket {
+.block-container {
+    position: relative;
+    width: 80px; /* הגדלת הרוחב */
+    height: 40px;
+    margin: 5px;
+    cursor: pointer;
+}
+
+.scratch-block {
     position: absolute;
-    left: -10px; /* לדוגמה, אם רוחב השקע הוא 20px */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #25AFF4;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.1); /* הוספת צללית פנימית */
+    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out; /* הוספת transition ל-background-color */
+}
+
+.scratch-block:hover {
+    transform: scale(1.05);
+}
+
+.scratch-block:active {
+    transform: scale(0.95);
+}
+
+.right-connector {
+    position: absolute;
+    right: -10px;
     top: 50%;
     transform: translateY(-50%);
-    width: 20px; /* רוחב השקע */
-    height: 20px; /* גובה השקע */
-    background-color: #ccc; /* צבע אפור בהיר */
-    border-radius: 5px; /* פינות מעוגלות */
+    width: 12px;
+    height: 20px;
+    background-color: #25AFF4;
+    border-radius: 0 30px 30px 0;
+}
+
+.left-connector-wrapper {
+    position: absolute;
+    left: -10px;
+    top: 0;
+    height: 100%;
+    width: 14px;
+    overflow: hidden;
+}
+
+.left-connector {
+    position: absolute;
+    left: -5px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    background-color: #f0f0f0;
+    border-radius: 50%;
+}
+
+.block-icon {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 5px; /* הוספת רווח בין האייקון לטקסט */
+}
+
+.block-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+#triggering-blocks .block-container .scratch-block {
+    background-color: #F9D74C;
+}
+
+#motion-blocks .block-container .scratch-block {
+    background-color: #3D81CC;
+}
+
+#looks-blocks .block-container .scratch-block {
+    background-color: #D86FBA;
+}
+
+#sound-blocks .block-container .scratch-block {
+    background-color: #4DC251;
+}
+
+#control-blocks .block-container .scratch-block {
+    background-color: #F8AA4C;
+}
+
+#end-blocks .block-container .scratch-block {
+    background-color: #F15959;
 }
