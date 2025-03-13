@@ -1,4 +1,4 @@
-body {
+ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -209,10 +209,11 @@ main {
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 45px; /* שינוי הרוחב ל-45px */
-    height: 45px; /* שינוי הגובה ל-45px */
+    width: 60px; /* שינוי הרוחב ל-60px */
+    height: 60px; /* שינוי הגובה ל-60px */
     margin: 5px;
     cursor: pointer;
+    background-color: transparent; /* הוספת רקע שקוף */
 }
 
 /* הוספתי את זה כדי שהגודל ישפיע על הבלוקים בפלטה */
