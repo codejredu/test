@@ -8,14 +8,16 @@
     <style>
         /* סגנונות נוספים אם צריך */
         #stage {
-            position: relative; /* חשוב! */
+            position: relative;
+            width: 550px;
+            height: 450px;
         }
+
         #character {
-            position: absolute; /* חשוב! */
+            position: absolute;
+            width: 100px;
+            height: 100px;
             cursor: grab;
-            /* הוספה של transition כדי לתת תחושה יותר נעימה */
-            transition: all 0.1s ease-out;
-            /* הוספה כדי שהדמות תתחיל באמצע */
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
@@ -24,122 +26,93 @@
 </head>
 <body>
 
-    <div class="container">
-        <header>
-            <div class="logo">ScratchJr</div>
-            <div class="header-icons">
-                <span class="icon">💾</span>
-                <span class="icon">📄</span>
-                <span class="icon">▶️</span> <!-- מצב מצגת -->
-                <span class="icon">➕</span> <!-- הוסף עמוד -->
-                <span class="icon">ℹ️</span> <!-- מידע על הפרויקט -->
-                <span class="icon" id="grid-toggle">GRID</span> <!-- כפתור קווי GRID -->
+<div class="container">
+    <header>
+        <div class="logo">ScratchJr</div>
+        <div class="header-icons">
+            <span class="icon">💾</span>
+            <span class="icon">📄</span>
+            <span class="icon">▶️</span>
+            <span class="icon">➕</span>
+            <span class="icon">ℹ️</span>
+            <span class="icon" id="grid-toggle">GRID</span>
+        </div>
+    </header>
+
+    <main>
+        <div class="stage-container">
+            <div id="stage">
+                <img id="character" src="assets/images/CAT.svg" alt="Cat" draggable="true">
             </div>
-        </header>
-
-        <main>
-            <div class="stage-container">
-                <div id="stage">
-                    <!-- כאן הדמויות והרקע יוצגו -->
-                    <img id="character" src="assets/images/CAT.svg" alt="Cat">
+        </div>
+        <div class="palette-and-programming">
+            <div id="block-palette">
+                <div class="category-tabs">
+                    <button class="category-tab" data-category="end">
+                        <img src="assets/images/end.svg" alt="End">
+                    </button>
+                    <button class="category-tab" data-category="control">
+                        <img src="assets/images/control.svg" alt="Control">
+                    </button>
+                    <button class="category-tab" data-category="sound">
+                        <img src="assets/images/sound.svg" alt="Sound">
+                    </button>
+                    <button class="category-tab" data-category="looks">
+                        <img src="assets/images/looks.svg" alt="Looks">
+                    </button>
+                    <button class="category-tab" data-category="motion">
+                        <img src="assets/images/motion.svg" alt="Motion">
+                    </button>
+                    <button class="category-tab active" data-category="triggering">
+                        <img src="assets/images/triggering.svg" alt="Triggers">
+                    </button>
                 </div>
+                <div id="end-blocks" class="block-category" data-category="end"></div>
+                <div id="control-blocks" class="block-category" data-category="control"></div>
+                <div id="sound-blocks" class="block-category" data-category="sound"></div>
+                <div id="looks-blocks" class="block-category" data-category="looks"></div>
+                <div id="motion-blocks" class="block-category" data-category="motion"></div>
+                <div id="triggering-blocks" class="block-category active" data-category="triggering"></div>
             </div>
-            <div class="palette-and-programming">
 
-                <div id="block-palette">
-                    <!-- כאן יוצגו הבלוקים השונים -->
-                    <div class="category-tabs">
-                        <button class="category-tab" data-category="end">
-                            <img src="assets/images/end.svg" alt="End">
-                        </button>
-                        <button class="category-tab" data-category="control">
-                            <img src="assets/images/control.svg" alt="Control">
-                        </button>
-                        <button class="category-tab" data-category="sound">
-                            <img src="assets/images/sound.svg" alt="Sound">
-                        </button>
-                        <button class="category-tab" data-category="looks">
-                            <img src="assets/images/looks.svg" alt="Looks">
-                        </button>
-                        <button class="category-tab" data-category="motion">
-                            <img src="assets/images/motion.svg" alt="Motion">
-                        </button>
-                        <button class="category-tab active" data-category="triggering">
-                            <img src="assets/images/triggering.svg" alt="Triggers">
-                        </button>
-                    </div>
-                    <div id="end-blocks" class="block-category" data-category="end"></div>
-                    <div id="control-blocks" class="block-category" data-category="control"></div>
-                    <div id="sound-blocks" class="block-category" data-category="sound"></div>
-                    <div id="looks-blocks" class="block-category" data-category="looks"></div>
-                    <div id="motion-blocks" class="block-category" data-category="motion"></div>
-                    <div id="triggering-blocks" class="block-category active" data-category="triggering"></div>
-
-                </div>
-
-                <div id="programming-area">
-                    <!-- כאן המשתמש יגרור ויחבר בלוקים -->
-                    <div class="program-header">Program <span id="clear-all">Clear All</span></div>
-                    <div id="program-blocks"></div>
-                </div>
+            <div id="programming-area">
+                <div class="program-header">Program <span id="clear-all">Clear All</span></div>
+                <div id="program-blocks"></div>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
+</div>
 
-    <script src="js/script.js"></script>
-    <script>
-        const character = document.getElementById('character');
-        const stage = document.getElementById('stage');
-        let isDragging = false;
-        let offsetX = 0;
-        let offsetY = 0;
+<script src="js/script.js"></script>
+<script>
+    const character = document.getElementById('character');
+    const stage = document.getElementById('stage');
 
-        character.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            offsetX = e.clientX - character.getBoundingClientRect().left;
-            offsetY = e.clientY - character.getBoundingClientRect().top;
-            character.style.cursor = 'grabbing';
-        });
+    character.addEventListener('dragstart', (event) => {
+        event.dataTransfer.setData('text/plain', ''); // Required for drag to work in Firefox
+    });
 
-        // שינוי משמעותי - הוספת Event Listener לבמה במקום ל document
-        stage.addEventListener('mouseup', () => {
-            isDragging = false;
-            character.style.cursor = 'grab';
-        });
+    stage.addEventListener('dragover', (event) => {
+        event.preventDefault(); // Allow drop
+    });
 
-        document.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
+    stage.addEventListener('drop', (event) => {
+        event.preventDefault();
 
-            // הגבלת התנועה לתחומי הבמה
-            const stageRect = stage.getBoundingClientRect();
-            let x = e.clientX - offsetX - stageRect.left;
-            let y = e.clientY - offsetY - stageRect.top;
+        const stageRect = stage.getBoundingClientRect();
+        const characterWidth = character.offsetWidth;
+        const characterHeight = character.offsetHeight;
 
-            // הגבלת הגרירה בתוך הבמה
-            const characterWidth = character.offsetWidth;
-            const characterHeight = character.offsetHeight;
+        let x = event.clientX - stageRect.left - characterWidth / 2;
+        let y = event.clientY - stageRect.top - characterHeight / 2;
 
-            // תיקון מיקום ה-X
-            if (x < 0) {
-                x = 0;
-            } else if (x + characterWidth > stageRect.width) {
-                x = stageRect.width - characterWidth;
-            }
+        // Stay within stage bounds
+        x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
+        y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
 
-            // תיקון מיקום ה-Y
-            if (y < 0) {
-                y = 0;
-            } else if (y + characterHeight > stageRect.height) {
-                y = stageRect.height - characterHeight;
-            }
-
-            character.style.left = x + 'px';
-            character.style.top = y + 'px';
-        });
-
-        character.addEventListener('dragstart', (e) => {
-            e.preventDefault(); // מניעת גרירת תמונה רגילה
-        });
-    </script>
+        character.style.left = x + 'px';
+        character.style.top = y + 'px';
+    });
+</script>
 </body>
 </html>
