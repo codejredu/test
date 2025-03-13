@@ -13,6 +13,8 @@
         #character {
             position: absolute; /* חשוב! */
             cursor: grab;
+            /* הוספה של transition כדי לתת תחושה יותר נעימה */
+            transition: all 0.1s ease-out;
         }
     </style>
 </head>
@@ -112,7 +114,8 @@
             character.style.cursor = 'grabbing';
         });
 
-        document.addEventListener('mouseup', () => {
+        // שינוי משמעותי - הוספת Event Listener לבמה במקום ל document
+        stage.addEventListener('mouseup', () => {
             isDragging = false;
             character.style.cursor = 'grab';
         });
