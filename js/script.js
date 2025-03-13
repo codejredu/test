@@ -14,7 +14,6 @@ const blocks = {
             name: "👆",
             color: "yellow",
             type: "startOnTap",
-            type: "startOnGreenFlag",
             icon: "👆",
         },
         {
@@ -246,8 +245,8 @@ programBlocks.addEventListener("drop", function(event) {
     const blockColor = data.color;
     const source = data.source;
 
-    const offsetX = event.clientX - programmingArea.offsetLeft;
-    const offsetY = event.clientY - programmingArea.offsetTop;
+    const offsetX = event.clientX - programBlocks.offsetLeft;
+    const offsetY = event.clientY - programBlocks.offsetTop;
 
     if (draggedBlock) {
         draggedBlock.style.left = `${offsetX}px`;
@@ -270,7 +269,7 @@ programBlocks.addEventListener("drop", function(event) {
             event.dataTransfer.setData("text/plain", JSON.stringify({ type: blockType, icon: blockIcon, color: blockColor, source: "programmingArea" }));
             event.dataTransfer.effectAllowed = "move";
         });
-          programmingArea.appendChild(newBlock);
+         programBlocks.appendChild(newBlock);
     }
 
 });
@@ -281,6 +280,7 @@ const blockCategories = document.querySelectorAll(".block-category");
 categoryTabs.forEach(tab => {
     tab.addEventListener("click", () => {
         blockCategories.forEach(c => c.classList.remove("active"));
+       
         categoryTabs.forEach(t => t.classList.remove("active"));
         tab.classList.add("active");
         const category = tab.dataset.category;
