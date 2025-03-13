@@ -1,4 +1,4 @@
-body {
+ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -254,8 +254,8 @@ main {
 
 .block-container {
     position: relative;
-    width: 80px; /* הגדלת הרוחב */
-    height: 40px;
+    width: 50px; /* שינוי הרוחב ל-50px */
+    height: 50px; /* שינוי הגובה ל-50px */
     margin: 5px;
     cursor: pointer;
 }
@@ -288,31 +288,31 @@ main {
 
 .right-connector {
     position: absolute;
-    right: -10px;
+    right: -5px; /* התאמת המיקום */
     top: 50%;
     transform: translateY(-50%);
-    width: 12px;
-    height: 20px;
+    width: 8px; /* הקטנת הרוחב */
+    height: 15px; /* הקטנת הגובה */
     background-color: #25AFF4;
     border-radius: 0 30px 30px 0;
 }
 
 .left-connector-wrapper {
     position: absolute;
-    left: -10px;
+    left: -7px; /* התאמת המיקום */
     top: 0;
     height: 100%;
-    width: 14px;
+    width: 10px; /* הקטנת הרוחב */
     overflow: hidden;
 }
 
 .left-connector {
     position: absolute;
-    left: -5px;
+    left: -8px;
     top: 50%;
     transform: translateY(-50%);
-    width: 24px;
-    height: 24px;
+    width: 16px; /* הקטנת הרוחב */
+    height: 16px; /* הקטנת הגובה */
     background-color: #f0f0f0;
     border-radius: 50%;
 }
