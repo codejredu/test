@@ -1,4 +1,4 @@
- body {
+body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -64,8 +64,8 @@ main {
 }
 
 #character {
-    width: 50px; /* שינוי הרוחב ל-50px */
-    height: 50px; /* שינוי הגובה ל-50px */
+    width: 100px; /* שינוי הרוחב ל-100px */
+    height: 100px; /* שינוי הגובה ל-100px */
     position: absolute;
     top: 50%;
     left: 50%;
