@@ -1,4 +1,4 @@
- body {
+body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -164,7 +164,7 @@ main {
     max-width: 100%;
     max-height: 100%;
     pointer-events: none;
-     filter: invert(100%);
+   filter: invert(100%);
 }
 
 .category-tab[data-category="triggering"] {
@@ -249,19 +249,45 @@ main {
     font-size: 45px;
      box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
     border-bottom: 2px solid rgba(0, 0, 0, 0.1);
-        font-size: 15px;
-        display: flex; /* כדי למקם את התמונה והטקסט במרכז */
-    align-items: center; /* לאזן אנכית */
-    justify-content: center; /* לאזן אופקית */
+    font-size: 15px;
+    position: relative; /* כדי שאפשר יהיה למקם את ה-::before וה-::after */
+}
+
+/*בליטה בצד ימין*/
+.block::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -10px; /* מוציא את הבליטה קצת החוצה */
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background-color: inherit; /* ירושה של צבע הרקע */
+    border-radius: 50%;
+    box-shadow: 3px 0 3px rgba(0, 0, 0, 0.2); /* אפקט תלת מימד */
+}
+
+/* שקע בצד שמאל */
+.block::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: -10px; /* מוציא את השקע קצת החוצה */
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background-color: #f0f4ff; /* צבע הרקע הכללי */
+    border-radius: 50%;
+    box-shadow: inset 2px 0 3px rgba(0, 0, 0, 0.2); /* אפקט תלת מימד */
 }
 
 .block img {
-    width: 30px !important;
-    height: 30px !important;
-    border: none;
+    max-width: 60%;
+    max-height: 60%;
+    width: 35px !important;
+    height: 35px !important;
+        border: none;
     outline: none;
-    background-color: transparent;
-     object-fit: contain;
 }
 
 /* הסרה ספציפית של גבול מ SVG בכל הקטגוריות */
