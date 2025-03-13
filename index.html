@@ -71,5 +71,58 @@
     </div>
 
     <script src="js/script.js"></script>
+    <script>
+        const character = document.getElementById('character');
+        const stage = document.getElementById('stage');
+        let isDragging = false;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        character.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            offsetX = e.clientX - character.getBoundingClientRect().left;
+            offsetY = e.clientY - character.getBoundingClientRect().top;
+            character.style.cursor = 'grabbing';
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            character.style.cursor = 'grab';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+
+            // הגבלת התנועה לתחומי הבמה
+            const stageRect = stage.getBoundingClientRect();
+            let x = e.clientX - offsetX - stageRect.left;
+            let y = e.clientY - offsetY - stageRect.top;
+
+            // הגבלת הגרירה בתוך הבמה
+            const characterWidth = character.offsetWidth;
+            const characterHeight = character.offsetHeight;
+
+            // תיקון מיקום ה-X
+            if (x < 0) {
+                x = 0;
+            } else if (x + characterWidth > stageRect.width) {
+                x = stageRect.width - characterWidth;
+            }
+
+            // תיקון מיקום ה-Y
+            if (y < 0) {
+                y = 0;
+            } else if (y + characterHeight > stageRect.height) {
+                y = stageRect.height - characterHeight;
+            }
+
+            character.style.left = x + 'px';
+            character.style.top = y + 'px';
+        });
+
+        character.addEventListener('dragstart', (e) => {
+            e.preventDefault(); // מניעת גרירת תמונה רגילה
+        });
+    </script>
 </body>
 </html>
