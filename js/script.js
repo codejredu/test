@@ -1,4 +1,4 @@
- // ========================================================================
+// ========================================================================
 //  הגדרת בלוקים (Blocks)
 // ========================================================================
 
@@ -227,47 +227,53 @@ const programmingArea = document.getElementById("program-blocks");
 let draggedBlock = null;
 
 // טיפול באירוע גרירה מעל אזור התכנות (dragover)
-programmingArea.addEventListener("dragover", function(event) {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
+programmingArea.addEventListener("dragover", (event) => {
+    event.preventDefault(); // מונע התנהגות ברירת מחדל
+    event.dataTransfer.dropEffect = "move"; // מציין שהפעולה היא העברה (move)
 });
 
 // טיפול באירוע שחרור באזור התכנות (drop)
 programmingArea.addEventListener("drop", (event) => {
-    event.preventDefault();
+    event.preventDefault(); // מונע התנהגות ברירת מחדל
 
-    const data = JSON.parse(event.dataTransfer.getData("text/plain"));
+    const data = JSON.parse(event.dataTransfer.getData("text/plain")); // קבלת המידע על הבלוק
     const blockType = data.type;
-    const blockIcon = data.icon;
-    const blockColor = data.color;
-    const source = data.source;
+    const blockIcon = data.icon; //קבלת האייקון
+    const blockColor = data.color;//קבלת הצבע
+    const source = data.source || "programmingArea"; // קבלת מקור הבלוק
 
     const offsetX = event.clientX - programmingArea.offsetLeft;
     const offsetY = event.clientY - programmingArea.offsetTop;
 
     if (draggedBlock) {
-        draggedBlock.style.left = `${offsetX}px`;
-        draggedBlock.style.top = `${offsetY}px`;
-        draggedBlock.classList.remove("dragging");
-        draggedBlock = null;
-    } else {
-        const newBlock = document.createElement("div");
-        newBlock.classList.add("block");
-        newBlock.style.backgroundColor = blockColor;
-        newBlock.textContent = blockIcon;
-        newBlock.dataset.type = blockType;
-        newBlock.draggable = true;
-           newBlock.style.position = "absolute";
+        // עדכון מיקום הבלוק הנגרר
+        if (source === "programmingArea") {
+            draggedBlock.style.left = `${offsetX}px`;
+            draggedBlock.style.top = `${offsetY}px`;
+        } else {
+            const newBlock = document.createElement("div");
+            newBlock.classList.add("block");
+            newBlock.style.backgroundColor = blockColor; // מציאת הצבע הנכון
+            newBlock.textContent = blockIcon; // מציאת השם הנכון
+            newBlock.dataset.type = blockType;
+            newBlock.draggable = true;
+               newBlock.style.position = "absolute";
     newBlock.style.left = `${offsetX}px`;
     newBlock.style.top = `${offsetY}px`;
 
-        newBlock.addEventListener("dragstart", function(event) {
-            draggedBlock = this;
-            event.dataTransfer.setData("text/plain", JSON.stringify({ type: blockType, icon: blockIcon, color: blockColor, source: "programmingArea" }));
-            event.dataTransfer.effectAllowed = "move";
-        });
-     programmingArea.appendChild(newBlock);
+            newBlock.addEventListener("dragstart", function(event) {
+              draggedBlock = this; // שמירת הפניה לבלוק הנגרר
+              event.dataTransfer.setData("text/plain", JSON.stringify({ type: blockType, icon: blockIcon, color: blockColor, source: "programmingArea" }));
+              event.dataTransfer.effectAllowed = "move";
+           });
+        
+              programmingArea.appendChild(newBlock);
+        }
+
+        draggedBlock.classList.remove("dragging");
+        draggedBlock = null;
     }
+
 });
 
 const categoryTabs = document.querySelectorAll(".category-tab");
