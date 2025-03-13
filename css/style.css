@@ -164,7 +164,7 @@ main {
     max-width: 100%;
     max-height: 100%;
     pointer-events: none;
-   filter: invert(100%);
+     filter: invert(100%);
 }
 
 .category-tab[data-category="triggering"] {
@@ -267,7 +267,7 @@ main {
     box-shadow: 3px 0 3px rgba(0, 0, 0, 0.2); /* אפקט תלת מימד */
 }
 
-/* שקע בצד שמאל */
+/* שקע בצד שמאל - שקוף */
 .block::after {
     content: "";
     position: absolute;
@@ -276,9 +276,9 @@ main {
     transform: translateY(-50%);
     width: 20px;
     height: 20px;
-    background-color: #f0f4ff; /* צבע הרקע הכללי */
+    background-color: transparent; /* רקע שקוף */
     border-radius: 50%;
-    box-shadow: inset 2px 0 3px rgba(0, 0, 0, 0.2); /* אפקט תלת מימד */
+    box-shadow: none; /* הסרת הצל */
 }
 
 .block img {
@@ -340,4 +340,14 @@ main {
     font-size: 24px;
     color: #999;
     cursor: pointer;
+}
+
+.dragging {
+    opacity: 0.5; /* אפקט שקיפות בזמן הגרירה */
+    /* אפשר להוסיף כאן סגנונות נוספים */
+}
+
+.highlight {
+    /* סגנון מיוחד לסימון אפשרות החיבור */
+    border: 2px dashed green;
 }
