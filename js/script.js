@@ -351,7 +351,7 @@ document.addEventListener("mouseup", () => {
     character.style.cursor = "grab"; // שינוי הסמן חזרה
 });
 
-document.addEventListener("mousemove", (e) => {
+stage.addEventListener("mousemove", (e) => { // שינוי: האזנה על הבמה
     if (!isDragging) return;
 
     const x = e.clientX - offsetX;
