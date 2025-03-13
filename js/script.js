@@ -185,13 +185,7 @@ const blocks = {
     ],
 };
 
-let draggedBlock = null; // גוש נגרר עכשוי
-let isDragging = false;
-
-// ========================================================================
-//  יצירת HTML לבני התכנות
-// ========================================================================
-
+// פונקציה ליצירת HTML עבור בלוק
 function createBlockElement(block, category) {
     const blockElement = document.createElement("div");
     blockElement.classList.add("block");
@@ -201,15 +195,14 @@ function createBlockElement(block, category) {
     blockElement.draggable = true;
 
     // טיפול באירוע התחלת גרירה (dragstart) - חשוב מאוד!
-    blockElement.addEventListener("dragstart", function(event) {
-        draggedBlock = this; // הבלוק שנגרר עכשיו
-        blockElement.classList.add("dragging"); // הוספת אפקט ויזואלי
-        event.dataTransfer.setData("text/plain", JSON.stringify({ type: block.type, icon: block.icon, color: block.color, source: "blockPalette" })); // הוספת מקור
+    blockElement.addEventListener("dragstart", (event) => {
+        event.dataTransfer.setData("text/plain", JSON.stringify({
+            type: block.type,
+            icon: block.icon,
+            color: block.color,
+            category: category // הוספת קטגוריה לנתונים
+        }));
         event.dataTransfer.effectAllowed = "move";
-    });
-
-    blockElement.addEventListener("dragend", () => {
-        blockElement.classList.remove("dragging"); // הסרת האפקט הויזואלי
     });
 
     return blockElement;
@@ -227,9 +220,10 @@ function populateBlockPalette(category) {
 }
 
 // ========================================================================
-//  אזור הקוד
+//  לוגיקת גרירה ושחרור (Drag and Drop)
 // ========================================================================
-const programBlocks = document.getElementById("program-blocks");
+
+const programmingArea = document.getElementById("program-blocks");
 
 // טיפול באירוע גרירה מעל אזור התכנות (dragover)
 programmingArea.addEventListener("dragover", (event) => {
@@ -241,39 +235,28 @@ programmingArea.addEventListener("dragover", (event) => {
 programmingArea.addEventListener("drop", (event) => {
     event.preventDefault(); // מונע התנהגות ברירת מחדל
 
-    const data = JSON.parse(event.dataTransfer.getData("text/plain"));
+    const data = JSON.parse(event.dataTransfer.getData("text/plain")); // קבלת המידע על הבלוק
     const blockType = data.type;
-    const blockIcon = data.icon;
-    const blockColor = data.color;
-    const source = data.source;
+    const blockCategory = data.category;
+    const blockIcon = data.icon; //קבלת האייקון
+    const blockColor = data.color;//קבלת הצבע
 
-    const offsetX = event.clientX - programmingArea.offsetLeft;
-    const offsetY = event.clientY - programmingArea.offsetTop;
+    // יצירת אלמנט בלוק חדש (שיבוט)
+    const newBlock = document.createElement("div");
+    newBlock.classList.add("block");
+    newBlock.style.backgroundColor = blockColor; // שימוש בצבע שהועבר
+    newBlock.textContent = blockIcon; //הוספת האייקון
+    newBlock.dataset.type = blockType;
+    newBlock.draggable = false; //העתק לא ניתן לגרירה
 
-    if (draggedBlock) {
-        draggedBlock.style.left = `${offsetX}px`;
-        draggedBlock.style.top = `${offsetY}px`;
-        draggedBlock.classList.remove("dragging");
-        draggedBlock = null;
-    } else {
-        const newBlock = document.createElement("div");
-        newBlock.classList.add("block");
-        newBlock.style.backgroundColor = blockColor;
-        newBlock.textContent = blockIcon;
-        newBlock.dataset.type = blockType;
-        newBlock.draggable = true;
-         newBlock.style.position = "absolute";
-    newBlock.style.left = `${offsetX}px`;
-    newBlock.style.top = `${offsetY}px`;
+    // הוספת הבלוק החדש לאזור התכנות
+    programmingArea.appendChild(newBlock);
 
-        newBlock.addEventListener("dragstart", function(event) {
-            draggedBlock = this;
-            event.dataTransfer.setData("text/plain", JSON.stringify({ type: blockType, icon: blockIcon, color: blockColor, source: "programmingArea" }));
-            event.dataTransfer.effectAllowed = "move";
-        });
-         programmingArea.appendChild(newBlock);
-    }
-
+    // מיקום הבלוק החדש יחסי לאזור התכנות
+    const rect = programmingArea.getBoundingClientRect();
+    newBlock.style.position = "absolute";
+    newBlock.style.left = `${event.clientX - rect.left}px`;
+    newBlock.style.top = `${event.clientY - rect.top}px`;
 });
 
 const categoryTabs = document.querySelectorAll(".category-tab");
@@ -281,12 +264,16 @@ const blockCategories = document.querySelectorAll(".block-category");
 
 categoryTabs.forEach(tab => {
     tab.addEventListener("click", () => {
-        blockCategories.forEach(c => c.classList.remove("active"));
-       
+        blockCategories.forEach(function(element){
+            element.classList.remove("active")
+        })
+        const category = tab.dataset.category;
         categoryTabs.forEach(t => t.classList.remove("active"));
         tab.classList.add("active");
-        const category = tab.dataset.category;
         document.getElementById(`${category}-blocks`).classList.add("active");
         populateBlockPalette(category);
     });
 });
+
+// אתחול הלוח עם הקטגוריה הפעילה הראשונה
+populateBlockPalette("triggering");
