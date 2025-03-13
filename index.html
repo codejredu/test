@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ScratchJr Web</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* סגנונות נוספים אם צריך */
+        #stage {
+            position: relative; /* חשוב! */
+        }
+        #character {
+            position: absolute; /* חשוב! */
+            cursor: grab;
+        }
+    </style>
 </head>
 <body>
 
@@ -23,10 +33,10 @@
 
         <main>
             <div class="stage-container">
-              <div id="stage">
-                  <!-- כאן הדמויות והרקע יוצגו -->
-                  <img id="character" src="assets/images/CAT.svg" alt="Cat">
-              </div>
+                <div id="stage">
+                    <!-- כאן הדמויות והרקע יוצגו -->
+                    <img id="character" src="assets/images/CAT.svg" alt="Cat">
+                </div>
             </div>
             <div class="palette-and-programming">
 
@@ -77,6 +87,23 @@
         let isDragging = false;
         let offsetX = 0;
         let offsetY = 0;
+
+        // הגדרת מיקום התחלתי רנדומלי לדמות
+        function setRandomPosition() {
+            const stageWidth = stage.offsetWidth;
+            const stageHeight = stage.offsetHeight;
+            const characterWidth = character.offsetWidth;
+            const characterHeight = character.offsetHeight;
+
+            const randomX = Math.random() * (stageWidth - characterWidth);
+            const randomY = Math.random() * (stageHeight - characterHeight);
+
+            character.style.left = randomX + 'px';
+            character.style.top = randomY + 'px';
+        }
+
+        // קריאה לפונקציה כדי לקבוע את המיקום ההתחלתי
+        setRandomPosition();
 
         character.addEventListener('mousedown', (e) => {
             isDragging = true;
