@@ -1,3 +1,6 @@
+בטח, הנה הקוד המלא עם התיקון שהוספתי כדי ליצור את השקע כמו בתמונה שצירפת.
+
+```css
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -266,6 +269,7 @@ main {
     height: 40px;
     background-color: transparent; /* שינוי כאן: רקע שקוף */
     border-radius: 50%;
+    box-shadow: inset 5px 0 10px rgba(0, 0, 0, 0.2); /* הוספתי צל פנימי */
 }
 
 .right-connector {
@@ -273,14 +277,3 @@ main {
 }
 
 .left-connector-wrapper {
-    display: none;
-}
-
-.left-connector {
-    display: none;
-}
-
-.block-icon {
-    width: 16px;
-    height: 16px;
-    display: flex;
