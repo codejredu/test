@@ -225,8 +225,8 @@ main {
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 85px; /* גודל כמו sticky-note */
-    height: 85px; /* גודל כמו sticky-note */
+    width: 85px;
+    height: 85px;
     margin: 5px;
     cursor: pointer;
     background-color: transparent; /* הוספת רקע שקוף */
@@ -238,70 +238,70 @@ main {
     position: absolute;
     width: 100%;
     height: 100%;
-    background-color: #7ED37E; /* ירוק כמו sticky-note כברירת מחדל */
-    border-radius: 8px; /* גבול מעוגל כמו sticky-note */
+    background-color: #7cd775; /* ירוק בהיר כברירת מחדל - ישתנה בהתאם לקטגוריה */
+    border-radius: 8px; /* שימוש ב border-radius של idea-button */
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #333; /* צבע טקסט כמו sticky-note */
+    color: #333; /* שימוש בצבע טקסט של idea-button */
     font-size: 16px;
     font-weight: bold;
-    border: none;
+    border: 1px solid black; /* הוספת גבול שחור דק */
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* צל כמו sticky-note */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* שימוש ב box-shadow של idea-button */
+    clip-path: polygon(10% 0, 0 50%, 10% 100%, 100% 100%, 100% 0);
 }
 
-/* שקע בצד שמאל - לבן כמו sticky-note */
+/* אפקט פאזל - משותף לכל הבלוקים */
 #block-palette .scratch-block::before,
-#programming-area .scratch-block::before {
-    content: '';
-    position: absolute;
-    left: 0; /* מיקום שמאלי כמו sticky-note */
-    top: 50%; /* מיקום אנכי כמו sticky-note */
-    transform: translateY(-50%); /* מרכוז אנכי כמו sticky-note */
-    width: 20px; /* רוחב כמו sticky-note */
-    height: 40px; /* גובה כמו sticky-note */
-    background-color: #FFF; /* צבע לבן כמו sticky-note */
-    border-radius: 50% 0 0 50%; /* עיגול כמו sticky-note */
-    box-shadow: inset 2px 0 5px rgba(0, 0, 0, 0.2); /* צל פנימי כמו sticky-note */
-}
-
-/* בליטה בצד ימין - צבע הבלוק */
+#programming-area .scratch-block::before,
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
-    content: '';
-    position: absolute;
-    right: -10px; /* מיקום ימני כמו sticky-note */
-    top: 50%; /* מיקום אנכי כמו sticky-note */
-    transform: translateY(-50%); /* מרכוז אנכי כמו sticky-note */
-    width: 20px; /* רוחב כמו sticky-note */
-    height: 40px; /* גובה כמו sticky-note */
-    background-color: inherit; /* ירושה מצבע הבלוק */
-    border-radius: 50%; /* עיגול כמו sticky-note */
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2); /* צל כמו sticky-note */
+  content: "";
+  position: absolute;
+  width: 12px; /* שימוש ב width של idea-button */
+  height: 24px; /* שימוש ב height של idea-button */
+  border-radius: 12px; /* שימוש ב border-radius של idea-button */
+}
+
+/* שקע בצד שמאל */
+#block-palette .scratch-block::before,
+#programming-area .scratch-block::before {
+  background-color: #fff; /* שימוש בצבע רקע של idea-button */
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* בליטה בצד ימין */
+#block-palette .scratch-block::after,
+#programming-area .scratch-block::after {
+  background-color: inherit;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 /* אפקטים של ריחוף ולחיצה - משותף לכל הבלוקים */
 #block-palette .scratch-block:hover,
 #programming-area .scratch-block:hover {
-    background-color: #66c05f; /* צבע ריחוף כמו sticky-note */
-    transform: translateY(-2px);
-    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  background-color: #66c05f; /* שימוש בצבע ריחוף של idea-button */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* שינוי צבע הבליטה בריחוף */
 #block-palette .scratch-block:hover::after,
 #programming-area .scratch-block:hover::after {
-    background-color: inherit; /* ירושה מצבע הבלוק בריחוף */
+  background-color: inherit; /* ירושה מצבע הבלוק בריחוף */
 }
 
 #block-palette .scratch-block:active,
 #programming-area .scratch-block:active {
-    transform: translateY(1px);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transform: translateY(1px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
-
 
 .right-connector {
     display:none; /* מסתיר את המחבר הימני המקורי */
