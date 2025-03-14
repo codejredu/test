@@ -1,4 +1,4 @@
-בטח, הנה קוד CSS מעודכן עם השינויים שהצעתי, כולל שימוש במשתני CSS, שיפור נגישות, ביצועים, קווי רשת, קטגוריות בלוקים, בלוקים, אזור תכנות, כפתור רשת ותאימות דפדפן.
+בטח, הנה הקוד המעודכן עם השקע משמאל והבליטה מימין בבלוקים:
 
 ```css
 :root {
@@ -8,7 +8,7 @@
     --block-bg: #ffff00;
     --text-color: #000;
     --grid-line-color: lightgrey;
-    --grid-size: 56px 46px; /* גודל ברירת מחדל */
+    --grid-size: 56px 46px;
 }
 
 body {
@@ -251,6 +251,7 @@ main {
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
+/* הוספה של השקע והבליטה */
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
     content: '';
@@ -267,4 +268,9 @@ main {
 #block-palette .scratch-block::before,
 #programming-area .scratch-block::before {
     content: '';
-    
+    position: absolute;
+    left: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height:
