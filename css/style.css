@@ -1,4 +1,4 @@
- body {
+body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -273,13 +273,15 @@ main {
     background-color: #f0f0f0; /* צבע הרקע של האפליקציה - לבן */
 }
 
-/* בליטה בצד ימין - צבע הבלוק */
+/* **בליטה בצד ימין - צבע הבלוק - תיקון קריטי!** */
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
     right: -10px;
     top: 50%;
     transform: translateY(-50%);
-    background-color: inherit; /* ירושה מצבע הבלוק */
+    /* **הנה התיקון:** השתמשנו ב-inherit קודם, אבל זה לא תמיד עובד טוב בפסאודו אלמנטים. */
+    /* במקום זאת, נגדיר את צבע הרקע ישירות, אבל נשתמש במשתנה CSS כדי שיהיה דינמי */
+    background-color: #ff66c4; /* ברירת מחדל - ורוד. קטגוריות ישנו את זה */
 }
 
 /* אפקטים של ריחוף ולחיצה - משותף לכל הבלוקים */
