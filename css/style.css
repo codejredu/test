@@ -1,4 +1,4 @@
-body {
+ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -231,7 +231,7 @@ main {
     background-color: transparent; /* הוספת רקע שקוף */
 }
 
-/* עיצוב בסיסי לבלוק - משותף לכל הקטגוריות */
+/* הוספתי את זה כדי שהגודל ישפיע על הבלוקים בפלטה */
 #block-palette .scratch-block,
 #programming-area .scratch-block {
     position: absolute;
@@ -264,14 +264,13 @@ main {
     border-radius: 50%;
 }
 
-/* שקע בצד שמאל - שקוף */
+/* שקע בצד שמאל - צבע הרקע של האפליקציה */
 #block-palette .scratch-block::before,
 #programming-area .scratch-block::before {
     left: -10px;
     top: 50%;
     transform: translateY(-50%);
-    background-color: transparent; /* שקוף */
-    box-shadow: -7px 0 0 #f0f4ff; /* צל שיוצר שקע */
+    background-color: #f0f0f0; /* צבע הרקע של האפליקציה - לבן */
 }
 
 /* בליטה בצד ימין - צבע הבלוק */
