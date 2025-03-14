@@ -1,7 +1,3 @@
-בטח, הנה הקוד המעודכן עם השינויים שביקשת:
-
-CSS
-
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -220,8 +216,8 @@ main {
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 60px; /* שינוי: הקטנת הרוחב */
-    height: 60px; /* שינוי: הקטנת הגובה */
+    width: 60px;
+    height: 60px;
     margin: 5px;
     cursor: pointer;
     background-color: transparent;
@@ -232,9 +228,8 @@ main {
     position: absolute;
     top: 0;
     left: 0;
-    width: 60px; /* שינוי: הקטנת הרוחב */
-    height: 60px; /* שינוי: הקטנת הגובה */
-    background-color: #ffff00;
+    width: 60px;
+    height: 60px;
     border-radius: 10px;
     display: flex;
     justify-content: center;
@@ -246,25 +241,41 @@ main {
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
-#block-palette .scratch-block::after,
-#programming-area .scratch-block::after {
-    content: '';
-    position: absolute;
-    right: -10px; /* שינוי: הקטנת המיקום */
-    top: 50%;
-    transform: translateY(-50%);
-    width: 20px; /* שינוי: הקטנת הרוחב */
-    height: 20px; /* שינוי: הקטנת הגובה */
-    background-color: #ffff00;
-    border-radius: 50%;
+/* התאמת צבע בלוק לפי קטגוריה */
+#block-palette .block-category[data-category="triggering"] .scratch-block,
+#programming-area .block-container[data-category="triggering"] .scratch-block {
+    background-color: yellow;
 }
 
+#block-palette .block-category[data-category="motion"] .scratch-block,
+#programming-area .block-container[data-category="motion"] .scratch-block {
+    background-color: blue;
+}
+
+#block-palette .block-category[data-category="looks"] .scratch-block,
+#programming-area .block-container[data-category="looks"] .scratch-block {
+    background-color: lavender;
+}
+
+#block-palette .block-category[data-category="sound"] .scratch-block,
+#programming-area .block-container[data-category="sound"] .scratch-block {
+    background-color: green;
+}
+
+#block-palette .block-category[data-category="control"] .scratch-block,
+#programming-area .block-container[data-category="control"] .scratch-block {
+    background-color: orange;
+}
+
+#block-palette .block-category[data-category="end"] .scratch-block,
+#programming-area .block-container[data-category="end"] .scratch-block {
+    background-color: red;
+}
+
+/* הסרת הבליטות והשקעים מהצדדים */
+#block-palette .scratch-block::after,
+#programming-area .scratch-block::after,
 #block-palette .scratch-block::before,
 #programming-area .scratch-block::before {
-    content: '';
-    position: absolute;
-    left: -10px; /* שינוי: הקטנת המיקום */
-    top: 50%;
-    transform: translateY(-50%);
-    width: 20px; /* שינוי: הקטנת הרוחב */
-    height: 20px; /* שינוי: הקט
+    display: none;
+}
