@@ -249,7 +249,7 @@ main {
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* שימוש ב box-shadow של idea-button */
-    overflow: hidden; /* כדי שהשקע לא יבלוט מגבולות הבלוק */
+    clip-path: polygon(10% 0, 0 50%, 10% 100%, 100% 100%, 100% 0); /* **קצוות ישרים + שקע משמאל** */
 }
 
 /* אפקט פאזל - משותף לכל הבלוקים */
@@ -279,13 +279,14 @@ main {
   content: ""; /* Required for pseudo-elements to display */
   position: absolute; /* Position it relative to the parent */
   background-color: inherit; /* Inherit color from parent block */
-  right: -6px; /* Position 6px to the right of the parent */
+  right: -10px; /* **הגדלת בליטה ימינה** */ /* Adjusted from -6px to -10px - Increased right for better visibility */
   top: 50%; /* Center vertically */
   transform: translateY(-50%); /* Ensure perfect vertical centering */
-  width: 6px; /* Give it width */
-  height: 12px; /* Give it height */
-  border-radius: 0 6px 6px 0; /* Round the right corners */
+  width: 10px; /* Give it width - Adjusted from 6px to 10px - Increased width for better visibility */
+  height: 24px; /* Give it height */
+  border-radius: 0 10px 10px 0; /* Round the right corners - Adjusted border-radius for wider protrusion */
 }
+
 
 /* אפקטים של ריחוף ולחיצה - משותף לכל הבלוקים */
 #block-palette .scratch-block:hover,
