@@ -231,7 +231,7 @@ main {
     background-color: transparent; /* הוספת רקע שקוף */
 }
 
-/* הוספתי את זה כדי שהגודל ישפיע על הבלוקים בפלטה */
+/* עיצוב בסיסי לבלוק - משותף לכל הקטגוריות */
 #block-palette .scratch-block,
 #programming-area .scratch-block {
     position: absolute;
@@ -264,25 +264,28 @@ main {
     border-radius: 50%;
 }
 
-/* שקע בצד שמאל - צבע הרקע של האפליקציה */
+/* שקע בצד שמאל - שקוף */
 #block-palette .scratch-block::before,
 #programming-area .scratch-block::before {
     left: -10px;
     top: 50%;
     transform: translateY(-50%);
-    background-color: #f0f0f0; /* צבע הרקע של האפליקציה - לבן */
+    background-color: transparent; /* שקוף */
+    box-shadow: -7px 0 0 #f0f4ff; /* צל שיוצר שקע */
 }
 
-/* **בליטה בצד ימין - צבע הבלוק - תיקון קריטי!** */
+/* **בליטה בצד ימין - אופקית בצבע "לבה"** */
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
-    right: -10px;
-    top: 50%;
-    transform: translateY(-50%);
-    /* **הנה התיקון:** השתמשנו ב-inherit קודם, אבל זה לא תמיד עובד טוב בפסאודו אלמנטים. */
-    /* במקום זאת, נגדיר את צבע הרקע ישירות, אבל נשתמש במשתנה CSS כדי שיהיה דינמי */
-    background-color: #ff66c4; /* ברירת מחדל - ורוד. קטגוריות ישנו את זה */
+    right: 50%; /* מרכז אופקית בצד ימין */
+    top: -10px; /* מיקום למעלה */
+    transform: translateX(50%); /* יישור למרכז */
+    width: 30px; /* גובה הבליטה */
+    height: 30px; /* רוחב הבליטה - אופקי */
+    border-radius: 50%;
+    background-color: #F15959; /* **צבע "לבה"** */
 }
+
 
 /* אפקטים של ריחוף ולחיצה - משותף לכל הבלוקים */
 #block-palette .scratch-block:hover,
@@ -346,8 +349,9 @@ main {
     background-color: #F8AA4C; /* כתום */
 }
 
-#end-blocks .block-container .scratch-block {
-    background-color: #F15959; /* אדום */
+/* **צבע "לבה" לבליטה** - לקטגוריית "סוף" (אדום) */
+#end-blocks .block-container .scratch-block::after {
+    background-color: #F15959; /* אדום "לבה" */
 }
 
 #grid-toggle {
