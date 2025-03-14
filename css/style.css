@@ -224,8 +224,8 @@ main {
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 100px; /* הגדלתי את הרוחב */
-    height: 100px; /* הגדלתי את הגובה */
+    width: 50px; /* הקטנה ל 50px */
+    height: 50px; /* הקטנה ל 50px */
     margin: 5px;
     cursor: pointer;
     background-color: transparent; /* הוספת רקע שקוף */
@@ -240,14 +240,14 @@ main {
     width: 100%;
     height: 100%;
     background-color: #ffff00; /* צהוב כמו בדוגמה שלך */
-    border-radius: 10px; /* יותר מעוגל */
+    border-radius: 8px; /* מעט פחות מעוגל */
     display: flex;
     justify-content: center;
     align-items: center;
     color: black; /* צבע טקסט שחור כדי שיתאים לצהוב */
-    font-size: 16px; /* גודל פונט גדול יותר */
+    font-size: 14px; /* גודל פונט קטן יותר */
     font-weight: bold;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2); /* צל עמוק יותר */
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.2); /* צל מעט יותר עדין */
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out; /* הוספת transition ל-background-color */
 }
 
@@ -256,11 +256,11 @@ main {
 #programming-area .scratch-block::after {
   content: '';
   position: absolute;
-  right: -20px; /* יותר רחוק ימינה */
+  right: -10px; /* הקטנה ימינה */
   top: 50%;
   transform: translateY(-50%);
-  width: 40px; /* יותר רחב */
-  height: 40px; /* יותר גבוה */
+  width: 20px; /* הקטנה ברוחב */
+  height: 20px; /* הקטנה בגובה */
   background-color: #ffff00; /* צהוב זהה */
   border-radius: 50%;
 }
@@ -270,13 +270,13 @@ main {
 #programming-area .scratch-block::before {
   content: '';
   position: absolute;
-  left: -20px; /* יותר רחוק שמאלה */
+  left: -10px; /* הקטנה שמאלה */
   top: 50%;
   transform: translateY(-50%);
-  width: 40px; /* יותר רחב */
-  height: 40px; /* יותר גבוה */
-  background-color: #f0f4ff; /* רקע בהיר של האפליקציה */
+  width: 20px; /* הקטנה ברוחב */
+  height: 20px; /* הקטנה בגובה */
   border-radius: 50%;
+    box-shadow: -5px 0 0 #f0f4ff; /* צל בצבע הרקע כדי לדמות שקע */
 }
 
 
