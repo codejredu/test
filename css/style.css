@@ -276,12 +276,16 @@ main {
 /* בליטה בצד ימין */
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
-  background-color: inherit; /* ירושה מצבע הבלוק */
-  right: -6px; /* שימוש ב right של idea-button */
-  top: 50%;  /* שימוש ב top של idea-button */
-  transform: translateY(-50%); /* שימוש ב transform של idea-button */
+  content: ""; /* Required for pseudo-elements to display */
+  position: absolute; /* Position it relative to the parent */
+  background-color: inherit; /* Inherit color from parent block */
+  right: -6px; /* Position 6px to the right of the parent */
+  top: 50%; /* Center vertically */
+  transform: translateY(-50%); /* Ensure perfect vertical centering */
+  width: 6px; /* Give it width */
+  height: 12px; /* Give it height */
+  border-radius: 0 6px 6px 0; /* Round the right corners */
 }
-
 
 /* אפקטים של ריחוף ולחיצה - משותף לכל הבלוקים */
 #block-palette .scratch-block:hover,
