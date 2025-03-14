@@ -1,3 +1,4 @@
+--- START OF FILE style.css ---
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -224,8 +225,8 @@ main {
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 60px;
-    height: 60px;
+    width: 85px; /* גודל כמו sticky-note */
+    height: 85px; /* גודל כמו sticky-note */
     margin: 5px;
     cursor: pointer;
     background-color: transparent; /* הוספת רקע שקוף */
@@ -237,71 +238,68 @@ main {
     position: absolute;
     width: 100%;
     height: 100%;
-    background-color: #7cd775; /* ירוק בהיר כברירת מחדל - ישתנה בהתאם לקטגוריה */
-    border-radius: 8px; /* שימוש ב border-radius של idea-button */
+    background-color: #7ED37E; /* ירוק כמו sticky-note כברירת מחדל */
+    border-radius: 8px; /* גבול מעוגל כמו sticky-note */
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #333; /* שימוש בצבע טקסט של idea-button */
+    color: #333; /* צבע טקסט כמו sticky-note */
     font-size: 16px;
     font-weight: bold;
     border: none;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* שימוש ב box-shadow של idea-button */
-    clip-path: polygon(10% 0, 0 50%, 10% 100%, 100% 100%, 100% 0);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* צל כמו sticky-note */
 }
 
-/* אפקט פאזל - משותף לכל הבלוקים */
-#block-palette .scratch-block::before,
-#programming-area .scratch-block::before,
-#block-palette .scratch-block::after,
-#programming-area .scratch-block::after {
-  content: "";
-  position: absolute;
-  width: 12px;
-  height: 24px;
-  border-radius: 12px;
-}
-
-/* שקע בצד שמאל */
+/* שקע בצד שמאל - לבן כמו sticky-note */
 #block-palette .scratch-block::before,
 #programming-area .scratch-block::before {
-  background-color: #fff;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
+    content: '';
+    position: absolute;
+    left: 0; /* מיקום שמאלי כמו sticky-note */
+    top: 50%; /* מיקום אנכי כמו sticky-note */
+    transform: translateY(-50%); /* מרכוז אנכי כמו sticky-note */
+    width: 20px; /* רוחב כמו sticky-note */
+    height: 40px; /* גובה כמו sticky-note */
+    background-color: #FFF; /* צבע לבן כמו sticky-note */
+    border-radius: 50% 0 0 50%; /* עיגול כמו sticky-note */
+    box-shadow: inset 2px 0 5px rgba(0, 0, 0, 0.2); /* צל פנימי כמו sticky-note */
 }
 
-/* בליטה בצד ימין - מרוכזת בפאה ימין */
+/* בליטה בצד ימין - צבע הבלוק */
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
-  background-color: inherit;
-  right: 50%; /* **שינוי: מרכוז אופקי בפאה ימין** */
-  top: 50%;
-  transform: translateX(50%) translateY(-50%); /* **שינוי: מרכוז אופקי** */
+    content: '';
+    position: absolute;
+    right: -10px; /* מיקום ימני כמו sticky-note */
+    top: 50%; /* מיקום אנכי כמו sticky-note */
+    transform: translateY(-50%); /* מרכוז אנכי כמו sticky-note */
+    width: 20px; /* רוחב כמו sticky-note */
+    height: 40px; /* גובה כמו sticky-note */
+    background-color: inherit; /* ירושה מצבע הבלוק */
+    border-radius: 50%; /* עיגול כמו sticky-note */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2); /* צל כמו sticky-note */
 }
-
 
 /* אפקטים של ריחוף ולחיצה - משותף לכל הבלוקים */
 #block-palette .scratch-block:hover,
 #programming-area .scratch-block:hover {
-  background-color: #66c05f; /* שימוש בצבע ריחוף של idea-button */
-  transform: translateY(-2px); /* שימוש ב transform ריחוף של idea-button */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* שימוש ב box-shadow ריחוף של idea-button */
+    background-color: #66c05f; /* צבע ריחוף כמו sticky-note */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* שינוי צבע הבליטה בריחוף */
 #block-palette .scratch-block:hover::after,
 #programming-area .scratch-block:hover::after {
-  background-color: inherit; /* ירושה מצבע הבלוק בריחוף */
+    background-color: inherit; /* ירושה מצבע הבלוק בריחוף */
 }
-
 
 #block-palette .scratch-block:active,
 #programming-area .scratch-block:active {
-  transform: translateY(1px); /* שימוש ב transform לחיצה של idea-button */
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); /* שימוש ב box-shadow לחיצה של idea-button */
+    transform: translateY(1px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 
