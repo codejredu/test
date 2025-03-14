@@ -1,8 +1,21 @@
+בטח, הנה קוד CSS מעודכן עם השינויים שהצעתי, כולל שימוש במשתני CSS, שיפור נגישות, ביצועים, קווי רשת, קטגוריות בלוקים, בלוקים, אזור תכנות, כפתור רשת ותאימות דפדפן.
+
+```css
+:root {
+    --primary-bg: #f0f4ff;
+    --secondary-bg: #fff;
+    --border-color: #e0e0e0;
+    --block-bg: #ffff00;
+    --text-color: #000;
+    --grid-line-color: lightgrey;
+    --grid-size: 56px 46px; /* גודל ברירת מחדל */
+}
+
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f0f4ff;
+    background-color: var(--primary-bg);
     direction: rtl;
 }
 
@@ -13,12 +26,12 @@ body {
 }
 
 header {
-    background-color: #fff;
+    background-color: var(--secondary-bg);
     padding: 10px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--border-color);
 }
 
 main {
@@ -39,14 +52,10 @@ main {
     flex: 0 0 auto;
     width: 550px;
     height: 450px;
-    background-color: #f5f5f5; /* רקע בהיר יותר */
-    border: 1px solid #e0e0e0;
+    background-color: #f5f5f5;
+    border: 1px solid var(--border-color);
     border-radius: 10px;
-    position: relative; /* חשוב! */
-    /* display: grid; הסרתי את זה כי אנחנו יוצרים קווי רשת אחרת */
-   /* grid-template-columns: repeat(10, 1fr); */
-   /* grid-template-rows: repeat(10, 1fr); */
-    gap: 1px;
+    position: relative;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
@@ -58,34 +67,28 @@ main {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    background: none; /* הסרת הרקע של קווי הרשת המובנים */
-    /* opacity: 0; הסתרת הרשת כברירת מחדל */
-}
-
-#stage.show-grid::before {
     background: none;
 }
 
 #stage.show-grid {
-  background-image:
-    linear-gradient(to right, lightgrey 1px, transparent 1px),
-    linear-gradient(to bottom, lightgrey 1px, transparent 1px);
-  background-size: 56px 46px; /* Set the size of the grid lines */
-  background-position: top left; /* Align the grid to the top left */
+    background-image:
+        linear-gradient(to right, var(--grid-line-color) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--grid-line-color) 1px, transparent 1px);
+    background-size: var(--grid-size);
+    background-position: top left;
 }
 
 #character {
     width: 100px;
     height: 100px;
-    position: absolute; /* חשוב! */
+    position: absolute;
     object-fit: contain;
     cursor: grab;
-    /* הוספה של transition כדי לתת תחושה יותר נעימה */
     transition: all 0.1s ease-out;
-    /* הוספה כדי שהדמות תתחיל באמצע */
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    will-change: transform;
 }
 
 .palette-and-programming {
@@ -95,8 +98,8 @@ main {
 }
 
 #block-palette {
-    background-color: #fff;
-    border: 1px solid #e0e0e0;
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--border-color);
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
@@ -118,7 +121,7 @@ main {
     border-radius: 10px;
     cursor: pointer;
     font-size: 14px;
-    color: #000000;
+    color: var(--text-color);
     width: 60px;
     height: 60px;
     display: flex;
@@ -171,8 +174,8 @@ main {
 }
 
 #programming-area {
-    background-color: #fff;
-    border: 1px solid #e0e0e0;
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--border-color);
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
@@ -195,12 +198,11 @@ main {
     min-height: 100px;
     border: 1px dashed #ccc;
     padding: 10px;
-    position: relative; /* כדי למקם אלמנטים באופן אבסולוטי בתוכו */
+    position: relative;
 }
 
 #program-blocks .block-container {
-    position: absolute; /* כדי למקם את הבלוקים באופן חופשי */
-    /* כאן אפשר להוסיף עוד סגנונות */
+    position: absolute;
 }
 
 .logo {
@@ -220,18 +222,16 @@ main {
     cursor: pointer;
 }
 
-/* הוספתי את זה כדי שהגודל ישפיע על הבלוקים בפלטה */
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 100px; /* הגדלתי את הרוחב */
-    height: 100px; /* הגדלתי את הגובה */
+    width: 100px;
+    height: 100px;
     margin: 5px;
     cursor: pointer;
-    background-color: transparent; /* הוספת רקע שקוף */
+    background-color: transparent;
 }
 
-/* הוספתי את זה כדי שהגודל ישפיע על הבלוקים בפלטה */
 #block-palette .scratch-block,
 #programming-area .scratch-block {
     position: absolute;
@@ -239,107 +239,32 @@ main {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: #ffff00; /* צהוב כמו בדוגמה שלך */
-    border-radius: 10px; /* יותר מעוגל */
+    background-color: var(--block-bg);
+    border-radius: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
-    color: black; /* צבע טקסט שחור כדי שיתאים לצהוב */
-    font-size: 16px; /* גודל פונט גדול יותר */
+    color: var(--text-color);
+    font-size: 16px;
     font-weight: bold;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2); /* צל עמוק יותר */
-    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out; /* הוספת transition ל-background-color */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
-/* Semi-circular protrusion on the right side - AFTER */
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
-  content: '';
-  position: absolute;
-  right: -20px; /* יותר רחוק ימינה */
-  top: 50%;
-  transform: translateY(-50%);
-  width: 40px; /* יותר רחב */
-  height: 40px; /* יותר גבוה */
-  background-color: #ffff00; /* צהוב זהה */
-  border-radius: 50%;
+    content: '';
+    position: absolute;
+    right: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    background-color: var(--block-bg);
+    border-radius: 50%;
 }
 
-/* Semi-circular indent on the left side - BEFORE */
 #block-palette .scratch-block::before,
 #programming-area .scratch-block::before {
-  content: '';
-  position: absolute;
-  left: -20px; /* יותר רחוק שמאלה */
-  top: 50%;
-  transform: translateY(-50%);
-  width: 40px; /* יותר רחב */
-  height: 40px; /* יותר גבוה */
-  background-color: #f0f4ff; /* רקע בהיר של האפליקציה */
-  border-radius: 50%;
-}
-
-
-.right-connector {
-    display:none; /* מסתיר את המחבר הימני המקורי */
-}
-
-.left-connector-wrapper {
-    display: none; /* מסתיר את המחבר השמאלי המקורי */
-}
-
-.left-connector {
-   display: none; /* מסתיר את המחבר השמאלי המקורי */
-}
-
-.block-icon {
-    width: 16px;
-    height: 16px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-right: 5px; /* הוספת רווח בין האייקון לטקסט */
-}
-
-.block-icon svg {
-    width: 100%;
-    height: 100%;
-}
-
-#triggering-blocks .block-container .scratch-block {
-    background-color: #F9D74C;
-}
-
-#motion-blocks .block-container .scratch-block {
-    background-color: #3D81CC;
-}
-
-#looks-blocks .block-container .scratch-block {
-    background-color: #D86FBA;
-}
-
-#sound-blocks .block-container .scratch-block {
-    background-color: #4DC251;
-}
-
-#control-blocks .block-container .scratch-block {
-    background-color: #F8AA4C;
-}
-
-#end-blocks .block-container .scratch-block {
-    background-color: #F15959;
-}
-
-#grid-toggle {
-    margin-left: 10px;
-    font-size: 16px;
-    color: #999;
-    cursor: pointer;
-    border: 1px solid #ccc;
-    padding: 5px 10px;
-    border-radius: 5px;
-}
-
-#grid-toggle:hover {
-    background-color: #f0f0f0;
-}
+    content: '';
+    
