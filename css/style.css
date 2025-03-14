@@ -224,59 +224,84 @@ main {
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 100px; /* הגדלתי את הרוחב */
-    height: 100px; /* הגדלתי את הגובה */
+    width: 85px; /* שימוש ברוחב של idea-button */
+    height: 85px; /* שימוש בגובה של idea-button */
     margin: 5px;
     cursor: pointer;
     background-color: transparent; /* הוספת רקע שקוף */
 }
 
-/* הוספתי את זה כדי שהגודל ישפיע על הבלוקים בפלטה */
+/* עיצוב בסיסי לבלוק - משותף לכל הקטגוריות */
 #block-palette .scratch-block,
 #programming-area .scratch-block {
     position: absolute;
-    top: 0;
-    left: 0;
     width: 100%;
     height: 100%;
-    background-color: #ffff00; /* צהוב כמו בדוגמה שלך */
-    border-radius: 10px; /* יותר מעוגל */
+    background-color: #7cd775; /* ירוק בהיר כברירת מחדל - ישתנה בהתאם לקטגוריה */
+    border-radius: 8px; /* שימוש ב border-radius של idea-button */
     display: flex;
-    justify-content: center;
     align-items: center;
-    color: black; /* צבע טקסט שחור כדי שיתאים לצהוב */
-    font-size: 16px; /* גודל פונט גדול יותר */
+    justify-content: center;
+    color: #333; /* שימוש בצבע טקסט של idea-button */
+    font-size: 16px;
     font-weight: bold;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2); /* צל עמוק יותר */
-    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out; /* הוספת transition ל-background-color */
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* שימוש ב box-shadow של idea-button */
+    overflow: hidden; /* כדי שהשקע לא יבלוט מגבולות הבלוק */
 }
 
-/* Semi-circular protrusion on the right side - AFTER */
+/* אפקט פאזל - משותף לכל הבלוקים */
+#block-palette .scratch-block::before,
+#programming-area .scratch-block::before,
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
-  content: '';
+  content: "";
   position: absolute;
-  right: -20px; /* יותר רחוק ימינה */
-  top: 50%;
-  transform: translateY(-50%);
-  width: 40px; /* יותר רחב */
-  height: 40px; /* יותר גבוה */
-  background-color: #ffff00; /* צהוב זהה */
-  border-radius: 50%;
+  width: 12px; /* שימוש ב width של idea-button */
+  height: 24px; /* שימוש ב height של idea-button */
+  border-radius: 12px; /* שימוש ב border-radius של idea-button */
 }
 
-/* Semi-circular indent on the left side - BEFORE */
+/* שקע בצד שמאל */
 #block-palette .scratch-block::before,
 #programming-area .scratch-block::before {
-  content: '';
-  position: absolute;
-  left: -20px; /* יותר רחוק שמאלה */
-  top: 50%;
-  transform: translateY(-50%);
-  width: 40px; /* יותר רחב */
-  height: 40px; /* יותר גבוה */
-  background-color: #f0f4ff; /* רקע בהיר של האפליקציה */
-  border-radius: 50%;
+  background-color: #fff; /* שימוש בצבע רקע של idea-button */
+  left: 0;  /* שימוש ב left של idea-button */
+  top: 50%; /* שימוש ב top של idea-button */
+  transform: translateY(-50%); /* שימוש ב transform של idea-button */
+}
+
+/* בליטה בצד ימין */
+#block-palette .scratch-block::after,
+#programming-area .scratch-block::after {
+  background-color: inherit; /* ירושה מצבע הבלוק */
+  right: -6px; /* שימוש ב right של idea-button */
+  top: 50%;  /* שימוש ב top של idea-button */
+  transform: translateY(-50%); /* שימוש ב transform של idea-button */
+}
+
+
+/* אפקטים של ריחוף ולחיצה - משותף לכל הבלוקים */
+#block-palette .scratch-block:hover,
+#programming-area .scratch-block:hover {
+  background-color: #66c05f; /* שימוש בצבע ריחוף של idea-button */
+  transform: translateY(-2px); /* שימוש ב transform ריחוף של idea-button */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* שימוש ב box-shadow ריחוף של idea-button */
+}
+
+/* שינוי צבע הבליטה בריחוף */
+#block-palette .scratch-block:hover::after,
+#programming-area .scratch-block:hover::after {
+  background-color: inherit; /* ירושה מצבע הבלוק בריחוף */
+}
+
+
+#block-palette .scratch-block:active,
+#programming-area .scratch-block:active {
+  transform: translateY(1px); /* שימוש ב transform לחיצה של idea-button */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); /* שימוש ב box-shadow לחיצה של idea-button */
 }
 
 
@@ -306,28 +331,30 @@ main {
     height: 100%;
 }
 
+/* צבעי קטגוריות - יש להחיל אחרי העיצוב הכללי */
 #triggering-blocks .block-container .scratch-block {
-    background-color: #F9D74C;
+    background-color: #F9D74C; /* צהוב */
 }
 
 #motion-blocks .block-container .scratch-block {
-    background-color: #3D81CC;
+    background-color: #3D81CC; /* כחול */
 }
 
 #looks-blocks .block-container .scratch-block {
-    background-color: #D86FBA;
+    background-color: #D86FBA; /* לבנדר */
 }
 
 #sound-blocks .block-container .scratch-block {
-    background-color: #4DC251;
+    background-color: #4DC251; /* ירוק */
 }
 
 #control-blocks .block-container .scratch-block {
-    background-color: #F8AA4C;
+    background-color: #F8AA4C; /* כתום */
 }
 
-#end-blocks .block-container .scratch-block {
-    background-color: #F15959;
+/* **צבע "לבה" לבליטה** - לקטגוריית "סוף" (אדום) */
+#end-blocks .block-container .scratch-block::after {
+    background-color: #F15959; /* אדום "לבה" */
 }
 
 #grid-toggle {
