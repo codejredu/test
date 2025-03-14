@@ -1,5 +1,7 @@
+בטח, הנה הקוד המעודכן עם השינויים שביקשת:
 
-```css
+CSS
+
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -218,8 +220,8 @@ main {
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 100px;
-    height: 100px;
+    width: 60px; /* שינוי: הקטנת הרוחב */
+    height: 60px; /* שינוי: הקטנת הגובה */
     margin: 5px;
     cursor: pointer;
     background-color: transparent;
@@ -230,8 +232,8 @@ main {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 60px; /* שינוי: הקטנת הרוחב */
+    height: 60px; /* שינוי: הקטנת הגובה */
     background-color: #ffff00;
     border-radius: 10px;
     display: flex;
@@ -248,11 +250,11 @@ main {
 #programming-area .scratch-block::after {
     content: '';
     position: absolute;
-    right: -20px;
+    right: -10px; /* שינוי: הקטנת המיקום */
     top: 50%;
     transform: translateY(-50%);
-    width: 40px;
-    height: 40px;
+    width: 20px; /* שינוי: הקטנת הרוחב */
+    height: 20px; /* שינוי: הקטנת הגובה */
     background-color: #ffff00;
     border-radius: 50%;
 }
@@ -261,11 +263,8 @@ main {
 #programming-area .scratch-block::before {
     content: '';
     position: absolute;
-    left: -20px;
+    left: -10px; /* שינוי: הקטנת המיקום */
     top: 50%;
     transform: translateY(-50%);
-    width: 40px;
-    height: 40px;
-    background-color: white; /* רקע לבן */
-    border-radius: 50%;
-    box-shadow: inset 5px 0 10px rgba(0, 0, 0, 0.2); /* צ
+    width: 20px; /* שינוי: הקטנת הרוחב */
+    height: 20px; /* שינוי: הקט
