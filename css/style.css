@@ -234,49 +234,64 @@ main {
 /* הוספתי את זה כדי שהגודל ישפיע על הבלוקים בפלטה */
 #block-palette .scratch-block,
 #programming-area .scratch-block {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background-color: #ffff00; /* צהוב כמו בדוגמה שלך */
-  border-radius: 15px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: black;
-  font-size: 16px;
-  font-weight: bold;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
-  overflow: hidden;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: #ff66c4; /* צבע ורוד כברירת מחדל - ישתנה בהתאם לקטגוריה */
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 32px; /* גודל פונט */
+    color: white;
+    border: none; /* הסרת גבולות מיותרים */
+    cursor: pointer; /* סמן עכבר */
+    transition: all 0.3s ease; /* מעבר חלק */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* צל */
 }
 
-/* בליטה חצי עיגול בצד ימין */
+/* יצירת אפקט הפאזל - משותף לכל הבלוקים */
+#block-palette .scratch-block::before,
+#programming-area .scratch-block::before,
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
-  content: '';
-  position: absolute;
-  right: -15px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 30px;
-  height: 30px;
-  background-color: inherit; /* חשוב: ירושה מצבע הרקע של הבלוק */
-  border-radius: 50%;
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
 }
 
-/* שקע חצי עגול בצד שמאל - שקוף */
+/* שקע בצד שמאל - משותף לכל הבלוקים */
 #block-palette .scratch-block::before,
 #programming-area .scratch-block::before {
-  content: '';
-  position: absolute;
-  left: -15px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 30px;
-  height: 30px;
-  background-color: transparent; /* שקוף */
-  border-radius: 50%;
-  box-shadow: -7px 0 0 #f0f4ff; /* צל שיוצר שקע */
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #f0f0f0; /* צבע הרקע של העמוד - לבן */
+}
+
+/* בליטה בצד ימין - משותף לכל הבלוקים */
+#block-palette .scratch-block::after,
+#programming-area .scratch-block::after {
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: inherit; /* חשוב: ירושה מצבע הרקע של הבלוק */
+}
+
+/* אפקטים של מעבר עכבר ולחיצה - משותף לכל הבלוקים */
+#block-palette .scratch-block:hover,
+#programming-area .scratch-block:hover {
+    background-color: #e64da9; /* ורוד בהיר יותר במעבר עכבר */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+#block-palette .scratch-block:active,
+#programming-area .scratch-block:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 
@@ -306,28 +321,29 @@ main {
     height: 100%;
 }
 
+/* צבעי קטגוריות - יש להחיל אחרי העיצוב הכללי */
 #triggering-blocks .block-container .scratch-block {
-    background-color: #F9D74C;
+    background-color: #F9D74C; /* צהוב */
 }
 
 #motion-blocks .block-container .scratch-block {
-    background-color: #3D81CC;
+    background-color: #3D81CC; /* כחול */
 }
 
 #looks-blocks .block-container .scratch-block {
-    background-color: #D86FBA;
+    background-color: #D86FBA; /* לבנדר */
 }
 
 #sound-blocks .block-container .scratch-block {
-    background-color: #4DC251;
+    background-color: #4DC251; /* ירוק */
 }
 
 #control-blocks .block-container .scratch-block {
-    background-color: #F8AA4C;
+    background-color: #F8AA4C; /* כתום */
 }
 
 #end-blocks .block-container .scratch-block {
-    background-color: #F15959;
+    background-color: #F15959; /* אדום */
 }
 
 #grid-toggle {
