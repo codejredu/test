@@ -44,8 +44,8 @@ main {
     border-radius: 10px;
     position: relative; /* חשוב! */
     /* display: grid; הסרתי את זה כי אנחנו יוצרים קווי רשת אחרת */
-    /* grid-template-columns: repeat(10, 1fr); */
-    /* grid-template-rows: repeat(10, 1fr); */
+   /* grid-template-columns: repeat(10, 1fr); */
+   /* grid-template-rows: repeat(10, 1fr); */
     gap: 1px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
@@ -67,11 +67,11 @@ main {
 }
 
 #stage.show-grid {
-    background-image:
-            linear-gradient(to right, lightgrey 1px, transparent 1px),
-            linear-gradient(to bottom, lightgrey 1px, transparent 1px);
-    background-size: 56px 46px; /* Set the size of the grid lines */
-    background-position: top left; /* Align the grid to the top left */
+  background-image:
+    linear-gradient(to right, lightgrey 1px, transparent 1px),
+    linear-gradient(to bottom, lightgrey 1px, transparent 1px);
+  background-size: 56px 46px; /* Set the size of the grid lines */
+  background-position: top left; /* Align the grid to the top left */
 }
 
 #character {
@@ -264,54 +264,51 @@ main {
 
 .left-connector-wrapper {
     position: absolute;
-    left: -10px; /* הרחבנו קצת כדי שיהיה מקום לצורה */
+    left: -15px; /* הרחבה נוספת כדי לפנות מקום לקימורים */
     top: 0;
     height: 100%;
-    width: 20px; /* הרחבנו כדי שיהיה מקום לצורה */
-    overflow: hidden; /* חשוב להסתיר את החלקים שיוצאים מגבולות */
-    display: flex; /* להשתמש בפלקסבוקס כדי למרכז את המחבר */
-    flex-direction: column; /* לסדר את האלמנטים בעמודה */
-    justify-content: center; /* למרכז אנכית */
-    align-items: center; /* למרכז אופקית */
+    width: 30px; /* הרחבה נוספת כדי לפנות מקום לקימורים */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start; /* יישור לשמאל כדי שהפאזל יתחיל משמאל */
 }
 
 .left-connector {
-    position: relative; /* כדי למקם את הפסאודו אלמנטים באופן יחסי */
-    width: 20px; /* הרחבנו כדי שיהיה מקום לצורה */
-    height: 30px; /* הגבהנו קצת כדי שיהיה מקום לצורה */
+    position: relative;
+    width: 25px; /* רוחב מעט יותר גדול */
+    height: 40px; /* גובה מעט יותר גדול */
     background-color: #f0f0f0;
-    border-radius: 0 0 10px 10px; /* עיגול פינות תחתונות */
-    overflow: hidden; /* לוודא שהפסאודו אלמנטים לא יוצאים */
+    /* הסרנו את עיגול הפינות התחתונות כדי ליצור בסיס ישר יותר */
+    border-radius: 0 0 0 10px; /* עיגול רק לפינה השמאלית התחתונה */
+    overflow: hidden;
 }
 
-/* יצירת "בליטה" פאזל בחלק העליון */
+/* יצירת "בליטה" פאזל בחלק העליון - מעוגל יותר */
 .left-connector::before {
     content: '';
     position: absolute;
-    top: -10px; /* למקם מעל הבלוק הראשי */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 20px;
-    height: 20px;
+    top: -12px; /* מיקום מעל */
+    left: -2px; /* הזזה קלה לשמאל */
+    width: 24px;
+    height: 24px;
     background-color: #f0f0f0;
-    border-radius: 50%; /* עיגול לצורה עגולה */
-    border-bottom: 5px solid transparent; /* ליצור מראה של בליטה ולא עיגול מלא */
-    box-sizing: border-box; /* לוודא שהגודל כולל את הגבול */
+    border-radius: 50% 0 50% 0; /* יוצר רבע עיגול בצד ימין למעלה */
+    box-sizing: border-box;
 }
 
-/* יצירת "שקע" פאזל בחלק התחתון */
+/* יצירת "שקע" פאזל בחלק התחתון - מעוגל יותר והזזה */
 .left-connector::after {
     content: '';
     position: absolute;
-    bottom: -10px; /* למקם מתחת לבלוק הראשי */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 20px;
-    height: 20px;
+    bottom: -12px; /* מיקום מתחת */
+    left: 3px; /* הזזה קלה לימין */
+    width: 24px;
+    height: 24px;
     background-color: #f0f0f0;
-    border-radius: 50%; /* עיגול לצורה עגולה */
-    border-top: 5px solid transparent; /* ליצור מראה של שקע ולא עיגול מלא */
-    box-sizing: border-box; /* לוודא שהגודל כולל את הגבול */
+    border-radius: 0 50% 0 50%; /* יוצר רבע עיגול בצד שמאל למטה */
+    box-sizing: border-box;
 }
 
 .block-icon {
