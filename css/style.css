@@ -224,8 +224,8 @@ main {
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 60px; /* שינוי ל 60px */
-    height: 60px; /* שינוי ל 60px */
+    width: 60px;
+    height: 60px;
     margin: 5px;
     cursor: pointer;
     background-color: transparent; /* הוספת רקע שקוף */
@@ -234,22 +234,20 @@ main {
 /* הוספתי את זה כדי שהגודל ישפיע על הבלוקים בפלטה */
 #block-palette .scratch-block,
 #programming-area .scratch-block {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: #ffff00; /* צהוב כמו בדוגמה שלך */
-    border-radius:15px; /* עיגול קצוות */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: black; /* צבע טקסט שחור כדי שיתאים לצהוב */
-    font-size: 16px;
-    font-weight: bold;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
-    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
-    overflow:hidden; /* להסתיר את החלק השקוף */
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: #ffff00; /* צהוב כמו בדוגמה שלך */
+  border-radius: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: black;
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
+  overflow: hidden;
 }
 
 /* בליטה חצי עיגול בצד ימין */
@@ -262,7 +260,7 @@ main {
   transform: translateY(-50%);
   width: 30px;
   height: 30px;
-  background-color: #ffff00;
+  background-color: inherit; /* חשוב: ירושה מצבע הרקע של הבלוק */
   border-radius: 50%;
 }
 
@@ -278,8 +276,9 @@ main {
   height: 30px;
   background-color: transparent; /* שקוף */
   border-radius: 50%;
-    box-shadow: -7px 0 0 #f0f4ff; /* צל שיוצר שקע - מוגדל מעט */
+  box-shadow: -7px 0 0 #f0f4ff; /* צל שיוצר שקע */
 }
+
 
 .right-connector {
     display:none; /* מסתיר את המחבר הימני המקורי */
