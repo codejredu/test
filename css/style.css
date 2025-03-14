@@ -1,4 +1,4 @@
-בטח, הנה הקוד המלא עם התיקון שהוספתי כדי ליצור את השקע כמו בתמונה שצירפת.
+בטח, הנה הקוד CSS המעודכן עם השימוש בקוד שסיפקת לתיקון השקע והבליטה, תוך שילובו במבנה הקיים:
 
 ```css
 body {
@@ -267,9 +267,9 @@ main {
     transform: translateY(-50%);
     width: 40px;
     height: 40px;
-    background-color: transparent; /* שינוי כאן: רקע שקוף */
+    background-color: transparent;
     border-radius: 50%;
-    box-shadow: inset 5px 0 10px rgba(0, 0, 0, 0.2); /* הוספתי צל פנימי */
+    box-shadow: inset 5px 0 10px rgba(0, 0, 0, 0.2);
 }
 
 .right-connector {
@@ -277,3 +277,7 @@ main {
 }
 
 .left-connector-wrapper {
+    display: none;
+}
+
+.
