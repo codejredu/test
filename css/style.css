@@ -224,8 +224,8 @@ main {
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 60px; /* שינוי הרוחב ל-60px */
-    height: 60px; /* שינוי הגובה ל-60px */
+    width: 100px; /* הגדלתי את הרוחב */
+    height: 100px; /* הגדלתי את הגובה */
     margin: 5px;
     cursor: pointer;
     background-color: transparent; /* הוספת רקע שקוף */
@@ -239,76 +239,57 @@ main {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: #25AFF4;
-    border-radius: 6px;
+    background-color: #ffff00; /* צהוב כמו בדוגמה שלך */
+    border-radius: 10px; /* יותר מעוגל */
     display: flex;
     justify-content: center;
     align-items: center;
-    color: white;
-    font-size: 12px;
+    color: black; /* צבע טקסט שחור כדי שיתאים לצהוב */
+    font-size: 16px; /* גודל פונט גדול יותר */
     font-weight: bold;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.1); /* הוספת צללית פנימית */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2); /* צל עמוק יותר */
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out; /* הוספת transition ל-background-color */
 }
 
+/* Semi-circular protrusion on the right side - AFTER */
+#block-palette .scratch-block::after,
+#programming-area .scratch-block::after {
+  content: '';
+  position: absolute;
+  right: -20px; /* יותר רחוק ימינה */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px; /* יותר רחב */
+  height: 40px; /* יותר גבוה */
+  background-color: #ffff00; /* צהוב זהה */
+  border-radius: 50%;
+}
+
+/* Semi-circular indent on the left side - BEFORE */
+#block-palette .scratch-block::before,
+#programming-area .scratch-block::before {
+  content: '';
+  position: absolute;
+  left: -20px; /* יותר רחוק שמאלה */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px; /* יותר רחב */
+  height: 40px; /* יותר גבוה */
+  background-color: #f0f4ff; /* רקע בהיר של האפליקציה */
+  border-radius: 50%;
+}
+
+
 .right-connector {
-    position: absolute;
-    right: -5px; /* התאמת המיקום */
-    top: 50%;
-    transform: translateY(-50%);
-    width: 8px; /* הקטנת הרוחב */
-    height: 15px; /* הקטנת הגובה */
-    background-color: #25AFF4;
-    border-radius: 0 30px 30px 0;
+    display:none; /* מסתיר את המחבר הימני המקורי */
 }
 
 .left-connector-wrapper {
-    position: absolute;
-    left: -15px; /* הרחבה נוספת כדי לפנות מקום לקימורים */
-    top: 0;
-    height: 100%;
-    width: 30px; /* הרחבה נוספת כדי לפנות מקום לקימורים */
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start; /* יישור לשמאל כדי שהפאזל יתחיל משמאל */
+    display: none; /* מסתיר את המחבר השמאלי המקורי */
 }
 
 .left-connector {
-    position: relative;
-    width: 25px; /* רוחב מעט יותר גדול */
-    height: 40px; /* גובה מעט יותר גדול */
-    background-color: #f0f0f0;
-    /* הסרנו את עיגול הפינות התחתונות כדי ליצור בסיס ישר יותר */
-    border-radius: 0 0 0 10px; /* עיגול רק לפינה השמאלית התחתונה */
-    overflow: hidden;
-}
-
-/* יצירת "בליטה" פאזל בחלק העליון - מעוגל יותר */
-.left-connector::before {
-    content: '';
-    position: absolute;
-    top: -12px; /* מיקום מעל */
-    left: -2px; /* הזזה קלה לשמאל */
-    width: 24px;
-    height: 24px;
-    background-color: #f0f0f0;
-    border-radius: 50% 0 50% 0; /* יוצר רבע עיגול בצד ימין למעלה */
-    box-sizing: border-box;
-}
-
-/* יצירת "שקע" פאזל בחלק התחתון - מעוגל יותר והזזה */
-.left-connector::after {
-    content: '';
-    position: absolute;
-    bottom: -12px; /* מיקום מתחת */
-    left: 3px; /* הזזה קלה לימין */
-    width: 24px;
-    height: 24px;
-    background-color: #f0f0f0;
-    border-radius: 0 50% 0 50%; /* יוצר רבע עיגול בצד שמאל למטה */
-    box-sizing: border-box;
+   display: none; /* מסתיר את המחבר השמאלי המקורי */
 }
 
 .block-icon {
