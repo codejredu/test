@@ -224,8 +224,8 @@ main {
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 85px; /* שימוש ברוחב של idea-button */
-    height: 85px; /* שימוש בגובה של idea-button */
+    width: 85px;
+    height: 85px;
     margin: 5px;
     cursor: pointer;
     background-color: transparent; /* הוספת רקע שקוף */
@@ -249,7 +249,7 @@ main {
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* שימוש ב box-shadow של idea-button */
-    overflow: hidden; /* כדי שהשקע לא יבלוט מגבולות הבלוק */
+    clip-path: polygon(10% 0, 0 50%, 10% 100%, 100% 100%, 100% 0); /* **קצוות ישרים + שקע משמאל** */
 }
 
 /* אפקט פאזל - משותף לכל הבלוקים */
@@ -277,7 +277,7 @@ main {
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
   background-color: inherit; /* ירושה מצבע הבלוק */
-  right: -6px; /* שימוש ב right של idea-button */
+  right: -10px; /* **הגדלת בליטה ימינה** */
   top: 50%;  /* שימוש ב top של idea-button */
   transform: translateY(-50%); /* שימוש ב transform של idea-button */
 }
