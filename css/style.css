@@ -224,82 +224,59 @@ main {
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 60px;
-    height: 60px;
+    width: 100px; /* הגדלתי את הרוחב */
+    height: 100px; /* הגדלתי את הגובה */
     margin: 5px;
     cursor: pointer;
     background-color: transparent; /* הוספת רקע שקוף */
 }
 
-/* עיצוב בסיסי לבלוק - משותף לכל הקטגוריות */
+/* הוספתי את זה כדי שהגודל ישפיע על הבלוקים בפלטה */
 #block-palette .scratch-block,
 #programming-area .scratch-block {
     position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    background-color: #ff66c4; /* ורוד כברירת מחדל - ישתנה בהתאם לקטגוריה */
-    border-radius: 10px;
+    background-color: #ffff00; /* צהוב כמו בדוגמה שלך */
+    border-radius: 10px; /* יותר מעוגל */
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 16px;
+    color: black; /* צבע טקסט שחור כדי שיתאים לצהוב */
+    font-size: 16px; /* גודל פונט גדול יותר */
     font-weight: bold;
-    color: white;
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    clip-path: polygon(10% 0, 0 50%, 10% 100%, 100% 100%, 100% 0); /* **קצוות ישרים + שקע משמאל** */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2); /* צל עמוק יותר */
+    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out; /* הוספת transition ל-background-color */
 }
 
-/* אפקט פאזל - משותף לכל הבלוקים */
-#block-palette .scratch-block::before,
-#programming-area .scratch-block::before,
+/* Semi-circular protrusion on the right side - AFTER */
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
-    content: "";
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
+  content: '';
+  position: absolute;
+  right: -20px; /* יותר רחוק ימינה */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px; /* יותר רחב */
+  height: 40px; /* יותר גבוה */
+  background-color: #ffff00; /* צהוב זהה */
+  border-radius: 50%;
 }
 
-/* **בליטה בצד שמאל - לבן - מוזז פנימה** */
+/* Semi-circular indent on the left side - BEFORE */
 #block-palette .scratch-block::before,
 #programming-area .scratch-block::before {
-    left: 5px; /* **הזזה לימין - פנימה יותר** */
-    top: 50%;
-    transform: translateY(-50%);
-    background-color: white; /* **צבע לבן** */
-    box-shadow: none; /* **הסרנו את הצל** כי זה בליטה ולא שקע */
-}
-
-/* **שקע בגוף הלבנה - בצד ימין - מוזז פנימה** */
-#block-palette .scratch-block::after,
-#programming-area .scratch-block::after {
-    right: 5px; /* **הזזה שמאלה - פנימה יותר** */
-    top: 50%;
-    transform: translateY(-50%);
-    width: 15px; /* **הקטנה של השקע** */
-    height: 15px; /* **הקטנה של השקע** */
-    border-radius: 50%;
-    background-color: #f0f4ff; /* **צבע הרקע של האפליקציה** - יוצר שקע */
-    box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.3); /* **צל פנימי לשקע** */
-}
-
-
-/* אפקטים של ריחוף ולחיצה - משותף לכל הבלוקים */
-#block-palette .scratch-block:hover,
-#programming-area .scratch-block:hover {
-    background-color: #e64da9; /* ורוד בהיר יותר במעבר עכבר */
-    transform: translateY(-2px);
-    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-}
-
-#block-palette .scratch-block:active,
-#programming-area .scratch-block:active {
-    transform: translateY(1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  content: '';
+  position: absolute;
+  left: -20px; /* יותר רחוק שמאלה */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px; /* יותר רחב */
+  height: 40px; /* יותר גבוה */
+  background-color: #f0f4ff; /* רקע בהיר של האפליקציה */
+  border-radius: 50%;
 }
 
 
@@ -329,30 +306,28 @@ main {
     height: 100%;
 }
 
-/* צבעי קטגוריות - יש להחיל אחרי העיצוב הכללי */
 #triggering-blocks .block-container .scratch-block {
-    background-color: #F9D74C; /* צהוב */
+    background-color: #F9D74C;
 }
 
 #motion-blocks .block-container .scratch-block {
-    background-color: #3D81CC; /* כחול */
+    background-color: #3D81CC;
 }
 
 #looks-blocks .block-container .scratch-block {
-    background-color: #D86FBA; /* לבנדר */
+    background-color: #D86FBA;
 }
 
 #sound-blocks .block-container .scratch-block {
-    background-color: #4DC251; /* ירוק */
+    background-color: #4DC251;
 }
 
 #control-blocks .block-container .scratch-block {
-    background-color: #F8AA4C; /* כתום */
+    background-color: #F8AA4C;
 }
 
-/* **צבע "לבה" לבליטה** - לקטגוריית "סוף" (אדום) */
-#end-blocks .block-container .scratch-block::after {
-    background-color: #F15959; /* אדום "לבה" */
+#end-blocks .block-container .scratch-block {
+    background-color: #F15959;
 }
 
 #grid-toggle {
