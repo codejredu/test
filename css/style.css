@@ -224,8 +224,8 @@ main {
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 50px; /* הקטנה ל 50px */
-    height: 50px; /* הקטנה ל 50px */
+    width: 60px; /* שינוי ל 60px */
+    height: 60px; /* שינוי ל 60px */
     margin: 5px;
     cursor: pointer;
     background-color: transparent; /* הוספת רקע שקוף */
@@ -240,45 +240,46 @@ main {
     width: 100%;
     height: 100%;
     background-color: #ffff00; /* צהוב כמו בדוגמה שלך */
-    border-radius: 8px; /* מעט פחות מעוגל */
+    border-radius:15px; /* עיגול קצוות */
     display: flex;
     justify-content: center;
     align-items: center;
     color: black; /* צבע טקסט שחור כדי שיתאים לצהוב */
-    font-size: 14px; /* גודל פונט קטן יותר */
+    font-size: 16px;
     font-weight: bold;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.2); /* צל מעט יותר עדין */
-    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out; /* הוספת transition ל-background-color */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    overflow:hidden; /* להסתיר את החלק השקוף */
 }
 
-/* Semi-circular protrusion on the right side - AFTER */
+/* בליטה חצי עיגול בצד ימין */
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
   content: '';
   position: absolute;
-  right: -10px; /* הקטנה ימינה */
+  right: -15px;
   top: 50%;
   transform: translateY(-50%);
-  width: 20px; /* הקטנה ברוחב */
-  height: 20px; /* הקטנה בגובה */
-  background-color: #ffff00; /* צהוב זהה */
+  width: 30px;
+  height: 30px;
+  background-color: #ffff00;
   border-radius: 50%;
 }
 
-/* Semi-circular indent on the left side - BEFORE */
+/* שקע חצי עגול בצד שמאל - שקוף */
 #block-palette .scratch-block::before,
 #programming-area .scratch-block::before {
   content: '';
   position: absolute;
-  left: -10px; /* הקטנה שמאלה */
+  left: -15px;
   top: 50%;
   transform: translateY(-50%);
-  width: 20px; /* הקטנה ברוחב */
-  height: 20px; /* הקטנה בגובה */
+  width: 30px;
+  height: 30px;
+  background-color: transparent; /* שקוף */
   border-radius: 50%;
-    box-shadow: -5px 0 0 #f0f4ff; /* צל בצבע הרקע כדי לדמות שקע */
+    box-shadow: -7px 0 0 #f0f4ff; /* צל שיוצר שקע - מוגדל מעט */
 }
-
 
 .right-connector {
     display:none; /* מסתיר את המחבר הימני המקורי */
