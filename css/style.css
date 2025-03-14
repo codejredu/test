@@ -231,26 +231,28 @@ main {
     background-color: transparent; /* הוספת רקע שקוף */
 }
 
-/* הוספתי את זה כדי שהגודל ישפיע על הבלוקים בפלטה */
+/* עיצוב בסיסי לבלוק - משותף לכל הקטגוריות */
 #block-palette .scratch-block,
 #programming-area .scratch-block {
     position: absolute;
     width: 100%;
     height: 100%;
-    background-color: #ff66c4; /* צבע ורוד כברירת מחדל - ישתנה בהתאם לקטגוריה */
+    background-color: #ff66c4; /* ורוד כברירת מחדל - ישתנה בהתאם לקטגוריה */
     border-radius: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 32px; /* גודל פונט */
+    font-size: 16px;
+    font-weight: bold;
     color: white;
-    border: none; /* הסרת גבולות מיותרים */
-    cursor: pointer; /* סמן עכבר */
-    transition: all 0.3s ease; /* מעבר חלק */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* צל */
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden; /* כדי שהשקע לא יבלוט מגבולות הבלוק */
 }
 
-/* יצירת אפקט הפאזל - משותף לכל הבלוקים */
+/* אפקט פאזל - משותף לכל הבלוקים */
 #block-palette .scratch-block::before,
 #programming-area .scratch-block::before,
 #block-palette .scratch-block::after,
@@ -262,25 +264,26 @@ main {
     border-radius: 50%;
 }
 
-/* שקע בצד שמאל - משותף לכל הבלוקים */
+/* שקע בצד שמאל - שקוף */
 #block-palette .scratch-block::before,
 #programming-area .scratch-block::before {
     left: -10px;
     top: 50%;
     transform: translateY(-50%);
-    background-color: #f0f0f0; /* צבע הרקע של העמוד - לבן */
+    background-color: transparent; /* שקוף */
+    box-shadow: -7px 0 0 #f0f4ff; /* צל שיוצר שקע */
 }
 
-/* בליטה בצד ימין - משותף לכל הבלוקים */
+/* בליטה בצד ימין - צבע הבלוק */
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
     right: -10px;
     top: 50%;
     transform: translateY(-50%);
-    background-color: inherit; /* חשוב: ירושה מצבע הרקע של הבלוק */
+    background-color: inherit; /* ירושה מצבע הבלוק */
 }
 
-/* אפקטים של מעבר עכבר ולחיצה - משותף לכל הבלוקים */
+/* אפקטים של ריחוף ולחיצה - משותף לכל הבלוקים */
 #block-palette .scratch-block:hover,
 #programming-area .scratch-block:hover {
     background-color: #e64da9; /* ורוד בהיר יותר במעבר עכבר */
