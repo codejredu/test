@@ -224,8 +224,8 @@ main {
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 85px; /* שימוש ברוחב של idea-button */
-    height: 85px; /* שימוש בגובה של idea-button */
+    width: 60px; /* הקטנה ל 70% */
+    height: 60px; /* הקטנה ל 70% */
     margin: 5px;
     cursor: pointer;
     background-color: transparent; /* הוספת רקע שקוף */
@@ -249,7 +249,7 @@ main {
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* שימוש ב box-shadow של idea-button */
-    clip-path: polygon(10% 0, 0 50%, 10% 100%, 100% 100%, 100% 0); /* **קצוות ישרים + שקע משמאל** */
+    clip-path: polygon(10% 0, 0 50%, 10% 100%, 100% 100%, 100% 0);
 }
 
 /* אפקט פאזל - משותף לכל הבלוקים */
@@ -259,55 +259,48 @@ main {
 #programming-area .scratch-block::after {
   content: "";
   position: absolute;
-  width: 12px; /* שימוש ב width של idea-button */
-  height: 24px; /* שימוש ב height של idea-button */
+  width: 8px; /* הקטנה ל 70% */
+  height: 17px; /* הקטנה ל 70% */
   border-radius: 12px; /* שימוש ב border-radius של idea-button */
 }
 
 /* שקע בצד שמאל */
 #block-palette .scratch-block::before,
 #programming-area .scratch-block::before {
-  background-color: #fff; /* שימוש בצבע רקע של idea-button */
-  left: 0;  /* שימוש ב left של idea-button */
-  top: 50%; /* שימוש ב top של idea-button */
-  transform: translateY(-50%); /* שימוש ב transform של idea-button */
+  background-color: #fff;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 /* בליטה בצד ימין */
-/* בליטה בצד ימין - **SIMPLIFIED AND VERY VISIBLE** */
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
-  content: '';
-  position: absolute;
-  right: 0; /* Align to the right edge */
-  top: 0;   /* Align to the top edge */
-  width: 20px;  /* Make it wider */
-  height: 20px; /* Make it taller - SQUARE for simplicity */
-  background-color: limegreen; /* **Bright Lime Green - VERY EASY TO SEE** */
+  background-color: inherit;
+  right: -4px; /*  הקטנה ל 70% */
+  top: 50%;
+  transform: translateY(-50%);
 }
-
 
 /* אפקטים של ריחוף ולחיצה - משותף לכל הבלוקים */
 #block-palette .scratch-block:hover,
 #programming-area .scratch-block:hover {
-  background-color: #66c05f; /* שימוש בצבע ריחוף של idea-button */
-  transform: translateY(-2px); /* שימוש ב transform ריחוף של idea-button */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* שימוש ב box-shadow ריחוף של idea-button */
+  background-color: #66c05f;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* שינוי צבע הבליטה בריחוף */
 #block-palette .scratch-block:hover::after,
 #programming-area .scratch-block:hover::after {
-  background-color: inherit; /* ירושה מצבע הבלוק בריחוף */
+  background-color: inherit;
 }
-
 
 #block-palette .scratch-block:active,
 #programming-area .scratch-block:active {
-  transform: translateY(1px); /* שימוש ב transform לחיצה של idea-button */
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); /* שימוש ב box-shadow לחיצה של idea-button */
+  transform: translateY(1px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
-
 
 .right-connector {
     display:none; /* מסתיר את המחבר הימני המקורי */
@@ -335,30 +328,29 @@ main {
     height: 100%;
 }
 
-/* צבעי קטגוריות - יש להחיל אחרי העיצוב הכללי */
 #triggering-blocks .block-container .scratch-block {
-    background-color: #F9D74C; /* צהוב */
+    background-color: #F9D74C;
 }
 
 #motion-blocks .block-container .scratch-block {
-    background-color: #3D81CC; /* כחול */
+    background-color: #3D81CC;
 }
 
 #looks-blocks .block-container .scratch-block {
-    background-color: #D86FBA; /* לבנדר */
+    background-color: #D86FBA;
 }
 
 #sound-blocks .block-container .scratch-block {
-    background-color: #4DC251; /* ירוק */
+    background-color: #4DC251;
 }
 
 #control-blocks .block-container .scratch-block {
-    background-color: #F8AA4C; /* כתום */
+    background-color: #F8AA4C;
 }
 
 /* **צבע "לבה" לבליטה** - לקטגוריית "סוף" (אדום) */
 #end-blocks .block-container .scratch-block::after {
-    background-color: #F15959; /* אדום "לבה" */
+    background-color: #F15959;
 }
 
 #grid-toggle {
@@ -374,3 +366,4 @@ main {
 #grid-toggle:hover {
     background-color: #f0f0f0;
 }
+--- END OF FILE style.css ---
