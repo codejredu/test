@@ -1,4 +1,4 @@
- body {
+body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -264,22 +264,54 @@ main {
 
 .left-connector-wrapper {
     position: absolute;
-    left: -7px; /* התאמת המיקום */
+    left: -10px; /* הרחבנו קצת כדי שיהיה מקום לצורה */
     top: 0;
     height: 100%;
-    width: 10px; /* הקטנת הרוחב */
-    overflow: hidden;
+    width: 20px; /* הרחבנו כדי שיהיה מקום לצורה */
+    overflow: hidden; /* חשוב להסתיר את החלקים שיוצאים מגבולות */
+    display: flex; /* להשתמש בפלקסבוקס כדי למרכז את המחבר */
+    flex-direction: column; /* לסדר את האלמנטים בעמודה */
+    justify-content: center; /* למרכז אנכית */
+    align-items: center; /* למרכז אופקית */
 }
 
 .left-connector {
-    position: absolute;
-    left: -8px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 16px; /* הקטנת הרוחב */
-    height: 16px; /* הקטנת הגובה */
+    position: relative; /* כדי למקם את הפסאודו אלמנטים באופן יחסי */
+    width: 20px; /* הרחבנו כדי שיהיה מקום לצורה */
+    height: 30px; /* הגבהנו קצת כדי שיהיה מקום לצורה */
     background-color: #f0f0f0;
-    border-radius: 50%;
+    border-radius: 0 0 10px 10px; /* עיגול פינות תחתונות */
+    overflow: hidden; /* לוודא שהפסאודו אלמנטים לא יוצאים */
+}
+
+/* יצירת "בליטה" פאזל בחלק העליון */
+.left-connector::before {
+    content: '';
+    position: absolute;
+    top: -10px; /* למקם מעל הבלוק הראשי */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    background-color: #f0f0f0;
+    border-radius: 50%; /* עיגול לצורה עגולה */
+    border-bottom: 5px solid transparent; /* ליצור מראה של בליטה ולא עיגול מלא */
+    box-sizing: border-box; /* לוודא שהגודל כולל את הגבול */
+}
+
+/* יצירת "שקע" פאזל בחלק התחתון */
+.left-connector::after {
+    content: '';
+    position: absolute;
+    bottom: -10px; /* למקם מתחת לבלוק הראשי */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    background-color: #f0f0f0;
+    border-radius: 50%; /* עיגול לצורה עגולה */
+    border-top: 5px solid transparent; /* ליצור מראה של שקע ולא עיגול מלא */
+    box-sizing: border-box; /* לוודא שהגודל כולל את הגבול */
 }
 
 .block-icon {
