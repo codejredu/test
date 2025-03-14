@@ -274,17 +274,16 @@ main {
 }
 
 /* בליטה בצד ימין */
+/* בליטה בצד ימין - **SIMPLIFIED AND VERY VISIBLE** */
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
-  content: ""; /* Required for pseudo-elements to display */
-  position: absolute; /* Position it relative to the parent */
-  background-color: inherit; /* Inherit color from parent block */
-  right: -10px; /* **הגדלת בליטה ימינה** */ /* Adjusted from -6px to -10px - Increased right for better visibility */
-  top: 50%; /* Center vertically */
-  transform: translateY(-50%); /* Ensure perfect vertical centering */
-  width: 10px; /* Give it width - Adjusted from 6px to 10px - Increased width for better visibility */
-  height: 24px; /* Give it height */
-  border-radius: 0 10px 10px 0; /* Round the right corners - Adjusted border-radius for wider protrusion */
+  content: '';
+  position: absolute;
+  right: 0; /* Align to the right edge */
+  top: 0;   /* Align to the top edge */
+  width: 20px;  /* Make it wider */
+  height: 20px; /* Make it taller - SQUARE for simplicity */
+  background-color: limegreen; /* **Bright Lime Green - VERY EASY TO SEE** */
 }
 
 
