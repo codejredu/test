@@ -107,8 +107,11 @@ main {
 
 .category-tabs {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: row;
+    /* flex-wrap: wrap; הסר כדי למנוע מעבר שורה */
     margin-bottom: 10px;
+    overflow-x: auto; /* הוסף גלילה אופקית אם הטאבים גולשים */
+    white-space: nowrap; /* מנע מהטאבים לעבור שורה בתוך עצמם */
 }
 
 .category-tab {
