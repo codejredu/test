@@ -17,49 +17,41 @@
             <span class="icon">▶️</span>
             <span class="icon">➕</span>
             <span class="icon">ℹ️</span>
-            <span class="icon" id="grid-toggle">GRID</span>
         </div>
     </header>
 
     <main>
-        <div class="stage-container">
-            <div id="stage">
-                <img id="character" src="assets/images/CAT.svg" alt="Cat" draggable="true">
-            </div>
-        </div>
-        <div class="palette-and-programming">
-            <div id="block-palette">
+        <div class="workspace">
+            <div class="block-categories">
+                <!-- כפתורי קטגוריות -->
                 <div class="category-tabs">
-                    <button class="category-tab" data-category="end">
-                        <img src="assets/images/end.svg" alt="End">
-                    </button>
-                    <button class="category-tab" data-category="control">
-                        <img src="assets/images/control.svg" alt="Control">
-                    </button>
-                    <button class="category-tab" data-category="sound">
-                        <img src="assets/images/sound.svg" alt="Sound">
-                    </button>
-                    <button class="category-tab" data-category="looks">
-                        <img src="assets/images/looks.svg" alt="Looks">
-                    </button>
-                    <button class="category-tab" data-category="motion">
-                        <img src="assets/images/motion.svg" alt="Motion">
-                    </button>
-                    <button class="category-tab active" data-category="triggering">
-                        <img src="assets/images/triggering.svg" alt="Triggers">
-                    </button>
+                    <div class="category-tab active" data-category="triggering">הפעלה</div>
+                    <div class="category-tab" data-category="motion">תנועה</div>
+                    <div class="category-tab" data-category="looks">מראה</div>
+                    <div class="category-tab" data-category="sound">צליל</div>
+                    <div class="category-tab" data-category="control">בקרה</div>
+                    <div class="category-tab" data-category="end">סיום</div>
                 </div>
-                <div id="end-blocks" class="block-category" data-category="end"></div>
-                <div id="control-blocks" class="block-category" data-category="control"></div>
-                <div id="sound-blocks" class="block-category" data-category="sound"></div>
-                <div id="looks-blocks" class="block-category" data-category="looks"></div>
-                <div id="motion-blocks" class="block-category" data-category="motion"></div>
-                <div id="triggering-blocks" class="block-category active" data-category="triggering"></div>
+                <!-- אזורי קטגוריות -->
+                <div id="triggering-blocks" class="block-category active"></div>
+                <div id="motion-blocks" class="block-category"></div>
+                <div id="looks-blocks" class="block-category"></div>
+                <div id="sound-blocks" class="block-category"></div>
+                <div id="control-blocks" class="block-category"></div>
+                <div id="end-blocks" class="block-category"></div>
             </div>
-
-            <div id="programming-area">
-                <div class="program-header">Program <span id="clear-all">Clear All</span></div>
-                <div id="program-blocks"></div>
+            
+            <!-- אזור התכנות -->
+            <div id="program-blocks" class="programming-area">
+                <div class="program-header">תכנית <span id="clear-all">נקה הכל</span></div>
+            </div>
+            
+            <!-- במה -->
+            <div id="stage" class="stage">
+                <div id="character" class="character" draggable="true">
+                    <img src="assets/images/CAT.svg" alt="Cat">
+                </div>
+                <button id="grid-toggle" class="grid-toggle">הצג/הסתר רשת</button>
             </div>
         </div>
     </main>
