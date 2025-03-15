@@ -1,3 +1,76 @@
+--- START OF FILE index.html ---
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScratchJr Web</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="logo">ScratchJr</div>
+        <div class="header-icons">
+            <span class="icon">💾</span>
+            <span class="icon">📄</span>
+            <span class="icon">▶️</span>
+            <span class="icon">➕</span>
+            <span class="icon">ℹ️</span>
+            <span class="icon" id="grid-toggle">GRID</span>
+        </div>
+    </header>
+
+    <main>
+        <div class="stage-container">
+            <div id="stage">
+                <img id="character" src="assets/images/CAT.svg" alt="Cat" draggable="true">
+            </div>
+        </div>
+        <div class="palette-and-programming">
+            <div id="block-palette">
+                <div class="category-tabs">
+                    <button class="category-tab" data-category="end">
+                        <img src="assets/images/end.svg" alt="End">
+                    </button>
+                    <button class="category-tab" data-category="control">
+                        <img src="assets/images/control.svg" alt="Control">
+                    </button>
+                    <button class="category-tab" data-category="sound">
+                        <img src="assets/images/sound.svg" alt="Sound">
+                    </button>
+                    <button class="category-tab" data-category="looks">
+                        <img src="assets/images/looks.svg" alt="Looks">
+                    </button>
+                    <button class="category-tab" data-category="motion">
+                        <img src="assets/images/motion.svg" alt="Motion">
+                    </button>
+                    <button class="category-tab active" data-category="triggering">
+                        <img src="assets/images/triggering.svg" alt="Triggers">
+                    </button>
+                </div>
+                <div id="end-blocks" class="block-category" data-category="end"></div>
+                <div id="control-blocks" class="block-category" data-category="control"></div>
+                <div id="sound-blocks" class="block-category" data-category="sound"></div>
+                <div id="looks-blocks" class="block-category" data-category="looks"></div>
+                <div id="motion-blocks" class="block-category" data-category="motion"></div>
+                <div id="triggering-blocks" class="block-category active" data-category="triggering"></div>
+            </div>
+
+            <div id="programming-area">
+                <div class="program-header">Program <span id="clear-all">Clear All</span></div>
+                <div id="program-blocks"></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="js/script.js"></script>
+</body>
+</html>
+--- END OF FILE index.html ---
+
 --- START OF FILE script.js ---
 // ========================================================================
 // הגדרת בלוקים (Blocks)
@@ -50,17 +123,125 @@ const blocks = {
 // פונקציות ליצירת אלמנטים
 // ========================================================================
 
-function createRightConnector(color) { /* ... Function - no changes needed ... */ }
-function createLeftConnector() { /* ... Function - no changes needed ... */ }
-function createScratchBlock(block) { /* ... Function - no changes needed ... */ }
-function createBlockElement(block, category) { /* ... Function - no changes needed ... */ }
+// פונקציה ליצירת מחבר ימני
+function createRightConnector(color) {
+    const rightConnector = document.createElement("div");
+    rightConnector.classList.add("right-connector");
+    rightConnector.style.backgroundColor = color;
+    return rightConnector;
+}
+
+// פונקציה ליצירת מחבר שמאלי
+function createLeftConnector() {
+    const leftConnectorWrapper = document.createElement("div");
+    leftConnectorWrapper.classList.add("left-connector-wrapper");
+
+    const leftConnector = document.createElement("div");
+    leftConnector.classList.add("left-connector");
+
+    leftConnectorWrapper.appendChild(leftConnector);
+    return leftConnectorWrapper;
+}
+
+// פונקציה ליצירת בלוק גרפי
+function createScratchBlock(block) {
+    const scratchBlock = document.createElement("div");
+    scratchBlock.classList.add("scratch-block");
+    scratchBlock.textContent = block.icon;
+    scratchBlock.style.backgroundColor = block.color;
+    return scratchBlock;
+}
+
+// פונקציה ליצירת HTML עבור בלוק
+function createBlockElement(block, category) {
+    const blockContainer = document.createElement("div");
+    blockContainer.classList.add("block-container");
+
+    const scratchBlock = createScratchBlock(block);
+    const rightConnector = createRightConnector(block.color);
+    const leftConnectorWrapper = createLeftConnector();
+
+    blockContainer.appendChild(scratchBlock);
+    blockContainer.appendChild(rightConnector);
+    blockContainer.appendChild(leftConnectorWrapper);
+
+    blockContainer.dataset.type = block.type;
+    blockContainer.draggable = true;
+
+    // טיפול באירוע התחלת גרירה (dragstart)
+    blockContainer.addEventListener("dragstart", (event) => {
+        handleDragStart(event, block, category);
+    });
+
+    return blockContainer;
+}
 
 // ========================================================================
 // פונקציות טיפול באירועים
 // ========================================================================
 
-function handleDragStart(event, block, category) { /* ... Function - no changes needed ... */ }
-function handleDrop(event) { /* ... Function - no changes needed ... */ }
+// פונקציה לטיפול בהתחלת גרירה
+function handleDragStart(event, block, category) {
+    const data = {
+        type: block.type,
+        icon: block.icon,
+        color: block.color,
+        category: category
+    };
+    event.dataTransfer.setData("text/plain", JSON.stringify(data));
+    event.dataTransfer.effectAllowed = "move";
+}
+
+// פונקציה לטיפול בשחרור באזור התכנות
+function handleDrop(event) {
+    event.preventDefault();
+
+    const data = JSON.parse(event.dataTransfer.getData("text/plain"));
+    const blockType = data.type;
+    const blockCategory = data.category;
+    const blockIcon = data.icon;
+    const blockColor = data.color;
+
+    // יצירת אלמנט בלוק חדש (שיבוט)
+    const newBlock = document.createElement("div");
+    newBlock.classList.add("block-container");
+
+    const scratchBlock = document.createElement("div");
+    scratchBlock.classList.add("scratch-block");
+    scratchBlock.textContent = blockIcon; // הצגת הטקסט בתוך הבלוק
+    scratchBlock.style.backgroundColor = blockColor; //הצבע
+
+    //יצירת אלמנט right-connector
+    const rightConnector = document.createElement("div");
+    rightConnector.classList.add("right-connector");
+    rightConnector.style.backgroundColor = blockColor;
+
+    //יצירת אלמנט left-connector-wrapper
+    const leftConnectorWrapper = document.createElement("div");
+    leftConnectorWrapper.classList.add("left-connector-wrapper");
+
+     //יצירת אלמנט left-connector
+    const leftConnector = document.createElement("div");
+    leftConnector.classList.add("left-connector");
+
+    leftConnectorWrapper.appendChild(leftConnector);
+
+    // הוספת הכל ל container
+    newBlock.appendChild(scratchBlock);
+    newBlock.appendChild(rightConnector);
+    newBlock.appendChild(leftConnectorWrapper);
+    newBlock.dataset.type = blockType;
+    newBlock.draggable = false;
+
+    // הוספת הבלוק החדש לאזור התכנות
+    programmingArea.appendChild(newBlock);
+
+    // מיקום הבלוק החדש יחסי לאזור התכנות
+    const rect = programmingArea.getBoundingClientRect();
+    newBlock.style.position = "absolute";
+    newBlock.style.left = `${event.clientX - rect.left}px`;
+    newBlock.style.top = `${event.clientY - rect.top}px`;
+}
 
 // ========================================================================
 // פונקציות אתחול
