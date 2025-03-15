@@ -43,7 +43,7 @@ main {
     background-color: #f5f5f5; /* רקע בהיר יותר */
     border: 1px solid #e0e0e0;
     border-radius: 10px;
-    position: relative; /* חשוב! */
+    position: relative;
     /* display: grid; הסרתי את זה כי אנחנו יוצרים קווי רשת אחרת */
    /* grid-template-columns: repeat(10, 1fr); */
    /* grid-template-rows: repeat(10, 1fr); */
@@ -97,7 +97,7 @@ main {
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    flex: 1; /* **Palette now takes available height - BACK TO FLEX: 1** */
+    flex: 1;
     overflow-y: auto;
     flex-direction: column; /* **Vertical layout for palette - BACK TO VERTICAL** */
 }
@@ -162,11 +162,11 @@ main {
     display: none; /* Still hidden by default */
     padding: 10px;
     position: absolute; /* **Absolute positioning for categories** */
-    top: 0; /* **Position at the top of PROGRAM AREA** */
-    left: 0; /* **Position at the left edge of PROGRAM AREA** */
+    top: 40px; /* **Position BELOW the tabs (adjust as needed)** */
+    left: 10px; /* **Position at the left edge of palette** */
     width: auto; /* **Adjust width as needed** */
     height: auto; /* **Height adjusts to content** */
-    background-color: #ffffff; /* **White background for visibility in program area** */
+    background-color: #fff; /* **White background for visibility in program area** */
     border: 1px solid #e0e0e0; /* **Border for visibility** */
     border-radius: 10px; /* **Rounded corners** */
     overflow-y: auto; /* **Keep scroll if content overflows** */
