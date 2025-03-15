@@ -236,9 +236,9 @@ main {
 #block-palette .scratch-block,
 #programming-area .scratch-block {
     position: relative;
-    width: 85px;  /* שינוי לגודל החדש */
-    height: 75px; /* שינוי לגודל החדש */
-    background-color: #ffff00; /* צבע צהוב כמו בדוגמה שלך */
+    width: 85px;  /* גודל הבלוק */
+    height: 75px; /* גודל הבלוק */
+    background-color: #ffff00; /* צבע צהוב */
     border-radius: 10px;
     display: flex;
     justify-content: center;
@@ -250,33 +250,34 @@ main {
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
-/* בליטה מימין */
+/* בליטה מימין (יוצאת מחוץ לגבול הבלוק) */
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
     content: '';
     position: absolute;
-    right: -15px;
+    right: -15px; /* הבליטה יוצאת החוצה מימין */
     top: 50%;
     transform: translateY(-50%);
-    width: 20px;   /* שינוי בגודל הבליטה */
-    height: 20px;  /* שינוי בגודל הבליטה */
-    background-color: inherit; /* ירושה מצבע הבלוק */
+    width: 20px;
+    height: 20px;
+    background-color: inherit;
     border-radius: 50%;
 }
 
-/* שקע משמאל */
+/* שקע משמאל (לא יוצא החוצה מהבלוק) */
 #block-palette .scratch-block::before,
 #programming-area .scratch-block::before {
     content: '';
     position: absolute;
-    left: -15px;
+    left: 0; /* נשאר בתוך גבול הבלוק */
     top: 50%;
     transform: translateY(-50%);
-    width: 20px;   /* שינוי בגודל השקע */
-    height: 20px;  /* שינוי בגודל השקע */
+    width: 20px;
+    height: 20px;
     background-color: #f0f4ff; /* צבע רקע האפליקציה */
     border-radius: 50%;
 }
+
 
 
 .block-icon {
