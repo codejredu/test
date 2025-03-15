@@ -176,7 +176,7 @@ const blocks = {
             color: "red",
             type: "stop",
             icon: "🛑",
-            },
+        },
         {
             name: "🏁",
             color: "red",
@@ -325,7 +325,7 @@ function populateBlockPalette(category) {
     });
 }
 
-// פונקציה לטיפול בשינוי קטגוריה - **עדכון חשוב כאן!**
+// פונקציה לטיפול בשינוי קטגוריה - **תיקון כאן!**
 function handleCategoryChange(category, tabElement) {
     blockCategories.forEach(element => {
         element.classList.remove("active");
@@ -340,10 +340,10 @@ function handleCategoryChange(category, tabElement) {
     categoryBlocksElement.style.display = "flex"; // **הצגת הקטגוריה הנכונה**
     populateBlockPalette(category);
 
-    // **קוד חדש למיקום אופקי**
-    const tabRect = tabElement.getBoundingClientRect(); // קבלת מיקום הטאב
-    categoryBlocksElement.style.left = `${tabRect.right}px`; // הצמדת הקטגוריה לימין הטאב
-    categoryBlocksElement.style.top = `${tabRect.top}px`;   // יישור הקטגוריה לראש הטאב
+    // **קוד חדש למיקום אופקי - ללא שינוי משמעותי, רק לוודא שהוא נכון**
+    const tabRect = tabElement.getBoundingClientRect();
+    categoryBlocksElement.style.left = `${tabRect.right}px`;
+    categoryBlocksElement.style.top = `${tabRect.top - 10}px`; // **תיקון קל במיקום אנכי** - הזזה קלה למעלה
 }
 
 // ========================================================================
