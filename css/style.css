@@ -112,7 +112,7 @@ main {
 .category-tab {
     border: none;
     padding: 0;
-    margin-right: 5px; /* **Right margin between tabs in row - REINTRODUCED** */
+    margin-right: 5px; /* **No right margin between tabs in column** */
     margin-bottom: 5px;
     border-radius: 10px;
     cursor: pointer;
