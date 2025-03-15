@@ -1,4 +1,4 @@
- /* style.css */
+--- START OF FILE style.css ---
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -103,17 +103,19 @@ main {
     border-radius: 10px;
     flex: 1;
     overflow-y: auto;
-    display: flex; /* הפוך את block-palette לקונטיינר flex */
-    flex-direction: row; /* סדר את הילדים שלו בשורה אופקית */
+
+    display: flex;
+    flex-direction: row;
     align-items: stretch; /* שנה ל-stretch כדי למתוח לגובה שווה */
 }
 
 .category-tabs {
     display: flex;
     flex-direction: row;
-    flex-wrap: wrap;
+    /* flex-wrap: wrap; הסר כדי למנוע מעבר שורה */
     margin-bottom: 10px;
-    min-height: 200px; /* הוספת גובה מינימלי */
+    overflow-x: auto; /* הוסף גלילה אופקית אם הטאבים גולשים */
+    white-space: nowrap; /* מנע מהטאבים לעבור שורה בתוך עצמם */
 }
 
 .category-tab {
@@ -125,8 +127,8 @@ main {
     cursor: pointer;
     font-size: 14px;
     color: #000000;
-    width: 60px;
-    height: 60px;
+    width: 70px;
+    height: 70px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -168,11 +170,6 @@ main {
 .block-category {
     display: none;
     padding: 10px;
-    flex-grow: 1;
-    overflow-y: auto;
-    min-height: 200px; /* הוספת גובה מינימלי תואם */
-    border-left: 1px solid #e0e0e0;
-    margin-left: 10px;
 }
 
 .block-category.active {
@@ -235,8 +232,8 @@ main {
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 90px;      /* 75% מ-120px */
-    height: 37.5px;   /* 75% מ-50px */
+    width: 120px; /* גודל כמו puzzle-button */
+    height: 50px; /* גודל כמו puzzle-button */
     margin: 5px;
     cursor: pointer;
     background-color: transparent; /* הוספת רקע שקוף */
@@ -246,15 +243,15 @@ main {
 #block-palette .scratch-block,
 #programming-area .scratch-block {
     position: relative;
-    width: 63.75px;   /* 75% מ-85px */
-    height: 56.25px;  /* 75% מ-75px */
+    width: 85px;  /* גודל הבלוק */
+    height: 75px; /* גודל הבלוק */
     background-color: #ffff00; /* צבע צהוב */
     border-radius: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
     color: black;
-    font-size: 24px;    /* 75% מ-32px */
+    font-size: 32px;
     font-weight: bold;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
@@ -265,11 +262,11 @@ main {
 #programming-area .scratch-block::after {
     content: '';
     position: absolute;
-    right: -11.25px; /* 75% מ--15px */
+    right: -15px; /* הבליטה יוצאת החוצה מימין */
     top: 50%;
     transform: translateY(-50%);
-    width: 15px;     /* 75% מ-20px */
-    height: 15px;    /* 75% מ-20px */
+    width: 20px;
+    height: 20px;
     background-color: inherit;
     border-radius: 50%;
 }
@@ -279,14 +276,15 @@ main {
 #programming-area .scratch-block::before {
     content: '';
     position: absolute;
-    left: 0;
+    left: 0; /* נשאר בתוך גבול הבלוק */
     top: 50%;
     transform: translateY(-50%);
-    width: 15px;     /* 75% מ-20px */
-    height: 15px;    /* 75% מ-20px */
+    width: 20px;
+    height: 20px;
     background-color: #f0f4ff; /* צבע רקע האפליקציה */
     border-radius: 50%;
 }
+
 
 
 .block-icon {
@@ -340,3 +338,4 @@ main {
 #grid-toggle:hover {
     background-color: #f0f0f0;
 }
+--- END OF FILE style.css ---
