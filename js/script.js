@@ -1,5 +1,4 @@
---- START OF FILE script.js ---
-// ========================================================================
+ // ========================================================================
 // הגדרת בלוקים (Blocks)
 // ========================================================================
 
@@ -377,7 +376,6 @@ populateBlockPalette("triggering");
 // ========================================================================
 
 const character = document.getElementById('character');
-const stage = document.getElementById('stage');
 
 character.addEventListener('dragstart', (event) => {
     event.dataTransfer.setData('text/plain', ''); // Required for drag to work in Firefox
@@ -395,7 +393,7 @@ stage.addEventListener('drop', (event) => {
     const characterHeight = character.offsetHeight;
 
     let x = event.clientX - stageRect.left - characterWidth / 2;
-    let y = event.clientY - offsetY - stageRect.top - characterHeight / 2;
+    let y = event.clientY - stageRect.top - characterHeight / 2;
 
     // Stay within stage bounds
     x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
@@ -404,4 +402,3 @@ stage.addEventListener('drop', (event) => {
     character.style.left = x + 'px';
     character.style.top = y + 'px';
 });
---- END OF FILE script.js ---
