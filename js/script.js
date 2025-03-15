@@ -1,4 +1,5 @@
- // ========================================================================
+--- START OF FILE script.js ---
+// ========================================================================
 // הגדרת בלוקים (Blocks)
 // ========================================================================
 
@@ -175,7 +176,7 @@ const blocks = {
             color: "red",
             type: "stop",
             icon: "🛑",
-        },
+            },
         {
             name: "🏁",
             color: "red",
@@ -324,15 +325,25 @@ function populateBlockPalette(category) {
     });
 }
 
-// פונקציה לטיפול בשינוי קטגוריה
-function handleCategoryChange(category) {
-    blockCategories.forEach(element => element.classList.remove("active"));
+// פונקציה לטיפול בשינוי קטגוריה - **עדכון חשוב כאן!**
+function handleCategoryChange(category, tabElement) {
+    blockCategories.forEach(element => {
+        element.classList.remove("active");
+        element.style.display = "none"; // **הסתרת כל הקטגוריות**
+    });
     categoryTabs.forEach(tab => tab.classList.remove("active"));
 
     const tab = document.querySelector(`.category-tab[data-category="${category}"]`);
     tab.classList.add("active");
-    document.getElementById(`${category}-blocks`).classList.add("active");
+    const categoryBlocksElement = document.getElementById(`${category}-blocks`);
+    categoryBlocksElement.classList.add("active");
+    categoryBlocksElement.style.display = "flex"; // **הצגת הקטגוריה הנכונה**
     populateBlockPalette(category);
+
+    // **קוד חדש למיקום אופקי**
+    const tabRect = tabElement.getBoundingClientRect(); // קבלת מיקום הטאב
+    categoryBlocksElement.style.left = `${tabRect.right}px`; // הצמדת הקטגוריה לימין הטאב
+    categoryBlocksElement.style.top = `${tabRect.top}px`;   // יישור הקטגוריה לראש הטאב
 }
 
 // ========================================================================
@@ -354,9 +365,9 @@ const categoryTabs = document.querySelectorAll(".category-tab");
 const blockCategories = document.querySelectorAll(".block-category");
 
 categoryTabs.forEach(tab => {
-    tab.addEventListener("click", () => {
+    tab.addEventListener("click", (event) => { // **שינוי: העברת event לפונקציה**
         const category = tab.dataset.category;
-        handleCategoryChange(category);
+        handleCategoryChange(category, event.currentTarget); // **שינוי: העברת currentTarget**
     });
 });
 
@@ -376,6 +387,7 @@ populateBlockPalette("triggering");
 // ========================================================================
 
 const character = document.getElementById('character');
+const stage = document.getElementById('stage');
 
 character.addEventListener('dragstart', (event) => {
     event.dataTransfer.setData('text/plain', ''); // Required for drag to work in Firefox
@@ -393,7 +405,7 @@ stage.addEventListener('drop', (event) => {
     const characterHeight = character.offsetHeight;
 
     let x = event.clientX - stageRect.left - characterWidth / 2;
-    let y = event.clientY - stageRect.top - characterHeight / 2;
+    let y = event.clientY - offsetY - stageRect.top - characterHeight / 2;
 
     // Stay within stage bounds
     x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
@@ -402,3 +414,4 @@ stage.addEventListener('drop', (event) => {
     character.style.left = x + 'px';
     character.style.top = y + 'px';
 });
+--- END OF FILE script.js ---
