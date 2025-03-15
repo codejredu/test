@@ -40,10 +40,10 @@ main {
     flex: 0 0 auto;
     width: 550px;
     height: 450px;
-    background-color: #f5f5f5;  /* רקע בהיר יותר */
+    background-color: #f5f5f5; /* רקע בהיר יותר */
     border: 1px solid #e0e0e0;
     border-radius: 10px;
-    position: relative;
+    position: relative; /* חשוב! */
     /* display: grid; הסרתי את זה כי אנחנו יוצרים קווי רשת אחרת */
    /* grid-template-columns: repeat(10, 1fr); */
    /* grid-template-rows: repeat(10, 1fr); */
