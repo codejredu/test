@@ -186,7 +186,7 @@ function populateBlockPalette(category) {
 }
 
 // פונקציה לטיפול בשינוי קטגוריה - **תיקון כאן!**
-function handleCategoryChange(category) {
+function handleCategoryChange(category, tabElement) {
     blockCategories.forEach(element => {
         element.classList.remove("active");
         element.style.display = "none"; // **הסתרת כל הקטגוריות**
@@ -228,7 +228,7 @@ const blockCategories = document.querySelectorAll(".block-category");
 categoryTabs.forEach(tab => {
     tab.addEventListener("click", () => {
         const category = tab.dataset.category;
-        handleCategoryChange(category);
+        handleCategoryChange(category, tab);
     });
 });
 
@@ -248,6 +248,7 @@ populateBlockPalette("triggering");
 // ========================================================================
 
 const character = document.getElementById('character');
+const stage = document.getElementById('stage');
 
 character.addEventListener('dragstart', (event) => {
     event.dataTransfer.setData('text/plain', ''); // Required for drag to work in Firefox
