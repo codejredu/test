@@ -232,12 +232,12 @@ main {
     background-color: transparent; /* הוספת רקע שקוף */
 }
 
-/* עיצוב בסיסי לבלוק - משותף לכל הקטגוריות */
+/* עיצוב לבנה עם בליטה מימין ושקע משמאל */
 #block-palette .scratch-block,
 #programming-area .scratch-block {
-    position: absolute;
-    width: 100%;
-    height: 100%;
+    position: relative;
+    width: 85px;  /* שינוי לגודל החדש */
+    height: 75px; /* שינוי לגודל החדש */
     background-color: #ffff00; /* צבע צהוב כמו בדוגמה שלך */
     border-radius: 10px;
     display: flex;
@@ -258,8 +258,8 @@ main {
     right: -15px;
     top: 50%;
     transform: translateY(-50%);
-    width: 30px;
-    height: 30px;
+    width: 20px;   /* שינוי בגודל הבליטה */
+    height: 20px;  /* שינוי בגודל הבליטה */
     background-color: inherit; /* ירושה מצבע הבלוק */
     border-radius: 50%;
 }
@@ -272,11 +272,12 @@ main {
     left: -15px;
     top: 50%;
     transform: translateY(-50%);
-    width: 30px;
-    height: 30px;
+    width: 20px;   /* שינוי בגודל השקע */
+    height: 20px;  /* שינוי בגודל השקע */
     background-color: #f0f4ff; /* צבע רקע האפליקציה */
     border-radius: 50%;
 }
+
 
 .block-icon {
     width: 16px;
