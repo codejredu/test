@@ -103,6 +103,10 @@ main {
     border-radius: 10px;
     flex: 1;
     overflow-y: auto;
+
+    display: flex; /* הפוך את block-palette לקונטיינר flex */
+    flex-direction: row; /* סדר את הילדים שלו בשורה אופקית */
+    align-items: flex-start; /* יישר את הפריטים לתחילת הציר המשני (למעלה) */
 }
 
 .category-tabs {
