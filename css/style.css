@@ -1,3 +1,4 @@
+--- START OF FILE style.css ---
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -39,10 +40,13 @@ main {
     flex: 0 0 auto;
     width: 550px;
     height: 450px;
-    background-color: #f5f5f5;
+    background-color: #f5f5f5; /* רקע בהיר יותר */
     border: 1px solid #e0e0e0;
     border-radius: 10px;
-    position: relative;
+    position: relative; /* חשוב! */
+    /* display: grid; הסרתי את זה כי אנחנו יוצרים קווי רשת אחרת */
+   /* grid-template-columns: repeat(10, 1fr); */
+   /* grid-template-rows: repeat(10, 1fr); */
     gap: 1px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
@@ -55,7 +59,8 @@ main {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    background: none;
+    background: none; /* הסרת הרקע של קווי הרשת המובנים */
+    /* opacity: 0; הסתרת הרשת כברירת מחדל */
 }
 
 #stage.show-grid::before {
@@ -66,17 +71,19 @@ main {
   background-image:
     linear-gradient(to right, lightgrey 1px, transparent 1px),
     linear-gradient(to bottom, lightgrey 1px, transparent 1px);
-  background-size: 56px 46px;
-  background-position: top left;
+  background-size: 56px 46px; /* Set the size of the grid lines */
+  background-position: top left; /* Align the grid to the top left */
 }
 
 #character {
     width: 100px;
     height: 100px;
-    position: absolute;
+    position: absolute; /* חשוב! */
     object-fit: contain;
     cursor: grab;
+    /* הוספה של transition כדי לתת תחושה יותר נעימה */
     transition: all 0.1s ease-out;
+    /* הוספה כדי שהדמות תתחיל באמצע */
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -98,11 +105,10 @@ main {
     overflow-y: auto;
 }
 
-/* סגנון כפתורי הקטגוריות */
 .category-tabs {
     display: flex;
     flex-wrap: wrap;
-    margin-bottom: 0; /* הקטנת המרווח בין הכפתורים לבלוקים */
+    margin-bottom: 10px;
 }
 
 .category-tab {
@@ -154,27 +160,15 @@ main {
     background-color: red;
 }
 
-/* סגנון אזורי הבלוקים */
 .block-category {
     display: none;
+    padding: 10px;
 }
 
 .block-category.active {
     display: flex;
-    flex-direction: row; /* שינוי לסידור אופקי */
     flex-wrap: wrap;
-    align-items: center;
-    padding: 10px 0; /* הקטנת המרווח מעל ומתחת */
-}
-
-/* סגנון למיכל הבלוקים האופקי */
-.horizontal-blocks-container {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 5px;
-    width: 100%;
+    padding: 10px;
 }
 
 #programming-area {
@@ -202,11 +196,12 @@ main {
     min-height: 100px;
     border: 1px dashed #ccc;
     padding: 10px;
-    position: relative;
+    position: relative; /* כדי למקם אלמנטים באופן אבסולוטי בתוכו */
 }
 
 #program-blocks .block-container {
-    position: absolute;
+    position: absolute; /* כדי למקם את הבלוקים באופן חופשי */
+    /* כאן אפשר להוסיף עוד סגנונות */
 }
 
 .logo {
@@ -226,66 +221,79 @@ main {
     cursor: pointer;
 }
 
-/* סגנון בלוקים */
-.block-container {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
+/* הוספתי את זה כדי שהגודל ישפיע על הבלוקים בפלטה */
+#block-palette .block-container,
+#programming-area .block-container {
     position: relative;
-    width: auto; /* שינוי לאוטומטי כדי לאפשר גודל טבעי */
-    height: 50px;
+    width: 120px; /* גודל כמו puzzle-button */
+    height: 50px; /* גודל כמו puzzle-button */
     margin: 5px;
     cursor: pointer;
-    background-color: transparent;
+    background-color: transparent; /* הוספת רקע שקוף */
 }
 
-/* עיצוב בלוק בסיסי */
-.scratch-block {
+/* עיצוב לבנה עם בליטה מימין ושקע משמאל */
+#block-palette .scratch-block,
+#programming-area .scratch-block {
     position: relative;
-    width: 60px; /* הקטנת הרוחב להתאמה לתצוגה אופקית */
-    height: 50px; /* הקטנת הגובה להתאמה לתצוגה אופקית */
-    background-color: #ffff00;
+    width: 85px;  /* גודל הבלוק */
+    height: 75px; /* גודל הבלוק */
+    background-color: #ffff00; /* צבע צהוב */
     border-radius: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
     color: black;
-    font-size: 28px; /* הקטנת גודל הטקסט */
+    font-size: 32px;
     font-weight: bold;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
-/* בליטה מימין - המחבר הימני */
-.right-connector {
-    width: 10px;
+/* בליטה מימין (יוצאת מחוץ לגבול הבלוק) */
+#block-palette .scratch-block::after,
+#programming-area .scratch-block::after {
+    content: '';
+    position: absolute;
+    right: -15px; /* הבליטה יוצאת החוצה מימין */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
     height: 20px;
-    position: relative;
     background-color: inherit;
-    border-top-right-radius: 10px;
-    border-bottom-right-radius: 10px;
-    margin-left: -3px;
+    border-radius: 50%;
 }
 
-/* עטיפת המחבר השמאלי */
-.left-connector-wrapper {
-    display: flex;
-    align-items: center;
-    height: 100%;
-    position: relative;
-    margin-right: -5px;
-}
-
-/* שקע משמאל - המחבר השמאלי */
-.left-connector {
-    width: 10px;
+/* שקע משמאל (לא יוצא החוצה מהבלוק) */
+#block-palette .scratch-block::before,
+#programming-area .scratch-block::before {
+    content: '';
+    position: absolute;
+    left: 0; /* נשאר בתוך גבול הבלוק */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
     height: 20px;
-    background-color: white;
-    border-top-left-radius: 10px;
-    border-bottom-left-radius: 10px;
+    background-color: #f0f4ff; /* צבע רקע האפליקציה */
+    border-radius: 50%;
 }
 
-/* צבעים לפי קטגוריות */
+
+
+.block-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 5px; /* הוספת רווח בין האייקון לטקסט */
+}
+
+.block-icon svg {
+    width: 200%;
+    height: 200%;
+}
+
 #triggering-blocks .block-container .scratch-block {
     background-color: #F9D74C;
 }
@@ -323,3 +331,4 @@ main {
 #grid-toggle:hover {
     background-color: #f0f0f0;
 }
+--- END OF FILE style.css ---
