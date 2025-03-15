@@ -290,8 +290,8 @@ main {
 }
 
 .block-icon svg {
-    width: 150%;
-    height: 150%;
+    width: 200%;
+    height: 200%;
 }
 
 #triggering-blocks .block-container .scratch-block {
