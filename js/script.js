@@ -1,4 +1,4 @@
- // ========================================================================
+// ========================================================================
 // הגדרת בלוקים (Blocks)
 // ========================================================================
 
@@ -313,15 +313,27 @@ function handleDrop(event) {
 // פונקציות אתחול
 // ========================================================================
 
-// הוספת הבלוקים ללוח הלבנים
+// הוספת הבלוקים ללוח הלבנים - סידור אופקי
 function populateBlockPalette(category) {
     const categoryDiv = document.getElementById(`${category}-blocks`);
     categoryDiv.innerHTML = "";
 
+    // יצירת מיכל אופקי לבלוקים
+    const horizontalContainer = document.createElement("div");
+    horizontalContainer.classList.add("horizontal-blocks-container");
+    horizontalContainer.style.display = "flex";
+    horizontalContainer.style.flexDirection = "row";
+    horizontalContainer.style.flexWrap = "wrap";
+    horizontalContainer.style.gap = "10px";
+    horizontalContainer.style.padding = "10px";
+    horizontalContainer.style.alignItems = "center";
+
     blocks[category].forEach(block => {
         const blockElement = createBlockElement(block, category);
-        categoryDiv.appendChild(blockElement);
+        horizontalContainer.appendChild(blockElement);
     });
+
+    categoryDiv.appendChild(horizontalContainer);
 }
 
 // פונקציה לטיפול בשינוי קטגוריה
@@ -331,7 +343,11 @@ function handleCategoryChange(category) {
 
     const tab = document.querySelector(`.category-tab[data-category="${category}"]`);
     tab.classList.add("active");
-    document.getElementById(`${category}-blocks`).classList.add("active");
+    
+    // הצגת קטגוריה פעילה
+    const activeCategory = document.getElementById(`${category}-blocks`);
+    activeCategory.classList.add("active");
+    
     populateBlockPalette(category);
 }
 
@@ -402,3 +418,70 @@ stage.addEventListener('drop', (event) => {
     character.style.left = x + 'px';
     character.style.top = y + 'px';
 });
+
+// ========================================================================
+// אתחול מיידי של הממשק כאשר ה-DOM נטען
+// ========================================================================
+document.addEventListener('DOMContentLoaded', () => {
+    // הוספת סגנונות נוספים באופן דינמי
+    const styleElement = document.createElement('style');
+    styleElement.textContent = `
+        /* סגנון קטגוריות הבלוקים */
+        .block-categories {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        /* סגנון כפתורי הקטגוריות */
+        .category-tabs {
+            display: flex;
+            flex-direction: row;
+            background-color: #f0f0f0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .category-tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-right: 1px solid #ddd;
+        }
+
+        .category-tab.active {
+            background-color: #fff;
+            border-bottom: 2px solid #4da6ff;
+        }
+
+        /* סגנון אזור הבלוקים */
+        .block-category {
+            display: none;
+            padding: 10px;
+        }
+
+        .block-category.active {
+            display: block;
+        }
+
+        /* סגנון מיכל הבלוקים */
+        .horizontal-blocks-container {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+        }
+
+        .block-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            cursor: grab;
+            margin: 5px;
+            user-select: none;
+            position: relative;
+        }
+
+        /* סגנון הבלוק עצמו */
+        .scratch-block {
+            color: white;
