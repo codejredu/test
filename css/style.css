@@ -104,9 +104,9 @@ main {
     flex: 1;
     overflow-y: auto;
 
-    display: flex; /* הפוך את block-palette לקונטיינר flex */
-    flex-direction: row; /* סדר את הילדים שלו בשורה אופקית */
-    align-items: flex-start; /* יישר את הפריטים לתחילת הציר המשני (למעלה) */
+    display: flex;
+    flex-direction: row;
+    align-items: stretch; /* שנה ל-stretch כדי למתוח לגובה שווה */
 }
 
 .category-tabs {
