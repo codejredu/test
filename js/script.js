@@ -1,48 +1,187 @@
---- START OF FILE script.js ---
-// ========================================================================
+ // ========================================================================
 // הגדרת בלוקים (Blocks)
 // ========================================================================
 
 const blocks = {
     triggering: [
-        { name: "🚩", color: "yellow", type: "startOnGreenFlag", icon: "🚩" },
-        { name: "👆", color: "yellow", type: "startOnTap", icon: "👆" },
-        { name: "💥", color: "yellow", type: "startOnBump", icon: "💥" },
-        { name: "✉️", color: "yellow", type: "sendMessage", icon: "✉️" },
-        { name: "📩", color: "yellow", type: "startOnMessage", icon: "📩" },
+        {
+            name: "🚩",
+            color: "yellow",
+            type: "startOnGreenFlag",
+            icon: "🚩",
+        },
+        {
+            name: "👆",
+            color: "yellow",
+            type: "startOnTap",
+            icon: "👆",
+        },
+        {
+            name: "💥",
+            color: "yellow",
+            type: "startOnBump",
+            icon: "💥",
+        },
+        {
+            name: "✉️",
+            color: "yellow",
+            type: "sendMessage",
+            icon: "✉️",
+        },
+        {
+            name: "📩",
+            color: "yellow",
+            type: "startOnMessage",
+            icon: "📩",
+        },
     ],
     motion: [
-        { name: "➡️", color: "blue", type: "moveRight", icon: "➡️" },
-        { name: "⬅️", color: "blue", type: "moveLeft", icon: "⬅️" },
-        { name: "⬆️", color: "blue", type: "moveUp", icon: "⬆️" },
-        { name: "⬇️", color: "blue", type: "moveDown", icon: "⬇️" },
-        { name: "↩️", color: "blue", type: "turnRight", icon: "↩️" },
-        { name: "↪️", color: "blue", type: "turnLeft", icon: "↪️" },
-        { name: "🤸", color: "blue", type: "hop", icon: "🤸" },
-        { name: "🏠", color: "blue", type: "goHome", icon: "🏠" },
+        {
+            name: "➡️",
+            color: "blue",
+            type: "moveRight",
+            icon: "➡️",
+        },
+        {
+            name: "⬅️",
+            color: "blue",
+            type: "moveLeft",
+            icon: "⬅️",
+        },
+        {
+            name: "⬆️",
+            color: "blue",
+            type: "moveUp",
+            icon: "⬆️",
+        },
+        {
+            name: "⬇️",
+            color: "blue",
+            type: "moveDown",
+            icon: "⬇️",
+        },
+        {
+            name: "↩️",
+            color: "blue",
+            type: "turnRight",
+            icon: "↩️",
+        },
+        {
+            name: "↪️",
+            color: "blue",
+            type: "turnLeft",
+            icon: "↪️",
+        },
+        {
+            name: "🤸",
+            color: "blue",
+            type: "hop",
+            icon: "🤸",
+        },
+        {
+            name: "🏠",
+            color: "blue",
+            type: "goHome",
+            icon: "🏠",
+        },
     ],
     looks: [
-        { name: "💬", color: "purple", type: "say", icon: "👁️" },
-        { name: "📈", color: "purple", type: "grow", icon: "🙈" },
-        { name: "📉", color: "purple", type: "shrink", icon: "🔄" },
-        { name: "🔄", color: "purple", type: "resetSize", icon: "📈" },
-        { name: "🙈", color: "purple", type: "hide", icon: "📉" },
-        { name: "👁️", color: "purple", type: "show", icon: "💬" },
+        {
+            name: "💬",
+            color: "purple",
+            type: "say",
+            icon: "👁️",
+        },
+        {
+            name: "📈",
+            color: "purple",
+            type: "grow",
+            icon: "🙈",
+        },
+        {
+            name: "📉",
+            color: "purple",
+            type: "shrink",
+            icon: "🔄",
+        },
+        {
+            name: "🔄",
+            color: "purple",
+            type: "resetSize",
+            icon: "📈",
+        },
+        {
+            name: "🙈",
+            color: "purple",
+            type: "hide",
+            icon: "📉",
+        },
+        {
+            name: "👁️",
+            color: "purple",
+            type: "show",
+            icon: "💬",
+        },
     ],
     sound: [
-        { name: "🎵", color: "green", type: "popSound", icon: "🎵" },
-        { name: "🎤", color: "green", type: "playRecordedSound", icon: "🎤" },
+        {
+            name: "🎵",
+            color: "green",
+            type: "popSound",
+            icon: "🎵",
+        },
+        {
+            name: "🎤",
+            color: "green",
+            type: "playRecordedSound",
+            icon: "🎤",
+        },
     ],
     control: [
-        { name: "⏱️", color: "orange", type: "wait", icon: "⏱️" },
-        { name: "⚡", color: "orange", type: "setSpeed", icon: "⚡" },
-        { name: "🔁", type: "repeat", icon: "🔁", color: "orange" },
-        { name: "♾️", type: "repeatForever", icon: "♾️", color: "orange" },
-        { name: "🚪", color: "orange", type: "goToPage", icon: "🚪" },
+        {
+            name: "⏱️",
+            color: "orange",
+            type: "wait",
+            icon: "⏱️",
+        },
+        {
+            name: "⚡",
+            color: "orange",
+            type: "setSpeed",
+            icon: "⚡",
+        },
+        {
+            name: "🔁",
+            type: "repeat",
+            icon: "🔁",
+            color: "orange"
+        },
+        {
+            name: "♾️",
+            type: "repeatForever",
+            icon: "♾️",
+            color: "orange"
+        },
+        {
+            name: "🚪",
+            color: "orange",
+            type: "goToPage",
+            icon: "🚪",
+        },
     ],
     end: [
-        { name: "🛑", color: "red", type: "stop", icon: "🛑" },
-        { name: "🏁", color: "red", type: "end", icon: "🏁" },
+        {
+            name: "🛑",
+            color: "red",
+            type: "stop",
+            icon: "🛑",
+        },
+        {
+            name: "🏁",
+            color: "red",
+            type: "end",
+            icon: "🏁",
+        },
     ],
 };
 
@@ -185,27 +324,16 @@ function populateBlockPalette(category) {
     });
 }
 
-// פונקציה לטיפול בשינוי קטגוריה - **תיקון כאן!**
+// פונקציה לטיפול בשינוי קטגוריה
 function handleCategoryChange(category) {
-    blockCategories.forEach(element => {
-        element.classList.remove("active");
-        element.style.display = "none"; // **הסתרת כל הקטגוריות**
-    });
+    blockCategories.forEach(element => element.classList.remove("active"));
     categoryTabs.forEach(tab => tab.classList.remove("active"));
 
     const tab = document.querySelector(`.category-tab[data-category="${category}"]`);
     tab.classList.add("active");
-    const categoryBlocksElement = document.getElementById(`${category}-blocks`);
-    categoryBlocksElement.classList.add("active");
-    categoryBlocksElement.style.display = "flex"; // **הצגת הקטגוריה הנכונה**
+    document.getElementById(`${category}-blocks`).classList.add("active");
     populateBlockPalette(category);
-
-    // **קוד חדש למיקום אופקי - תיקון קריטי**
-    const programmingAreaRect = document.getElementById('programming-area').getBoundingClientRect(); // Get programming-area rect
-    categoryBlocksElement.style.left = `${programmingAreaRect.left}px`; // Position category at the left of the **programming area**
-    categoryBlocksElement.style.top = `${programmingAreaRect.top + 40}px`;   // **Position BELOW the category TABS**, offset by tabs' height (adjust 40px as needed)
 }
-
 
 // ========================================================================
 //  לוגיקת גרירה ושחרור (Drag and Drop)
@@ -248,17 +376,16 @@ populateBlockPalette("triggering");
 // ========================================================================
 
 const character = document.getElementById('character');
-const stage = document.getElementById('stage');
 
 character.addEventListener('dragstart', (event) => {
     event.dataTransfer.setData('text/plain', ''); // Required for drag to work in Firefox
 });
 
-stage.addEventListener("dragover", (event) => {
+stage.addEventListener('dragover', (event) => {
     event.preventDefault(); // Allow drop
 });
 
-stage.addEventListener("drop", (event) => {
+stage.addEventListener('drop', (event) => {
     event.preventDefault();
 
     const stageRect = stage.getBoundingClientRect();
@@ -266,7 +393,7 @@ stage.addEventListener("drop", (event) => {
     const characterHeight = character.offsetHeight;
 
     let x = event.clientX - stageRect.left - characterWidth / 2;
-    let y = event.clientY - offsetY - stageRect.top - characterHeight / 2;
+    let y = event.clientY - stageRect.top - characterHeight / 2;
 
     // Stay within stage bounds
     x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
@@ -275,4 +402,3 @@ stage.addEventListener("drop", (event) => {
     character.style.left = x + 'px';
     character.style.top = y + 'px';
 });
---- END OF FILE script.js ---
