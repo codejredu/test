@@ -50,17 +50,125 @@ const blocks = {
 // פונקציות ליצירת אלמנטים
 // ========================================================================
 
-function createRightConnector(color) { /* ... Function - no changes needed ... */ }
-function createLeftConnector() { /* ... Function - no changes needed ... */ }
-function createScratchBlock(block) { /* ... Function - no changes needed ... */ }
-function createBlockElement(block, category) { /* ... Function - no changes needed ... */ }
+// פונקציה ליצירת מחבר ימני
+function createRightConnector(color) {
+    const rightConnector = document.createElement("div");
+    rightConnector.classList.add("right-connector");
+    rightConnector.style.backgroundColor = color;
+    return rightConnector;
+}
+
+// פונקציה ליצירת מחבר שמאלי
+function createLeftConnector() {
+    const leftConnectorWrapper = document.createElement("div");
+    leftConnectorWrapper.classList.add("left-connector-wrapper");
+
+    const leftConnector = document.createElement("div");
+    leftConnector.classList.add("left-connector");
+
+    leftConnectorWrapper.appendChild(leftConnector);
+    return leftConnectorWrapper;
+}
+
+// פונקציה ליצירת בלוק גרפי
+function createScratchBlock(block) {
+    const scratchBlock = document.createElement("div");
+    scratchBlock.classList.add("scratch-block");
+    scratchBlock.textContent = block.icon;
+    scratchBlock.style.backgroundColor = block.color;
+    return scratchBlock;
+}
+
+// פונקציה ליצירת HTML עבור בלוק
+function createBlockElement(block, category) {
+    const blockContainer = document.createElement("div");
+    blockContainer.classList.add("block-container");
+
+    const scratchBlock = createScratchBlock(block);
+    const rightConnector = createRightConnector(block.color);
+    const leftConnectorWrapper = createLeftConnector();
+
+    blockContainer.appendChild(scratchBlock);
+    blockContainer.appendChild(rightConnector);
+    blockContainer.appendChild(leftConnectorWrapper);
+
+    blockContainer.dataset.type = block.type;
+    blockContainer.draggable = true;
+
+    // טיפול באירוע התחלת גרירה (dragstart)
+    blockContainer.addEventListener("dragstart", (event) => {
+        handleDragStart(event, block, category);
+    });
+
+    return blockContainer;
+}
 
 // ========================================================================
 // פונקציות טיפול באירועים
 // ========================================================================
 
-function handleDragStart(event, block, category) { /* ... Function - no changes needed ... */ }
-function handleDrop(event) { /* ... Function - no changes needed ... */ }
+// פונקציה לטיפול בהתחלת גרירה
+function handleDragStart(event, block, category) {
+    const data = {
+        type: block.type,
+        icon: block.icon,
+        color: block.color,
+        category: category
+    };
+    event.dataTransfer.setData("text/plain", JSON.stringify(data));
+    event.dataTransfer.effectAllowed = "move";
+}
+
+// פונקציה לטיפול בשחרור באזור התכנות
+function handleDrop(event) {
+    event.preventDefault();
+
+    const data = JSON.parse(event.dataTransfer.getData("text/plain"));
+    const blockType = data.type;
+    const blockCategory = data.category;
+    const blockIcon = data.icon;
+    const blockColor = data.color;
+
+    // יצירת אלמנט בלוק חדש (שיבוט)
+    const newBlock = document.createElement("div");
+    newBlock.classList.add("block-container");
+
+    const scratchBlock = document.createElement("div");
+    scratchBlock.classList.add("scratch-block");
+    scratchBlock.textContent = blockIcon; // הצגת הטקסט בתוך הבלוק
+    scratchBlock.style.backgroundColor = blockColor; //הצבע
+
+    //יצירת אלמנט right-connector
+    const rightConnector = document.createElement("div");
+    rightConnector.classList.add("right-connector");
+    rightConnector.style.backgroundColor = blockColor;
+
+    //יצירת אלמנט left-connector-wrapper
+    const leftConnectorWrapper = document.createElement("div");
+    leftConnectorWrapper.classList.add("left-connector-wrapper");
+
+     //יצירת אלמנט left-connector
+    const leftConnector = document.createElement("div");
+    leftConnector.classList.add("left-connector");
+
+    leftConnectorWrapper.appendChild(leftConnector);
+
+    // הוספת הכל ל container
+    newBlock.appendChild(scratchBlock);
+    newBlock.appendChild(rightConnector);
+    newBlock.appendChild(leftConnectorWrapper);
+    newBlock.dataset.type = blockType;
+    newBlock.draggable = false;
+
+    // הוספת הבלוק החדש לאזור התכנות
+    programmingArea.appendChild(newBlock);
+
+    // מיקום הבלוק החדש יחסי לאזור התכנות
+    const rect = programmingArea.getBoundingClientRect();
+    newBlock.style.position = "absolute";
+    newBlock.style.left = `${event.clientX - rect.left}px`;
+    newBlock.style.top = `${event.clientY - rect.top}px`;
+}
 
 // ========================================================================
 // פונקציות אתחול
@@ -78,7 +186,7 @@ function populateBlockPalette(category) {
 }
 
 // פונקציה לטיפול בשינוי קטגוריה - **תיקון כאן!**
-function handleCategoryChange(category, tabElement) {
+function handleCategoryChange(category) {
     blockCategories.forEach(element => {
         element.classList.remove("active");
         element.style.display = "none"; // **הסתרת כל הקטגוריות**
@@ -118,9 +226,9 @@ const categoryTabs = document.querySelectorAll(".category-tab");
 const blockCategories = document.querySelectorAll(".block-category");
 
 categoryTabs.forEach(tab => {
-    tab.addEventListener("click", (event) => { // **שינוי: העברת event לפונקציה**
+    tab.addEventListener("click", () => {
         const category = tab.dataset.category;
-        handleCategoryChange(category, event.currentTarget); // **שינוי: העברת currentTarget**
+        handleCategoryChange(category);
     });
 });
 
@@ -140,7 +248,6 @@ populateBlockPalette("triggering");
 // ========================================================================
 
 const character = document.getElementById('character');
-const stage = document.getElementById('stage');
 
 character.addEventListener('dragstart', (event) => {
     event.dataTransfer.setData('text/plain', ''); // Required for drag to work in Firefox
