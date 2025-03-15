@@ -40,7 +40,7 @@ main {
     flex: 0 0 auto;
     width: 550px;
     height: 450px;
-    background-color: #f5f5f5;
+    background-color: #f5f5f5; /* רקע בהיר יותר */
     border: 1px solid #e0e0e0;
     border-radius: 10px;
     position: relative;
@@ -76,13 +76,13 @@ main {
 }
 
 #character {
-    width: 100px;
-    height: 100px;
+    width: 100px; /* שינוי הרוחב ל-100px */
+    height: 100px; /* שינוי הגובה ל-100px */
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    object-fit: contain;
+    object-fit: contain; /* גורם לתמונה להתאים בתוך השטח המוקצה לה */
 }
 
 .palette-and-programming {
@@ -97,19 +97,20 @@ main {
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    flex: 0 0 auto; /* **Palette takes minimal height** */
+    flex: 0 0 auto;
     overflow-x: auto; /* **Horizontal scroll if needed** */
     overflow-y: hidden; /* **Hide vertical scroll** */
     display: flex; /* **Horizontal layout for palette** */
     flex-direction: row; /* **Categories in a row** */
     align-items: flex-start; /* **Align items to the start (top)** */
     height: 140px; /* **Fixed height for the whole palette row** */
+    white-space: nowrap; /* **Prevent category blocks from wrapping** */
 }
 
 .category-tabs {
-    display: flex;
+    display: inline-flex; /* **Make category tabs inline-flex for horizontal layout** */
     flex-direction: row; /* **Tabs in a ROW - HORIZONTAL** */
-    flex-wrap: nowrap; /* **No wrap for tabs** */
+    flex-wrap: nowrap;
     margin-bottom: 0;
 }
 
@@ -129,6 +130,7 @@ main {
     align-items: center;
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
     border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+    flex: none; /* **Prevent tabs from stretching** */
 }
 
 .category-tab img {
@@ -177,10 +179,11 @@ main {
     flex-direction: row; /* **Blocks in category in ROW - HORIZONTAL** */
     flex-wrap: wrap; /* **Wrap blocks if needed** */
     margin-right: 10px; /* **Added right margin between categories** */
+    display: inline-flex; /* **Make block categories inline-flex for horizontal flow** */
 }
 
 .block-category.active {
-    display: flex; /* **Make active category visible** */
+    display: inline-flex; /* **Make active category visible** */
 }
 
 #programming-area {
