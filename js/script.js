@@ -1,4 +1,4 @@
- --- START OF FILE script.js ---
+--- START OF FILE script.js ---
 // ========================================================================
 // הגדרת בלוקים (Blocks)
 // ========================================================================
@@ -88,9 +88,9 @@ function handleCategoryChange(category) {
 
     const tab = document.querySelector(`.category-tab[data-category="${category}"]`);
     tab.classList.add("active");
-    const categoryBlocksElement = document.getElementById(`${category}-blocks`);
-    categoryBlocksElement.classList.add("active");
-    categoryBlocksElement.style.display = "flex"; // **הצגת הקטגוריה הנכונה**
+    const categoryDiv = document.getElementById(`${category}-blocks`); // **Fixed variable name here**
+    categoryDiv.classList.add("active");
+    categoryDiv.style.display = "flex"; // **הצגת הקטגוריה הנכונה**
     populateBlockPalette(category);
 }
 
