@@ -1,306 +1,334 @@
-/* ========================================================================
-   סגנונות כלליים
-   ======================================================================== */
-* {
+--- START OF FILE style.css ---
+body {
+    font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f4ff;
     direction: rtl;
 }
 
-body {
-    background-color: #f0f0f0;
+.container {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    overflow-x: hidden;
 }
 
-/* ========================================================================
-   סגנונות לתפריט העליון
-   ======================================================================== */
-.navbar {
-    background-color: #4d97ff;
-    color: white;
+header {
+    background-color: #fff;
     padding: 10px 20px;
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e0e0e0;
 }
 
-.logo {
-    font-size: 24px;
-    font-weight: bold;
-}
-
-.nav-buttons button {
-    background-color: #3d7ce5;
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    margin-right: 10px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.nav-buttons button:hover {
-    background-color: #2e61b6;
-}
-
-/* ========================================================================
-   סגנונות לאיזור העבודה הראשי
-   ======================================================================== */
-.main-area {
+main {
     display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.stage-container {
     flex: 1;
-    overflow: hidden;
-}
-
-/* ========================================================================
-   סגנונות לסרגל הכלים
-   ======================================================================== */
-.toolbar {
-    background-color: #f9f9f9;
-    border-left: 1px solid #ddd;
-    width: 250px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     padding: 10px;
-    display: flex;
-    flex-direction: column;
 }
 
-/* ========================================================================
-   סגנונות לפלטת הבלוקים
-   ======================================================================== */
-#block-palette {
-    background-color: #f9f9f9;
-    border-left: 1px solid #ddd;
-    width: 250px;
+#stage {
+    flex: 0 0 auto;
+    width: 550px;
+    height: 450px;
+    background-color: #f5f5f5; /* רקע בהיר יותר */
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    position: relative; /* חשוב! */
+    /* display: grid; הסרתי את זה כי אנחנו יוצרים קווי רשת אחרת */
+   /* grid-template-columns: repeat(10, 1fr); */
+   /* grid-template-rows: repeat(10, 1fr); */
+    gap: 1px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+#stage::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background: none; /* הסרת הרקע של קווי הרשת המובנים */
+    /* opacity: 0; הסתרת הרשת כברירת מחדל */
+}
+
+#stage.show-grid::before {
+    background: none;
+}
+
+#stage.show-grid {
+  background-image:
+    linear-gradient(to right, lightgrey 1px, transparent 1px),
+    linear-gradient(to bottom, lightgrey 1px, transparent 1px);
+  background-size: 56px 46px; /* Set the size of the grid lines */
+  background-position: top left; /* Align the grid to the top left */
+}
+
+#character {
+    width: 100px;
+    height: 100px;
+    position: absolute; /* חשוב! */
+    object-fit: contain;
+    cursor: grab;
+    /* הוספה של transition כדי לתת תחושה יותר נעימה */
+    transition: all 0.1s ease-out;
+    /* הוספה כדי שהדמות תתחיל באמצע */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.palette-and-programming {
     display: flex;
     flex-direction: column;
+    flex: 1;
+}
+
+#block-palette {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    flex: 1;
     overflow-y: auto;
 }
 
-.palette-tabs {
+.category-tabs {
     display: flex;
-    overflow-x: auto;
-    background-color: #eaeaea;
-    border-bottom: 1px solid #ddd;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
 }
 
 .category-tab {
-    padding: 10px;
     border: none;
-    background-color: transparent;
+    padding: 0;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    border-radius: 10px;
     cursor: pointer;
-    white-space: nowrap;
-    transition: background-color 0.2s;
+    font-size: 14px;
+    color: #000000;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
 }
 
-.category-tab:hover {
-    background-color: #e0e0e0;
+.category-tab img {
+    max-width: 100%;
+    max-height: 100%;
+    pointer-events: none;
+    filter: invert(100%);
 }
 
-.category-tab.active {
-    background-color: #4d97ff;
-    color: white;
+.category-tab[data-category="triggering"] {
+    background-color: yellow;
 }
 
-.block-categories {
-    flex: 1;
-    overflow-y: auto;
+.category-tab[data-category="motion"] {
+    background-color: blue;
+}
+
+.category-tab[data-category="looks"] {
+    background-color: lavender;
+}
+
+.category-tab[data-category="sound"] {
+    background-color: green;
+}
+
+.category-tab[data-category="control"] {
+    background-color: orange;
+}
+
+.category-tab[data-category="end"] {
+    background-color: red;
 }
 
 .block-category {
     display: none;
-    flex-wrap: wrap;
     padding: 10px;
 }
 
 .block-category.active {
     display: flex;
+    flex-wrap: wrap;
+    padding: 10px;
 }
 
-/* ========================================================================
-   סגנונות לבלוקים
-   ======================================================================== */
-.block-wrapper {
-    margin: 5px;
-    display: inline-block;
-    cursor: grab;
-}
-
-.scratch-block {
-    display: flex;
-    align-items: center;
+#programming-area {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    margin: 10px;
+    padding: 10px;
     border-radius: 10px;
-    height: 40px;
-    min-width: 60px;
-    position: relative;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-/* סגנון למחבר השמאלי (השקע) */
-.left-connector {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: white;
-    position: absolute;
-    left: -5px;
-    top: 15px;
-}
-
-/* סגנון למחבר הימני (הבליטה) */
-.right-connector {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    position: absolute;
-    right: -5px;
-    top: 15px;
-}
-
-.block-content {
-    padding: 0 15px;
-    font-size: 18px;
-    text-align: center;
-    flex-grow: 1;
-}
-
-/* ========================================================================
-   סגנונות לאיזור התכנות
-   ======================================================================== */
-#programming-container {
     flex: 1;
+}
+
+.program-header {
     display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+#clear-all {
+    color: #e74c3c;
+    cursor: pointer;
 }
 
 #program-blocks {
-    background-color: #f0f0f0;
-    padding: 20px;
-    flex: 1;
-    overflow-y: auto;
-    min-height: 150px;
-    border-bottom: 1px solid #ddd;
+    min-height: 100px;
+    border: 1px dashed #ccc;
+    padding: 10px;
+    position: relative; /* כדי למקם אלמנטים באופן אבסולוטי בתוכו */
 }
 
-/* ========================================================================
-   סגנונות לבמת המשחק
-   ======================================================================== */
-#stage-container {
-    background-color: white;
-    flex: 1;
+#program-blocks .block-container {
+    position: absolute; /* כדי למקם את הבלוקים באופן חופשי */
+    /* כאן אפשר להוסיף עוד סגנונות */
+}
+
+.logo {
+    font-size: 20px;
+    font-weight: bold;
+    color: #4a90e2;
+}
+
+.header-icons {
+    display: flex;
+}
+
+.icon {
+    margin-left: 10px;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+}
+
+/* הוספתי את זה כדי שהגודל ישפיע על הבלוקים בפלטה */
+#block-palette .block-container,
+#programming-area .block-container {
+    position: relative;
+    width: 120px; /* גודל כמו puzzle-button */
+    height: 50px; /* גודל כמו puzzle-button */
+    margin: 5px;
+    cursor: pointer;
+    background-color: transparent; /* הוספת רקע שקוף */
+}
+
+/* עיצוב לבנה עם בליטה מימין ושקע משמאל */
+#block-palette .scratch-block,
+#programming-area .scratch-block {
+    position: relative;
+    width: 85px;  /* גודל הבלוק */
+    height: 75px; /* גודל הבלוק */
+    background-color: #ffff00; /* צבע צהוב */
+    border-radius: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px;
-    overflow: auto;
+    color: black;
+    font-size: 32px;
+    font-weight: bold;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
-#stage {
-    width: 480px;
-    height: 360px;
-    background-color: white;
-    border: 1px solid #ddd;
-    position: relative;
-    overflow: hidden;
-}
-
-.show-grid {
-    background-image: 
-        linear-gradient(to right, rgba(0, 0, 0, 0.1) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
-    background-size: 20px 20px;
-}
-
-/* סגנון לדמות המשחק */
-#character {
-    width: 50px;
-    height: 50px;
-    background-color: red;
-    border-radius: 50%;
+/* בליטה מימין (יוצאת מחוץ לגבול הבלוק) */
+#block-palette .scratch-block::after,
+#programming-area .scratch-block::after {
+    content: '';
     position: absolute;
+    right: -15px; /* הבליטה יוצאת החוצה מימין */
     top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    cursor: grab;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background-color: inherit;
+    border-radius: 50%;
 }
 
-/* ========================================================================
-   סגנונות לבלוקים באיזור התכנות
-   ======================================================================== */
-.program-block {
-    margin-bottom: 5px;
+/* שקע משמאל (לא יוצא החוצה מהבלוק) */
+#block-palette .scratch-block::before,
+#programming-area .scratch-block::before {
+    content: '';
+    position: absolute;
+    left: 0; /* נשאר בתוך גבול הבלוק */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background-color: #f0f4ff; /* צבע רקע האפליקציה */
+    border-radius: 50%;
 }
 
-/* ========================================================================
-   סגנונות כפתורי בקרה
-   ======================================================================== */
-.controls {
+
+
+.block-icon {
+    width: 40px;
+    height: 40px;
     display: flex;
     justify-content: center;
-    padding: 10px;
-    background-color: #f9f9f9;
-    border-top: 1px solid #ddd;
+    align-items: center;
+    margin-right: 5px; /* הוספת רווח בין האייקון לטקסט */
 }
 
-.controls button {
-    background-color: #4d97ff;
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    margin: 0 5px;
-    border-radius: 5px;
+.block-icon svg {
+    width: 200%;
+    height: 200%;
+}
+
+#triggering-blocks .block-container .scratch-block {
+    background-color: #F9D74C;
+}
+
+#motion-blocks .block-container .scratch-block {
+    background-color: #3D81CC;
+}
+
+#looks-blocks .block-container .scratch-block {
+    background-color: #D86FBA;
+}
+
+#sound-blocks .block-container .scratch-block {
+    background-color: #4DC251;
+}
+
+#control-blocks .block-container .scratch-block {
+    background-color: #F8AA4C;
+}
+
+#end-blocks .block-container .scratch-block {
+    background-color: #F15959;
+}
+
+#grid-toggle {
+    margin-left: 10px;
+    font-size: 16px;
+    color: #999;
     cursor: pointer;
-    transition: background-color 0.2s;
+    border: 1px solid #ccc;
+    padding: 5px 10px;
+    border-radius: 5px;
 }
 
-.controls button:hover {
-    background-color: #3d7ce5;
+#grid-toggle:hover {
+    background-color: #f0f0f0;
 }
-
-/* ========================================================================
-   מצבי גרירה
-   ======================================================================== */
-.dragging {
-    opacity: 0.5;
-}
-
-.drag-over {
-    background-color: rgba(77, 151, 255, 0.1);
-}
-
-/* ========================================================================
-   אנימציות
-   ======================================================================== */
-@keyframes pop {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
-}
-
-.pop {
-    animation: pop 0.3s ease;
-}
-
-/* ========================================================================
-   תצוגה מותאמת למסך קטן
-   ======================================================================== */
-@media (max-width: 768px) {
-    .main-area {
-        flex-direction: column;
-    }
-    
-    #block-palette {
-        width: 100%;
-        max-height: 200px;
-    }
-    
-    .toolbar {
-        width: 100%;
-    }
-}
+--- END OF FILE style.css ---
