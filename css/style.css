@@ -99,12 +99,12 @@ main {
     border-radius: 10px;
     flex: 1;
     overflow-y: auto;
-    display: flex; /* **Horizontal layout for palette** */
+    flex-direction: column; /* **Vertical layout for palette - BACK TO VERTICAL** */
 }
 
 .category-tabs {
     display: flex;
-    flex-direction: column; /* **Tabs in a column - VERTICAL** */
+    flex-direction: row; /* **Tabs in a ROW - BACK TO HORIZONTAL** */
     flex-wrap: wrap;
     margin-bottom: 10px;
 }
@@ -112,7 +112,7 @@ main {
 .category-tab {
     border: none;
     padding: 0;
-    margin-right: 0; /* **No right margin between tabs in column** */
+    margin-right: 5px; /* **Right margin between tabs in row - REINTRODUCED** */
     margin-bottom: 5px;
     border-radius: 10px;
     cursor: pointer;
@@ -161,18 +161,18 @@ main {
 .block-category {
     display: none; /* Still hidden by default */
     padding: 10px;
-    position: absolute; /* **Absolute positioning for categories** */
-    top: 0; /* **Position at the top** */
-    left: 70px; /* **Position to the right of tabs (adjust as needed)** */
-    width: auto; /* **Adjust width as needed** */
-    height: 100%; /* **Take full height of palette** */
-    background-color: #fff; /* **Ensure same background** */
-    border: 1px solid #e0e0e0; /* **Ensure same border** */
-    border-radius: 10px; /* **Ensure same border-radius** */
+    position: relative; /* **Relative positioning for categories - BACK TO RELATIVE** */
+    top: auto; /* **Reset top** */
+    left: auto; /* **Reset left** */
+    width: 100%; /* **Back to 100% width** */
+    height: auto; /* **Auto height to fit content** */
+    background-color: transparent; /* **Make background transparent again** */
+    border: none; /* **Remove border** */
+    border-radius: 0; /* **Remove border-radius** */
     overflow-y: auto; /* **Keep scroll if content overflows** */
     display: none; /* **Hidden by default** */
+    flex-direction: row; /* **Blocks in category in column** */
     flex-wrap: wrap; /* **Wrap blocks if needed** */
-    flex-direction: row; /* **Blocks in category in ROW - HORIZONTAL** */
 }
 
 .block-category.active {
