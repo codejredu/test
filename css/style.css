@@ -174,8 +174,8 @@ main {
 #programming-area {
     background-color: #fff;
     border: 1px solid #e0e0e0;
-    margin: 10px;
-    padding: 10px;
+    margin: 3 px;
+    padding: 3 px;
     border-radius: 10px;
     flex: 1;
 }
