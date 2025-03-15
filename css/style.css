@@ -1,4 +1,4 @@
---- START OF FILE style.css ---
+ --- START OF FILE style.css ---
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -165,7 +165,6 @@ main {
     top: auto;
     left: auto;
     width: 100%;
-    /* height: auto; **Replaced with fixed height below** */
     height: 250px; /* **Fixed height for all categories** */
     background-color: transparent;
     border: none;
