@@ -190,7 +190,7 @@ main {
     flex: 1; /* ייקח את שאר המקום הפנוי */
     display: flex;
     flex-direction: column;
-    max-height: calc(100% - 22px); /* הוספה: הגבלת הגובה המקסימלי ב-22px פחות */
+    max-height: calc(100% - 66px); /* הוספה: הגבלת הגובה המקסימלי ב-22px פחות */
 }
 
 .program-header {
