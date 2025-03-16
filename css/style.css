@@ -95,7 +95,7 @@ main {
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    height: 114px; /* Fixed height of 114px as requested */
+    height: 105px; /* Fixed height of 114px as requested */
     display: flex;
     flex-direction: row;
     align-items: stretch;
@@ -299,7 +299,7 @@ main {
 }
 
 #motion-blocks .block-container .scratch-block {
-    background-color: #3D81CC;
+    background-color: #4CDAFF;
 }
 
 #looks-blocks .block-container .scratch-block {
