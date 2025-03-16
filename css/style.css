@@ -125,8 +125,8 @@ main {
     cursor: pointer;
     font-size: 14px;
     color: #000000;
-    width: 45px;
-    height: 45px;
+    width: 60px; /* Set tab width to 60px */
+    height: 60px; /* Set tab height to 60px */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -234,8 +234,8 @@ main {
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 75px;
-    height: 30px;
+    width: 60px;      /* Set block container width to 60px */
+    height: 60px;   /* Set block container height to 60px */
     margin: 4px;
     cursor: pointer;
     background-color: transparent;
@@ -245,15 +245,15 @@ main {
 #block-palette .scratch-block,
 #programming-area .scratch-block {
     position: relative;
-    width: 50.625px;
-    height: 45px;
+    width: 42px;   /* Adjusted block width to fit in 60px container */
+    height: 52px;  /* Adjusted block height to fit in 60px container and show connectors */
     background-color: #ffff00;
     border-radius: 8px;
     display: flex;
     justify-content: center;
     align-items: center;
     color: black;
-    font-size: 18px;
+    font-size: 20px;    /* Adjusted font size to fit in block */
     font-weight: bold;
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2), inset 0 1.5px 3px rgba(0, 0, 0, 0.2);
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
