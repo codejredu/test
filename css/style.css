@@ -100,10 +100,11 @@ main {
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    flex: 0.4; /* הגדלתי מ-0.3 ל-0.4 כדי לתת מקום גבוה יותר */
+    height: 135px; /* גובה קבוע של 135px כפי שנדרש */
+    flex: 0 0 auto; /* מונע מהאלמנט להימתח */
     display: flex;
     flex-direction: row;
-    align-items: stretch; /* שנה ל-stretch כדי למתוח לגובה שווה */
+    align-items: stretch;
 }
 
 .category-tabs {
@@ -168,11 +169,10 @@ main {
     display: none;
     padding: 10px;
     flex-grow: 1;
-    height: auto; /* שיניתי מגובה קבוע לאוטומטי */
-    min-height: 160px; /* הוספתי גובה מינימלי שאמור להספיק ללבנים */
+    height: 100%; /* מילוי כל הגובה שזמין */
     border-left: 1px solid #e0e0e0;
     margin-left: 10px;
-    overflow-y: visible; /* ביטלתי את הגלילה האנכית */
+    overflow-y: hidden; /* מניעת גלילה אנכית */
 }
 
 .block-category.active {
@@ -187,7 +187,7 @@ main {
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    flex: 1.6; /* הקטנתי מעט מ-1.7 ל-1.6 כדי לאזן עם השינוי באזור הלבנים */
+    flex: 1; /* ייקח את שאר המקום הזמין */
 }
 
 .program-header {
