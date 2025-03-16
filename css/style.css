@@ -89,16 +89,19 @@ main {
     flex: 1;
 }
 
+/* שינוי גובה אזור הלבנים */
 #block-palette {
     background-color: #fff;
     border: 1px solid #e0e0e0;
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    flex: 1;
+    flex: 0 0 auto; /* שינוי מ-flex: 1 להגדרה קבועה */
+    height: 160px; /* הגדרת גובה מקסימלי קבוע */
     display: flex;
-    flex-direction: row; /* Make sure flex-direction is row for LTR */
+    flex-direction: row;
     align-items: stretch;
+    overflow: hidden; /* מניעת גלילה */
 }
 
 .category-tabs {
@@ -108,16 +111,17 @@ main {
     margin-bottom: 0;
     height: 100%;
     align-content: flex-start;
+    overflow-y: auto; /* אפשרות גלילה אנכית אם יש יותר מדי טאבים */
 }
 
 .category-tab {
     border: none;
     padding: 0;
-    margin-left: 5px; /* Spacing on the left for LTR */
+    margin-left: 5px;
     margin-bottom: 5px;
     border-radius: 10px;
     cursor: pointer;
-    font-size: 16px; /* Slightly increased font size in tabs */
+    font-size: 16px;
     color: #000000;
     width: 80px;
     height: 80px;
@@ -164,23 +168,28 @@ main {
     padding: 10px;
     flex-grow: 1;
     height: 100%;
-    border-right: 1px solid #e0e0e0; /* Border on the right for LTR */
-    margin-left: 10px; /* Margin on the left for LTR */
+    border-right: 1px solid #e0e0e0;
+    margin-left: 10px;
+    overflow-x: auto; /* אפשרות גלילה אופקית אם יש הרבה לבנים */
 }
 
 .block-category.active {
     display: flex;
     flex-wrap: wrap;
     padding: 10px;
+    align-content: flex-start; /* שומר את הלבנים בחלק העליון של האזור */
 }
 
+/* הגדלת אזור התכנות */
 #programming-area {
     background-color: #fff;
     border: 1px solid #e0e0e0;
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    flex: 1;
+    flex: 1; /* ייקח את שאר המקום הפנוי */
+    display: flex;
+    flex-direction: column;
 }
 
 .program-header {
@@ -200,6 +209,8 @@ main {
     border: 1px dashed #ccc;
     padding: 10px;
     position: relative;
+    flex: 1; /* ייקח את שאר המקום הפנוי באזור התכנות */
+    overflow: auto; /* אפשר גלילה במקרה שיש יותר מדי בלוקים */
 }
 
 #program-blocks .block-container {
@@ -227,8 +238,8 @@ main {
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 130px;      /* הגדלה מ-100px ל-130px כדי להכיל את הלבנים הרחבות יותר */
-    height: 100px;     /* נשאר אותו גובה */
+    width: 130px;
+    height: 100px;
     margin: 4px;
     cursor: pointer;
     background-color: transparent;
@@ -238,8 +249,8 @@ main {
 #block-palette .scratch-block,
 #programming-area .scratch-block {
     position: relative;
-    width: 100px;   /* הגדלה מ-70px ל-100px */
-    height: 80px;   /* נשאר אותו גובה */
+    width: 100px;
+    height: 80px;
     background-color: #ffff00;
     border-radius: 10px;
     display: flex;
@@ -252,7 +263,7 @@ main {
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
-/* התאמת הבליטה מימין לרוחב החדש */
+/* התאמת הבליטה מימין */
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
     content: '';
@@ -266,7 +277,7 @@ main {
     border-radius: 50%;
 }
 
-/* שקע משמאל - נשאר כמו שהיה */
+/* שקע משמאל */
 #block-palette .scratch-block::before,
 #programming-area .scratch-block::before {
     content: '';
@@ -280,10 +291,9 @@ main {
     border-radius: 50%;
 }
 
-/* הגדלת אייקון בתוך הבלוק */
 .block-icon {
-    width: 60px;       /* הגדלה מ-50px ל-60px */
-    height: 50px;      /* נשאר אותו גובה */
+    width: 60px;
+    height: 50px;
     display: flex;
     justify-content: center;
     align-items: center;
