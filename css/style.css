@@ -123,10 +123,10 @@ main {
     margin-bottom: 5px;
     border-radius: 10px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 16px; /* Slightly increased font size in tabs */
     color: #000000;
-    width: 80px; /* Set tab width to 60px */
-    height: 80px; /* Set tab height to 60px */
+    width: 80px; /* Set tab width to 80px */
+    height: 80px; /* Set tab height to 80px */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -135,8 +135,8 @@ main {
 }
 
 .category-tab img {
-    max-width: 80%;
-    max-height: 80%;
+    max-width: 60%; /* Adjusted image size in tabs to fit 80x80 */
+    max-height: 60%; /* Adjusted image size in tabs to fit 80x80 */
     pointer-events: none;
     filter: invert(100%);
 }
@@ -234,8 +234,8 @@ main {
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 60px;      /* Set block container width to 60px */
-    height: 60px;   /* Set block container height to 60px */
+    width: 80px;      /* Set block container width to 80px */
+    height: 80px;   /* Set block container height to 80px */
     margin: 4px;
     cursor: pointer;
     background-color: transparent;
@@ -245,17 +245,17 @@ main {
 #block-palette .scratch-block,
 #programming-area .scratch-block {
     position: relative;
-    width: 42px;   /* Adjusted block width to fit in 60px container */
-    height: 52px;  /* Adjusted block height to fit in 60px container and show connectors */
+    width: 56px;   /* Adjusted block width to fit in 80px container */
+    height: 68px;  /* Adjusted block height to fit in 80px container and show connectors */
     background-color: #ffff00;
-    border-radius: 8px;
+    border-radius: 10px; /* Slightly larger border-radius */
     display: flex;
     justify-content: center;
     align-items: center;
     color: black;
-    font-size: 20px;    /* Adjusted font size to fit in block */
+    font-size: 24px;    /* Adjusted font size to fit in larger block */
     font-weight: bold;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2), inset 0 1.5px 3px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2); /* Slightly larger shadow */
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
@@ -264,11 +264,11 @@ main {
 #programming-area .scratch-block::after {
     content: '';
     position: absolute;
-    right: -9px;
+    right: -12px; /* Adjusted bump position for larger block */
     top: 50%;
     transform: translateY(-50%);
-    width: 12px;
-    height: 12px;
+    width: 16px;    /* Adjusted bump size for larger block */
+    height: 16px;   /* Adjusted bump size for larger block */
     background-color: inherit;
     border-radius: 50%;
 }
@@ -281,8 +281,8 @@ main {
     left: 0;
     top: 50%;
     transform: translateY(-50%);
-    width: 12px;
-    height: 12px;
+    width: 16px;    /* Adjusted socket size for larger block */
+    height: 16px;   /* Adjusted socket size for larger block */
     background-color: #f0f4ff;
     border-radius: 50%;
 }
