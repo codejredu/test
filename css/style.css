@@ -138,15 +138,15 @@ main {
 }
 
 .category-tab[data-category="triggering"] {
-    background-color: yellow;
+    background-color: #FFEC80;
 }
 
 .category-tab[data-category="motion"] {
-    background-color: blue;
+    background-color: #43D3FF;
 }
 
 .category-tab[data-category="looks"] {
-    background-color: lavender;
+    background-color: #D38BD6;
 }
 
 .category-tab[data-category="sound"] {
