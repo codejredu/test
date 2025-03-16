@@ -1,4 +1,9 @@
-<svg viewBox="0 0 24 24" fill="red" xmlns="http://www.w3.org/2000/svg">
-  <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2H8C6.9 3 6 3.9 6 5v14zM12 13c.8 0 1.5-.7 1.5-1.5V7.5c0-.8-.7-1.5-1.5-1.5-.8 0-1.5.7-1.5 1.5v4c0 .8.7 1.5 1.5 1.5z"/>
-  <path d="M0 0h24v24H0z" fill="none"/>
+<svg width="800px" height="800px" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--emojione" preserveAspectRatio="xMidYMid meet" fill="#f7fafc">
+
+<g id="SVGRepo_bgCarrier" stroke-width="0"/>
+
+<g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"/>
+
+<g id="SVGRepo_iconCarrier"> <g fill="#f7fafc"> <path d="M3 18L19 2v10h42v12H19v10z"> </path> <path d="M25 43.4V40H13v22h12v-3.4h-9v-5.9h9v-3.4h-9v-5.9z"> </path> <path d="M51 40h-6v22h6c3.3 0 6-2.8 6-6.3v-9.3c0-3.6-2.7-6.4-6-6.4m3 15.7c0 1.6-1.3 3-3 3h-3V43.4h3c1.7 0 3 1.3 3 3v9.3"> </path> <path d="M32 47.7L37.8 62H41V40h-3v14.3L32.2 40H29v22h3z"> </path> </g> </g>
+
 </svg>
