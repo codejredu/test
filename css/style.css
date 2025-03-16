@@ -85,21 +85,23 @@ main {
 
 .palette-and-programming {
     display: flex;
-    flex-direction: row; /* Changed to row to place palette and programming side by side */
+    flex-direction: row;
     flex: 1;
 }
 
 #block-palette {
-    width: 114px;
     background-color: #fff;
     border: 1px solid #e0e0e0;
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    flex: 0 0 114px; /* Fixed width of 114px */
+    flex: 1;
+    height: 114px; /* Fixed height of 114px */
+    max-height: 114px; /* Ensuring height doesn't exceed 114px */
     display: flex;
-    flex-direction: column; /* Changed to column to stack tabs and blocks */
+    flex-direction: row;
     align-items: stretch;
+    overflow: hidden; /* Prevent content from overflowing */
 }
 
 .category-tabs {
@@ -111,6 +113,8 @@ main {
     padding: 5px;
     border-radius: 5px;
     align-content: flex-start;
+    height: 100%;
+    overflow-y: auto; /* Allow scrolling if needed */
 }
 
 .category-tab {
@@ -166,16 +170,18 @@ main {
     display: none;
     padding: 10px;
     flex-grow: 1;
+    height: 100%;
     background-color: #f0f0f0; /* Light gray background */
-    margin-top: 10px; /* Add margin to separate from tabs */
+    margin-left: 10px;
     border-radius: 5px;
+    overflow-y: auto; /* Allow scrolling if needed */
 }
 
 .block-category.active {
     display: flex;
     flex-wrap: wrap;
     padding: 10px;
-    justify-content: center;
+    align-content: flex-start;
 }
 
 #programming-area {
@@ -184,7 +190,8 @@ main {
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    flex: 3; /* Increased ratio to make programming area larger */
+    flex: 1;
+    flex-grow: 3; /* Make programming area larger */
 }
 
 .program-header {
@@ -205,6 +212,8 @@ main {
     padding: 10px;
     position: relative;
     background-color: #e6f2ff; /* Light blue background */
+    flex-grow: 1;
+    overflow-y: auto; /* Allow scrolling if needed */
 }
 
 #program-blocks .block-container {
