@@ -170,11 +170,9 @@ main {
 .block-category {
     display: none;
     padding: 10px;
-    padding-top: 20px;    /* הוסף ריווח פנימי עליון */
-    padding-bottom: 20px; /* הוסף ריווח פנימי תחתון */
     flex-grow: 1;
     overflow-y: auto;
-    /* min-height: 200px; הוסר */
+    height: 140px; /* הגדר גובה קבוע של 140px */
     border-left: 1px solid #e0e0e0;
     margin-left: 10px;
 }
