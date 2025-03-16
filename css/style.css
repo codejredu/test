@@ -109,17 +109,15 @@ main {
 
 .category-tabs {
     display: flex;
-    flex-direction: row;
-    /* flex-wrap: wrap; הסר כדי למנוע מעבר שורה */
-    margin-bottom: 10px;
-    overflow-x: auto; /* הוסף גלילה אופקית אם הטאבים גולשים */
-    white-space: nowrap; /* מנע מהטאבים לעבור שורה בתוך עצמם */
+    flex-direction: row-reverse; /* שינוי מ-row ל-row-reverse */
+    overflow-x: auto;
+    white-space: nowrap;
 }
 
 .category-tab {
     border: none;
     padding: 0;
-    margin-left: 5px; /* שינוי מ-margin-right ל-margin-left */
+    margin-right: 5px; /* שינוי מ-margin-left ל-margin-right */
     margin-bottom: 5px;
     border-radius: 10px;
     cursor: pointer;
@@ -170,8 +168,8 @@ main {
     padding: 10px;
     flex-grow: 1;
     height: 100%; /* מילוי כל הגובה שזמין */
-    border-right: 1px solid #e0e0e0; /* שינוי מ-border-left ל-border-right */
-    margin-right: 10px; /* שינוי מ-margin-left ל-margin-right */
+    border-left: 1px solid #e0e0e0; /* שינוי מ-border-right ל-border-left */
+    margin-left: 10px; /* שינוי מ-margin-right ל-margin-left */
     overflow-y: hidden; /* מניעת גלילה אנכית */
 }
 
@@ -179,8 +177,8 @@ main {
     display: flex;
     flex-wrap: wrap;
     padding: 10px;
-    flex-direction: row-reverse; /* הוספה - פריסת האלמנטים מימין לשמאל */
-    justify-content: flex-start; /* הוספה - התחלה מצד ימין */
+    flex-direction: row; /* שינוי מ-row-reverse ל-row */
+    justify-content: flex-start; /* הוספה - התחלה מצד שמאל */
 }
 
 #programming-area {
