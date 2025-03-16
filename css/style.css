@@ -1,4 +1,3 @@
---- START OF FILE style.css ---
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -101,9 +100,8 @@ main {
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    flex: 1;
+    flex: 0.3; /* Reduced from flex: 1 to make it take up less vertical space */
     overflow-y: auto;
-
     display: flex;
     flex-direction: row;
     align-items: stretch; /* שנה ל-stretch כדי למתוח לגובה שווה */
@@ -172,7 +170,7 @@ main {
     padding: 10px;
     flex-grow: 1;
     overflow-y: auto;
-    height: 140px; /* הגדר גובה קבוע של 140px */
+    height: 100px; /* Reduced from 140px to make the blocks palette area shorter */
     border-left: 1px solid #e0e0e0;
     margin-left: 10px;
 }
@@ -189,7 +187,7 @@ main {
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    flex: 1;
+    flex: 1.7; /* Increased to make the programming area taller */
 }
 
 .program-header {
@@ -205,7 +203,7 @@ main {
 }
 
 #program-blocks {
-    min-height: 100px;
+    min-height: 200px; /* Increased from 100px to provide more space for programming */
     border: 1px dashed #ccc;
     padding: 10px;
     position: relative; /* כדי למקם אלמנטים באופן אבסולוטי בתוכו */
@@ -290,8 +288,6 @@ main {
     border-radius: 50%;
 }
 
-
-
 .block-icon {
     width: 40px;
     height: 40px;
@@ -343,4 +339,3 @@ main {
 #grid-toggle:hover {
     background-color: #f0f0f0;
 }
---- END OF FILE style.css ---
