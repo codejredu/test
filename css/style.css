@@ -168,7 +168,32 @@ main {
     height: 100%;
     border-right: 1px solid #e0e0e0;
     margin-left: 10px;
-    background-color: #0D66CA; /* blue background behind programming blocks */
+    /* הסרנו את צבע הרקע הכחול כהה מכאן */
+}
+
+/* הוספנו צבעי רקע ספציפיים לכל קטגוריית בלוקים */
+#motion-blocks {
+    background-color: #43D3FF;
+}
+
+#triggering-blocks {
+    background-color: #FFEC80;
+}
+
+#looks-blocks {
+    background-color: #D38BD6;
+}
+
+#sound-blocks {
+    background-color: green;
+}
+
+#control-blocks {
+    background-color: orange;
+}
+
+#end-blocks {
+    background-color: red;
 }
 
 .block-category.active {
