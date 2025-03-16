@@ -1,4 +1,4 @@
---- START OF FILE style.css ---
+/* style.css */
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -102,20 +102,20 @@ main {
     padding: 10px;
     border-radius: 10px;
     flex: 1;
-    overflow-y: auto;
-
-    display: flex;
-    flex-direction: row;
+    /* overflow-y: auto; נסיר גלילה אם נצמצם מספיק גובה */
+    display: flex; /* הפוך את block-palette לקונטיינר flex */
+    flex-direction: row; /* סדר את הילדים שלו בשורה אופקית */
     align-items: stretch; /* שנה ל-stretch כדי למתוח לגובה שווה */
+    /* height: 160px; נסיר גובה קבוע כדי שיתאים לטאבים באופן דינמי */
 }
 
 .category-tabs {
     display: flex;
     flex-direction: row;
-    /* flex-wrap: wrap; הסר כדי למנוע מעבר שורה */
-    margin-bottom: 10px;
-    overflow-x: auto; /* הוסף גלילה אופקית אם הטאבים גולשים */
-    white-space: nowrap; /* מנע מהטאבים לעבור שורה בתוך עצמם */
+    flex-wrap: wrap;
+    margin-bottom: 0; /* הסר margin bottom כדי שיתאים לגובה החדש */
+    height: 100%; /* השתמש בגובה 100% כדי למלא את גובה #block-palette */
+    align-content: flex-start; /* יישר טאבים למעלה */
 }
 
 .category-tab {
@@ -127,8 +127,8 @@ main {
     cursor: pointer;
     font-size: 14px;
     color: #000000;
-    width: 70px;
-    height: 70px;
+    width: 45px; /* הקטן רוחב טאב */
+    height: 45px; /* הקטן גובה טאב */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -137,8 +137,8 @@ main {
 }
 
 .category-tab img {
-    max-width: 100%;
-    max-height: 100%;
+    max-width: 80%; /* הקטן תמונה בטאב */
+    max-height: 80%; /* הקטן תמונה בטאב */
     pointer-events: none;
     filter: invert(100%);
 }
@@ -171,8 +171,8 @@ main {
     display: none;
     padding: 10px;
     flex-grow: 1;
-    overflow-y: auto;
-    height: 140px; /* הגדר גובה קבוע של 140px */
+    /* overflow-y: auto; הסר גלילה */
+    height: 100%; /* השתמש בגובה 100% כדי למלא את גובה #block-palette */
     border-left: 1px solid #e0e0e0;
     margin-left: 10px;
 }
@@ -237,9 +237,9 @@ main {
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 120px; /* גודל כמו puzzle-button */
-    height: 50px; /* גודל כמו puzzle-button */
-    margin: 5px;
+    width: 75px;      /* גודל מוקטן עוד יותר - 75% מ-90px */
+    height: 30px;   /* גודל מוקטן עוד יותר - 80% מ-37.5px */
+    margin: 4px; /* מרווח מוקטן */
     cursor: pointer;
     background-color: transparent; /* הוספת רקע שקוף */
 }
@@ -248,17 +248,17 @@ main {
 #block-palette .scratch-block,
 #programming-area .scratch-block {
     position: relative;
-    width: 85px;  /* גודל הבלוק */
-    height: 75px; /* גודל הבלוק */
+    width: 50.625px;   /* גודל מוקטן עוד יותר - 75% מ-63.75px */
+    height: 45px;  /* גודל מוקטן עוד יותר - 80% מ-56.25px */
     background-color: #ffff00; /* צבע צהוב */
-    border-radius: 10px;
+    border-radius: 8px; /* הקטן עיגול פינות */
     display: flex;
     justify-content: center;
     align-items: center;
     color: black;
-    font-size: 32px;
+    font-size: 18px;    /* גודל פונט מוקטן עוד יותר - 75% מ-24px */
     font-weight: bold;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2), inset 0 1.5px 3px rgba(0, 0, 0, 0.2); /* הקטן צל */
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
@@ -267,11 +267,11 @@ main {
 #programming-area .scratch-block::after {
     content: '';
     position: absolute;
-    right: -15px; /* הבליטה יוצאת החוצה מימין */
+    right: -9px; /* גודל מוקטן עוד יותר - 80% מ--11.25px */
     top: 50%;
     transform: translateY(-50%);
-    width: 20px;
-    height: 20px;
+    width: 12px;     /* גודל מוקטן עוד יותר - 80% מ-15px */
+    height: 12px;    /* גודל מוקטן עוד יותר - 80% מ-15px */
     background-color: inherit;
     border-radius: 50%;
 }
@@ -281,15 +281,14 @@ main {
 #programming-area .scratch-block::before {
     content: '';
     position: absolute;
-    left: 0; /* נשאר בתוך גבול הבלוק */
+    left: 0;
     top: 50%;
     transform: translateY(-50%);
-    width: 20px;
-    height: 20px;
+    width: 12px;     /* גודל מוקטן עוד יותר - 80% מ-15px */
+    height: 12px;    /* גודל מוקטן עוד יותר - 80% מ-15px */
     background-color: #f0f4ff; /* צבע רקע האפליקציה */
     border-radius: 50%;
 }
-
 
 
 .block-icon {
@@ -343,4 +342,3 @@ main {
 #grid-toggle:hover {
     background-color: #f0f0f0;
 }
---- END OF FILE style.css ---
