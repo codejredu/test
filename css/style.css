@@ -110,6 +110,7 @@ main {
 }
 
 .category-tabs {
+ height: 100px; /* הקטנה מ-140px */
     display: flex;
     flex-direction: row;
     /* flex-wrap: wrap; הסר כדי למנוע מעבר שורה */
