@@ -172,7 +172,7 @@ main {
     padding: 10px;
     flex-grow: 1;
     overflow-y: auto;
-    height: 140px; /* הגדר גובה קבוע של 100px */
+    height: 100px; /* הגדר גובה קבוע של 100px */
     border-left: 1px solid #e0e0e0;
     margin-left: 10px;
 }
