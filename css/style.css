@@ -1,9 +1,10 @@
+/* style.css */
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
     background-color: #f0f4ff;
-    direction: rtl;
+    direction: ltr; /* Make sure direction is LTR */
 }
 
 .container {
@@ -100,31 +101,32 @@ main {
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    height: 135px; /* גובה קבוע של 135px כפי שנדרש */
-    flex: 0 0 auto; /* מונע מהאלמנט להימתח */
+    flex: 1;
     display: flex;
-    flex-direction: row;
+    flex-direction: row; /* Make sure flex-direction is row for LTR */
     align-items: stretch;
 }
 
 .category-tabs {
     display: flex;
-    flex-direction: row-reverse; /* שינוי מ-row ל-row-reverse */
-    overflow-x: auto;
-    white-space: nowrap;
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-bottom: 0;
+    height: 100%;
+    align-content: flex-start;
 }
 
 .category-tab {
     border: none;
     padding: 0;
-    margin-right: 5px; /* שינוי מ-margin-left ל-margin-right */
+    margin-left: 5px; /* Spacing on the left for LTR */
     margin-bottom: 5px;
     border-radius: 10px;
     cursor: pointer;
     font-size: 14px;
     color: #000000;
-    width: 70px;
-    height: 70px;
+    width: 45px;
+    height: 45px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -133,8 +135,8 @@ main {
 }
 
 .category-tab img {
-    max-width: 100%;
-    max-height: 100%;
+    max-width: 80%;
+    max-height: 80%;
     pointer-events: none;
     filter: invert(100%);
 }
@@ -167,18 +169,15 @@ main {
     display: none;
     padding: 10px;
     flex-grow: 1;
-    height: 100%; /* מילוי כל הגובה שזמין */
-    border-left: 1px solid #e0e0e0; /* שינוי מ-border-right ל-border-left */
-    margin-left: 10px; /* שינוי מ-margin-right ל-margin-left */
-    overflow-y: hidden; /* מניעת גלילה אנכית */
+    height: 100%;
+    border-right: 1px solid #e0e0e0; /* Border on the right for LTR */
+    margin-left: 10px; /* Margin on the left for LTR */
 }
 
 .block-category.active {
     display: flex;
     flex-wrap: wrap;
     padding: 10px;
-    flex-direction: row; /* שינוי מ-row-reverse ל-row */
-    justify-content: flex-start; /* הוספה - התחלה מצד שמאל */
 }
 
 #programming-area {
@@ -187,7 +186,7 @@ main {
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    flex: 1; /* ייקח את שאר המקום הזמין */
+    flex: 1;
 }
 
 .program-header {
@@ -203,7 +202,7 @@ main {
 }
 
 #program-blocks {
-    min-height: 200px; /* Increased from 100px to provide more space for programming */
+    min-height: 100px;
     border: 1px dashed #ccc;
     padding: 10px;
     position: relative; /* כדי למקם אלמנטים באופן אבסולוטי בתוכו */
@@ -235,58 +234,59 @@ main {
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 120px; /* גודל כמו puzzle-button */
-    height: 50px; /* גודל כמו puzzle-button */
-    margin: 5px;
+    width: 75px;
+    height: 30px;
+    margin: 4px;
     cursor: pointer;
-    background-color: transparent; /* הוספת רקע שקוף */
+    background-color: transparent;
 }
 
 /* עיצוב לבנה עם בליטה מימין ושקע משמאל */
 #block-palette .scratch-block,
 #programming-area .scratch-block {
     position: relative;
-    width: 85px;  /* גודל הבלוק */
-    height: 75px; /* גודל הבלוק */
-    background-color: #ffff00; /* צבע צהוב */
-    border-radius: 10px;
+    width: 50.625px;
+    height: 45px;
+    background-color: #ffff00;
+    border-radius: 8px;
     display: flex;
     justify-content: center;
     align-items: center;
     color: black;
-    font-size: 32px;
+    font-size: 18px;
     font-weight: bold;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2), inset 0 1.5px 3px rgba(0, 0, 0, 0.2);
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
-/* בליטה מימין (יוצאת מחוץ לגבול הבלוק) - צריך להישאר כך כי זה מתייחס לעיצוב הלבנים */
+/* בליטה מימין (יוצאת מחוץ לגבול הבלוק) */
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
     content: '';
     position: absolute;
-    right: -15px; /* הבליטה יוצאת החוצה מימין */
+    right: -9px;
     top: 50%;
     transform: translateY(-50%);
-    width: 20px;
-    height: 20px;
+    width: 12px;
+    height: 12px;
     background-color: inherit;
     border-radius: 50%;
 }
 
-/* שקע משמאל (לא יוצא החוצה מהבלוק) - צריך להישאר כך כי זה מתייחס לעיצוב הלבנים */
+/* שקע משמאל (לא יוצא החוצה מהבלוק) */
 #block-palette .scratch-block::before,
 #programming-area .scratch-block::before {
     content: '';
     position: absolute;
-    left: 0; /* נשאר בתוך גבול הבלוק */
+    left: 0;
     top: 50%;
     transform: translateY(-50%);
-    width: 20px;
-    height: 20px;
-    background-color: #f0f4ff; /* צבע רקע האפליקציה */
+    width: 12px;
+    height: 12px;
+    background-color: #f0f4ff;
     border-radius: 50%;
 }
+
 
 .block-icon {
     width: 40px;
