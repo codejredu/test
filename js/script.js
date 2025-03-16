@@ -10,7 +10,7 @@ const blocks = {
             type: "startOnGreenFlag",
         //     icon: "🚩",
  // הוסף שדה חדש לנתיב התמונה
-            imgSrc: "assets/images/icons/green-flag.svg"
+            imgSrc: "assets/images/green-flag.svg"
         },
         {
             name: "👆",
