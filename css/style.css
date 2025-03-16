@@ -246,37 +246,6 @@ main {
     background-color: transparent;
 }
 
-/* טולטיפ מעוצב כאשר עוברים עם העכבר על בלוק */
-.block-container:hover::after {
-    content: attr(title);
-    position: absolute;
-    top: -35px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-size: 14px;
-    white-space: nowrap;
-    z-index: 1000;
-    pointer-events: none;
-}
-
-/* חץ קטן בתחתית הטולטיפ */
-.block-container:hover::before {
-    content: '';
-    position: absolute;
-    top: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-width: 5px;
-    border-style: solid;
-    border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
-    z-index: 1000;
-    pointer-events: none;
-}
-
 #block-palette .scratch-block,
 #programming-area .scratch-block {
     position: relative;
