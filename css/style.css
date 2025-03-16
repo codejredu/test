@@ -234,8 +234,8 @@ main {
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 100px;      /* שונה מ-80px ל-100px כדי להתאים לטאבים */
-    height: 100px;     /* שונה מ-80px ל-100px כדי להתאים לטאבים */
+    width: 120px;      /* שונה מ-80px ל-100px כדי להתאים לטאבים */
+    height: 90px;     /* שונה מ-80px ל-100px כדי להתאים לטאבים */
     margin: 4px;
     cursor: pointer;
     background-color: transparent;
