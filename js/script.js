@@ -8,7 +8,7 @@ const blocks = {
             name: "🚩",
             color: "yellow",
             type: "startOnGreenFlag",
-            icon: "🚩",
+        //     icon: "🚩",
  // הוסף שדה חדש לנתיב התמונה
             imgSrc: "assets/images/icons/green-flag.svg"
         },
