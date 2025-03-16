@@ -125,8 +125,8 @@ main {
     cursor: pointer;
     font-size: 16px; /* Slightly increased font size in tabs */
     color: #000000;
-    width: 100px; /* Set tab width to 100px */
-    height: 100px; /* Set tab height to 100px */
+    width: 80px; /* Set tab width to 100px */
+    height: 80px; /* Set tab height to 100px */
     display: flex;
     justify-content: center;
     align-items: center;
