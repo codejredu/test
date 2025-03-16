@@ -168,7 +168,7 @@ main {
     height: 100%;
     border-right: 1px solid #e0e0e0;
     margin-left: 10px;
-    background-color: #e6f2ff; /* Light blue background behind programming blocks */
+    background-color: #0D66CA; /* blue background behind programming blocks */
 }
 
 .block-category.active {
