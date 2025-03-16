@@ -100,8 +100,7 @@ main {
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    flex: 0.3; /* Reduced from flex: 1 to make it take up less vertical space */
-    overflow-y: auto;
+    flex: 0.4; /* הגדלתי מ-0.3 ל-0.4 כדי לתת מקום גבוה יותר */
     display: flex;
     flex-direction: row;
     align-items: stretch; /* שנה ל-stretch כדי למתוח לגובה שווה */
@@ -169,10 +168,11 @@ main {
     display: none;
     padding: 10px;
     flex-grow: 1;
-    overflow-y: auto;
-    height: 100px; /* Reduced from 140px to make the blocks palette area shorter */
+    height: auto; /* שיניתי מגובה קבוע לאוטומטי */
+    min-height: 160px; /* הוספתי גובה מינימלי שאמור להספיק ללבנים */
     border-left: 1px solid #e0e0e0;
     margin-left: 10px;
+    overflow-y: visible; /* ביטלתי את הגלילה האנכית */
 }
 
 .block-category.active {
@@ -187,7 +187,7 @@ main {
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    flex: 1.7; /* Increased to make the programming area taller */
+    flex: 1.6; /* הקטנתי מעט מ-1.7 ל-1.6 כדי לאזן עם השינוי באזור הלבנים */
 }
 
 .program-header {
