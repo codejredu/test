@@ -1,3 +1,4 @@
+--- START OF FILE style.css ---
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -39,10 +40,13 @@ main {
     flex: 0 0 auto;
     width: 550px;
     height: 450px;
-    background-color: #f5f5f5;
+    background-color: #f5f5f5; /* רקע בהיר יותר */
     border: 1px solid #e0e0e0;
     border-radius: 10px;
-    position: relative;
+    position: relative; /* חשוב! */
+    /* display: grid; הסרתי את זה כי אנחנו יוצרים קווי רשת אחרת */
+   /* grid-template-columns: repeat(10, 1fr); */
+   /* grid-template-rows: repeat(10, 1fr); */
     gap: 1px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
@@ -55,7 +59,8 @@ main {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    background: none;
+    background: none; /* הסרת הרקע של קווי הרשת המובנים */
+    /* opacity: 0; הסתרת הרשת כברירת מחדל */
 }
 
 #stage.show-grid::before {
@@ -66,17 +71,19 @@ main {
   background-image:
     linear-gradient(to right, lightgrey 1px, transparent 1px),
     linear-gradient(to bottom, lightgrey 1px, transparent 1px);
-  background-size: 56px 46px;
-  background-position: top left;
+  background-size: 56px 46px; /* Set the size of the grid lines */
+  background-position: top left; /* Align the grid to the top left */
 }
 
 #character {
     width: 100px;
     height: 100px;
-    position: absolute;
+    position: absolute; /* חשוב! */
     object-fit: contain;
     cursor: grab;
+    /* הוספה של transition כדי לתת תחושה יותר נעימה */
     transition: all 0.1s ease-out;
+    /* הוספה כדי שהדמות תתחיל באמצע */
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -86,7 +93,6 @@ main {
     display: flex;
     flex-direction: column;
     flex: 1;
-    min-height: 420px; /* מוגדל ב-20px */
 }
 
 #block-palette {
@@ -97,18 +103,19 @@ main {
     border-radius: 10px;
     flex: 1;
     overflow-y: auto;
+
     display: flex;
     flex-direction: row;
-    align-items: stretch;
+    align-items: stretch; /* שנה ל-stretch כדי למתוח לגובה שווה */
 }
 
 .category-tabs {
-    height: auto;
     display: flex;
     flex-direction: row;
+    /* flex-wrap: wrap; הסר כדי למנוע מעבר שורה */
     margin-bottom: 10px;
-    overflow-x: auto;
-    white-space: nowrap;
+    overflow-x: auto; /* הוסף גלילה אופקית אם הטאבים גולשים */
+    white-space: nowrap; /* מנע מהטאבים לעבור שורה בתוך עצמם */
 }
 
 .category-tab {
@@ -120,8 +127,8 @@ main {
     cursor: pointer;
     font-size: 14px;
     color: #000000;
-    width: 90px; /* מוגדל ב-20px מ-70px */
-    height: 90px; /* מוגדל ב-20px מ-70px */
+    width: 70px;
+    height: 70px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -165,7 +172,7 @@ main {
     padding: 10px;
     flex-grow: 1;
     overflow-y: auto;
-    height: auto;
+    height: 140px; /* הגדר גובה קבוע של 140px */
     border-left: 1px solid #e0e0e0;
     margin-left: 10px;
 }
@@ -182,7 +189,7 @@ main {
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    flex: 2;
+    flex: 1;
 }
 
 .program-header {
@@ -198,14 +205,15 @@ main {
 }
 
 #program-blocks {
-    min-height: 220px; /* מוגדל ב-20px מ-200px */
+    min-height: 100px;
     border: 1px dashed #ccc;
     padding: 10px;
-    position: relative;
+    position: relative; /* כדי למקם אלמנטים באופן אבסולוטי בתוכו */
 }
 
 #program-blocks .block-container {
-    position: absolute;
+    position: absolute; /* כדי למקם את הבלוקים באופן חופשי */
+    /* כאן אפשר להוסיף עוד סגנונות */
 }
 
 .logo {
@@ -225,22 +233,24 @@ main {
     cursor: pointer;
 }
 
+/* הוספתי את זה כדי שהגודל ישפיע על הבלוקים בפלטה */
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 140px; /* מוגדל ב-20px מ-120px */
-    height: 70px; /* מוגדל ב-20px מ-50px */
+    width: 120px; /* גודל כמו puzzle-button */
+    height: 50px; /* גודל כמו puzzle-button */
     margin: 5px;
     cursor: pointer;
-    background-color: transparent;
+    background-color: transparent; /* הוספת רקע שקוף */
 }
 
+/* עיצוב לבנה עם בליטה מימין ושקע משמאל */
 #block-palette .scratch-block,
 #programming-area .scratch-block {
     position: relative;
-    width: 105px; /* מוגדל ב-20px מ-85px */
-    height: 95px; /* מוגדל ב-20px מ-75px */
-    background-color: #ffff00;
+    width: 85px;  /* גודל הבלוק */
+    height: 75px; /* גודל הבלוק */
+    background-color: #ffff00; /* צבע צהוב */
     border-radius: 10px;
     display: flex;
     justify-content: center;
@@ -252,11 +262,12 @@ main {
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
+/* בליטה מימין (יוצאת מחוץ לגבול הבלוק) */
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
     content: '';
     position: absolute;
-    right: -15px;
+    right: -15px; /* הבליטה יוצאת החוצה מימין */
     top: 50%;
     transform: translateY(-50%);
     width: 20px;
@@ -265,26 +276,29 @@ main {
     border-radius: 50%;
 }
 
+/* שקע משמאל (לא יוצא החוצה מהבלוק) */
 #block-palette .scratch-block::before,
 #programming-area .scratch-block::before {
     content: '';
     position: absolute;
-    left: 0;
+    left: 0; /* נשאר בתוך גבול הבלוק */
     top: 50%;
     transform: translateY(-50%);
     width: 20px;
     height: 20px;
-    background-color: #f0f4ff;
+    background-color: #f0f4ff; /* צבע רקע האפליקציה */
     border-radius: 50%;
 }
 
+
+
 .block-icon {
-    width: 60px; /* מוגדל ב-20px מ-40px */
-    height: 60px; /* מוגדל ב-20px מ-40px */
+    width: 40px;
+    height: 40px;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-right: 5px;
+    margin-right: 5px; /* הוספת רווח בין האייקון לטקסט */
 }
 
 .block-icon svg {
@@ -329,3 +343,4 @@ main {
 #grid-toggle:hover {
     background-color: #f0f0f0;
 }
+--- END OF FILE style.css ---
