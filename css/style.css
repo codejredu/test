@@ -96,7 +96,7 @@ main {
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    flex: 0 0 auto; /* שינוי מ-flex: 1 להגדרה קבועה */
+    flex: 0 0 auto;
     height: 160px; /* הגדרת גובה מקסימלי קבוע */
     display: flex;
     flex-direction: row;
@@ -180,7 +180,7 @@ main {
     align-content: flex-start; /* שומר את הלבנים בחלק העליון של האזור */
 }
 
-/* הגדלת אזור התכנות */
+/* הגדלת אזור התכנות אבל הקטנה ב-22px */
 #programming-area {
     background-color: #fff;
     border: 1px solid #e0e0e0;
@@ -190,6 +190,7 @@ main {
     flex: 1; /* ייקח את שאר המקום הפנוי */
     display: flex;
     flex-direction: column;
+    max-height: calc(100% - 22px); /* הוספה: הגבלת הגובה המקסימלי ב-22px פחות */
 }
 
 .program-header {
