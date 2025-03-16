@@ -1,4 +1,13 @@
 /* style.css */
+:root {
+    --motion-color: #43D3FF;
+    --triggering-color: #FFEC80;
+    --looks-color: #D38BD6;
+    --sound-color: green;
+    --control-color: orange;
+    --end-color: red;
+}
+
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -138,27 +147,27 @@ main {
 }
 
 .category-tab[data-category="triggering"] {
-    background-color: #FFEC80;
+    background-color: var(--triggering-color);
 }
 
 .category-tab[data-category="motion"] {
-    background-color: #43D3FF;
+    background-color: var(--motion-color);
 }
 
 .category-tab[data-category="looks"] {
-    background-color: #D38BD6;
+    background-color: var(--looks-color);
 }
 
 .category-tab[data-category="sound"] {
-    background-color: green;
+    background-color: var(--sound-color);
 }
 
 .category-tab[data-category="control"] {
-    background-color: orange;
+    background-color: var(--control-color);
 }
 
 .category-tab[data-category="end"] {
-    background-color: red;
+    background-color: var(--end-color);
 }
 
 .block-category {
@@ -295,27 +304,27 @@ main {
 }
 
 #triggering-blocks .block-container .scratch-block {
-    background-color: #F9D74C;
+    background-color: var(--triggering-color);
 }
 
 #motion-blocks .block-container .scratch-block {
-    background-color: #43D3FF;
+    background-color: var(--motion-color);
 }
 
 #looks-blocks .block-container .scratch-block {
-    background-color: #D86FBA;
+    background-color: var(--looks-color);
 }
 
 #sound-blocks .block-container .scratch-block {
-    background-color: #4DC251;
+    background-color: var(--sound-color);
 }
 
 #control-blocks .block-container .scratch-block {
-    background-color: #F8AA4C;
+    background-color: var(--control-color);
 }
 
 #end-blocks .block-container .scratch-block {
-    background-color: #F15959;
+    background-color: var(--end-color);
 }
 
 #grid-toggle {
