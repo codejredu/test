@@ -264,10 +264,10 @@ main {
     padding: 5px; /* מרווח פנימי לתמונות */
 }
 
-/* סגנון מעודכן לתמונות SVG בתוך הבלוקים - פי 2 מהגודל המקורי */
+/* סגנון מעודכן לתמונות SVG בתוך הבלוקים */
 .block-svg-icon {
-    width: 120%;
-    height: 120%;
+    width: 80%;
+    height: 80%;
     object-fit: contain;
     pointer-events: none;
     display: block;
@@ -277,35 +277,35 @@ main {
     transform: translateY(-50%); /* מרכז את התמונה אנכית */
 }
 
-/* גדלים מותאמים לתמונות SVG בקטגוריות שונות - פי 2 מהגודל המקורי */
+/* גדלים מותאמים לתמונות SVG בקטגוריות שונות */
 #triggering-blocks .block-svg-icon {
-    width: 110%;
-    height: 110%;
+    width: 75%;
+    height: 75%;
 }
 
 #motion-blocks .block-svg-icon {
-    width: 100%;
-    height: 100%;
+    width: 70%;
+    height: 70%;
 }
 
 #looks-blocks .block-svg-icon {
-    width: 110%;
-    height: 110%;
+    width: 75%;
+    height: 75%;
 }
 
 #sound-blocks .block-svg-icon {
-    width: 120%;
-    height: 120%;
+    width: 80%;
+    height: 80%;
 }
 
 #control-blocks .block-svg-icon {
-    width: 100%;
-    height: 100%;
+    width: 70%;
+    height: 70%;
 }
 
 #end-blocks .block-svg-icon {
-    width: 120%;
-    height: 120%;
+    width: 80%;
+    height: 80%;
 }
 
 #block-palette .scratch-block::after,
