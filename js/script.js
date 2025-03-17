@@ -1,186 +1,186 @@
- // ========================================================================
+// ========================================================================
 // הגדרת בלוקים (Blocks)
 // ========================================================================
 
 const blocks = {
     triggering: [
         {
-    name: "דגל ירוק", // שם שתוכל להשתמש להצגה או הערות
-    color: "yellow",
-    type: "startOnGreenFlag",
-    icon: "assets/images/green-flag.svg", // הפניה לקובץ SVG
-},
+            name: "דגל ירוק",
+            color: "yellow",
+            type: "startOnGreenFlag",
+            icon: "assets/images/green-flag.svg",
+        },
         {
-            name: "👆",
+            name: "הקשה",
             color: "yellow",
             type: "startOnTap",
-            icon: "👆",
+            icon: "assets/images/tap.svg",
         },
         {
-            name: "💥",
+            name: "התנגשות",
             color: "yellow",
             type: "startOnBump",
-            icon: "💥",
+            icon: "assets/images/bump.svg",
         },
         {
-            name: "✉️",
+            name: "שלח הודעה",
             color: "yellow",
             type: "sendMessage",
-            icon: "✉️",
+            icon: "assets/images/send-message.svg",
         },
         {
-            name: "📩",
+            name: "קבל הודעה",
             color: "yellow",
             type: "startOnMessage",
-            icon: "📩",
+            icon: "assets/images/receive-message.svg",
         },
     ],
     motion: [
         {
-            name: "➡️",
+            name: "זוז ימינה",
             color: "#43D3FF",
             type: "moveRight",
-            icon: "➡️",
+            icon: "assets/images/move-right.svg",
         },
         {
-            name: "⬅️",
+            name: "זוז שמאלה",
             color: "#43D3FF",
             type: "moveLeft",
-            icon: "⬅️",
+            icon: "assets/images/move-left.svg",
         },
         {
-            name: "⬆️",
+            name: "זוז למעלה",
             color: "#43D3FF",
             type: "moveUp",
-            icon: "⬆️",
+            icon: "assets/images/move-up.svg",
         },
         {
-            name: "⬇️",
+            name: "זוז למטה",
             color: "#43D3FF",
             type: "moveDown",
-            icon: "⬇️",
+            icon: "assets/images/move-down.svg",
         },
         {
-            name: "↩️",
+            name: "הסתובב ימינה",
             color: "#43D3FF",
             type: "turnRight",
-            icon: "↩️",
+            icon: "assets/images/turn-right.svg",
         },
         {
-            name: "↪️",
+            name: "הסתובב שמאלה",
             color: "#43D3FF",
             type: "turnLeft",
-            icon: "↪️",
+            icon: "assets/images/turn-left.svg",
         },
         {
-            name: "🤸",
+            name: "קפוץ",
             color: "#43D3FF",
             type: "hop",
-            icon: "🤸",
+            icon: "assets/images/hop.svg",
         },
         {
-            name: "🏠",
+            name: "חזור הביתה",
             color: "#43D3FF",
             type: "goHome",
-            icon: "🏠",
+            icon: "assets/images/go-home.svg",
         },
     ],
     looks: [
         {
-            name: "💬",
+            name: "דיבור",
             color: "purple",
             type: "say",
-            icon: "👁️",
+            icon: "assets/images/say.svg",
         },
         {
-            name: "📈",
+            name: "גדל",
             color: "purple",
             type: "grow",
-            icon: "🙈",
+            icon: "assets/images/grow.svg",
         },
         {
-            name: "📉",
+            name: "הקטן",
             color: "purple",
             type: "shrink",
-            icon: "🔄",
+            icon: "assets/images/shrink.svg",
         },
         {
-            name: "🔄",
+            name: "אפס גודל",
             color: "purple",
             type: "resetSize",
-            icon: "📈",
+            icon: "assets/images/reset-size.svg",
         },
         {
-            name: "🙈",
+            name: "הסתר",
             color: "purple",
             type: "hide",
-            icon: "📉",
+            icon: "assets/images/hide.svg",
         },
         {
-            name: "👁️",
+            name: "הראה",
             color: "purple",
             type: "show",
-            icon: "💬",
+            icon: "assets/images/show.svg",
         },
     ],
     sound: [
         {
-            name: "🎵",
+            name: "השמע צליל",
             color: "green",
             type: "popSound",
-            icon: "🎵",
+            icon: "assets/images/play-sound.svg",
         },
         {
-            name: "🎤",
+            name: "השמע הקלטה",
             color: "green",
             type: "playRecordedSound",
-            icon: "🎤",
+            icon: "assets/images/play-recorded.svg",
         },
     ],
     control: [
         {
-            name: "⏱️",
+            name: "המתן",
             color: "orange",
             type: "wait",
-            icon: "⏱️",
+            icon: "assets/images/wait.svg",
         },
         {
-            name: "⚡",
+            name: "קבע מהירות",
             color: "orange",
             type: "setSpeed",
-            icon: "⚡",
+            icon: "assets/images/set-speed.svg",
         },
         {
-            name: "🔁",
+            name: "חזור על",
             type: "repeat",
-            icon: "🔁",
+            icon: "assets/images/repeat.svg",
             color: "orange"
         },
         {
-            name: "♾️",
+            name: "חזור לנצח",
             type: "repeatForever",
-            icon: "♾️",
+            icon: "assets/images/repeat-forever.svg",
             color: "orange"
         },
         {
-            name: "🚪",
+            name: "עבור לדף",
             color: "orange",
             type: "goToPage",
-            icon: "🚪",
+            icon: "assets/images/go-to-page.svg",
         },
     ],
     end: [
         {
-            name: "🛑",
+            name: "עצור",
             color: "red",
             type: "stop",
-            icon: "🛑",
+            icon: "assets/images/stop.svg",
         },
         {
-            name: "🏁",
+            name: "סיים",
             color: "red",
             type: "end",
-            icon: "🏁",
+            icon: "assets/images/end.svg",
         },
     ],
 };
@@ -213,8 +213,20 @@ function createLeftConnector() {
 function createScratchBlock(block) {
     const scratchBlock = document.createElement("div");
     scratchBlock.classList.add("scratch-block");
-    scratchBlock.textContent = block.icon;
     scratchBlock.style.backgroundColor = block.color;
+    
+    // בדיקה אם האייקון הוא קובץ SVG
+    if (block.icon && block.icon.endsWith('.svg')) {
+        const img = document.createElement("img");
+        img.src = block.icon;
+        img.alt = block.name;
+        img.classList.add("block-svg-icon");
+        scratchBlock.appendChild(img);
+    } else {
+        // במקרה שאין קובץ SVG, נשתמש בטקסט כמו קודם
+        scratchBlock.textContent = block.icon;
+    }
+    
     return scratchBlock;
 }
 
@@ -252,7 +264,8 @@ function handleDragStart(event, block, category) {
         type: block.type,
         icon: block.icon,
         color: block.color,
-        category: category
+        category: category,
+        name: block.name
     };
     event.dataTransfer.setData("text/plain", JSON.stringify(data));
     event.dataTransfer.effectAllowed = "move";
@@ -267,6 +280,7 @@ function handleDrop(event) {
     const blockCategory = data.category;
     const blockIcon = data.icon;
     const blockColor = data.color;
+    const blockName = data.name;
 
     // יצירת אלמנט בלוק חדש (שיבוט)
     const newBlock = document.createElement("div");
@@ -274,8 +288,19 @@ function handleDrop(event) {
 
     const scratchBlock = document.createElement("div");
     scratchBlock.classList.add("scratch-block");
-    scratchBlock.textContent = blockIcon; // הצגת הטקסט בתוך הבלוק
     scratchBlock.style.backgroundColor = blockColor; //הצבע
+
+    // בדיקה אם האייקון הוא קובץ SVG
+    if (blockIcon && blockIcon.endsWith('.svg')) {
+        const img = document.createElement("img");
+        img.src = blockIcon;
+        img.alt = blockName || blockType;
+        img.classList.add("block-svg-icon");
+        scratchBlock.appendChild(img);
+    } else {
+        // במקרה שאין קובץ SVG, נשתמש בטקסט כמו קודם
+        scratchBlock.textContent = blockIcon;
+    }
 
     //יצירת אלמנט right-connector
     const rightConnector = document.createElement("div");
@@ -366,6 +391,12 @@ const stage = document.getElementById("stage");
 
 gridToggle.addEventListener("click", () => {
     stage.classList.toggle("show-grid");
+});
+
+// כפתור ניקוי האזור תכנות
+const clearAllButton = document.getElementById("clear-all");
+clearAllButton.addEventListener("click", () => {
+    programmingArea.innerHTML = "";
 });
 
 // אתחול הלוח עם הקטגוריה הפעילה הראשונה
