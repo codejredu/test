@@ -261,6 +261,51 @@ main {
     font-weight: bold;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    padding: 5px; /* מרווח פנימי לתמונות */
+}
+
+/* סגנון חדש לתמונות SVG בתוך הבלוקים */
+.block-svg-icon {
+    width: 60%;
+    height: 60%;
+    object-fit: contain;
+    pointer-events: none;
+    display: block;
+    margin: 0 auto; /* מרכז את התמונה אופקית */
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%); /* מרכז את התמונה אנכית */
+}
+
+/* גדלים שונים לתמונות SVG בקטגוריות שונות */
+#triggering-blocks .block-svg-icon {
+    width: 55%;
+    height: 55%;
+}
+
+#motion-blocks .block-svg-icon {
+    width: 50%;
+    height: 50%;
+}
+
+#looks-blocks .block-svg-icon {
+    width: 55%;
+    height: 55%;
+}
+
+#sound-blocks .block-svg-icon {
+    width: 60%;
+    height: 60%;
+}
+
+#control-blocks .block-svg-icon {
+    width: 50%;
+    height: 50%;
+}
+
+#end-blocks .block-svg-icon {
+    width: 60%;
+    height: 60%;
 }
 
 #block-palette .scratch-block::after,
