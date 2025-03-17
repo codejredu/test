@@ -1,214 +1,186 @@
-// ========================================================================
+ // ========================================================================
 // הגדרת בלוקים (Blocks)
 // ========================================================================
 
 const blocks = {
     triggering: [
         {
-            name: "Start on Green Flag",
+            name: "🚩",
             color: "yellow",
             type: "startOnGreenFlag",
-            textIcon: "🚩", // למקרה שאין קובץ SVG
-            iconSrc: "assets/images/block-icons/green-flag.svg",
+            icon: "🚩",
         },
         {
-            name: "Start on Tap",
+            name: "👆",
             color: "yellow",
             type: "startOnTap",
-            textIcon: "👆",
-            iconSrc: "assets/images/block-icons/tap.svg",
+            icon: "👆",
         },
         {
-            name: "Start on Bump",
+            name: "💥",
             color: "yellow",
             type: "startOnBump",
-            textIcon: "💥",
-            iconSrc: "assets/images/block-icons/bump.svg",
+            icon: "💥",
         },
         {
-            name: "Send Message",
+            name: "✉️",
             color: "yellow",
             type: "sendMessage",
-            textIcon: "✉️",
-            iconSrc: "assets/images/block-icons/send-message.svg",
+            icon: "✉️",
         },
         {
-            name: "Start on Message",
+            name: "📩",
             color: "yellow",
             type: "startOnMessage",
-            textIcon: "📩",
-            iconSrc: "assets/images/block-icons/receive-message.svg",
+            icon: "📩",
         },
     ],
     motion: [
         {
-            name: "Move Right",
+            name: "➡️",
             color: "#43D3FF",
             type: "moveRight",
-            textIcon: "➡️",
-            iconSrc: "assets/images/block-icons/move-right.svg",
+            icon: "➡️",
         },
         {
-            name: "Move Left",
+            name: "⬅️",
             color: "#43D3FF",
             type: "moveLeft",
-            textIcon: "⬅️",
-            iconSrc: "assets/images/block-icons/move-left.svg",
+            icon: "⬅️",
         },
         {
-            name: "Move Up",
+            name: "⬆️",
             color: "#43D3FF",
             type: "moveUp",
-            textIcon: "⬆️",
-            iconSrc: "assets/images/block-icons/move-up.svg",
+            icon: "⬆️",
         },
         {
-            name: "Move Down",
+            name: "⬇️",
             color: "#43D3FF",
             type: "moveDown",
-            textIcon: "⬇️",
-            iconSrc: "assets/images/block-icons/move-down.svg",
+            icon: "⬇️",
         },
         {
-            name: "Turn Right",
+            name: "↩️",
             color: "#43D3FF",
             type: "turnRight",
-            textIcon: "↩️",
-            iconSrc: "assets/images/block-icons/turn-right.svg",
+            icon: "↩️",
         },
         {
-            name: "Turn Left",
+            name: "↪️",
             color: "#43D3FF",
             type: "turnLeft",
-            textIcon: "↪️",
-            iconSrc: "assets/images/block-icons/turn-left.svg",
+            icon: "↪️",
         },
         {
-            name: "Hop",
+            name: "🤸",
             color: "#43D3FF",
             type: "hop",
-            textIcon: "🤸",
-            iconSrc: "assets/images/block-icons/hop.svg",
+            icon: "🤸",
         },
         {
-            name: "Go Home",
+            name: "🏠",
             color: "#43D3FF",
             type: "goHome",
-            textIcon: "🏠",
-            iconSrc: "assets/images/block-icons/go-home.svg",
+            icon: "🏠",
         },
     ],
     looks: [
         {
-            name: "Say",
+            name: "💬",
             color: "purple",
             type: "say",
-            textIcon: "💬",
-            iconSrc: "assets/images/block-icons/say.svg",
+            icon: "👁️",
         },
         {
-            name: "Grow",
+            name: "📈",
             color: "purple",
             type: "grow",
-            textIcon: "📈",
-            iconSrc: "assets/images/block-icons/grow.svg",
+            icon: "🙈",
         },
         {
-            name: "Shrink",
+            name: "📉",
             color: "purple",
             type: "shrink",
-            textIcon: "📉",
-            iconSrc: "assets/images/block-icons/shrink.svg",
+            icon: "🔄",
         },
         {
-            name: "Reset Size",
+            name: "🔄",
             color: "purple",
             type: "resetSize",
-            textIcon: "🔄",
-            iconSrc: "assets/images/block-icons/reset-size.svg",
+            icon: "📈",
         },
         {
-            name: "Hide",
+            name: "🙈",
             color: "purple",
             type: "hide",
-            textIcon: "🙈",
-            iconSrc: "assets/images/block-icons/hide.svg",
+            icon: "📉",
         },
         {
-            name: "Show",
+            name: "👁️",
             color: "purple",
             type: "show",
-            textIcon: "👁️",
-            iconSrc: "assets/images/block-icons/show.svg",
+            icon: "💬",
         },
     ],
     sound: [
         {
-            name: "Pop Sound",
+            name: "🎵",
             color: "green",
             type: "popSound",
-            textIcon: "🎵",
-            iconSrc: "assets/images/block-icons/pop-sound.svg",
+            icon: "🎵",
         },
         {
-            name: "Play Recorded Sound",
+            name: "🎤",
             color: "green",
             type: "playRecordedSound",
-            textIcon: "🎤",
-            iconSrc: "assets/images/block-icons/play-recorded.svg",
+            icon: "🎤",
         },
     ],
     control: [
         {
-            name: "Wait",
+            name: "⏱️",
             color: "orange",
             type: "wait",
-            textIcon: "⏱️",
-            iconSrc: "assets/images/block-icons/wait.svg",
+            icon: "⏱️",
         },
         {
-            name: "Set Speed",
+            name: "⚡",
             color: "orange",
             type: "setSpeed",
-            textIcon: "⚡",
-            iconSrc: "assets/images/block-icons/set-speed.svg",
+            icon: "⚡",
         },
         {
-            name: "Repeat",
+            name: "🔁",
             type: "repeat",
-            textIcon: "🔁",
-            iconSrc: "assets/images/block-icons/repeat.svg",
+            icon: "🔁",
             color: "orange"
         },
         {
-            name: "Repeat Forever",
+            name: "♾️",
             type: "repeatForever",
-            textIcon: "♾️",
-            iconSrc: "assets/images/block-icons/repeat-forever.svg",
+            icon: "♾️",
             color: "orange"
         },
         {
-            name: "Go To Page",
+            name: "🚪",
             color: "orange",
             type: "goToPage",
-            textIcon: "🚪",
-            iconSrc: "assets/images/block-icons/go-to-page.svg",
+            icon: "🚪",
         },
     ],
     end: [
         {
-            name: "Stop",
+            name: "🛑",
             color: "red",
             type: "stop",
-            textIcon: "🛑",
-            iconSrc: "assets/images/block-icons/stop.svg",
+            icon: "🛑",
         },
         {
-            name: "End",
+            name: "🏁",
             color: "red",
             type: "end",
-            textIcon: "🏁",
-            iconSrc: "assets/images/block-icons/end.svg",
+            icon: "🏁",
         },
     ],
 };
@@ -216,14 +188,6 @@ const blocks = {
 // ========================================================================
 // פונקציות ליצירת אלמנטים
 // ========================================================================
-
-// פונקציה לבדיקה אם קובץ SVG קיים
-function checkIfImageExists(url, callback) {
-    const img = new Image();
-    img.onload = function() { callback(true); };
-    img.onerror = function() { callback(false); };
-    img.src = url;
-}
 
 // פונקציה ליצירת מחבר ימני
 function createRightConnector(color) {
@@ -249,23 +213,8 @@ function createLeftConnector() {
 function createScratchBlock(block) {
     const scratchBlock = document.createElement("div");
     scratchBlock.classList.add("scratch-block");
+    scratchBlock.textContent = block.icon;
     scratchBlock.style.backgroundColor = block.color;
-
-    // בדיקה אם קובץ ה-SVG קיים
-    checkIfImageExists(block.iconSrc, function(exists) {
-        if (exists) {
-            // אם קובץ ה-SVG קיים - יצירת תג img
-            const iconImg = document.createElement("img");
-            iconImg.src = block.iconSrc;
-            iconImg.alt = block.name;
-            iconImg.classList.add("block-icon-img");
-            scratchBlock.appendChild(iconImg);
-        } else {
-            // אם קובץ ה-SVG לא קיים - שימוש באימוג'י
-            scratchBlock.textContent = block.textIcon;
-        }
-    });
-    
     return scratchBlock;
 }
 
@@ -301,8 +250,7 @@ function createBlockElement(block, category) {
 function handleDragStart(event, block, category) {
     const data = {
         type: block.type,
-        textIcon: block.textIcon,
-        iconSrc: block.iconSrc,
+        icon: block.icon,
         color: block.color,
         category: category
     };
@@ -317,9 +265,8 @@ function handleDrop(event) {
     const data = JSON.parse(event.dataTransfer.getData("text/plain"));
     const blockType = data.type;
     const blockCategory = data.category;
+    const blockIcon = data.icon;
     const blockColor = data.color;
-    const blockIconSrc = data.iconSrc;
-    const blockTextIcon = data.textIcon;
 
     // יצירת אלמנט בלוק חדש (שיבוט)
     const newBlock = document.createElement("div");
@@ -327,22 +274,8 @@ function handleDrop(event) {
 
     const scratchBlock = document.createElement("div");
     scratchBlock.classList.add("scratch-block");
+    scratchBlock.textContent = blockIcon; // הצגת הטקסט בתוך הבלוק
     scratchBlock.style.backgroundColor = blockColor; //הצבע
-
-    // בדיקה אם קובץ ה-SVG קיים
-    checkIfImageExists(blockIconSrc, function(exists) {
-        if (exists) {
-            // אם קובץ ה-SVG קיים - יצירת תג img
-            const iconImg = document.createElement("img");
-            iconImg.src = blockIconSrc;
-            iconImg.alt = blockType;
-            iconImg.classList.add("block-icon-img");
-            scratchBlock.appendChild(iconImg);
-        } else {
-            // אם קובץ ה-SVG לא קיים - שימוש באימוג'י
-            scratchBlock.textContent = blockTextIcon;
-        }
-    });
 
     //יצירת אלמנט right-connector
     const rightConnector = document.createElement("div");
@@ -397,14 +330,9 @@ function handleCategoryChange(category) {
     categoryTabs.forEach(tab => tab.classList.remove("active"));
 
     const tab = document.querySelector(`.category-tab[data-category="${category}"]`);
-    if (tab) {
-        tab.classList.add("active");
-        const blockCategory = document.getElementById(`${category}-blocks`);
-        if (blockCategory) {
-            blockCategory.classList.add("active");
-            populateBlockPalette(category);
-        }
-    }
+    tab.classList.add("active");
+    document.getElementById(`${category}-blocks`).classList.add("active");
+    populateBlockPalette(category);
 }
 
 // ========================================================================
@@ -440,14 +368,6 @@ gridToggle.addEventListener("click", () => {
     stage.classList.toggle("show-grid");
 });
 
-// ניקוי כל הבלוקים באזור התכנות
-const clearAllButton = document.getElementById("clear-all");
-if (clearAllButton) {
-    clearAllButton.addEventListener("click", () => {
-        programmingArea.innerHTML = "";
-    });
-}
-
 // אתחול הלוח עם הקטגוריה הפעילה הראשונה
 populateBlockPalette("triggering");
 
@@ -481,19 +401,4 @@ stage.addEventListener('drop', (event) => {
 
     character.style.left = x + 'px';
     character.style.top = y + 'px';
-});
-
-// ========================================================================
-// יצירת תיקיות וקבצי SVG אם לא קיימים
-// ========================================================================
-
-// פונקציה לבדיקה אם התיקיה assets/images/block-icons קיימת ויצירתה אם לא
-function checkAndCreateDirectories() {
-  console.log("מנסה ליצור תיקיות אם לא קיימות");
-  // הודעה שהתיקיות נבדקות - לא ניתן באמת ליצור תיקיות מהדפדפן ללא חיבור לשרת
-}
-
-// הרצת הפונקציה בטעינת הדף
-document.addEventListener('DOMContentLoaded', function() {
-  checkAndCreateDirectories();
 });
