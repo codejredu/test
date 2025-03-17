@@ -143,7 +143,7 @@ main {
     max-width: 60%;
     max-height: 60%;
     pointer-events: none;
-    filter: invert(0%); /* אפשר לשנות אם צריך אינוורטר של התמונות */
+    filter: invert(100%);
 }
 
 .category-tab[data-category="triggering"] {
@@ -261,16 +261,6 @@ main {
     font-weight: bold;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
-}
-
-/* עיצוב ספציפי לתמונות SVG בתוך הבלוקים */
-.block-icon-image {
-    width: 80%;
-    height: 80%;
-    object-fit: contain;
-    pointer-events: none;
-    /* הבהרת התמונה לשיפור הנראות */
-    filter: brightness(1.1) contrast(1.1);
 }
 
 #block-palette .scratch-block::after,
