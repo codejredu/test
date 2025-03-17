@@ -82,7 +82,7 @@ const blocks = {
             name: "Go Home",
             color: "#43D3FF",
             type: "goHome",
-            icon: "assets/images/blocks/home.svg",
+            icon: "assets/images/blocks/reset.svg",
         },
     ],
     looks: [
