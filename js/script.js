@@ -8,7 +8,7 @@ const blocks = {
             name: "When Green Flag",
             color: "yellow",
             type: "startOnGreenFlag",
-            icon: "assets/images/blocks/green-flag.svg",
+            icon: "assets/images/green-flag.svg",
         },
         {
             name: "On Tap",
