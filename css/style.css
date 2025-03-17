@@ -263,6 +263,14 @@ main {
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
+/* SVG Icon styling */
+.block-svg-icon {
+    width: 40px;
+    height: 40px;
+    display: block;
+    margin: 0 auto;
+}
+
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
     content: '';
