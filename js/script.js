@@ -1,4 +1,3 @@
---- START OF FILE script.js ---
  // ========================================================================
 // הגדרת בלוקים (Blocks)
 // ========================================================================
@@ -6,182 +5,182 @@
 const blocks = {
     triggering: [
         {
-            name: "When Green Flag",
+            name: "🚩",
             color: "yellow",
             type: "startOnGreenFlag",
-            icon: "assets/images/blocks/flag.svg",
+            icon: "🚩",
         },
         {
-            name: "On Tap",
+            name: "👆",
             color: "yellow",
             type: "startOnTap",
-            icon: "assets/images/blocks/tap.svg",
+            icon: "👆",
         },
         {
-            name: "On Bump",
+            name: "💥",
             color: "yellow",
             type: "startOnBump",
-            icon: "assets/images/blocks/bump.svg",
+            icon: "💥",
         },
         {
-            name: "Send Message",
+            name: "✉️",
             color: "yellow",
             type: "sendMessage",
-            icon: "assets/images/blocks/send_message.svg",
+            icon: "✉️",
         },
         {
-            name: "Receive Message",
+            name: "📩",
             color: "yellow",
             type: "startOnMessage",
-            icon: "assets/images/blocks/receive_message.svg",
+            icon: "📩",
         },
     ],
     motion: [
         {
-            name: "Move Right",
+            name: "➡️",
             color: "#43D3FF",
             type: "moveRight",
-            icon: "assets/images/blocks/move_right.svg",
+            icon: "➡️",
         },
         {
-            name: "Move Left",
+            name: "⬅️",
             color: "#43D3FF",
             type: "moveLeft",
-            icon: "assets/images/blocks/move_left.svg",
+            icon: "⬅️",
         },
         {
-            name: "Move Up",
+            name: "⬆️",
             color: "#43D3FF",
             type: "moveUp",
-            icon: "assets/images/blocks/move_up.svg",
+            icon: "⬆️",
         },
         {
-            name: "Move Down",
+            name: "⬇️",
             color: "#43D3FF",
             type: "moveDown",
-            icon: "assets/images/blocks/move_down.svg",
+            icon: "⬇️",
         },
         {
-            name: "Turn Right",
+            name: "↩️",
             color: "#43D3FF",
             type: "turnRight",
-            icon: "assets/images/blocks/turn_right.svg",
+            icon: "↩️",
         },
         {
-            name: "Turn Left",
+            name: "↪️",
             color: "#43D3FF",
             type: "turnLeft",
-            icon: "assets/images/blocks/turn_left.svg",
+            icon: "↪️",
         },
         {
-            name: "Hop",
+            name: "🤸",
             color: "#43D3FF",
             type: "hop",
-            icon: "assets/images/blocks/hop.svg",
+            icon: "🤸",
         },
         {
-            name: "Go Home",
+            name: "🏠",
             color: "#43D3FF",
             type: "goHome",
-            icon: "assets/images/blocks/go_home.svg",
+            icon: "🏠",
         },
     ],
     looks: [
         {
-            name: "Say",
+            name: "💬",
             color: "purple",
             type: "say",
-            icon: "assets/images/blocks/say.svg",
+            icon: "👁️",
         },
         {
-            name: "Grow",
+            name: "📈",
             color: "purple",
             type: "grow",
-            icon: "assets/images/blocks/grow.svg",
+            icon: "🙈",
         },
         {
-            name: "Shrink",
+            name: "📉",
             color: "purple",
             type: "shrink",
-            icon: "assets/images/blocks/shrink.svg",
+            icon: "🔄",
         },
         {
-            name: "Reset Size",
+            name: "🔄",
             color: "purple",
             type: "resetSize",
-            icon: "assets/images/blocks/reset_size.svg",
+            icon: "📈",
         },
         {
-            name: "Hide",
+            name: "🙈",
             color: "purple",
             type: "hide",
-            icon: "assets/images/blocks/hide.svg",
+            icon: "📉",
         },
         {
-            name: "Show",
+            name: "👁️",
             color: "purple",
             type: "show",
-            icon: "assets/images/blocks/show.svg",
+            icon: "💬",
         },
     ],
     sound: [
         {
-            name: "Pop Sound",
+            name: "🎵",
             color: "green",
             type: "popSound",
-            icon: "assets/images/blocks/pop_sound.svg",
+            icon: "🎵",
         },
         {
-            name: "Play Recorded Sound",
+            name: "🎤",
             color: "green",
             type: "playRecordedSound",
-            icon: "assets/images/blocks/record_sound.svg",
+            icon: "🎤",
         },
     ],
     control: [
         {
-            name: "Wait",
+            name: "⏱️",
             color: "orange",
             type: "wait",
-            icon: "assets/images/blocks/wait.svg",
+            icon: "⏱️",
         },
         {
-            name: "Set Speed",
+            name: "⚡",
             color: "orange",
             type: "setSpeed",
-            icon: "assets/images/blocks/speed.svg",
+            icon: "⚡",
         },
         {
-            name: "Repeat",
+            name: "🔁",
             type: "repeat",
-            icon: "assets/images/blocks/repeat.svg",
+            icon: "🔁",
             color: "orange"
         },
         {
-            name: "Repeat Forever",
+            name: "♾️",
             type: "repeatForever",
-            icon: "assets/images/blocks/repeat_forever.svg",
+            icon: "♾️",
             color: "orange"
         },
         {
-            name: "Go To Page",
+            name: "🚪",
             color: "orange",
             type: "goToPage",
-            icon: "assets/images/blocks/go_to_page.svg",
+            icon: "🚪",
         },
     ],
     end: [
         {
-            name: "Stop",
+            name: "🛑",
             color: "red",
             type: "stop",
-            icon: "assets/images/blocks/stop.svg",
+            icon: "🛑",
         },
         {
-            name: "End",
+            name: "🏁",
             color: "red",
             type: "end",
-            icon: "assets/images/blocks/end.svg",
+            icon: "🏁",
         },
     ],
 };
@@ -214,13 +213,8 @@ function createLeftConnector() {
 function createScratchBlock(block) {
     const scratchBlock = document.createElement("div");
     scratchBlock.classList.add("scratch-block");
+    scratchBlock.textContent = block.icon;
     scratchBlock.style.backgroundColor = block.color;
-
-    const iconElement = document.createElement('img');
-    iconElement.src = block.icon;
-    iconElement.alt = block.name; // Add alt text for accessibility
-    scratchBlock.appendChild(iconElement);
-
     return scratchBlock;
 }
 
@@ -280,13 +274,8 @@ function handleDrop(event) {
 
     const scratchBlock = document.createElement("div");
     scratchBlock.classList.add("scratch-block");
-    scratchBlock.style.backgroundColor = blockColor;
-
-    const iconElement = document.createElement('img');
-    iconElement.src = blockIcon;
-    iconElement.alt = blockType; // Use block type as alt text
-    scratchBlock.appendChild(iconElement);
-
+    scratchBlock.textContent = blockIcon; // הצגת הטקסט בתוך הבלוק
+    scratchBlock.style.backgroundColor = blockColor; //הצבע
 
     //יצירת אלמנט right-connector
     const rightConnector = document.createElement("div");
