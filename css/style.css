@@ -1,19 +1,9 @@
-/* style.css */
-:root {
-    --motion-color: #43D3FF;
-    --triggering-color: #FFEC80;
-    --looks-color: #D38BD6;
-    --sound-color: green;
-    --control-color: orange;
-    --end-color: red;
-}
-
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
     background-color: #f0f4ff;
-    direction: ltr; /* Make sure direction is LTR */
+    direction: rtl;
 }
 
 .container {
@@ -53,6 +43,9 @@ main {
     border: 1px solid #e0e0e0;
     border-radius: 10px;
     position: relative;
+    /* display: grid; הסרתי את זה כי אנחנו יוצרים קווי רשת אחרת */
+    /* grid-template-columns: repeat(10, 1fr); */
+    /* grid-template-rows: repeat(10, 1fr); */
     gap: 1px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
@@ -65,7 +58,8 @@ main {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    background: none;
+    background: none; /* הסרת הרקע של קווי הרשת המובנים */
+    /* opacity: 0; הסתרת הרשת כברירת מחדל */
 }
 
 #stage.show-grid::before {
@@ -73,7 +67,7 @@ main {
 }
 
 #stage.show-grid {
-  background-image:
+  background-image: 
     linear-gradient(to right, lightgrey 1px, transparent 1px),
     linear-gradient(to bottom, lightgrey 1px, transparent 1px);
   background-size: 56px 46px; /* Set the size of the grid lines */
@@ -81,15 +75,19 @@ main {
 }
 
 #character {
-    width: 100px;
-    height: 100px;
+    width: 100px; /* שינוי הרוחב ל-100px */
+    height: 100px; /* שינוי הגובה ל-100px */
     position: absolute;
-    object-fit: contain;
-    cursor: grab;
-    transition: all 0.1s ease-out;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    object-fit: contain; /* גורם לתמונה להתאים בתוך השטח המוקצה לה */
+     /* שינוי הסמן לגרירה */
+    cursor: grab;
+}
+
+#character:active {
+    cursor: grabbing; /* סמן אחר כאשר לוחצים */
 }
 
 .palette-and-programming {
@@ -99,39 +97,32 @@ main {
 }
 
 #block-palette {
-    background-color: #f0f0f0; /* Gray background as requested */
+    background-color: #fff;
     border: 1px solid #e0e0e0;
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    height: 105px; /* Fixed height of 114px as requested */
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    overflow: hidden; /* Prevent content from overflowing */
+    flex: 1;
+    overflow-y: auto;
 }
 
 .category-tabs {
     display: flex;
-    flex-direction: row;
     flex-wrap: wrap;
-    margin-bottom: 0;
-    height: 100%;
-    align-content: flex-start;
-    background-color: #f0f0f0; /* Gray background behind tabs */
+    margin-bottom: 10px;
 }
 
 .category-tab {
     border: none;
     padding: 0;
-    margin-left: 5px;
+    margin-right: 5px;
     margin-bottom: 5px;
     border-radius: 10px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 14px;
     color: #000000;
-    width: 80px;
-    height: 80px;
+    width: 60px;
+    height: 60px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -140,44 +131,39 @@ main {
 }
 
 .category-tab img {
-    max-width: 60%;
-    max-height: 60%;
+    max-width: 100%;
+    max-height: 100%;
     pointer-events: none;
-    filter: invert(100%);
+   filter: invert(100%);
 }
 
 .category-tab[data-category="triggering"] {
-    background-color: var(--triggering-color);
+    background-color: yellow;
 }
 
 .category-tab[data-category="motion"] {
-    background-color: var(--motion-color);
+    background-color: blue;
 }
 
 .category-tab[data-category="looks"] {
-    background-color: var(--looks-color);
+    background-color: lavender;
 }
 
 .category-tab[data-category="sound"] {
-    background-color: var(--sound-color);
+    background-color: green;
 }
 
 .category-tab[data-category="control"] {
-    background-color: var(--control-color);
+    background-color: orange;
 }
 
 .category-tab[data-category="end"] {
-    background-color: var(--end-color);
+    background-color: red;
 }
 
 .block-category {
     display: none;
     padding: 10px;
-    flex-grow: 1;
-    height: 100%;
-    border-right: 1px solid #e0e0e0;
-    margin-left: 10px;
-    background-color: #0D66CA; /* blue background behind programming blocks */
 }
 
 .block-category.active {
@@ -192,8 +178,7 @@ main {
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    flex: 2; /* Increased to make programming area taller */
-    min-height: 200px; /* Set minimum height */
+    flex: 1;
 }
 
 .program-header {
@@ -209,14 +194,15 @@ main {
 }
 
 #program-blocks {
-    min-height: 180px; /* Increased height */
+    min-height: 100px;
     border: 1px dashed #ccc;
     padding: 10px;
-    position: relative;
+    position: relative; /* כדי למקם אלמנטים באופן אבסולוטי בתוכו */
 }
 
 #program-blocks .block-container {
-    position: absolute;
+    position: absolute; /* כדי למקם את הבלוקים באופן חופשי */
+    /* כאן אפשר להוסיף עוד סגנונות */
 }
 
 .logo {
@@ -236,140 +222,104 @@ main {
     cursor: pointer;
 }
 
+/* הוספתי את זה כדי שהגודל ישפיע על הבלוקים בפלטה */
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 100px;
-    height: 100px;
-    margin: 4px;
+    width: 60px; /* שינוי הרוחב ל-60px */
+    height: 60px; /* שינוי הגובה ל-60px */
+    margin: 5px;
     cursor: pointer;
-    background-color: transparent;
+    background-color: transparent; /* הוספת רקע שקוף */
 }
 
+/* הוספתי את זה כדי שהגודל ישפיע על הבלוקים בפלטה */
 #block-palette .scratch-block,
 #programming-area .scratch-block {
-    position: relative;
-    width: 70px;
-    height: 80px;
-    background-color: #ffff00;
-    border-radius: 10px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #25AFF4;
+    border-radius: 6px;
     display: flex;
     justify-content: center;
     align-items: center;
-    color: black;
-    font-size: 24px;
+    color: white;
+    font-size: 12px;
     font-weight: bold;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
-    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
-    padding: 5px; /* מרווח פנימי לתמונות */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), inset 0 1px 2px rgba(0, 0, 0, 0.1); /* הוספת צללית פנימית */
+    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out; /* הוספת transition ל-background-color */
 }
 
-/* סגנון מעודכן לתמונות SVG בתוך הבלוקים */
-.block-svg-icon {
-    width: 80%;
-    height: 80%;
-    object-fit: contain;
-    pointer-events: none;
-    display: block;
-    margin: 0 auto; /* מרכז את התמונה אופקית */
-    position: relative;
-    top: 50%;
-    transform: translateY(-50%); /* מרכז את התמונה אנכית */
-}
-
-/* גדלים מותאמים לתמונות SVG בקטגוריות שונות */
-#triggering-blocks .block-svg-icon {
-    width: 75%;
-    height: 75%;
-}
-
-#motion-blocks .block-svg-icon {
-    width: 70%;
-    height: 70%;
-}
-
-#looks-blocks .block-svg-icon {
-    width: 75%;
-    height: 75%;
-}
-
-#sound-blocks .block-svg-icon {
-    width: 80%;
-    height: 80%;
-}
-
-#control-blocks .block-svg-icon {
-    width: 70%;
-    height: 70%;
-}
-
-#end-blocks .block-svg-icon {
-    width: 80%;
-    height: 80%;
-}
-
-#block-palette .scratch-block::after,
-#programming-area .scratch-block::after {
-    content: '';
+.right-connector {
     position: absolute;
-    right: -14px;
+    right: -5px; /* התאמת המיקום */
     top: 50%;
     transform: translateY(-50%);
-    width: 18px;
-    height: 18px;
-    background-color: inherit;
-    border-radius: 50%;
+    width: 8px; /* הקטנת הרוחב */
+    height: 15px; /* הקטנת הגובה */
+    background-color: #25AFF4;
+    border-radius: 0 30px 30px 0;
 }
 
-#block-palette .scratch-block::before,
-#programming-area .scratch-block::before {
-    content: '';
+.left-connector-wrapper {
     position: absolute;
-    left: 0;
+    left: -7px; /* התאמת המיקום */
+    top: 0;
+    height: 100%;
+    width: 10px; /* הקטנת הרוחב */
+    overflow: hidden;
+}
+
+.left-connector {
+    position: absolute;
+    left: -8px; /* התאמת המיקום */
     top: 50%;
     transform: translateY(-50%);
-    width: 18px;
-    height: 18px;
-    background-color: #f0f4ff;
+    width: 16px; /* הקטנת הרוחב */
+    height: 16px; /* הקטנת הגובה */
+    background-color: #f0f0f0;
     border-radius: 50%;
 }
 
 .block-icon {
-    width: 50px;
-    height: 50px;
+    width: 16px;
+    height: 16px;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-right: 5px;
+    margin-right: 5px; /* הוספת רווח בין האייקון לטקסט */
 }
 
 .block-icon svg {
-    width: 200%;
-    height: 200%;
+    width: 100%;
+    height: 100%;
 }
 
 #triggering-blocks .block-container .scratch-block {
-    background-color: var(--triggering-color);
+    background-color: #F9D74C;
 }
 
 #motion-blocks .block-container .scratch-block {
-    background-color: var(--motion-color);
+    background-color: #3D81CC;
 }
 
 #looks-blocks .block-container .scratch-block {
-    background-color: var(--looks-color);
+    background-color: #D86FBA;
 }
 
 #sound-blocks .block-container .scratch-block {
-    background-color: var(--sound-color);
+    background-color: #4DC251;
 }
 
 #control-blocks .block-container .scratch-block {
-    background-color: var(--control-color);
+    background-color: #F8AA4C;
 }
 
 #end-blocks .block-container .scratch-block {
-    background-color: var(--end-color);
+    background-color: #F15959;
 }
 
 #grid-toggle {
