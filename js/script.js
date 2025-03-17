@@ -14,7 +14,7 @@ const blocks = {
             name: "Tap",
             color: "yellow",
             type: "startOnTap",
-            icon: "assets/images/blocks/tap.svg",
+            icon: "assets/images/tap.svg",
         },
         {
             name: "Bump",
