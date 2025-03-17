@@ -257,12 +257,24 @@ main {
     justify-content: center;
     align-items: center;
     color: black;
+    font-size: 24px;
+    font-weight: bold;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
-    overflow: hidden; /* Ensure image stays within block */
-    padding: 5px; /* Add some padding to give space around the icon */
 }
 
+#block-palette .scratch-block::after,
+#programming-area .scratch-block::after {
+    content: '';
+    position: absolute;
+    right: -14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    background-color: inherit;
+    border-radius: 50%;
+}
 
 #block-palette .scratch-block::before,
 #programming-area .scratch-block::before {
@@ -275,7 +287,6 @@ main {
     height: 18px;
     background-color: #f0f4ff;
     border-radius: 50%;
-    display: none; /* Hide left circle */
 }
 
 .block-icon {
