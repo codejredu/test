@@ -303,6 +303,14 @@ main {
     height: 200%;
 }
 
+/* חדש: עיצוב לתמונות SVG בתוך בלוקים */
+.block-icon-img {
+    width: 40px;
+    height: 40px;
+    pointer-events: none; /* למנוע אירועי גרירה על התמונה עצמה */
+    object-fit: contain; /* שמירה על יחס גובה-רוחב */
+}
+
 #triggering-blocks .block-container .scratch-block {
     background-color: var(--triggering-color);
 }
@@ -339,4 +347,41 @@ main {
 
 #grid-toggle:hover {
     background-color: #f0f0f0;
+}
+
+/* חדש: עיצוב לתמונות SVG בתוך בלוקים כשהם באזור התכנות */
+#programming-area .block-icon-img {
+    width: 40px;
+    height: 40px;
+}
+
+/* חדש: תמיכה בעיצוב מחברים ימניים ושמאליים */
+.right-connector {
+    position: absolute;
+    right: 0;
+    top: 40px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    z-index: 1;
+}
+
+.left-connector-wrapper {
+    position: absolute;
+    left: 0;
+    top: 40px;
+    width: 20px;
+    height: 20px;
+    z-index: 1;
+}
+
+.left-connector {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    z-index: 2;
 }
