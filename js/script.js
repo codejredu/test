@@ -5,13 +5,11 @@
 const blocks = {
     triggering: [
         {
-            name: "🚩",
-            color: "yellow",
-            type: "startOnGreenFlag",
-           icon: "🚩",
- // הוסף שדה חדש לנתיב התמונה
-            imgSrc: "assets/images/green-flag.svg"
-        },
+    name: "דגל ירוק", // שם שתוכל להשתמש להצגה או הערות
+    color: "yellow",
+    type: "startOnGreenFlag",
+    icon: "assets/images/green-flag.svg", // הפניה לקובץ SVG
+},
         {
             name: "👆",
             color: "yellow",
