@@ -241,7 +241,7 @@ main {
     position: relative;
     width: 100px;
     height: 100px;
-    margin: 4px;
+    margin: 8px;
     cursor: pointer;
     background-color: transparent;
 }
