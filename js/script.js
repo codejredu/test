@@ -1,4 +1,3 @@
---- START OF FILE script.js ---
 // ========================================================================
 // הגדרת בלוקים (Blocks)
 // ========================================================================
@@ -215,13 +214,13 @@ function createScratchBlock(block) {
     const scratchBlock = document.createElement("div");
     scratchBlock.classList.add("scratch-block");
     scratchBlock.style.backgroundColor = block.color;
-
+    
     // יצירת אלמנט תמונה עבור האיקון
     const iconImg = document.createElement("img");
     iconImg.src = block.icon;
     iconImg.alt = block.name;
     iconImg.classList.add("block-icon-img");
-
+    
     scratchBlock.appendChild(iconImg);
     return scratchBlock;
 }
@@ -291,7 +290,7 @@ function handleDrop(event) {
     iconImg.src = blockIcon;
     iconImg.alt = blockName;
     iconImg.classList.add("block-icon-img");
-
+    
     scratchBlock.appendChild(iconImg);
 
     //יצירת אלמנט right-connector
