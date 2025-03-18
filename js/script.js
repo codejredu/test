@@ -162,14 +162,14 @@ const blocks = {
             icon: "assets/images/blocks/repeat-forever.svg",
             color: "orange"
         },
-    ],
-    end: [
         {
             name: "Stop",
-            color: "red",
+            color: "orange",
             type: "stop",
             icon: "assets/images/blocks/stop.svg",
         },
+    ],
+    end: [
         {
             name: "End",
             color: "red",
