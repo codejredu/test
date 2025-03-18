@@ -189,7 +189,7 @@ const blocks = {
 // פונקציות ליצירת אלמנטים
 // ========================================================================
 
-// פונקציה ליצירת מחבר ימני
+// פונקציה ליצירת מחבר ימני - מותאם לגדלים החדשים
 function createRightConnector(color) {
     const rightConnector = document.createElement("div");
     rightConnector.classList.add("right-connector");
@@ -197,7 +197,7 @@ function createRightConnector(color) {
     return rightConnector;
 }
 
-// פונקציה ליצירת מחבר שמאלי
+// פונקציה ליצירת מחבר שמאלי - מותאם לגדלים החדשים
 function createLeftConnector() {
     const leftConnectorWrapper = document.createElement("div");
     leftConnectorWrapper.classList.add("left-connector-wrapper");
@@ -209,13 +209,13 @@ function createLeftConnector() {
     return leftConnectorWrapper;
 }
 
-// פונקציה ליצירת בלוק גרפי - עודכנה להוספת תמונות SVG
+// פונקציה ליצירת בלוק גרפי - עודכנה להתאמה לסגנון החדש
 function createScratchBlock(block) {
     const scratchBlock = document.createElement("div");
     scratchBlock.classList.add("scratch-block");
     scratchBlock.style.backgroundColor = block.color;
     
-    // יצירת אלמנט תמונה עבור האיקון
+    // יצירת אלמנט תמונה עבור האיקון בגודל המעודכן
     const iconImg = document.createElement("img");
     iconImg.src = block.icon;
     iconImg.alt = block.name;
@@ -266,7 +266,7 @@ function handleDragStart(event, block, category) {
     event.dataTransfer.effectAllowed = "move";
 }
 
-// פונקציה לטיפול בשחרור באזור התכנות
+// פונקציה לטיפול בשחרור באזור התכנות - מותאם לסגנון החדש
 function handleDrop(event) {
     event.preventDefault();
 
@@ -285,7 +285,7 @@ function handleDrop(event) {
     scratchBlock.classList.add("scratch-block");
     scratchBlock.style.backgroundColor = blockColor; //הצבע
 
-    // יצירת אלמנט תמונה עבור האיקון
+    // יצירת אלמנט תמונה עבור האיקון בגודל המעודכן
     const iconImg = document.createElement("img");
     iconImg.src = blockIcon;
     iconImg.alt = blockName;
