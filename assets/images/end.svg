@@ -1,9 +1,10 @@
-<svg width="800px" height="800px" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--emojione" preserveAspectRatio="xMidYMid meet" fill="#f7fafc">
-
-<g id="SVGRepo_bgCarrier" stroke-width="0"/>
-
-<g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"/>
-
-<g id="SVGRepo_iconCarrier"> <g fill="#f7fafc"> <path d="M3 18L19 2v10h42v12H19v10z"> </path> <path d="M25 43.4V40H13v22h12v-3.4h-9v-5.9h9v-3.4h-9v-5.9z"> </path> <path d="M51 40h-6v22h6c3.3 0 6-2.8 6-6.3v-9.3c0-3.6-2.7-6.4-6-6.4m3 15.7c0 1.6-1.3 3-3 3h-3V43.4h3c1.7 0 3 1.3 3 3v9.3"> </path> <path d="M32 47.7L37.8 62H41V40h-3v14.3L32.2 40H29v22h3z"> </path> </g> </g>
-
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="50" height="50" viewBox="0 0 50 50" xml:space="preserve">
+<desc>Created with Fabric.js 3.6.6</desc>
+<defs>
+</defs>
+<g transform="matrix(0.35 0 0 0.35 25.58 25.27)"  >
+	<image style="stroke: none; stroke-width: 0; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: rgb(0,0,0); fill-rule: nonzero; opacity: 1;"  xlink:href="data:image/png;base64,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" x="-61.5" y="-43.5" width="123" height="87"></image>
+</g>
 </svg>
