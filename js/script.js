@@ -214,13 +214,13 @@ function createScratchBlock(block) {
     const scratchBlock = document.createElement("div");
     scratchBlock.classList.add("scratch-block");
     scratchBlock.style.backgroundColor = block.color;
-    
+
     // יצירת אלמנט תמונה עבור האיקון
     const iconImg = document.createElement("img");
     iconImg.src = block.icon;
     iconImg.alt = block.name;
     iconImg.classList.add("block-icon-img");
-    
+
     scratchBlock.appendChild(iconImg);
     return scratchBlock;
 }
@@ -270,59 +270,86 @@ function handleDragStart(event, block, category) {
 function handleDrop(event) {
     event.preventDefault();
 
-    const data = JSON.parse(event.dataTransfer.getData("text/plain"));
-    const blockType = data.type;
-    const blockCategory = data.category;
-    const blockIcon = data.icon;
-    const blockColor = data.color;
-    const blockName = data.name;
+    const blockIndex = event.dataTransfer.getData('block-index'); // נסה לקבל אינדקס, אם קיים
 
-    // יצירת אלמנט בלוק חדש (שיבוט)
-    const newBlock = document.createElement("div");
-    newBlock.classList.add("block-container");
+    if (blockIndex) { // אם קיים block-index, זה אומר שגוררים בלוק בתוך אזור התכנות
+        const draggedBlockIndex = parseInt(blockIndex);
+        const draggedBlock = programmingArea.children[draggedBlockIndex];
 
-    const scratchBlock = document.createElement("div");
-    scratchBlock.classList.add("scratch-block");
-    scratchBlock.style.backgroundColor = blockColor; //הצבע
+        if (draggedBlock) {
+            // הסר את הבלוק מהמיקום הישן
+            programmingArea.removeChild(draggedBlock);
 
-    // יצירת אלמנט תמונה עבור האיקון
-    const iconImg = document.createElement("img");
-    iconImg.src = blockIcon;
-    iconImg.alt = blockName;
-    iconImg.classList.add("block-icon-img");
-    
-    scratchBlock.appendChild(iconImg);
+            // מצא את מיקום השחרור
+            // כאן אפשר להוסיף לוגיקה יותר מורכבת כדי למקם את הבלוק במקום ספציפי
+            // כרגע, נשים אותו בסוף - אפשר לשפר בהמשך
+            programmingArea.appendChild(draggedBlock);
 
-    //יצירת אלמנט right-connector
-    const rightConnector = document.createElement("div");
-    rightConnector.classList.add("right-connector");
-    rightConnector.style.backgroundColor = blockColor;
+            // אפשרות: הוסף קוד למיקום מדויק יותר של הבלוק בתוך programmingArea
+            // בהתאם למיקום העכבר (event.clientX, event.clientY)
+        }
+    } else { // אם אין block-index, זה אומר שגוררים בלוק מלוח הלבנים (התנהגות קודמת)
+        const data = JSON.parse(event.dataTransfer.getData("text/plain"));
+        const blockType = data.type;
+        const blockCategory = data.category;
+        const blockIcon = data.icon;
+        const blockColor = data.color;
+        const blockName = data.name;
 
-    //יצירת אלמנט left-connector-wrapper
-    const leftConnectorWrapper = document.createElement("div");
-    leftConnectorWrapper.classList.add("left-connector-wrapper");
+        // יצירת אלמנט בלוק חדש (שיבוט)
+        const newBlock = document.createElement("div");
+        newBlock.classList.add("block-container");
 
-     //יצירת אלמנט left-connector
-    const leftConnector = document.createElement("div");
-    leftConnector.classList.add("left-connector");
+        const scratchBlock = document.createElement("div");
+        scratchBlock.classList.add("scratch-block");
+        scratchBlock.style.backgroundColor = blockColor; //הצבע
 
-    leftConnectorWrapper.appendChild(leftConnector);
+        // יצירת אלמנט תמונה עבור האיקון
+        const iconImg = document.createElement("img");
+        iconImg.src = blockIcon;
+        iconImg.alt = blockName;
+        iconImg.classList.add("block-icon-img");
 
-    // הוספת הכל ל container
-    newBlock.appendChild(scratchBlock);
-    newBlock.appendChild(rightConnector);
-    newBlock.appendChild(leftConnectorWrapper);
-    newBlock.dataset.type = blockType;
-    newBlock.draggable = false;
+        scratchBlock.appendChild(iconImg);
 
-    // הוספת הבלוק החדש לאזור התכנות
-    programmingArea.appendChild(newBlock);
+        //יצירת אלמנט right-connector
+        const rightConnector = document.createElement("div");
+        rightConnector.classList.add("right-connector");
+        rightConnector.style.backgroundColor = blockColor;
 
-    // מיקום הבלוק החדש יחסי לאזור התכנות
-    const rect = programmingArea.getBoundingClientRect();
-    newBlock.style.position = "absolute";
-    newBlock.style.left = `${event.clientX - rect.left}px`;
-    newBlock.style.top = `${event.clientY - rect.top}px`;
+        //יצירת אלמנט left-connector-wrapper
+        const leftConnectorWrapper = document.createElement("div");
+        leftConnectorWrapper.classList.add("left-connector-wrapper");
+
+         //יצירת אלמנט left-connector
+        const leftConnector = document.createElement("div");
+        leftConnector.classList.add("left-connector");
+
+        leftConnectorWrapper.appendChild(leftConnector);
+
+        // הוספת הכל ל container
+        newBlock.appendChild(scratchBlock);
+        newBlock.appendChild(rightConnector);
+        newBlock.appendChild(leftConnectorWrapper);
+        newBlock.dataset.type = blockType;
+        newBlock.draggable = true; // אפשר גרירה לבלוקים חדשים
+
+        // הוספת event listener לגרירה של בלוקים בתוך אזור התכנות (כמו בסעיף 2)
+        newBlock.addEventListener("dragstart", (event) => {
+            event.dataTransfer.setData('block-index', Array.from(programmingArea.children).indexOf(newBlock).toString());
+            event.dataTransfer.effectAllowed = "move";
+        });
+
+
+        // הוספת הבלוק החדש לאזור התכנות
+        programmingArea.appendChild(newBlock);
+
+        // הסר מיקום אבסולוטי - בלוקים יזרמו באופן טבעי
+        // const rect = programmingArea.getBoundingClientRect();
+        // newBlock.style.position = "absolute";
+        // newBlock.style.left = `${event.clientX - rect.left}px`;
+        // newBlock.style.top = `${event.clientY - rect.top}px`;
+    }
 }
 
 // ========================================================================
