@@ -157,30 +157,30 @@ const blocks = {
             color: "orange"
         },
         {
-            name: "Stop",
+            name: "Repeat Forever",
+            type: "repeatForever",
+            icon: "assets/images/blocks/repeat-forever.svg",
+            color: "orange"
+        },
+        {
+            name: "Go To Page",
             color: "orange",
-            type: "stop",
-            icon: "assets/images/blocks/stop.svg",
+            type: "goToPage",
+            icon: "assets/images/blocks/go-to-page.svg",
         },
     ],
     end: [
+        {
+            name: "Stop",
+            color: "red",
+            type: "stop",
+            icon: "assets/images/blocks/stop.svg",
+        },
         {
             name: "End",
             color: "red",
             type: "end",
             icon: "assets/images/blocks/end.svg",
-        },
-        {
-            name: "Go To Page",
-            color: "red",
-            type: "goToPage",
-            icon: "assets/images/blocks/go-to-page.svg",
-        },
-        {
-            name: "Repeat Forever",
-            type: "repeatForever",
-            icon: "assets/images/blocks/repeat-forever.svg",
-            color: "red"
         },
     ],
 };
