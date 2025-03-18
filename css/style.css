@@ -1,3 +1,4 @@
+--- START OF FILE style.css ---
 /* style.css */
 :root {
     --motion-color: #43D3FF;
@@ -249,13 +250,13 @@ main {
 #block-palette .scratch-block,
 #programming-area .scratch-block {
     position: relative;
-    width: 70px;
+    width: 85px; /* רוחב מוגדל של הלבנה */
     height: 80px;
     background-color: #ffff00;
     border-radius: 10px;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    justify-content: center; /* מרכוז אופקי */
+    align-items: center; /* מרכוז אנכי */
     color: black;
     font-size: 24px;
     font-weight: bold;
@@ -270,6 +271,12 @@ main {
     display: block;
     margin: 0 auto;
 }
+
+.block-icon-img {
+    max-width: 60%; /* הקטנת גודל מקסימלי של האיקון אם צריך */
+    max-height: 60%;
+}
+
 
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
