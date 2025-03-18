@@ -221,11 +221,6 @@ function createScratchBlock(block) {
     iconImg.alt = block.name;
     iconImg.classList.add("block-icon-img");
     
-    // מיקום האיקון במרכז הבלוק
-    iconImg.style.position = "relative";
-    iconImg.style.display = "block";
-    iconImg.style.margin = "0 auto";
-    
     scratchBlock.appendChild(iconImg);
     return scratchBlock;
 }
@@ -295,11 +290,6 @@ function handleDrop(event) {
     iconImg.src = blockIcon;
     iconImg.alt = blockName;
     iconImg.classList.add("block-icon-img");
-    
-    // וודא שהאיקון ממוקם במרכז הבלוק
-    iconImg.style.position = "relative";
-    iconImg.style.display = "block";
-    iconImg.style.margin = "0 auto";
     
     scratchBlock.appendChild(iconImg);
 
