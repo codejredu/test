@@ -1,245 +1,111 @@
-/* style.css */
-:root {
-    --motion-color: #43D3FF;
-    --triggering-color: #FFEC80;
-    --looks-color: #D38BD6;
-    --sound-color: green;
-    --control-color: orange;
-    --end-color: red;
-}
+/* ========================================================================
+   Main Layout and General Styles
+   ======================================================================== */
 
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
     background-color: #f0f4ff;
-    direction: ltr; /* Make sure direction is LTR */
+    direction: rtl;
 }
 
 .container {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 10px;
 }
 
 header {
-    background-color: #fff;
+    background-color: #4a6fa5;
+    color: white;
     padding: 10px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
 }
 
-main {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
+h1 {
+    margin: 0;
+    font-size: 24px;
 }
 
-.stage-container {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 10px;
-}
-
-#stage {
-    flex: 0 0 auto;
-    width: 550px;
-    height: 450px;
-    background-color: #f5f5f5;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    position: relative;
-    gap: 1px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-}
-
-#stage::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    background: none;
-}
-
-#stage.show-grid::before {
-    background: none;
-}
-
-#stage.show-grid {
-  background-image:
-    linear-gradient(to right, lightgrey 1px, transparent 1px),
-    linear-gradient(to bottom, lightgrey 1px, transparent 1px);
-  background-size: 56px 46px; /* Set the size of the grid lines */
-  background-position: top left; /* Align the grid to the top left */
-}
-
-#character {
-    width: 100px;
-    height: 100px;
-    position: absolute;
-    object-fit: contain;
-    cursor: grab;
-    transition: all 0.1s ease-out;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-.palette-and-programming {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-}
+/* ========================================================================
+   Block Palette Styles
+   ======================================================================== */
 
 #block-palette {
-    background-color: #f0f0f0; /* Gray background as requested */
-    border: 1px solid #e0e0e0;
-    margin: 10px;
-    padding: 10px;
-    border-radius: 10px;
-    height: 105px; /* Fixed height of 114px as requested */
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    overflow: hidden; /* Prevent content from overflowing */
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    height: 120px;  /* הגדלה מ-105px ל-120px */
+    margin: 10px 0;
+    overflow: hidden;
 }
 
 .category-tabs {
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    margin-bottom: 0;
-    height: 100%;
-    align-content: flex-start;
-    background-color: #f0f0f0; /* Gray background behind tabs */
+    border-bottom: 1px solid #ddd;
+    background-color: #f8f9fa;
+    border-top-right-radius: 8px;
+    border-top-left-radius: 8px;
 }
 
 .category-tab {
-    border: none;
-    padding: 0;
-    margin-left: 5px;
-    margin-bottom: 5px;
-    border-radius: 10px;
+    padding: 8px 15px;
     cursor: pointer;
-    font-size: 16px;
-    color: #000000;
-    width: 80px;
-    height: 80px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+    font-weight: 500;
+    text-align: center;
+    border-right: 1px solid #ddd;
+    transition: background-color 0.2s;
 }
 
-.category-tab img {
-    max-width: 60%;
-    max-height: 60%;
-    pointer-events: none;
-    filter: invert(100%);
+.category-tab:first-child {
+    border-top-right-radius: 8px;
 }
 
-.category-tab[data-category="triggering"] {
-    background-color: var(--triggering-color);
+.category-tab:last-child {
+    border-right: none;
+    border-top-left-radius: 8px;
 }
 
-.category-tab[data-category="motion"] {
-    background-color: var(--motion-color);
+.category-tab.active {
+    background-color: white;
+    border-bottom: 2px solid #4a6fa5;
+    color: #4a6fa5;
+    font-weight: bold;
 }
 
-.category-tab[data-category="looks"] {
-    background-color: var(--looks-color);
-}
-
-.category-tab[data-category="sound"] {
-    background-color: var(--sound-color);
-}
-
-.category-tab[data-category="control"] {
-    background-color: var(--control-color);
-}
-
-.category-tab[data-category="end"] {
-    background-color: var(--end-color);
-}
+/* ========================================================================
+   Block Categories
+   ======================================================================== */
 
 .block-category {
     display: none;
-    padding: 10px;
-    flex-grow: 1;
     height: 100%;
-    border-right: 1px solid #e0e0e0;
-    margin-left: 10px;
-    background-color: #0D66CA; /* blue background behind programming blocks */
+    overflow-y: auto;
 }
 
 .block-category.active {
     display: flex;
     flex-wrap: wrap;
     padding: 10px;
+    overflow-x: auto;  /* אפשר גלילה אופקית אם יש יותר מדי בלוקים */
 }
 
-#programming-area {
-    background-color: #fff;
-    border: 1px solid #e0e0e0;
-    margin: 10px;
-    padding: 10px;
-    border-radius: 10px;
-    flex: 2; /* Increased to make programming area taller */
-    min-height: 200px; /* Set minimum height */
-}
-
-.program-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-#clear-all {
-    color: #e74c3c;
-    cursor: pointer;
-}
-
-#program-blocks {
-    min-height: 180px; /* Increased height */
-    border: 1px dashed #ccc;
-    padding: 10px;
-    position: relative;
-}
-
-#program-blocks .block-container {
-    position: absolute;
-}
-
-.logo {
-    font-size: 20px;
-    font-weight: bold;
-    color: #4a90e2;
-}
-
-.header-icons {
-    display: flex;
-}
-
-.icon {
-    margin-left: 10px;
-    font-size: 24px;
-    color: #999;
-    cursor: pointer;
-}
+/* ========================================================================
+   Block Styles
+   ======================================================================== */
 
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
-    width: 100px;
+    width: 120px;  /* הגדלה מ-100px ל-120px */
     height: 100px;
     margin: 4px;
     cursor: pointer;
@@ -249,7 +115,7 @@ main {
 #block-palette .scratch-block,
 #programming-area .scratch-block {
     position: relative;
-    width: 70px;
+    width: 90px;  /* הגדלה מ-70px ל-90px */
     height: 80px;
     background-color: #ffff00;
     border-radius: 10px;
@@ -263,14 +129,18 @@ main {
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
-/* SVG Icon styling */
-.block-svg-icon {
-    width: 40px;
-    height: 40px;
+/* עדכון מיקום האיקונים */
+.block-icon-img {
+    width: 45px;  /* גודל אחיד לאיקונים */
+    height: 45px;
+    object-fit: contain;
     display: block;
     margin: 0 auto;
+    position: relative;
+    z-index: 2;  /* וודא שהאיקון מופיע מעל רקע הבלוק */
 }
 
+/* עדכון מיקום המחברים */
 #block-palette .scratch-block::after,
 #programming-area .scratch-block::after {
     content: '';
@@ -282,6 +152,7 @@ main {
     height: 18px;
     background-color: inherit;
     border-radius: 50%;
+    z-index: 1;
 }
 
 #block-palette .scratch-block::before,
@@ -295,56 +166,198 @@ main {
     height: 18px;
     background-color: #f0f4ff;
     border-radius: 50%;
+    z-index: 1;
 }
 
-.block-icon {
+/* ========================================================================
+   Connector Styles
+   ======================================================================== */
+
+.right-connector {
+    position: absolute;
+    right: 5px;
+    top: 40px;
+    width: 24px;
+    height: 20px;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    z-index: 0;
+}
+
+.left-connector-wrapper {
+    position: absolute;
+    left: 5px;
+    top: 40px;
+    width: 24px;
+    height: 20px;
+}
+
+.left-connector {
+    width: 100%;
+    height: 100%;
+    background-color: #e6e6e6;
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+}
+
+/* ========================================================================
+   Programming Area
+   ======================================================================== */
+
+.content {
+    display: flex;
+    flex-grow: 1;
+    margin-top: 10px;
+    gap: 10px;
+}
+
+.left-panel {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+}
+
+.right-panel {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+}
+
+#program-blocks {
+    min-height: 200px;  /* הגדלה מ-180px ל-200px */
+    border: 1px dashed #ccc;
+    padding: 10px;
+    position: relative;
+    overflow: visible;  /* חשוב כדי שהבלוקים יוכלו לחרוג מהתחום */
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+/* ========================================================================
+   Stage Styles
+   ======================================================================== */
+
+#stage {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    position: relative;
+    width: 100%;
+    height: 300px;
+    overflow: hidden;
+}
+
+.show-grid {
+    background-image: linear-gradient(#ddd 1px, transparent 1px),
+                     linear-gradient(90deg, #ddd 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+#character {
+    position: absolute;
     width: 50px;
     height: 50px;
+    left: 10px;
+    top: 10px;
+    cursor: grab;
+    user-select: none;
+    background-color: #4a6fa5;
+    border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-right: 5px;
+    color: white;
+    font-weight: bold;
 }
 
-.block-icon svg {
-    width: 200%;
-    height: 200%;
+/* ========================================================================
+   Controls
+   ======================================================================== */
+
+.controls {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
 
-#triggering-blocks .block-container .scratch-block {
-    background-color: var(--triggering-color);
+.control-button {
+    padding: 8px 16px;
+    background-color: #4a6fa5;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 0 5px;
+    transition: background-color 0.2s;
 }
 
-#motion-blocks .block-container .scratch-block {
-    background-color: var(--motion-color);
+.control-button:hover {
+    background-color: #3a5a8e;
 }
 
-#looks-blocks .block-container .scratch-block {
-    background-color: var(--looks-color);
+#run-button {
+    background-color: #4caf50;
 }
 
-#sound-blocks .block-container .scratch-block {
-    background-color: var(--sound-color);
-}
-
-#control-blocks .block-container .scratch-block {
-    background-color: var(--control-color);
-}
-
-#end-blocks .block-container .scratch-block {
-    background-color: var(--end-color);
+#run-button:hover {
+    background-color: #3d8b40;
 }
 
 #grid-toggle {
-    margin-left: 10px;
-    font-size: 16px;
-    color: #999;
-    cursor: pointer;
-    border: 1px solid #ccc;
-    padding: 5px 10px;
-    border-radius: 5px;
+    background-color: #f8f9fa;
+    color: #4a6fa5;
+    border: 1px solid #ddd;
 }
 
 #grid-toggle:hover {
-    background-color: #f0f0f0;
+    background-color: #e9ecef;
 }
+
+/* ========================================================================
+   Responsive Design
+   ======================================================================== */
+
+@media (max-width: 768px) {
+    .content {
+        flex-direction: column;
+    }
+    
+    .left-panel, .right-panel {
+        width: 100%;
+    }
+    
+    #stage {
+        height: 250px;
+    }
+    
+    .category-tab {
+        padding: 6px 10px;
+        font-size: 14px;
+    }
+}
+
+/* ========================================================================
+   Animation Effects
+   ======================================================================== */
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.block-container:hover .scratch-block {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.25), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ========================================================================
+   Special Block Styles - Different Colors for Different Categories
+   ======================================================================== */
+
+/* Already set in the JavaScript code through the blocks object */
