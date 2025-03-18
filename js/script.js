@@ -333,6 +333,8 @@ function handleDrop(event) {
         // **הוספת לוגיקת ההצמדה**
         // ====================================================================
         let snapped = false; // דגל לבדיקה אם בוצעה הצמדה
+        const snapDistance = 30; // מרחק הצמדה אופקי
+        const verticalAlignmentThreshold = 20; // סף יישור אנכי
 
         // לולאה על כל הבלוקים הקיימים באזור התכנות (חוץ מהבלוק הנוכחי שנגרר)
         Array.from(programmingArea.children).forEach(existingBlock => {
@@ -341,60 +343,34 @@ function handleDrop(event) {
                 // 1. קבלת מיקומי מחברים (Bounding Rectangles)
                 const droppedBlockRightConnectorRect = droppedBlock.querySelector('.right-connector').getBoundingClientRect();
                 const existingBlockLeftConnectorRect = existingBlock.querySelector('.left-connector').getBoundingClientRect();
-                const programmingAreaRect = programmingArea.getBoundingClientRect(); // מיקום אזור התכנות
 
-                // log bounding rects
-                console.log("Dropped Block Right Connector Rect:", droppedBlockRightConnectorRect);
-                console.log("Existing Block Left Connector Rect:", existingBlockLeftConnectorRect);
-                console.log("Programming Area Rect:", programmingAreaRect);
-
-
-                // המרת מיקומים לתוך קואורדינטות מקומיות של אזור התכנות
-                const droppedBlockRightConnectorPos = {
-                    x: droppedBlockRightConnectorRect.left - programmingAreaRect.left + (droppedBlockRightConnectorRect.width / 2),
-                    y: droppedBlockRightConnectorRect.top - programmingAreaRect.top + (droppedBlockRightConnectorRect.height / 2)
-                };
-                const existingBlockLeftConnectorPos = {
-                    x: existingBlockLeftConnectorRect.left - programmingAreaRect.left + (existingBlockLeftConnectorRect.width / 2),
-                    y: existingBlockLeftConnectorRect.top - programmingAreaRect.top + (existingBlockLeftConnectorRect.height / 2)
-                };
-
-                // log local positions
-                console.log("Dropped Block Right Connector Local Pos:", droppedBlockRightConnectorPos);
-                console.log("Existing Block Left Connector Local Pos:", existingBlockLeftConnectorPos);
-
-
-                // 2. בדיקת מרחק בין מחברים (רדיוס הצמדה)
-                const snapRadius = 50; // רדיוס הצמדה - ניתן לכוונן
-                const distance = Math.sqrt(
-                    Math.pow(droppedBlockRightConnectorPos.x - existingBlockLeftConnectorPos.x, 2) +
-                    Math.pow(droppedBlockRightConnectorPos.y - existingBlockLeftConnectorPos.y, 2)
+                // 2. בדיקת חפיפה אופקית ויישור אנכי
+                const horizontalOverlap = (
+                    droppedBlockRightConnectorRect.right >= existingBlockLeftConnectorRect.left - snapDistance &&
+                    droppedBlockRightConnectorRect.right <= existingBlockLeftConnectorRect.left + snapDistance
+                );
+                const verticalAlignment = Math.abs(
+                    (droppedBlockRightConnectorRect.top + droppedBlockRightConnectorRect.bottom) / 2 -
+                    (existingBlockLeftConnectorRect.top + existingBlockLeftConnectorRect.bottom) / 2
                 );
 
-                // 3. בדיקת יישור אנכי (בערך)
-                const verticalAlignmentThreshold = 30; // סף יישור אנכי - ניתן לכוונן
-                const verticalAlignment = Math.abs(droppedBlockRightConnectorPos.y - existingBlockLeftConnectorPos.y);
-
-                // log distance and alignment
-                console.log("Distance:", distance);
-                console.log("Vertical Alignment:", verticalAlignment);
-
-
-                // 4. אם קרוב מספיק ומיושר אנכית - בצע הצמדה
-                if (distance <= snapRadius && verticalAlignment <= verticalAlignmentThreshold) {
-                    // הצמדה!
+                // 3. אם יש חפיפה אופקית ויישור אנכי - בצע הצמדה
+                if (horizontalOverlap && verticalAlignment <= verticalAlignmentThreshold) {
                     snapped = true;
-                    droppedBlock.style.left = `${existingBlockLeftConnectorPos.x - droppedBlockRightConnectorPos.x}px`; // כוונן אופקית
-                    droppedBlock.style.top = `${existingBlockLeftConnectorPos.y - droppedBlockRightConnectorPos.y}px`; // כוונן אנכית
-                    console.log("Snapped!", "New Left:", droppedBlock.style.left, "New Top:", droppedBlock.style.top); // log snap action
-                } else {
-                    console.log("Not snapped."); // log when not snapped
+
+                    // חישוב הזזה אופקית להצמדה מדויקת
+                    const snapOffsetX = existingBlockLeftConnectorRect.left - droppedBlockRightConnectorRect.right;
+
+                    droppedBlock.style.left = `${parseFloat(droppedBlock.style.left) + snapOffsetX}px`;
+                    droppedBlock.style.top = `${existingBlockLeftConnectorRect.top - droppedBlockRightConnectorRect.top}px`;
+
+
                 }
             }
         });
 
         if (snapped) {
-            console.log("Block snapped (after loop)!"); // אפשר להוסיף אינדיקציה ויזואלית נוספת אם רוצים
+            console.log("Block snapped!");
         }
     }
 }
