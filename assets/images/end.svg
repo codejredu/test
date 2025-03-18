@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="50" height="50" viewBox="0 0 50 50" xml:space="preserve">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="35" height="35" viewBox="0 0 35 35" xml:space="preserve">
 <desc>Created with Fabric.js 3.6.6</desc>
 <defs>
 </defs>
-<g transform="matrix(0.76 0 0 0.76 23.5 26.5)"  >
-	<image style="stroke: none; stroke-width: 0; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: rgb(0,0,0); fill-rule: nonzero; opacity: 1;"  xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACUAAAAlCAYAAADFniADAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAB3RJTUUH6QMSEgkgtSHpsQAAAK9JREFUWIXt2EEOgCAMRNHBcDjvfyFcGIgIQjGhnUX/WpNn2VhCSglsRQC7VWH1hWOH4tXyR2uggBv2xJ2jh+NeS1OGDY9Ua1LvhkdqhQIGMEsU8AGzRnVjQDXTYkA1saCqabGgqphQZVpMqJKjpDlKmqOkOUqaoyaV/3YmVIkFVW03LKgqBlSzA1qjukupNaqb9tqeo1vbp1dD2ijRXZXW8S1dnGlMavkmL/55aXcX0KAOmoMGE2AAAAAASUVORK5CYII=" x="-18.5" y="-18.5" width="37" height="37"></image>
+<g transform="matrix(1.01 0 0 1.01 18.75 17.75)"  >
+	<image style="stroke: none; stroke-width: 0; stroke-dasharray: none; stroke-linecap: butt; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 4; fill: rgb(0,0,0); fill-rule: nonzero; opacity: 1;"  xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACUAAAAlCAYAAADFniADAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAB3RJTUUH6QMSEhYQXqLXgwAAAL5JREFUWIXt2D0OwjAMhmGnyjE6cJze/wQMHAMpHRDIWPlxIjn+Br8zFU+dpU4qpRBa+f08TVX58UqzzxwWEN7KS5ujiD4wgbt6v8/Gnr++sNGRbpmUbHSkLiiiPswNRdSGuaJauaNq03JH1YJAyWlBoGQwKD4tGBQvUNoCpS1Q2gKlLVC9+Hc7DIoHgZLbDQRK5o6q7YCuqNZS6j6pWlvX9t+foq3tmquhrSjtXdWW45u9ODOf1MpNXkK887wBY5Qyk4cF2gAAAAAASUVORK5CYII=" x="-18.5" y="-18.5" width="37" height="37"></image>
 </g>
 </svg>
