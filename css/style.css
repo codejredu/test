@@ -249,7 +249,7 @@ main {
 #block-palette .scratch-block,
 #programming-area .scratch-block {
     position: relative;
-    width: 70px;
+    width: 100px;
     height: 80px;
     background-color: #ffff00;
     border-radius: 10px;
