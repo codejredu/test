@@ -340,15 +340,14 @@ function handleDrop(event) {
             event.dataTransfer.effectAllowed = "move";
         });
 
-
         // הוספת הבלוק החדש לאזור התכנות
         programmingArea.appendChild(newBlock);
 
-        // הסר מיקום אבסולוטי - בלוקים יזרמו באופן טבעי
-        // const rect = programmingArea.getBoundingClientRect();
-        // newBlock.style.position = "absolute";
-        // newBlock.style.left = `${event.clientX - rect.left}px`;
-        // newBlock.style.top = `${event.clientY - rect.top}px`;
+        // מיקום הבלוק החדש יחסי לאזור התכנות - מתחת לעכבר
+        const rect = programmingArea.getBoundingClientRect();
+        newBlock.style.position = "absolute"; // השתמש במיקום אבסולוטי
+        newBlock.style.left = `${event.clientX - rect.left - (newBlock.offsetWidth / 2)}px`; // מרכז את הבלוק אופקית
+        newBlock.style.top = `${event.clientY - rect.top - (newBlock.offsetHeight / 2)}px`; // מרכז את הבלוק אנכית
     }
 }
 
