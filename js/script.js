@@ -270,25 +270,18 @@ function handleDragStart(event, block, category) {
 function handleDrop(event) {
     event.preventDefault();
 
-    const blockIndex = event.dataTransfer.getData('block-index'); // נסה לקבל אינדקס, אם קיים
+    const blockIndex = event.dataTransfer.getData('block-index');
 
-    if (blockIndex) { // אם קיים block-index, זה אומר שגוררים בלוק בתוך אזור התכנות
+    let droppedBlock; // משתנה לבלוק שנשמט
+
+    if (blockIndex) { // גרירה בתוך אזור התכנות
         const draggedBlockIndex = parseInt(blockIndex);
-        const draggedBlock = programmingArea.children[draggedBlockIndex];
+        droppedBlock = programmingArea.children[draggedBlockIndex];
 
-        if (draggedBlock) {
-            // הסר את הבלוק מהמיקום הישן
-            programmingArea.removeChild(draggedBlock);
-
-            // מצא את מיקום השחרור ועדכן מיקום
-            const rect = programmingArea.getBoundingClientRect();
-            draggedBlock.style.position = "absolute";
-            draggedBlock.style.left = `${event.clientX - rect.left - (draggedBlock.offsetWidth / 2)}px`;
-            draggedBlock.style.top = `${event.clientY - rect.top - (draggedBlock.offsetHeight / 2)}px`;
-
-            programmingArea.appendChild(draggedBlock); // הוסף את הבלוק במיקום החדש (כרגע בסוף)
+        if (droppedBlock) {
+            programmingArea.removeChild(droppedBlock); // הסר מהמיקום הישן
         }
-    } else { // אם אין block-index, זה אומר שגוררים בלוק מלוח הלבנים (התנהגות קודמת)
+    } else { // גרירה מלוח הלבנים
         const data = JSON.parse(event.dataTransfer.getData("text/plain"));
         const blockType = data.type;
         const blockCategory = data.category;
@@ -296,58 +289,94 @@ function handleDrop(event) {
         const blockColor = data.color;
         const blockName = data.name;
 
-        // יצירת אלמנט בלוק חדש (שיבוט)
-        const newBlock = document.createElement("div");
-        newBlock.classList.add("block-container");
-
+        // יצירת אלמנט בלוק חדש (שיבוט) - זהה לקוד הקודם
+        droppedBlock = document.createElement("div");
+        droppedBlock.classList.add("block-container");
+        // ... (יצירת scratchBlock, מחברים וכו' - זהה לקוד הקודם) ...
         const scratchBlock = document.createElement("div");
         scratchBlock.classList.add("scratch-block");
-        scratchBlock.style.backgroundColor = blockColor; //הצבע
-
-        // יצירת אלמנט תמונה עבור האיקון
+        scratchBlock.style.backgroundColor = blockColor;
         const iconImg = document.createElement("img");
         iconImg.src = blockIcon;
         iconImg.alt = blockName;
         iconImg.classList.add("block-icon-img");
-
         scratchBlock.appendChild(iconImg);
-
-        //יצירת אלמנט right-connector
         const rightConnector = document.createElement("div");
         rightConnector.classList.add("right-connector");
         rightConnector.style.backgroundColor = blockColor;
-
-        //יצירת אלמנט left-connector-wrapper
         const leftConnectorWrapper = document.createElement("div");
         leftConnectorWrapper.classList.add("left-connector-wrapper");
-
-         //יצירת אלמנט left-connector
         const leftConnector = document.createElement("div");
         leftConnector.classList.add("left-connector");
-
         leftConnectorWrapper.appendChild(leftConnector);
-
-        // הוספת הכל ל container
-        newBlock.appendChild(scratchBlock);
-        newBlock.appendChild(rightConnector);
-        newBlock.appendChild(leftConnectorWrapper);
-        newBlock.dataset.type = blockType;
-        newBlock.draggable = true; // אפשר גרירה לבלוקים חדשים
-
-        // הוספת event listener לגרירה של בלוקים בתוך אזור התכנות (כמו בסעיף 2)
-        newBlock.addEventListener("dragstart", (event) => {
-            event.dataTransfer.setData('block-index', Array.from(programmingArea.children).indexOf(newBlock).toString());
+        droppedBlock.appendChild(scratchBlock);
+        droppedBlock.appendChild(rightConnector);
+        droppedBlock.appendChild(leftConnectorWrapper);
+        droppedBlock.dataset.type = blockType;
+        droppedBlock.draggable = true;
+        droppedBlock.addEventListener("dragstart", (event) => {
+            event.dataTransfer.setData('block-index', Array.from(programmingArea.children).indexOf(droppedBlock).toString());
             event.dataTransfer.effectAllowed = "move";
         });
+    }
 
-        // הוספת הבלוק החדש לאזור התכנות
-        programmingArea.appendChild(newBlock);
+    if (droppedBlock) {
+        programmingArea.appendChild(droppedBlock);
 
-        // מיקום הבלוק החדש יחסי לאזור התכנות - מתחת לעכבר
+        // מיקום ראשוני של הבלוק - מתחת לעכבר
         const rect = programmingArea.getBoundingClientRect();
-        newBlock.style.position = "absolute"; // השתמש במיקום אבסולוטי
-        newBlock.style.left = `${event.clientX - rect.left - (newBlock.offsetWidth / 2)}px`; // מרכז את הבלוק אופקית
-        newBlock.style.top = `${event.clientY - rect.top - (newBlock.offsetHeight / 2)}px`; // מרכז את הבלוק אנכית
+        droppedBlock.style.position = "absolute";
+        droppedBlock.style.left = `${event.clientX - rect.left - (droppedBlock.offsetWidth / 2)}px`;
+        droppedBlock.style.top = `${event.clientY - rect.top - (droppedBlock.offsetHeight / 2)}px`;
+
+        // ====================================================================
+        // **הוספת לוגיקת ההצמדה**
+        // ====================================================================
+        let snapped = false; // דגל לבדיקה אם בוצעה הצמדה
+
+        // לולאה על כל הבלוקים הקיימים באזור התכנות (חוץ מהבלוק הנוכחי שנגרר)
+        Array.from(programmingArea.children).forEach(existingBlock => {
+            if (existingBlock !== droppedBlock) { // אל תבדוק הצמדה לעצמו
+
+                // 1. קבלת מיקומי מחברים (Bounding Rectangles)
+                const droppedBlockRightConnectorRect = droppedBlock.querySelector('.right-connector').getBoundingClientRect();
+                const existingBlockLeftConnectorRect = existingBlock.querySelector('.left-connector').getBoundingClientRect();
+                const programmingAreaRect = programmingArea.getBoundingClientRect(); // מיקום אזור התכנות
+
+                // המרת מיקומים לתוך קואורדינטות מקומיות של אזור התכנות
+                const droppedBlockRightConnectorPos = {
+                    x: droppedBlockRightConnectorRect.left - programmingAreaRect.left + (droppedBlockRightConnectorRect.width / 2),
+                    y: droppedBlockRightConnectorRect.top - programmingAreaRect.top + (droppedBlockRightConnectorRect.height / 2)
+                };
+                const existingBlockLeftConnectorPos = {
+                    x: existingBlockLeftConnectorRect.left - programmingAreaRect.left + (existingBlockLeftConnectorRect.width / 2),
+                    y: existingBlockLeftConnectorRect.top - programmingAreaRect.top + (existingBlockLeftConnectorRect.height / 2)
+                };
+
+                // 2. בדיקת מרחק בין מחברים (רדיוס הצמדה)
+                const snapRadius = 50; // רדיוס הצמדה - ניתן לכוונן
+                const distance = Math.sqrt(
+                    Math.pow(droppedBlockRightConnectorPos.x - existingBlockLeftConnectorPos.x, 2) +
+                    Math.pow(droppedBlockRightConnectorPos.y - existingBlockLeftConnectorPos.y, 2)
+                );
+
+                // 3. בדיקת יישור אנכי (בערך)
+                const verticalAlignmentThreshold = 30; // סף יישור אנכי - ניתן לכוונן
+                const verticalAlignment = Math.abs(droppedBlockRightConnectorPos.y - existingBlockLeftConnectorPos.y);
+
+                // 4. אם קרוב מספיק ומיושר אנכית - בצע הצמדה
+                if (distance <= snapRadius && verticalAlignment <= verticalAlignmentThreshold) {
+                    // הצמדה!
+                    snapped = true;
+                    droppedBlock.style.left = `${existingBlockLeftConnectorPos.x - droppedBlockRightConnectorPos.x}px`; // כוונן אופקית
+                    droppedBlock.style.top = `${existingBlockLeftConnectorPos.y - droppedBlockRightConnectorPos.y}px`; // כוונן אנכית
+                }
+            }
+        });
+
+        if (snapped) {
+            console.log("Block snapped!"); // אפשר להוסיף אינדיקציה ויזואלית נוספת אם רוצים
+        }
     }
 }
 
