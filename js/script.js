@@ -162,12 +162,6 @@ const blocks = {
             icon: "assets/images/blocks/repeat-forever.svg",
             color: "orange"
         },
-        {
-            name: "Go To Page",
-            color: "orange",
-            type: "goToPage",
-            icon: "assets/images/blocks/go-to-page.svg",
-        },
     ],
     end: [
         {
@@ -181,6 +175,12 @@ const blocks = {
             color: "red",
             type: "end",
             icon: "assets/images/blocks/end.svg",
+        },
+        {
+            name: "Go To Page",
+            color: "red",
+            type: "goToPage",
+            icon: "assets/images/blocks/go-to-page.svg",
         },
     ],
 };
