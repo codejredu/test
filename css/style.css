@@ -250,7 +250,7 @@ main {
 #block-palette .scratch-block,
 #programming-area .scratch-block {
     position: relative;
-    width: 85px; /* רוחב מוגדל של הלבנה */
+    width: 105px; /* רוחב מוגדל של הלבנה */
     height: 80px;
     background-color: #ffff00;
     border-radius: 10px;
