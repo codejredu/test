@@ -280,13 +280,13 @@ function handleDrop(event) {
             // הסר את הבלוק מהמיקום הישן
             programmingArea.removeChild(draggedBlock);
 
-            // מצא את מיקום השחרור
-            // כאן אפשר להוסיף לוגיקה יותר מורכבת כדי למקם את הבלוק במקום ספציפי
-            // כרגע, נשים אותו בסוף - אפשר לשפר בהמשך
-            programmingArea.appendChild(draggedBlock);
+            // מצא את מיקום השחרור ועדכן מיקום
+            const rect = programmingArea.getBoundingClientRect();
+            draggedBlock.style.position = "absolute";
+            draggedBlock.style.left = `${event.clientX - rect.left - (draggedBlock.offsetWidth / 2)}px`;
+            draggedBlock.style.top = `${event.clientY - rect.top - (draggedBlock.offsetHeight / 2)}px`;
 
-            // אפשרות: הוסף קוד למיקום מדויק יותר של הבלוק בתוך programmingArea
-            // בהתאם למיקום העכבר (event.clientX, event.clientY)
+            programmingArea.appendChild(draggedBlock); // הוסף את הבלוק במיקום החדש (כרגע בסוף)
         }
     } else { // אם אין block-index, זה אומר שגוררים בלוק מלוח הלבנים (התנהגות קודמת)
         const data = JSON.parse(event.dataTransfer.getData("text/plain"));
