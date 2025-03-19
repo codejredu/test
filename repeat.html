@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>הדגמת לחצן חזור בסגנון סקראץ' משופר</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+            font-family: Arial, sans-serif;
+        }
+
+        .back-button {
+            position: relative;
+            width: 200px;
+            height: 70px;
+            background-color: #FFA64D;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        /* Left side circle indent */
+        .back-button::before {
+            content: "";
+            position: absolute;
+            left: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border-radius: 50%;
+        }
+        /* Right side puzzle piece protrusion */
+        .back-button::after {
+            content: "";
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            background-color: #FFA64D;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        /* White rectangle for the icon area */
+        .back-button .icon-area {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: white;
+            right: 15%;
+            top: 40%;
+            transform: translate(50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* Arrow icon */
+        .back-button .icon-area::before {
+            content: "";
+            width: 0;
+            height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-right: 12px solid #FFA64D;
+        }
+        /* Bottom rectangular indent - made square */
+        .back-button .bottom-notch {
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 50px;
+            background-color: white;
+            border-radius: 0 0 5px 5px;
+        }
+        /* Left side indent on bottom notch */
+        .back-button .bottom-notch::before {
+            content: "";
+            position: absolute;
+            left: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            background-color: #f5f5f5; /* שקע - צבע הרקע של הדף */
+            border-radius: 50%;
+        }
+        /* Right side indent on bottom notch */
+        .back-button .bottom-notch::after {
+            content: "";
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            background-color: #f5f5f5; /* שקע - צבע הרקע של הדף */
+            border-radius: 50%;
+        }
+        /* Hover effect */
+        .back-button:hover {
+            background-color: #FF9933;
+        }
+        .back-button:hover::after {
+            background-color: #FF9933;
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .description {
+            font-size: 18px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="button-container">
+        <div class="description">לחצן חזור בסגנון סקראץ' ג'וניור:</div>
+        <div class="back-button">
+            <div class="icon-area"></div>
+            <div class="bottom-notch"></div>
+        </div>
+    </div>
+</body>
+</html>
