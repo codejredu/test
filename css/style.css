@@ -1,11 +1,11 @@
 /* style.css */
 :root {
-    --motion-color: #43D3FF;
-    --triggering-color: #FFEC80;
-    --looks-color: #D38BD6;
-    --sound-color: green;
-    --control-color: orange;
-    --end-color: red;
+    --motion-color: #66D2FF;    /* כחול-תכלת בהיר */
+    --triggering-color: #FFE866; /* צהוב בננה רך */
+    --looks-color: #D295F6;     /* סגול לבנדר רך */
+    --sound-color: #7ED957;     /* ירוק תפוח בהיר */
+    --control-color: #FFBD67;   /* כתום אפרסק */
+    --end-color: #FF6B6B;       /* אדום קורל רך */
 }
 
 body {
