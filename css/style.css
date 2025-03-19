@@ -380,3 +380,108 @@ main {
 #end-blocks.active .block-container .scratch-block {
     background-color: var(--end-color);
 }
+
+/* Special styling for the REPEAT block */
+.repeat-block {
+    position: relative;
+    width: 87px;
+    height: 80px;
+    background-color: var(--control-color);
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: black;
+    font-size: 24px;
+    font-weight: bold;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    margin: 8px;
+    cursor: pointer;
+}
+
+/* Create the C-shaped block with cutouts */
+.repeat-block::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background-color: var(--control-color);
+    border-radius: 50% 0 0 50%;
+}
+
+.repeat-block::after {
+    content: '';
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background-color: var(--control-color);
+    border-radius: 0 50% 50% 0;
+}
+
+/* Create the top tab */
+.repeat-block .top-tab {
+    position: absolute;
+    top: -10px;
+    right: 20px;
+    width: 20px;
+    height: 20px;
+    background-color: var(--control-color);
+    border-radius: 5px 5px 0 0;
+}
+
+/* Create the bottom notch */
+.repeat-block .bottom-notch {
+    position: absolute;
+    bottom: -10px;
+    left: 20px;
+    width: 20px;
+    height: 20px;
+    background-color: white;
+    border-radius: 0 0 5px 5px;
+}
+
+/* Arrow icon for repeat */
+.repeat-block .arrow-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.repeat-block .arrow-icon svg {
+    width: 40px;
+    height: 40px;
+    fill: rgba(0, 0, 0, 0.7);
+}
+
+/* Number indicator for repeat count */
+.repeat-block .repeat-number {
+    position: absolute;
+    bottom: -5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    background-color: white;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    font-weight: bold;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Control blocks container styling for the repeat block */
+#control-blocks .block-container .repeat-block {
+    background-color: var(--control-color);
+}
+
+/* Ensure the repeat block has the correct color when active */
+#control-blocks.active .block-container .repeat-block {
+    background-color: var(--control-color);
+}
