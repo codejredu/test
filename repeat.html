@@ -19,7 +19,7 @@
       const connectorHeight = height * 0.3; // גובה החיבור
       const notchDepth = connectorWidth * 0.6; // עומק השקע
       const borderRadius = width * 0.05; // רדיוס הפינה
-      const buttonRadius = 8; // רדיוס הפינות של הכפתור
+      const buttonRadius = 12; // רדיוס הפינות של הכפתור (הגדלנו)
 
       ctx.beginPath();
 
@@ -77,7 +77,7 @@
         ctx.lineTo(buttonX, buttonY + buttonRadius);
         ctx.quadraticCurveTo(buttonX, buttonY, buttonX + buttonRadius, buttonY);
         ctx.closePath();
-        ctx.fillStyle = "lightgray";
+        ctx.fillStyle = "orange"; // שינוי לצבע כתום
         ctx.fill();
 
       // צייר שוב את המספר (בצבע שחור, מעל הכפתור)
