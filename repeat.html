@@ -1,159 +1,77 @@
-<!DOCTYPE html>
-<html dir="rtl">
+  <!DOCTYPE html>
+<html lang="he">
 <head>
-    <meta charset="UTF-8">
-    <title>לחצן חזור בסגנון סקראץ' משופר</title>
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f5f5f5;
-            font-family: Arial, sans-serif;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>כפתור חזרה - Scratch Junior</title>
+  <style>
+    .repeat-button {
+      background-color: #ffcc00; /* צבע צהוב כמו בתמונה */
+      border: 2px solid #e6b800; /* גבול מעט כהה יותר */
+      border-radius: 10px; /* פינות מעוגלות */
+      padding: 10px 20px; /* ריווח פנימי */
+      display: inline-flex; /* הצגה כאלמנט גמיש בשורה */
+      align-items: center; /* יישור אנכי של התוכן למרכז */
+      position: relative; /* מיקום יחסי עבור אלמנטים פנימיים */
+    }
 
-        .back-button {
-            position: relative;
-            width: 200px;
-            height: 70px;
-            background-color: #FFA64D;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: Arial, sans-serif;
-            font-weight: bold;
-            color: white;
-            text-align: center;
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }
-        /* שקע עגול בצד שמאל */
-        .back-button::before {
-            content: "";
-            position: absolute;
-            left: -10px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 20px;
-            height: 20px;
-           background-color: transparent;
-            border-radius: 50%;
-        }
-        /* זיז בצורת פאזל בצד ימין */
-        .back-button::after {
-            content: "";
-            position: absolute;
-            right: -10px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 20px;
-            height: 20px;
-            background-color: #FFA64D;
-            border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-        /* אזור לבן לסמל החץ */
-        .back-button .icon-area {
-            position: absolute;
-            width: 30px;
-            height: 30px;
-            background-color: white;
-            right: 15%;
-            top: 40%;
-            transform: translate(50%, -50%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        /* סמל חץ */
-        .back-button .icon-area::before {
-            content: "";
-            width: 0;
-            height: 0;
-            border-top: 8px solid transparent;
-            border-bottom: 8px solid transparent;
-            border-right: 12px solid #FFA64D;
-        }
-        /* שקע מרובע בתחתית, מורחב ושקוע בתוך הלחצן */
-        .back-button .bottom-notch {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80px; /* רוחב מורחב */
-            height: 50px; /* גובה מורחב */
-            background-color: white;
-            border-radius: 0 0 10px 10px;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: flex-end; /* יישור המספר לתחתית השקע */
-        }
-        /* שקע בצד שמאל של השקע התחתון */
-        .back-button .bottom-notch::before {
-            content: "";
-            position: absolute;
-            left: -10px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 20px;
-            height: 20px;
-            background-color: #f5f5f5;
-            border-radius: 50%;
-        }
-        /* שקע בצד ימין של השקע התחתון */
-        .back-button .bottom-notch::after {
-            content: "";
-            position: absolute;
-            right: -10px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 20px;
-            height: 20px;
-            background-color: #f5f5f5;
-            border-radius: 50%;
-        }
-        /* אפקט ריחוף */
-        .back-button:hover {
-            background-color: #FF9933;
-        }
-        .back-button:hover::after {
-            background-color: #FF9933;
-        }
-        /* עיצוב המיקום של המספר 4 */
-        .back-button .number {
-            font-size: 24px; /* גודל גופן מוגדל */
-            padding: 10px; /* ריווח מוגדל */
-            color: #333;
-        }
+    .repeat-button::before {
+      content: "";
+      position: absolute;
+      top: -5px;
+      left: 10px;
+      width: 20px;
+      height: 10px;
+      background-color: #ffcc00;
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+    }
 
-        .button-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 30px;
-            margin-top: 50px;
-        }
+    .repeat-button::after {
+      content: "";
+      position: absolute;
+      top: -5px;
+      right: 10px;
+      width: 20px;
+      height: 10px;
+      background-color: #ffcc00;
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+    }
 
-        .description {
-            font-size: 18px;
-            color: #333;
-        }
-    </style>
+    .repeat-button .arrow {
+      width: 20px;
+      height: 20px;
+      border: 2px solid gray;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-right: 10px;
+    }
+
+    .repeat-button .arrow::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-top: 2px solid gray;
+      border-right: 2px solid gray;
+      transform: rotate(45deg);
+    }
+
+    .repeat-button .number {
+      background-color: lightgray;
+      border-radius: 5px;
+      padding: 5px 10px;
+    }
+  </style>
 </head>
 <body>
-    <div class="button-container">
-        <div class="description">לחצן חזור בסגנון סקראץ' משופר:</div>
-        <div class="back-button">
-            <div class="icon-area"></div>
-            <div class="bottom-notch">
-                <div class="number">4</div>
-            </div>
-        </div>
-    </div>
+
+  <div class="repeat-button">
+    <div class="arrow"></div>
+    <div class="number">4</div>
+  </div>
+
 </body>
 </html>
