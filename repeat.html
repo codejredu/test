@@ -1,69 +1,34 @@
 <!DOCTYPE html>
-<html lang="he">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>כפתור REPEAT של סקראץ' ג'וניור</title>
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
-        }
-
-        .repeat-container {
-            position: relative;
-            width: 160px;
-            height: 60px;
-        }
-
-        .repeat-button {
-            width: 100%;
-            height: 100%;
-            background-color: #fdbf00;
-            border-radius: 15px;
-            position: absolute;
-            top: 0;
-            left: 0;
-            clip-path: polygon(0% 40%, 10% 15%, 90% 15%, 100% 40%, 100% 60%, 90% 85%, 10% 85%, 0% 60%);
-            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .repeat-arrow {
-            position: absolute;
-            right: 15px;
-            bottom: 12px;
-            font-size: 30px;
-            color: white;
-            font-weight: bold;
-            transform: rotate(180deg);
-        }
-
-        .repeat-number {
-            position: absolute;
-            bottom: -5px;
-            right: -5px;
-            background: white;
-            color: black;
-            font-size: 16px;
-            font-weight: bold;
-            width: 28px;
-            height: 28px;
-            line-height: 28px;
-            border-radius: 50%;
-            text-align: center;
-            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-        }
-    </style>
+  <title>יצירת לבנה</title>
+  <style>
+    canvas {
+      border: 1px solid black;
+    }
+  </style>
 </head>
 <body>
+  <canvas id="myCanvas" width="200" height="100"></canvas>
+  <script>
+    const canvas = document.getElementById("myCanvas");
+    const ctx = canvas.getContext("2d");
 
-    <div class="repeat-container">
-        <div class="repeat-button"></div>
-        <span class="repeat-arrow">↩</span>
-        <div class="repeat-number">4</div>
-    </div>
+    function drawBlock(x, y, width, height, color, icon) {
+      // צייר את הלבנה
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, width, height);
 
-</body
+      // צייר את האייקון (לדוגמה, חץ)
+      ctx.font = "20px Arial";
+      ctx.fillStyle = "white";
+      ctx.fillText(icon, x + width / 2 - 10, y + height / 2 + 5); // ממקם את הטקסט במרכז
+
+      // אפשר להוסיף כאן קוד נוסף לציור בליטות/שקעים
+    }
+
+    // שימוש בפונקציה
+    drawBlock(10, 10, 150, 50, "yellow", "⟳"); // קוד ASCII עבור חץ מעגלי
+  </script>
+</body>
+</html>
