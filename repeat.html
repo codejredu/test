@@ -9,49 +9,79 @@
   </style>
 </head>
 <body>
-  <canvas id="myCanvas" width="200" height="100"></canvas>
+  <canvas id="myCanvas" width="250" height="120"></canvas>
   <script>
     const canvas = document.getElementById("myCanvas");
     const ctx = canvas.getContext("2d");
 
-    function drawRoundedBlock(x, y, width, height, color, icon, borderRadius) {
-      // התחל נתיב חדש
+    function drawScratchJrBlock(x, y, width, height, color, icon, numRepetitions) {
+      const connectorWidth = width * 0.15; // רוחב החיבור
+      const connectorHeight = height * 0.3; // גובה החיבור
+      const notchDepth = connectorWidth * 0.6; // עומק השקע
+      const borderRadius = width * 0.05; // רדיוס הפינה
+
       ctx.beginPath();
 
-      // צייר פינה מעוגלת שמאלית עליונה
-      ctx.moveTo(x + borderRadius, y);
-      ctx.lineTo(x + width - borderRadius, y);
-      ctx.quadraticCurveTo(x + width, y, x + width, y + borderRadius);
+      // שמאלי: חיבור
+      ctx.moveTo(x, y + height / 2 - connectorHeight / 2);
+      ctx.lineTo(x - connectorWidth, y + height / 2 - connectorHeight / 2);
+      ctx.lineTo(x - connectorWidth, y + height / 2 + connectorHeight / 2);
+      ctx.lineTo(x, y + height / 2 + connectorHeight / 2);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
 
-      // צייר פינה מעוגלת ימנית תחתונה
-      ctx.lineTo(x + width, y + height - borderRadius);
-      ctx.quadraticCurveTo(x + width, y + height, x + width - borderRadius, y + height);
+      // גוף הלבנה: קו עליון
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + width - connectorWidth * 2, y); // מפחיתים את רוחב החיבורים מצד ימין
+      ctx.quadraticCurveTo(x + width - connectorWidth * 2 + borderRadius, y, x + width - connectorWidth * 2 + borderRadius, y + borderRadius); // פינה ימנית עליונה מעוגלת
 
-      // צייר פינה מעוגלת שמאלית תחתונה
-      ctx.lineTo(x + borderRadius, y + height);
-      ctx.quadraticCurveTo(x, y + height, x, y + height - borderRadius);
+      // ימין: שקע
+      ctx.lineTo(x + width - connectorWidth * 2 + borderRadius, y + height / 2 - connectorHeight / 2);
+      ctx.lineTo(x + width - connectorWidth * 2 + borderRadius + notchDepth, y + height / 2 - connectorHeight / 2);
+      ctx.lineTo(x + width - connectorWidth * 2 + borderRadius + notchDepth, y + height / 2 + connectorHeight / 2);
+      ctx.lineTo(x + width - connectorWidth * 2 + borderRadius, y + height / 2 + connectorHeight / 2);
 
-      // צייר פינה מעוגלת שמאלית עליונה
-      ctx.lineTo(x, y + borderRadius);
-      ctx.quadraticCurveTo(x, y, x + borderRadius, y);
-
-      // סגור את הנתיב
+      // גוף הלבנה: קו תחתון
+      ctx.lineTo(x + width - connectorWidth * 2 + borderRadius, y + height - borderRadius);
+      ctx.quadraticCurveTo(x + width - connectorWidth * 2 + borderRadius, y + height, x + width - connectorWidth * 2, y + height); // פינה ימנית תחתונה מעוגלת
+      ctx.lineTo(x, y + height);
       ctx.closePath();
 
-      // מלא את הצורה
       ctx.fillStyle = color;
       ctx.fill();
 
       // צייר את האייקון (לדוגמה, חץ)
-      ctx.font = "20px Arial";
+      ctx.font = "30px Arial";
       ctx.fillStyle = "white";
-      ctx.textAlign = "center"; // יישור הטקסט למרכז
-      ctx.textBaseline = "middle"; // יישור הטקסט לגובה
-      ctx.fillText(icon, x + width / 2, y + height / 2);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(icon, x + width - connectorWidth * 2, y + height / 2);
+
+      // צייר את המספר (לדוגמה, "4")
+      ctx.font = "16px Arial";
+      ctx.fillStyle = "black";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(numRepetitions, x + width - connectorWidth/2, y + height * 0.85);
+
+      // צייר עיגול אפור סביב המספר
+      ctx.beginPath();
+      ctx.arc(x + width - connectorWidth/2, y + height * 0.85, 12, 0, 2 * Math.PI);
+      ctx.fillStyle = "lightgray";
+      ctx.fill();
+
+      // צייר שוב את המספר (בצבע שחור, מעל העיגול)
+       ctx.font = "16px Arial";
+      ctx.fillStyle = "black";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(numRepetitions, x + width - connectorWidth/2, y + height * 0.85);
     }
 
     // שימוש בפונקציה
-    drawRoundedBlock(10, 10, 150, 50, "yellow", "⟳", 10); // קוד ASCII עבור חץ מעגלי, רדיוס פינה 10
+    drawScratchJrBlock(50, 20, 150, 80, "yellow", "⟳", "4");
   </script>
 </body>
 </html>
