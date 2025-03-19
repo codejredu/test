@@ -1,99 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>יצירת לבנה</title>
+  <title>לחצן כתום</title>
   <style>
-    canvas {
-      border: 1px solid black;
+    .button {
+      background-color: #FFA500; /* כתום */
+      border: none;
+      color: white;
+      padding: 15px 32px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      margin: 4px 2px;
+      cursor: pointer;
+      border-radius: 10px; /* פינות מעוגלות */
+      transition-duration: 0.4s; /* אנימציה חלקה */
+    }
+
+    .button:hover {
+      background-color: white;
+      color: #FFA500;
+      border: 2px solid #FFA500; /* קו מתאר כתום בריחוף */
+    }
+
+    .button:active {
+      background-color: #FF8C00; /* כתום כהה יותר בלחיצה */
+      color: white;
     }
   </style>
 </head>
 <body>
-  <canvas id="myCanvas" width="250" height="120"></canvas>
-  <script>
-    const canvas = document.getElementById("myCanvas");
-    const ctx = canvas.getContext("2d");
 
-    function drawScratchJrBlock(x, y, width, height, color, icon, numRepetitions) {
-      const connectorWidth = width * 0.15; // רוחב החיבור
-      const connectorHeight = height * 0.3; // גובה החיבור
-      const notchDepth = connectorWidth * 0.6; // עומק השקע
-      const borderRadius = width * 0.05; // רדיוס הפינה של גוף הלבנה
-      const buttonRadius = 12; // רדיוס הפינות של הכפתור
-      const connectorRadius = 5; // רדיוס הפינות של החיבור
+  <button class="button">לחץ כאן</button>
 
-      ctx.beginPath();
-
-       // שמאלי: חיבור מעוגל
-        ctx.moveTo(x, y + height / 2 - connectorHeight / 2 + connectorRadius);
-        ctx.quadraticCurveTo(x - connectorWidth + connectorRadius, y + height / 2 - connectorHeight / 2, x - connectorWidth, y + height / 2 - connectorHeight / 2 + connectorRadius); // פינה שמאלית עליונה
-        ctx.lineTo(x - connectorWidth, y + height / 2 + connectorHeight / 2 - connectorRadius);
-        ctx.quadraticCurveTo(x - connectorWidth + connectorRadius, y + height / 2 + connectorHeight / 2, x, y + height / 2 + connectorHeight / 2 - connectorRadius); // פינה שמאלית תחתונה
-        ctx.lineTo(x, y + height / 2 + connectorHeight / 2);
-        ctx.lineTo(x, y + height / 2 - connectorHeight / 2);
-        ctx.closePath();
-        ctx.fillStyle = color;
-        ctx.fill();
-
-
-      // גוף הלבנה: קו עליון
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + width - connectorWidth * 2, y); // מפחיתים את רוחב החיבורים מצד ימין
-      ctx.quadraticCurveTo(x + width - connectorWidth * 2 + borderRadius, y, x + width - connectorWidth * 2 + borderRadius, y + borderRadius); // פינה ימנית עליונה מעוגלת
-
-      // ימין: שקע
-      ctx.lineTo(x + width - connectorWidth * 2 + borderRadius, y + height / 2 - connectorHeight / 2);
-      ctx.lineTo(x + width - connectorWidth * 2 + borderRadius + notchDepth, y + height / 2 - connectorHeight / 2);
-      ctx.lineTo(x + width - connectorWidth * 2 + borderRadius + notchDepth, y + height / 2 + connectorHeight / 2);
-      ctx.lineTo(x + width - connectorWidth * 2 + borderRadius, y + height / 2 + connectorHeight / 2);
-
-      // גוף הלבנה: קו תחתון
-      ctx.lineTo(x + width - connectorWidth * 2 + borderRadius, y + height - borderRadius);
-      ctx.quadraticCurveTo(x + width - connectorWidth * 2 + borderRadius, y + height, x + width - connectorWidth * 2, y + height); // פינה ימנית תחתונה מעוגלת
-      ctx.lineTo(x, y + height);
-      ctx.closePath();
-
-      ctx.fillStyle = color;
-      ctx.fill();
-
-      // צייר את האייקון (לדוגמה, חץ)
-      ctx.font = "30px Arial";
-      ctx.fillStyle = "white";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(icon, x + width - connectorWidth * 2, y + height / 2);
-
-      // ציור הכפתור המעוגל
-      const buttonX = x + width - connectorWidth/2 - 12;
-      const buttonY = y + height * 0.85 - 12;
-      const buttonWidth = 24;
-      const buttonHeight = 24;
-
-       ctx.beginPath();
-        ctx.moveTo(buttonX + buttonRadius, buttonY);
-        ctx.lineTo(buttonX + buttonWidth - buttonRadius, buttonY);
-        ctx.quadraticCurveTo(buttonX + buttonWidth, buttonY, buttonX + buttonWidth, buttonY + buttonRadius);
-        ctx.lineTo(buttonX + buttonWidth, buttonY + buttonHeight - buttonRadius);
-        ctx.quadraticCurveTo(buttonX + buttonWidth, buttonY + buttonHeight, buttonX + buttonWidth - buttonRadius, buttonY + buttonHeight);
-        ctx.lineTo(buttonX + buttonRadius, buttonY + buttonHeight);
-        ctx.quadraticCurveTo(buttonX, buttonY + buttonHeight, buttonX, buttonY + buttonHeight - buttonRadius);
-        ctx.lineTo(buttonX, buttonY + buttonRadius);
-        ctx.quadraticCurveTo(buttonX, buttonY, buttonX + buttonRadius, buttonY);
-        ctx.closePath();
-        ctx.fillStyle = "orange"; // שינוי לצבע כתום
-        ctx.fill();
-
-      // צייר שוב את המספר (בצבע שחור, מעל הכפתור)
-       ctx.font = "16px Arial";
-      ctx.fillStyle = "black";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(numRepetitions, x + width - connectorWidth/2, y + height * 0.85);
-    }
-
-    // שימוש בפונקציה
-    drawScratchJrBlock(50, 20, 150, 80, "orange", "⟳", "4");
-  </script>
 </body>
 </html>
