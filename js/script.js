@@ -1,3 +1,75 @@
+--- START OF FILE index.html ---
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScratchJr Web</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="logo">ScratchJr</div>
+        <div class="header-icons">
+            <span class="icon">💾</span>
+            <span class="icon">📄</span>
+            <span class="icon">▶️</span>
+            <span class="icon">➕</span>
+            <span class="icon">ℹ️</span>
+            <span class="icon" id="grid-toggle">GRID</span>
+        </div>
+    </header>
+
+    <main>
+        <div class="stage-container">
+            <div id="stage">
+                <img id="character" src="assets/images/CAT.svg" alt="Cat" draggable="true">
+            </div>
+        </div>
+        <div class="palette-and-programming">
+            <div id="block-palette">
+                <div class="category-tabs">
+                    <button class="category-tab" data-category="end">
+                        <img src="assets/images/end.svg" alt="End">
+                    </button>
+                    <button class="category-tab" data-category="control">
+                        <img src="assets/images/control.svg" alt="Control">
+                    </button>
+                    <button class="category-tab" data-category="sound">
+                        <img src="assets/images/sound.svg" alt="Sound">
+                    </button>
+                    <button class="category-tab" data-category="looks">
+                        <img src="assets/images/looks.svg" alt="Looks">
+                    </button>
+                    <button class="category-tab" data-category="motion">
+                        <img src="assets/images/motion.svg" alt="Motion">
+                    </button>
+                    <button class="category-tab active" data-category="triggering">
+                        <img src="assets/images/triggering.svg" alt="Triggers">
+                    </button>
+                </div>
+                <div id="end-blocks" class="block-category" data-category="end"></div>
+                <div id="control-blocks" class="block-category" data-category="control"></div>
+                <div id="sound-blocks" class="block-category" data-category="sound"></div>
+                <div id="looks-blocks" class="block-category" data-category="looks"></div>
+                <div id="motion-blocks" class="block-category" data-category="motion"></div>
+                <div id="triggering-blocks" class="block-category active" data-category="triggering"></div>
+            </div>
+
+            <div id="programming-area">
+                <div class="program-header">Program <span id="clear-all">Clear All</span></div>
+                <div id="program-blocks"></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="js/script.js"></script>
+</body>
+</html>
+--- START OF FILE script.js ---
 // ========================================================================
 // הגדרת בלוקים (Blocks)
 // ========================================================================
@@ -229,6 +301,8 @@ function createScratchBlock(block) {
 function createBlockElement(block, category) {
     const blockContainer = document.createElement("div");
     blockContainer.classList.add("block-container");
+    // הוספת title עבור tooltip
+    blockContainer.title = block.name;
 
     const scratchBlock = createScratchBlock(block);
     const rightConnector = createRightConnector(block.color);
@@ -300,6 +374,8 @@ function handleDrop(event) {
         const newBlock = document.createElement("div");
         newBlock.classList.add("block-container");
         newBlock.dataset.category = blockCategory; // שמירת הקטגוריה בנתוני הבלוק
+        // הוספת title עבור tooltip
+        newBlock.title = blockName;
 
         const scratchBlock = document.createElement("div");
         scratchBlock.classList.add("scratch-block");
