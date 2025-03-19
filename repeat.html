@@ -27,23 +27,23 @@
       width: 150px;
       height: 90px;
       /* אפקט תלת מימד - בליטה ימנית */
-      box-shadow:  3px 3px 6px #b88150, /* צל חיובי בצד ימין ובחלק תחתון  */
-                  -3px -3px 6px #ffc57e; /* צל שלילי בצד שמאל ובחלק העליון */
+      box-shadow:  2px 2px 4px #b88150, /* צל חיובי מופחת */
+                  -2px -2px 4px #ffc57e; /* צל שלילי מופחת */
 
     }
 
     .button:hover {
       background-color: #E09354; /* גוון כהה יותר בריחוף */
       /* שינוי קל בצל בריחוף */
-      box-shadow:  2px 2px 5px #b88150,
-                  -2px -2px 5px #ffc57e;
+      box-shadow:  1px 1px 3px #b88150,
+                  -1px -1px 3px #ffc57e;
     }
 
     .button:active {
       background-color: #D08344; /* גוון כהה עוד יותר בלחיצה */
-      /* אפקט של לחיצה עמוקה */
-      box-shadow: inset 2px 2px 3px #b88150,
-                  inset -2px -2px 3px #ffc57e;
+      /* הסרת אפקט "לחיצה" - שמירה על אותו צל כמו בריחוף*/
+      box-shadow:  1px 1px 3px #b88150,
+                  -1px -1px 3px #ffc57e;
     }
   </style>
 </head>
