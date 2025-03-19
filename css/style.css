@@ -143,7 +143,7 @@ main {
     max-width: 60%;
     max-height: 60%;
     pointer-events: none;
-    
+
 }
 
 .category-tab[data-category="triggering"] {
@@ -176,7 +176,7 @@ main {
     flex-grow: 1;
     height: 100%;
     border-right: 1px solid #e0e0e0;
-    margin-left: 10px;
+    margin-left: 0px; /* Remove margin-left to align with tabs */
     background-color: #0D66CA; /* blue background behind programming blocks */
 }
 
@@ -184,7 +184,7 @@ main {
     display: flex;
     flex-wrap: wrap;
     padding: 10px;
-    background-color: #f0f0f0; /* שינוי מ-#0D66CA לאפור בהיר כדי להתאים לעיצוב */
+    background-color: #0D66CA; /* blue background behind programming blocks */
 }
 
 #programming-area {
@@ -353,7 +353,7 @@ main {
 /* תיקונים לצבעי הבלוקים בקטגוריה פעילה */
 .block-category.active .scratch-block {
     /* הסרת כל צבע סגול שעשוי להיות מוחל */
-    background-color: inherit;
+    background-color: inherit; /* חשוב לוודא שהצבע יורש מההגדרה של הבלוק */
 }
 
 /* וידוא שלכל קטגוריה יש את הצבע הנכון כשהיא פעילה */
