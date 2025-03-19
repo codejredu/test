@@ -6,31 +6,31 @@ const blocks = {
     triggering: [
         {
             name: "Green Flag",
-            color: "yellow",
+            color: "var(--triggering-color)", // שימוש במשתנה CSS במקום ערך קבוע
             type: "startOnGreenFlag",
             icon: "assets/images/green-flag.svg",
         },
         {
             name: "Tap",
-            color: "yellow",
+            color: "var(--triggering-color)",
             type: "startOnTap",
             icon: "assets/images/blocks/tap.svg",
         },
         {
             name: "Bump",
-            color: "yellow",
+            color: "var(--triggering-color)",
             type: "startOnBump",
             icon: "assets/images/blocks/bump.svg",
         },
         {
             name: "Send Message",
-            color: "yellow",
+            color: "var(--triggering-color)",
             type: "sendMessage",
             icon: "assets/images/blocks/send-message.svg",
         },
         {
             name: "Receive Message",
-            color: "yellow",
+            color: "var(--triggering-color)",
             type: "startOnMessage",
             icon: "assets/images/blocks/receive-message.svg",
         },
@@ -38,49 +38,49 @@ const blocks = {
     motion: [
         {
             name: "Move Right",
-            color: "#43D3FF",
+            color: "var(--motion-color)",
             type: "moveRight",
             icon: "assets/images/blocks/move-right.svg",
         },
         {
             name: "Move Left",
-            color: "#43D3FF",
+            color: "var(--motion-color)",
             type: "moveLeft",
             icon: "assets/images/blocks/move-left.svg",
         },
         {
             name: "Move Up",
-            color: "#43D3FF",
+            color: "var(--motion-color)",
             type: "moveUp",
             icon: "assets/images/blocks/move-up.svg",
         },
         {
             name: "Move Down",
-            color: "#43D3FF",
+            color: "var(--motion-color)",
             type: "moveDown",
             icon: "assets/images/blocks/move-down.svg",
         },
         {
             name: "Turn Right",
-            color: "#43D3FF",
+            color: "var(--motion-color)",
             type: "turnRight",
             icon: "assets/images/blocks/turn-right.svg",
         },
         {
             name: "Turn Left",
-            color: "#43D3FF",
+            color: "var(--motion-color)",
             type: "turnLeft",
             icon: "assets/images/blocks/turn-left.svg",
         },
         {
             name: "Hop",
-            color: "#43D3FF",
+            color: "var(--motion-color)",
             type: "hop",
             icon: "assets/images/blocks/hop.svg",
         },
         {
             name: "Go Home",
-            color: "#43D3FF",
+            color: "var(--motion-color)",
             type: "goHome",
             icon: "assets/images/blocks/reset.svg",
         },
@@ -88,37 +88,37 @@ const blocks = {
     looks: [
         {
             name: "Say",
-            color: "purple",
+            color: "var(--looks-color)",
             type: "say",
             icon: "assets/images/blocks/say.svg",
         },
         {
             name: "Grow",
-            color: "purple",
+            color: "var(--looks-color)",
             type: "grow",
             icon: "assets/images/blocks/grow.svg",
         },
         {
             name: "Shrink",
-            color: "purple",
+            color: "var(--looks-color)",
             type: "shrink",
             icon: "assets/images/blocks/shrink.svg",
         },
         {
             name: "Reset Size",
-            color: "purple",
+            color: "var(--looks-color)",
             type: "resetSize",
             icon: "assets/images/blocks/reset-size.svg",
         },
         {
             name: "Hide",
-            color: "purple",
+            color: "var(--looks-color)",
             type: "hide",
             icon: "assets/images/blocks/hide.svg",
         },
         {
             name: "Show",
-            color: "purple",
+            color: "var(--looks-color)",
             type: "show",
             icon: "assets/images/blocks/show.svg",
         },
@@ -126,13 +126,13 @@ const blocks = {
     sound: [
         {
             name: "Play Sound",
-            color: "green",
+            color: "var(--sound-color)",
             type: "popSound",
             icon: "assets/images/blocks/sound.svg",
         },
         {
             name: "Play Recorded Sound",
-            color: "green",
+            color: "var(--sound-color)",
             type: "playRecordedSound",
             icon: "assets/images/blocks/record-sound.svg",
         },
@@ -140,13 +140,13 @@ const blocks = {
     control: [
         {
             name: "Wait",
-            color: "orange",
+            color: "var(--control-color)",
             type: "wait",
             icon: "assets/images/blocks/wait.svg",
         },
         {
             name: "Set Speed",
-            color: "orange",
+            color: "var(--control-color)",
             type: "setSpeed",
             icon: "assets/images/blocks/speed.svg",
         },
@@ -154,17 +154,17 @@ const blocks = {
             name: "Repeat",
             type: "repeat",
             icon: "assets/images/blocks/repeat.svg",
-            color: "orange"
+            color: "var(--control-color)"
         },
         {
             name: "Repeat Forever",
             type: "repeatForever",
             icon: "assets/images/blocks/repeat-forever.svg",
-            color: "orange"
+            color: "var(--control-color)"
         },
         {
             name: "Go To Page",
-            color: "orange",
+            color: "var(--control-color)",
             type: "goToPage",
             icon: "assets/images/blocks/go-to-page.svg",
         },
@@ -172,13 +172,13 @@ const blocks = {
     end: [
         {
             name: "Stop",
-            color: "red",
+            color: "var(--end-color)",
             type: "stop",
             icon: "assets/images/blocks/stop.svg",
         },
         {
             name: "End",
-            color: "red",
+            color: "var(--end-color)",
             type: "end",
             icon: "assets/images/blocks/end.svg",
         },
@@ -270,108 +270,85 @@ function handleDragStart(event, block, category) {
 function handleDrop(event) {
     event.preventDefault();
 
-    const blockIndex = event.dataTransfer.getData('block-index');
+    const blockIndex = event.dataTransfer.getData('block-index'); // נסה לקבל אינדקס, אם קיים
 
-    let droppedBlock; // משתנה לבלוק שנשמט
-
-    if (blockIndex) { // גרירה בתוך אזור התכנות
+    if (blockIndex) { // אם קיים block-index, זה אומר שגוררים בלוק בתוך אזור התכנות
         const draggedBlockIndex = parseInt(blockIndex);
-        droppedBlock = programmingArea.children[draggedBlockIndex];
+        const draggedBlock = programmingArea.children[draggedBlockIndex];
 
-        if (droppedBlock) {
-            programmingArea.removeChild(droppedBlock); // הסר מהמיקום הישן
+        if (draggedBlock) {
+            // הסר את הבלוק מהמיקום הישן
+            programmingArea.removeChild(draggedBlock);
+
+            // מצא את מיקום השחרור ועדכן מיקום
+            const rect = programmingArea.getBoundingClientRect();
+            draggedBlock.style.position = "absolute";
+            draggedBlock.style.left = `${event.clientX - rect.left - (draggedBlock.offsetWidth / 2)}px`;
+            draggedBlock.style.top = `${event.clientY - rect.top - (draggedBlock.offsetHeight / 2)}px`;
+
+            programmingArea.appendChild(draggedBlock); // הוסף את הבלוק במיקום החדש (כרגע בסוף)
         }
-    } else { // גרירה מלוח הלבנים
+    } else { // אם אין block-index, זה אומר שגוררים בלוק מלוח הלבנים (התנהגות קודמת)
         const data = JSON.parse(event.dataTransfer.getData("text/plain"));
         const blockType = data.type;
         const blockCategory = data.category;
         const blockIcon = data.icon;
-        const blockColor = data.color;
+        const blockColor = data.color; // צבע הבלוק המקורי
         const blockName = data.name;
 
-        // יצירת אלמנט בלוק חדש (שיבוט) - זהה לקוד הקודם
-        droppedBlock = document.createElement("div");
-        droppedBlock.classList.add("block-container");
-        // ... (יצירת scratchBlock, מחברים וכו' - זהה לקוד הקודם) ...
+        // יצירת אלמנט בלוק חדש (שיבוט)
+        const newBlock = document.createElement("div");
+        newBlock.classList.add("block-container");
+        newBlock.dataset.category = blockCategory; // שמירת הקטגוריה בנתוני הבלוק
+
         const scratchBlock = document.createElement("div");
         scratchBlock.classList.add("scratch-block");
-        scratchBlock.style.backgroundColor = blockColor;
+        scratchBlock.style.backgroundColor = blockColor; // שימוש בצבע המקורי של הבלוק
+
+        // יצירת אלמנט תמונה עבור האיקון
         const iconImg = document.createElement("img");
         iconImg.src = blockIcon;
         iconImg.alt = blockName;
         iconImg.classList.add("block-icon-img");
+
         scratchBlock.appendChild(iconImg);
+
+        //יצירת אלמנט right-connector
         const rightConnector = document.createElement("div");
         rightConnector.classList.add("right-connector");
-        rightConnector.style.backgroundColor = blockColor;
+        rightConnector.style.backgroundColor = blockColor; // שימוש באותו צבע גם למחבר
+
+        //יצירת אלמנט left-connector-wrapper
         const leftConnectorWrapper = document.createElement("div");
         leftConnectorWrapper.classList.add("left-connector-wrapper");
+
+         //יצירת אלמנט left-connector
         const leftConnector = document.createElement("div");
         leftConnector.classList.add("left-connector");
+
         leftConnectorWrapper.appendChild(leftConnector);
-        droppedBlock.appendChild(scratchBlock);
-        droppedBlock.appendChild(rightConnector);
-        droppedBlock.appendChild(leftConnectorWrapper);
-        droppedBlock.dataset.type = blockType;
-        droppedBlock.draggable = true;
-        droppedBlock.addEventListener("dragstart", (event) => {
-            event.dataTransfer.setData('block-index', Array.from(programmingArea.children).indexOf(droppedBlock).toString());
+
+        // הוספת הכל ל container
+        newBlock.appendChild(scratchBlock);
+        newBlock.appendChild(rightConnector);
+        newBlock.appendChild(leftConnectorWrapper);
+        newBlock.dataset.type = blockType;
+        newBlock.draggable = true; // אפשר גרירה לבלוקים חדשים
+
+        // הוספת event listener לגרירה של בלוקים בתוך אזור התכנות
+        newBlock.addEventListener("dragstart", (event) => {
+            event.dataTransfer.setData('block-index', Array.from(programmingArea.children).indexOf(newBlock).toString());
             event.dataTransfer.effectAllowed = "move";
         });
-    }
 
-    if (droppedBlock) {
-        programmingArea.appendChild(droppedBlock);
+        // הוספת הבלוק החדש לאזור התכנות
+        programmingArea.appendChild(newBlock);
 
-        // מיקום ראשוני של הבלוק - מתחת לעכבר
+        // מיקום הבלוק החדש יחסי לאזור התכנות - מתחת לעכבר
         const rect = programmingArea.getBoundingClientRect();
-        droppedBlock.style.position = "absolute";
-        droppedBlock.style.left = `${event.clientX - rect.left - (droppedBlock.offsetWidth / 2)}px`;
-        droppedBlock.style.top = `${event.clientY - rect.top - (droppedBlock.offsetHeight / 2)}px`;
-
-        // ====================================================================
-        // **הוספת לוגיקת ההצמדה**
-        // ====================================================================
-        let snapped = false; // דגל לבדיקה אם בוצעה הצמדה
-        const snapDistance = 30; // מרחק הצמדה אופקי
-        const verticalAlignmentThreshold = 20; // סף יישור אנכי
-
-        // לולאה על כל הבלוקים הקיימים באזור התכנות (חוץ מהבלוק הנוכחי שנגרר)
-        Array.from(programmingArea.children).forEach(existingBlock => {
-            if (existingBlock !== droppedBlock) { // אל תבדוק הצמדה לעצמו
-
-                // 1. קבלת מיקומי מחברים (Bounding Rectangles)
-                const droppedBlockRightConnectorRect = droppedBlock.querySelector('.right-connector').getBoundingClientRect();
-                const existingBlockLeftConnectorRect = existingBlock.querySelector('.left-connector').getBoundingClientRect();
-
-                // 2. בדיקת חפיפה אופקית ויישור אנכי
-                const horizontalOverlap = (
-                    droppedBlockRightConnectorRect.right >= existingBlockLeftConnectorRect.left - snapDistance &&
-                    droppedBlockRightConnectorRect.right <= existingBlockLeftConnectorRect.left + snapDistance
-                );
-                const verticalAlignment = Math.abs(
-                    (droppedBlockRightConnectorRect.top + droppedBlockRightConnectorRect.bottom) / 2 -
-                    (existingBlockLeftConnectorRect.top + existingBlockLeftConnectorRect.bottom) / 2
-                );
-
-                // 3. אם יש חפיפה אופקית ויישור אנכי - בצע הצמדה
-                if (horizontalOverlap && verticalAlignment <= verticalAlignmentThreshold) {
-                    snapped = true;
-
-                    // חישוב הזזה אופקית להצמדה מדויקת
-                    const snapOffsetX = existingBlockLeftConnectorRect.left - droppedBlockRightConnectorRect.right;
-
-                    droppedBlock.style.left = `${parseFloat(droppedBlock.style.left) + snapOffsetX}px`;
-                    droppedBlock.style.top = `${existingBlockLeftConnectorRect.top - droppedBlockRightConnectorRect.top}px`;
-
-
-                }
-            }
-        });
-
-        if (snapped) {
-            console.log("Block snapped!");
-        }
+        newBlock.style.position = "absolute"; // השתמש במיקום אבסולוטי
+        newBlock.style.left = `${event.clientX - rect.left - (newBlock.offsetWidth / 2)}px`; // מרכז את הבלוק אופקית
+        newBlock.style.top = `${event.clientY - rect.top - (newBlock.offsetHeight / 2)}px`; // מרכז את הבלוק אנכית
     }
 }
 
@@ -432,6 +409,12 @@ const stage = document.getElementById("stage");
 
 gridToggle.addEventListener("click", () => {
     stage.classList.toggle("show-grid");
+});
+
+// ניקוי כל הבלוקים מאזור התכנות
+const clearAllButton = document.getElementById("clear-all");
+clearAllButton.addEventListener("click", () => {
+    programmingArea.innerHTML = "";
 });
 
 // אתחול הלוח עם הקטגוריה הפעילה הראשונה
