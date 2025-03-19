@@ -18,19 +18,23 @@
       const connectorWidth = width * 0.15; // רוחב החיבור
       const connectorHeight = height * 0.3; // גובה החיבור
       const notchDepth = connectorWidth * 0.6; // עומק השקע
-      const borderRadius = width * 0.05; // רדיוס הפינה
-      const buttonRadius = 24; // רדיוס הפינות של הכפתור (הגדלנו)
+      const borderRadius = width * 0.05; // רדיוס הפינה של גוף הלבנה
+      const buttonRadius = 12; // רדיוס הפינות של הכפתור
+      const connectorRadius = 5; // רדיוס הפינות של החיבור
 
       ctx.beginPath();
 
-      // שמאלי: חיבור
-      ctx.moveTo(x, y + height / 2 - connectorHeight / 2);
-      ctx.lineTo(x - connectorWidth, y + height / 2 - connectorHeight / 2);
-      ctx.lineTo(x - connectorWidth, y + height / 2 + connectorHeight / 2);
-      ctx.lineTo(x, y + height / 2 + connectorHeight / 2);
-      ctx.closePath();
-      ctx.fillStyle = color;
-      ctx.fill();
+       // שמאלי: חיבור מעוגל
+        ctx.moveTo(x, y + height / 2 - connectorHeight / 2 + connectorRadius);
+        ctx.quadraticCurveTo(x - connectorWidth + connectorRadius, y + height / 2 - connectorHeight / 2, x - connectorWidth, y + height / 2 - connectorHeight / 2 + connectorRadius); // פינה שמאלית עליונה
+        ctx.lineTo(x - connectorWidth, y + height / 2 + connectorHeight / 2 - connectorRadius);
+        ctx.quadraticCurveTo(x - connectorWidth + connectorRadius, y + height / 2 + connectorHeight / 2, x, y + height / 2 + connectorHeight / 2 - connectorRadius); // פינה שמאלית תחתונה
+        ctx.lineTo(x, y + height / 2 + connectorHeight / 2);
+        ctx.lineTo(x, y + height / 2 - connectorHeight / 2);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+
 
       // גוף הלבנה: קו עליון
       ctx.beginPath();
