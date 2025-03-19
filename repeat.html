@@ -1,79 +1,56 @@
 <!DOCTYPE html>
 <html lang="he">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>כפתור חזרה - Scratch Junior</title>
-  <style>
-    .repeat-button {
-      background-color: #ffcc00; /* צבע צהוב כמו בתמונה */
-      border: 2px solid #e6b800; /* גבול מעט כהה יותר */
-      border-radius: 10px; /* פינות מעוגלות */
-      padding: 10px 20px; /* ריווח פנימי */
-      display: inline-flex; /* הצגה כאלמנט גמיש בשורה */
-      align-items: center; /* יישור אנכי של התוכן למרכז */
-      position: relative; /* מיקום יחסי עבור אלמנטים פנימיים */
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>כפתור REPEAT</title>
+    <style>
+        .repeat-button {
+            display: inline-block;
+            background-color: #fdbf00;
+            border-radius: 15px;
+            padding: 15px 40px;
+            position: relative;
+            font-family: Arial, sans-serif;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);
+            clip-path: polygon(0% 30%, 10% 0%, 90% 0%, 100% 30%, 100% 70%, 90% 100%, 10% 100%, 0% 70%);
+        }
 
-    .repeat-button::before,
-    .repeat-button::after {
-      content: "";
-      position: absolute;
-      width: 10px;
-      height: 10px;
-    }
+        .repeat-arrow {
+            position: absolute;
+            right: 10px;
+            bottom: 5px;
+            font-size: 24px;
+            transform: rotate(180deg);
+        }
 
-    .repeat-button::before {
-      top: 50%;
-      left: -5px;
-      transform: translateY(-50%);
-      border-top-left-radius: 5px;
-      border-bottom-left-radius: 5px;
-      background-color: #ffcc00;
-    }
-
-    .repeat-button::after {
-      top: 50%;
-      right: -5px;
-      transform: translateY(-50%);
-      border-top-right-radius: 5px;
-      border-bottom-right-radius: 5px;
-      background-color: #ffcc00;
-    }
-
-    .repeat-button .arrow {
-      width: 20px;
-      height: 20px;
-      border: 2px solid gray;
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-right: 10px;
-    }
-
-    .repeat-button .arrow::before {
-      content: "";
-      width: 8px;
-      height: 8px;
-      border-top: 2px solid gray;
-      border-right: 2px solid gray;
-      transform: rotate(45deg);
-    }
-
-    .repeat-button .number {
-      background-color: lightgray;
-      border-radius: 5px;
-      padding: 5px 10px;
-    }
-  </style>
+        .repeat-number {
+            position: absolute;
+            bottom: -10px;
+            right: -10px;
+            background: white;
+            color: black;
+            font-size: 14px;
+            font-weight: bold;
+            width: 25px;
+            height: 25px;
+            line-height: 25px;
+            border-radius: 50%;
+            text-align: center;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+        }
+    </style>
 </head>
 <body>
 
-  <div class="repeat-button">
-    <div class="arrow"></div>
-    <div class="number">4</div>
-  </div>
+    <div class="repeat-button">
+        <span class="repeat-arrow">↩</span>
+        <div class="repeat-number">4</div>
+    </div>
 
 </body>
 </html>
