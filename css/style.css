@@ -184,6 +184,7 @@ main {
     display: flex;
     flex-wrap: wrap;
     padding: 10px;
+    background-color: #f0f0f0; /* שינוי מ-#0D66CA לאפור בהיר כדי להתאים לעיצוב */
 }
 
 #programming-area {
@@ -347,4 +348,35 @@ main {
 
 #grid-toggle:hover {
     background-color: #f0f0f0;
+}
+
+/* תיקונים לצבעי הבלוקים בקטגוריה פעילה */
+.block-category.active .scratch-block {
+    /* הסרת כל צבע סגול שעשוי להיות מוחל */
+    background-color: inherit;
+}
+
+/* וידוא שלכל קטגוריה יש את הצבע הנכון כשהיא פעילה */
+#triggering-blocks.active .block-container .scratch-block {
+    background-color: var(--triggering-color);
+}
+
+#motion-blocks.active .block-container .scratch-block {
+    background-color: var(--motion-color);
+}
+
+#looks-blocks.active .block-container .scratch-block {
+    background-color: var(--looks-color);
+}
+
+#sound-blocks.active .block-container .scratch-block {
+    background-color: var(--sound-color);
+}
+
+#control-blocks.active .block-container .scratch-block {
+    background-color: var(--control-color);
+}
+
+#end-blocks.active .block-container .scratch-block {
+    background-color: var(--end-color);
 }
