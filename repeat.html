@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>לחצן כתום תלת מימדי</title>
+  <title>לחצן כתום תלת מימדי - בליטה ימנית</title>
   <style>
     body {
       display: flex;
@@ -12,7 +12,7 @@
     }
 
     .button {
-      background-color: #FFA500; /* כתום */
+      background-color: #F0A364;  /* גוון כתום בהיר יותר */
       border: none;
       color: white;
       padding: 15px 32px;
@@ -23,26 +23,27 @@
       margin: 4px 2px;
       cursor: pointer;
       border-radius: 10px;
-      transition: all 0.3s ease; /* מעבר חלק לכל השינויים */
+      transition: all 0.3s ease;
       width: 150px;
       height: 90px;
-      /* אפקט תלת מימד */
-      box-shadow: inset 5px 0px 5px rgba(0, 0, 0, 0.2), /* שקע בצד שמאל */
-                  5px 5px 7px rgba(0, 0, 0, 0.3);    /* בליטה תחתונה ימנית */
+      /* אפקט תלת מימד - בליטה ימנית */
+      box-shadow:  3px 3px 6px #b88150, /* צל חיובי בצד ימין ובחלק תחתון  */
+                  -3px -3px 6px #ffc57e; /* צל שלילי בצד שמאל ובחלק העליון */
+
     }
 
     .button:hover {
-      background-color: #FF8C00; /* כתום כהה יותר בריחוף */
-      /*שינוי קל בצל בריחוף*/
-      box-shadow: inset 3px 0px 3px rgba(0, 0, 0, 0.2), /* שקע בצד שמאל */
-                  3px 3px 5px rgba(0, 0, 0, 0.3);    /* בליטה תחתונה ימנית */
+      background-color: #E09354; /* גוון כהה יותר בריחוף */
+      /* שינוי קל בצל בריחוף */
+      box-shadow:  2px 2px 5px #b88150,
+                  -2px -2px 5px #ffc57e;
     }
 
     .button:active {
-      background-color: #FF7700; /* כתום כהה יותר בלחיצה */
+      background-color: #D08344; /* גוון כהה עוד יותר בלחיצה */
       /* אפקט של לחיצה עמוקה */
-      box-shadow: inset 7px 0px 7px rgba(0, 0, 0, 0.4),
-                  7px 7px 9px rgba(0, 0, 0, 0.5);
+      box-shadow: inset 2px 2px 3px #b88150,
+                  inset -2px -2px 3px #ffc57e;
     }
   </style>
 </head>
