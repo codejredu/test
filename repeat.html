@@ -19,7 +19,7 @@
             width: 200px;
             height: 70px;
             background-color: #FFA64D;
-            border-radius: 10px; /* מעוגל יותר */
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -28,7 +28,8 @@
             color: white;
             text-align: center;
             cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* צל עמוק יותר */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            overflow: hidden; /* כדי להסתיר את חלקי השקע שיוצאים מגבולות הלחצן */
         }
         /* שקע עגול בצד שמאל */
         .back-button::before {
@@ -77,16 +78,17 @@
             border-bottom: 8px solid transparent;
             border-right: 12px solid #FFA64D;
         }
-        /* שקע מרובע בתחתית */
+        /* שקע מרובע בתחתית, שקוע בתוך הלחצן */
         .back-button .bottom-notch {
             position: absolute;
-            bottom: -15px; /* מוריד את השקע למטה יותר */
+            bottom: 0; /* ממוקם בתחתית הלחצן */
             left: 50%;
             transform: translateX(-50%);
-            width: 40px; /* מקטין את רוחב השקע */
-            height: 20px; /* מקטין את גובה השקע */
+            width: 40px;
+            height: 60px; /* גובה פי 3 מהקודם */
             background-color: white;
-            border-radius: 0 0 10px 10px; /* מעגל את הפינות התחתונות */
+            border-radius: 0 0 10px 10px;
+            overflow: hidden; /* כדי להסתיר את חלקי השקע שיוצאים מגבולותיו */
         }
         /* שקע בצד שמאל של השקע התחתון */
         .back-button .bottom-notch::before {
