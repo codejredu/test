@@ -14,21 +14,44 @@
     const canvas = document.getElementById("myCanvas");
     const ctx = canvas.getContext("2d");
 
-    function drawBlock(x, y, width, height, color, icon) {
-      // צייר את הלבנה
+    function drawRoundedBlock(x, y, width, height, color, icon, borderRadius) {
+      // התחל נתיב חדש
+      ctx.beginPath();
+
+      // צייר פינה מעוגלת שמאלית עליונה
+      ctx.moveTo(x + borderRadius, y);
+      ctx.lineTo(x + width - borderRadius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + borderRadius);
+
+      // צייר פינה מעוגלת ימנית תחתונה
+      ctx.lineTo(x + width, y + height - borderRadius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - borderRadius, y + height);
+
+      // צייר פינה מעוגלת שמאלית תחתונה
+      ctx.lineTo(x + borderRadius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - borderRadius);
+
+      // צייר פינה מעוגלת שמאלית עליונה
+      ctx.lineTo(x, y + borderRadius);
+      ctx.quadraticCurveTo(x, y, x + borderRadius, y);
+
+      // סגור את הנתיב
+      ctx.closePath();
+
+      // מלא את הצורה
       ctx.fillStyle = color;
-      ctx.fillRect(x, y, width, height);
+      ctx.fill();
 
       // צייר את האייקון (לדוגמה, חץ)
       ctx.font = "20px Arial";
       ctx.fillStyle = "white";
-      ctx.fillText(icon, x + width / 2 - 10, y + height / 2 + 5); // ממקם את הטקסט במרכז
-
-      // אפשר להוסיף כאן קוד נוסף לציור בליטות/שקעים
+      ctx.textAlign = "center"; // יישור הטקסט למרכז
+      ctx.textBaseline = "middle"; // יישור הטקסט לגובה
+      ctx.fillText(icon, x + width / 2, y + height / 2);
     }
 
     // שימוש בפונקציה
-    drawBlock(10, 10, 150, 50, "yellow", "⟳"); // קוד ASCII עבור חץ מעגלי
+    drawRoundedBlock(10, 10, 150, 50, "yellow", "⟳", 10); // קוד ASCII עבור חץ מעגלי, רדיוס פינה 10
   </script>
 </body>
 </html>
