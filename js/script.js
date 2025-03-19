@@ -1,3 +1,5 @@
+--- START OF FILE script.js ---
+
 // ========================================================================
 // הגדרת בלוקים (Blocks)
 // ========================================================================
@@ -156,18 +158,6 @@ const blocks = {
             icon: "assets/images/blocks/repeat.svg",
             color: "var(--control-color)"
         },
-        {
-            name: "Repeat Forever",
-            type: "repeatForever",
-            icon: "assets/images/blocks/repeat-forever.svg",
-            color: "var(--control-color)"
-        },
-        {
-            name: "Go To Page",
-            color: "var(--control-color)",
-            type: "goToPage",
-            icon: "assets/images/blocks/go-to-page.svg",
-        },
     ],
     end: [
         {
@@ -181,6 +171,18 @@ const blocks = {
             color: "var(--end-color)",
             type: "end",
             icon: "assets/images/blocks/end.svg",
+        },
+        {
+            name: "Repeat Forever",
+            type: "repeatForever",
+            icon: "assets/images/blocks/repeat-forever.svg",
+            color: "var(--control-color)" // Note: Keeping the original color, you can change to var(--end-color) if needed.
+        },
+        {
+            name: "Go To Page",
+            color: "var(--control-color)", // Note: Keeping the original color, you can change to var(--end-color) if needed.
+            type: "goToPage",
+            icon: "assets/images/blocks/go-to-page.svg",
         },
     ],
 };
