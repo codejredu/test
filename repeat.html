@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="he">
 <head>
   <meta charset="UTF-8">
@@ -15,28 +15,30 @@
       position: relative; /* מיקום יחסי עבור אלמנטים פנימיים */
     }
 
-    .repeat-button::before {
-      content: "";
-      position: absolute;
-      top: -5px;
-      left: 10px;
-      width: 20px;
-      height: 10px;
-      background-color: #ffcc00;
-      border-top-left-radius: 5px;
-      border-top-right-radius: 5px;
-    }
-
+    .repeat-button::before,
     .repeat-button::after {
       content: "";
       position: absolute;
-      top: -5px;
-      right: 10px;
-      width: 20px;
+      width: 10px;
       height: 10px;
-      background-color: #ffcc00;
+    }
+
+    .repeat-button::before {
+      top: 50%;
+      left: -5px;
+      transform: translateY(-50%);
       border-top-left-radius: 5px;
+      border-bottom-left-radius: 5px;
+      background-color: #ffcc00;
+    }
+
+    .repeat-button::after {
+      top: 50%;
+      right: -5px;
+      transform: translateY(-50%);
       border-top-right-radius: 5px;
+      border-bottom-right-radius: 5px;
+      background-color: #ffcc00;
     }
 
     .repeat-button .arrow {
