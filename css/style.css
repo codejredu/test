@@ -1,4 +1,4 @@
-/* style.css */
+/* style.css - עם צבעים מעודכנים לילדי גן */
 :root {
     --motion-color: #66D2FF;    /* כחול-תכלת בהיר */
     --triggering-color: #FFE866; /* צהוב בננה רך */
@@ -249,7 +249,7 @@ main {
 #block-palette .scratch-block,
 #programming-area .scratch-block {
     position: relative;
-    width: 87 px;
+    width: 87px;
     height: 80px;
     background-color: #ffff00;
     border-radius: 10px;
