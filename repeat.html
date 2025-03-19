@@ -2,7 +2,7 @@
 <html dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>הדגמת לחצן חזור בסגנון סקראץ' משופר</title>
+    <title>לחצן חזור בסגנון סקראץ' משופר</title>
     <style>
         body {
             display: flex;
@@ -19,7 +19,7 @@
             width: 200px;
             height: 70px;
             background-color: #FFA64D;
-            border-radius: 5px;
+            border-radius: 10px; /* מעוגל יותר */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -28,9 +28,9 @@
             color: white;
             text-align: center;
             cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* צל עמוק יותר */
         }
-        /* Left side circle indent */
+        /* שקע עגול בצד שמאל */
         .back-button::before {
             content: "";
             position: absolute;
@@ -42,7 +42,7 @@
             background-color: white;
             border-radius: 50%;
         }
-        /* Right side puzzle piece protrusion */
+        /* זיז בצורת פאזל בצד ימין */
         .back-button::after {
             content: "";
             position: absolute;
@@ -55,7 +55,7 @@
             border-radius: 50%;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
-        /* White rectangle for the icon area */
+        /* אזור לבן לסמל החץ */
         .back-button .icon-area {
             position: absolute;
             width: 30px;
@@ -68,7 +68,7 @@
             align-items: center;
             justify-content: center;
         }
-        /* Arrow icon */
+        /* סמל חץ */
         .back-button .icon-area::before {
             content: "";
             width: 0;
@@ -77,18 +77,18 @@
             border-bottom: 8px solid transparent;
             border-right: 12px solid #FFA64D;
         }
-        /* Bottom rectangular indent - made square */
+        /* שקע מרובע בתחתית */
         .back-button .bottom-notch {
             position: absolute;
-            bottom: -5px;
+            bottom: -15px; /* מוריד את השקע למטה יותר */
             left: 50%;
             transform: translateX(-50%);
-            width: 50px;
-            height: 50px;
+            width: 40px; /* מקטין את רוחב השקע */
+            height: 20px; /* מקטין את גובה השקע */
             background-color: white;
-            border-radius: 0 0 5px 5px;
+            border-radius: 0 0 10px 10px; /* מעגל את הפינות התחתונות */
         }
-        /* Left side indent on bottom notch */
+        /* שקע בצד שמאל של השקע התחתון */
         .back-button .bottom-notch::before {
             content: "";
             position: absolute;
@@ -97,10 +97,10 @@
             transform: translateY(-50%);
             width: 20px;
             height: 20px;
-            background-color: #f5f5f5; /* שקע - צבע הרקע של הדף */
+            background-color: #f5f5f5; /* צבע רקע הדף */
             border-radius: 50%;
         }
-        /* Right side indent on bottom notch */
+        /* שקע בצד ימין של השקע התחתון */
         .back-button .bottom-notch::after {
             content: "";
             position: absolute;
@@ -109,15 +109,27 @@
             transform: translateY(-50%);
             width: 20px;
             height: 20px;
-            background-color: #f5f5f5; /* שקע - צבע הרקע של הדף */
+            background-color: #f5f5f5; /* צבע רקע הדף */
             border-radius: 50%;
         }
-        /* Hover effect */
+        /* אפקט ריחוף */
         .back-button:hover {
             background-color: #FF9933;
         }
         .back-button:hover::after {
             background-color: #FF9933;
+        }
+        /* עיצוב המיקום של המספר 4 */
+        .back-button .number {
+            position: absolute;
+            bottom: -20px;
+            right: 10px;
+            background-color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 16px;
+            color: #333;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .button-container {
@@ -136,10 +148,11 @@
 </head>
 <body>
     <div class="button-container">
-        <div class="description">לחצן חזור בסגנון סקראץ' ג'וניור:</div>
+        <div class="description">לחצן חזור בסגנון סקראץ' משופר:</div>
         <div class="back-button">
             <div class="icon-area"></div>
             <div class="bottom-notch"></div>
+            <div class="number">4</div>
         </div>
     </div>
 </body>
