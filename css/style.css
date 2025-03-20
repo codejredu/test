@@ -312,6 +312,14 @@ main {
     height: 200%;
 }
 
+.block-icon-img {
+    max-width: 60%;
+    max-height: 60%;
+    display: block;
+    margin: auto; /* Center the image */
+}
+
+
 #triggering-blocks .block-container .scratch-block {
     background-color: var(--triggering-color);
 }
@@ -390,4 +398,14 @@ main {
     padding-left: 10px;
     text-align: center; /* מרכוז טקסט אם יש */
     font-size: 20px; /* גודל גופן מתאים לרוחב החדש */
+}
+
+/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
+#control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
+#programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
+    position: absolute; /* כדי לאפשר מיקום פינתי */
+    top: 5px;          /* מרחק קטן מהקצה העליון */
+    right: 5px;         /* מרחק קטן מהקצה הימני */
+    max-width: 30%;   /* הקטנת האייקון אם צריך */
+    max-height: 30%;
 }
