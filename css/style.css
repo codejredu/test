@@ -381,31 +381,32 @@ main {
     background-color: var(--end-color);
 }
 
-/* הרחבת בלוק ה-REPEAT בלבד וחזרה למצב איקון קודם */
+/* הרחבת בלוק ה-REPEAT בלבד */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #control-blocks.active .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
     width: 140px; /* רוחב מורחב לבלוק repeat - שונה ל-140px */
-    flex-direction: row; /* חזרה לכיוון שורה רגיל */
-    align-items: center; /* יישור אנכי למרכז */
-    padding-top: 0; /* הסרת מרווח עליון */
-    padding-right: 0; /* הסרת מרווח ימני */
-    justify-content: center; /* יישור למרכז */
-    text-align: center; /* יישור טקסט למרכז */
-    padding-bottom: 0; /* הסרת מרווח תחתון */
-    height: 80px; /* חזרה לגובה רגיל */
+    flex-direction: column-reverse; /* שינוי לטור הפוך כדי ליישר איקון למעלה */
+    align-items: flex-end; /* יישור איקון לקצה הימני */
+    padding-top: 10px; /* מרווח פנימי עליון לאיקון */
+    padding-right: 10px; /* מרווח פנימי ימני לאיקון */
+    justify-content: flex-start; /* יישור התוכן לתחילת הבלוק (למעלה במקרה זה) */
+    text-align: right; /* יישור טקסט לימין אם יש */
+    padding-bottom: 60px; /* מרווח תחתון כדי לפנות מקום לשקע */
+    height: 140px; /* גובה מוגדל כדי להכיל איקון ושקע */
     display: flex; /* לוודא ש-display flex פעיל */
 }
+
 
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #control-blocks.active .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
     right: -14px; /* שמירה על מיקום המחבר הימני */
-    top: 50%; /* חזרה למיקום אנכי מרכזי */
-    bottom: auto; /* ביטול הגדרת bottom */
+    top: auto; /* ביטול הגדרה קודמת של top */
+    bottom: 60px; /* מיקום המחבר מעל השקע */
 }
 
-/* יצירת שקע פנימי בפאה התחתונה של בלוק ה-REPEAT */
+/* יצירת שקע פנימי בפאה התחתונה של בלוק ה-REPEAT - צבע לבן ומיקום מעודכן */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #control-blocks.active .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
@@ -416,7 +417,7 @@ main {
     transform: translateX(-50%) translateY(50%); /* מרכוז והזזה פנימה */
     width: 80%; /* רוחב השקע - 80% מרוחב הלבנה */
     height: 30px; /* גובה השקע הפנימי */
-    background-color: #e0a257; /* צבע מעט כהה יותר מכתום כדי ליצור עומק */
+    background-color: white; /* צבע השקע - לבן */
     border-radius: 0 0 10px 10px; /* עיגול פינות תחתונות */
     box-shadow: inset 0 5px 5px rgba(0, 0, 0, 0.3); /* צל פנימי לשקע */
     z-index: 0; /* השקע מעל הרקע של הלבנה */
@@ -424,17 +425,14 @@ main {
 
 .block-icon-img {
     margin-left: 10px; /* מרווח בין האיקון לקצה השמאלי של הבלוקים הרגילים */
-    margin-right: auto; /* דחיפת האיקון לשמאל */
-    margin-top: auto;
-    margin-bottom: auto;
 }
 
 /* תיקון מרווח איקון בבלוק repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #control-blocks.active .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
-    margin-left: 10px; /* מרווח שמאלי לאיקון בבלוק repeat */
+    margin-left: 0; /* הסרת מרווח שמאלי מהאיקון בבלוק repeat */
     margin-right: 0; /* הסרת מרווח ימני מהאיקון בבלוק repeat */
-    margin-top: auto;
-    margin-bottom: auto;
+    margin-top: 0;
+    margin-bottom: auto; /* דחיפת האיקון לפינה ימנית עליונה */
 }
