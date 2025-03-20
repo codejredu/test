@@ -1,5 +1,3 @@
-// --- START OF FILE script.js ---
-
 // ========================================================================
 // הגדרת בלוקים (Blocks)
 // ========================================================================
@@ -453,4 +451,3 @@ stage.addEventListener('drop', (event) => {
     character.style.left = x + 'px';
     character.style.top = y + 'px';
 });
-// --- END OF FILE script.js ---
