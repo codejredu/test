@@ -1,3 +1,5 @@
+--- START OF FILE style.css ---
+
 /* style.css - עם צבעים מעודכנים לילדי גן */
 :root {
     --motion-color: #66D2FF;    /* כחול-תכלת בהיר */
@@ -398,6 +400,7 @@ main {
     padding-left: 10px;
     text-align: center; /* מרכוז טקסט אם יש */
     font-size: 20px; /* גודל גופן מתאים לרוחב החדש */
+    position: relative; /* חשוב למיקום ::after */
 }
 
 /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
@@ -408,4 +411,18 @@ main {
     right: 5px;         /* מרחק קטן מהקצה הימני */
     max-width: 30%;   /* הקטנת האייקון אם צריך */
     max-height: 30%;
+}
+
+/* יצירת חלל במרכז בלוק ה-Repeat */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
+#programming-area .block-container[data-type="repeat"] .scratch-block::after {
+    content: '';
+    position: absolute;
+    top: 25px; /* מיקום אנכי של החלל */
+    left: 45px; /* מיקום אופקי של החלל */
+    width: 50px; /* רוחב החלל */
+    height: 30px; /* גובה החלל */
+    background-color: #fff; /* צבע הרקע של האיזור התוכנה - יוצר את החלל */
+    border-radius: 5px; /* אם רוצים פינות מעוגלות לחלל */
+    z-index: 1; /* לוודא שהחלל מעל הבלוק */
 }
