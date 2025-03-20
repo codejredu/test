@@ -411,7 +411,7 @@ main {
     left: 50%;
     transform: translateX(-50%);
     width: 80px; /* Width of the hole */
-    height: 50px; /* Height of the hole */
+    height: 60px; /* Height of the hole */
     background-color: #f0f4ff; /* Match the background color of the stage */
     border-radius: 10px 10px 10px 10px; /* הוספת עיגול לפינות העליונות (10px לכל הפינות) */
     pointer-events: none; /* Allow clicks to pass through */
