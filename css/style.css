@@ -393,11 +393,31 @@ main {
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
     width: 140px; /* רוחב לבנה 140px */
-    border-radius: 30px 10px 10px 30px; /* צורת "ח" -  מעוגל יותר בצדדים שמאל וימין פחות */
+    border-radius: 30px 10px 10px 30px; /* צורת "ח" בחלק העליון */
     padding-right: 10px; /* קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה */
     padding-left: 10px;
     text-align: center; /* מרכוז טקסט אם יש */
     font-size: 20px; /* גודל גופן מתאים לרוחב החדש */
+    position: relative;
+    /* יוצר את צורת הח' עם גובה מינימלי ושוליים תחתונים */
+    min-height: 40px;
+    border-bottom: none; /* מבטל את הגבול התחתון */
+    border-bottom-left-radius: 0; /* מבטל עיגול בפינה השמאלית התחתונה */
+    border-bottom-right-radius: 0; /* מבטל עיגול בפינה הימנית התחתונה */
+}
+
+/* מוסיף חלק תחתון לבלוק שיוצר את הפתח של צורת ח' */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
+#programming-area .block-container[data-type="repeat"] .scratch-block::after {
+    content: "";
+    position: absolute;
+    bottom: -10px; /* מרחק מתחת לבלוק העיקרי */
+    left: 0;
+    height: 10px; /* גובה הפתח */
+    width: 100%;
+    background-color: inherit; /* משתמש באותו צבע כמו הבלוק העיקרי */
+    border-radius: 0 0 10px 30px; /* עיגול בפינות התחתונות */
+    border-top: none; /* ללא גבול עליון כדי ליצור את הפתח */
 }
 
 /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
