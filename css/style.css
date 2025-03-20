@@ -407,33 +407,16 @@ main {
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
     content: '';
     position: absolute;
-    top: 15px; /* שימוש ב-top להצבה מהחלק העליון */
+    top: 15px; /* עדכון המיקום - 10px למעלה מהמיקום הקודם */
     left: 50%;
     transform: translateX(-50%);
     width: 80px; /* Width of the hole */
-    height: 50px; /* Height of the hole */
+    height: 65px; /* Height of the hole */
     background-color: #f0f4ff; /* Match the background color of the stage */
-    border-radius: 10px 10px 10px 10px; /* פינות עגולות (10px לכל הפינות) */
+    border-radius: 10px 10px 10px 10px; /* הוספת עיגול לפינות העליונות (10px לכל הפינות) */
     pointer-events: none; /* Allow clicks to pass through */
     z-index: 1; /* Ensure the hole is above the block's content, but below the icon*/
 }
-
-/* הוספת הפין בפאה הימנית */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
-    content: '';
-    position: absolute;
-    top: 50%; /* מיקום אנכי במרכז */
-    right: -10px; /* מיקום מעבר לגבול הימני */
-    transform: translateY(-50%); /* יישור אנכי מדויק */
-    width: 10px; /* רוחב הפין */
-    height: 10px; /* גובה הפין */
-    background-color: #f0f4ff; /* צבע זהה לצבע המלבן הלבן */
-    border-radius: 50%; /* עיגול מלא */
-    pointer-events: none; /* אפשור מעבר קליקים */
-    z-index: 1; /* שכבה זהה למלבן הלבן */
-}
-
 /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
