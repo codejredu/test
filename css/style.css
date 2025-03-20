@@ -386,15 +386,15 @@ main {
 #control-blocks.active .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
     width: 140px; /* רוחב מורחב לבלוק repeat - שונה ל-140px */
-    flex-direction: column-reverse; /* שינוי לטור הפוך כדי ליישר איקון למעלה */
-    align-items: flex-end; /* יישור איקון לקצה הימני */
-    padding-top: 10px; /* מרווח פנימי עליון לאיקון */
-    padding-right: 10px; /* מרווח פנימי ימני לאיקון */
-    justify-content: flex-start; /* יישור התוכן לתחילת הבלוק (למעלה במקרה זה) */
-    text-align: right; /* יישור טקסט לימין אם יש */
-    padding-bottom: 60px; /* מרווח תחתון כדי לפנות מקום לשקע */
-    height: 140px; /* גובה מוגדל כדי להכיל איקון ושקע */
-    display: flex; /* לוודא ש-display flex פעיל */
+    height: 80px; /* גובה חזרה לגובה רגיל של בלוקים אחרים */
+    flex-direction: row; /* חזרה לכיוון שורה רגיל */
+    align-items: center; /* יישור אנכי למרכז */
+    justify-content: flex-start; /* יישור תוכן לתחילת השורה (שמאל) */
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-right: 0;
+    padding-left: 10px; /* הוספת ריפוד שמאלי לאיקון */
+    text-align: left; /* יישור טקסט לשמאל */
 }
 
 
@@ -402,8 +402,8 @@ main {
 #control-blocks.active .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
     right: -14px; /* שמירה על מיקום המחבר הימני */
-    top: auto; /* ביטול הגדרה קודמת של top */
-    bottom: 60px; /* מיקום המחבר מעל השקע */
+    top: 50%; /* חזרה למיקום אנכי מרכזי */
+    bottom: auto; /* ביטול הגדרת bottom */
 }
 
 /* יצירת שקע פנימי בפאה התחתונה של בלוק ה-REPEAT - צבע לבן ומיקום מעודכן */
@@ -424,15 +424,18 @@ main {
 }
 
 .block-icon-img {
-    margin-left: 10px; /* מרווח בין האיקון לקצה השמאלי של הבלוקים הרגילים */
+    margin-left: 0; /* הסרת מרווח שמאלי בגלל ריפוד בבלוק */
+    margin-right: auto; /* דחיפת האיקון לימין */
+    margin-top: auto;
+    margin-bottom: auto;
 }
 
 /* תיקון מרווח איקון בבלוק repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #control-blocks.active .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
-    margin-left: 0; /* הסרת מרווח שמאלי מהאיקון בבלוק repeat */
-    margin-right: 0; /* הסרת מרווח ימני מהאיקון בבלוק repeat */
-    margin-top: 0;
-    margin-bottom: auto; /* דחיפת האיקון לפינה ימנית עליונה */
+    margin-left: 0; /* לוודא שאין מרווח שמאלי כפול */
+    margin-right: 10px; /* מרווח ימני לאיקון בבלוק repeat - למיקום סופי */
+    margin-top: auto;
+    margin-bottom: auto;
 }
