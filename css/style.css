@@ -398,6 +398,25 @@ main {
     padding-left: 10px;
     text-align: center; /* מרכוז טקסט אם יש */
     font-size: 20px; /* גודל גופן מתאים לרוחב החדש */
+    position: relative; /* Required for the "hole" positioning */
+    overflow: visible; /* Ensure the "hole" is not clipped */
+    height: 80px; /* Keep the height consistent */
+}
+
+/* הוספת החור לבלוק Repeat */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
+#programming-area .block-container[data-type="repeat"] .scratch-block::after {
+    content: '';
+    position: absolute;
+    bottom: -10px; /* Position the hole slightly below the block */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px; /* Width of the hole */
+    height: 10px; /* Height of the hole */
+    background-color: #f0f4ff; /* Match the background color of the stage */
+    border-radius: 0 0 10px 10px; /* Rounded bottom corners */
+    pointer-events: none; /* Allow clicks to pass through */
+    z-index: 1; /* Ensure the hole is above the block's content, but below the icon*/
 }
 
 /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
@@ -408,4 +427,5 @@ main {
     right: 5px;         /* מרחק קטן מהקצה הימני */
     max-width: 30%;   /* הקטנת האייקון אם צריך */
     max-height: 30%;
+    z-index: 2; /*Ensure the icon is above the hole*/
 }
