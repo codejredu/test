@@ -407,7 +407,7 @@ main {
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
     content: '';
     position: absolute;
-    bottom: 10px; /* עדכון המיקום - 10px למעלה מהמיקום הקודם */
+    bottom: 30px; /* עדכון המיקום - 10px למעלה מהמיקום הקודם */
     left: 50%;
     transform: translateX(-50%);
     width: 80px; /* Width of the hole */
