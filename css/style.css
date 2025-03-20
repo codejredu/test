@@ -388,42 +388,63 @@ main {
 #end-blocks.active .block-container .scratch-block {
     background-color: var(--end-color);
 }
-
 /* סגנון מיוחד לבלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
-    width: 140px; /* רוחב לבנה 140px */
-    border-radius: 30px 10px 10px 30px; /* צורת "ח" -  מעוגל יותר בצדדים שמאל וימין פחות */
-    padding-right: 10px; /* קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה */
-    padding-left: 10px;
-    text-align: center; /* מרכוז טקסט אם יש */
-    font-size: 20px; /* גודל גופן מתאים לרוחב החדש */
-    position: relative; /* Required for the "hole" positioning */
-    overflow: visible; /* Ensure the "hole" is not clipped */
-    height: 80px; /* Keep the height consistent */
+    width: 180px; /* רוחב הלבנה */
+    height: 100px; /* גובה הלבנה */
+    background-color: #f0c888; /* צבע הלבנה (צהוב-כתום בהיר) */
+    border-radius: 50px; /* עיגול פינות מאוד גדול */
+    position: relative;
+    overflow: visible;
 }
-/* הוספת החור לבלוק Repeat */
+
+/* חור בצד שמאל */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 30px;
+    width: 40px;
+    height: 40px;
+    background-color: #f0c888; /* אותו צבע כמו הלבנה */
+    border-radius: 50%; /* עיגול מושלם */
+}
+
+/* בליטה בצד ימין */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
     content: '';
     position: absolute;
-    top: 15px; /* עדכון המיקום - 10px למעלה מהמיקום הקודם */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80px; /* Width of the hole */
-    height: 65px; /* Height of the hole */
-    background-color: #f0f4ff; /* Match the background color of the stage */
-    border-radius: 10px 10px 10px 10px; /* הוספת עיגול לפינות העליונות (10px לכל הפינות) */
-    pointer-events: none; /* Allow clicks to pass through */
-    z-index: 1; /* Ensure the hole is above the block's content, but below the icon*/
+    right: -20px;
+    top: 30px;
+    width: 40px;
+    height: 40px;
+    background-color: #f0c888; /* אותו צבע כמו הלבנה */
+    border-radius: 50%; /* עיגול מושלם */
 }
-/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
+
+/* חור ריבועי לבן באמצע */
+#control-blocks .block-container[data-type="repeat"] .scratch-block .block-content,
+#programming-area .block-container[data-type="repeat"] .scratch-block .block-content {
+    position: absolute;
+    top: 20px;
+    left: 40px;
+    width: 100px;
+    height: 60px;
+    background-color: white;
+    border-radius: 10px;
+    z-index: 1; /* מעל הבליטות והחורים */
+}
+
+/* אייקון בפינה הימנית העליונה */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
-    position: absolute; /* כדי לאפשר מיקום פינתי */
-    top: 5px;          /* מרחק קטן מהקצה העליון */
-    right: 5px;         /* מרחק קטן מהקצה הימני */
-    max-width: 30%;   /* הקטנת האייקון אם צריך */
-    max-height: 30%;
-    z-index: 2; /*Ensure the icon is above the hole*/
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    max-width: 25px;
+    max-height: 25px;
+    z-index: 2; /* מעל החור הלבן */
 }
