@@ -380,3 +380,14 @@ main {
 #end-blocks.active .block-container .scratch-block {
     background-color: var(--end-color);
 }
+
+/* סגנון מיוחד לבלוק Repeat */
+#control-blocks .block-container[data-type="repeat"] .scratch-block,
+#programming-area .block-container[data-type="repeat"] .scratch-block {
+    width: 140px; /* רוחב לבנה 140px */
+    border-radius: 30px 10px 10px 30px; /* צורת "ח" -  מעוגל יותר בצדדים שמאל וימין פחות */
+    padding-right: 10px; /* קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה */
+    padding-left: 10px;
+    text-align: center; /* מרכוז טקסט אם יש */
+    font-size: 20px; /* גודל גופן מתאים לרוחב החדש */
+}
