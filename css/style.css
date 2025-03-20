@@ -380,3 +380,120 @@ main {
 #end-blocks.active .block-container .scratch-block {
     background-color: var(--end-color);
 }
+
+
+/* ======================================================================== */
+/*  New Style for REPEAT Block                                            */
+/* ======================================================================== */
+
+/* Base style for the scratch block - adjust if needed to match your overall theme */
+#control-blocks .block-container[data-type="repeat"] .scratch-block,
+#programming-area .block-container[data-type="repeat"] .scratch-block {
+    position: relative;
+    background-color: var(--control-color); /* Use control color variable */
+    border-radius: 12px;
+    padding: 38px 50px; /* Adjust padding as needed */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 24px;
+    color: white;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3);
+    min-width: 120px; /* Adjust min-width as needed */
+    height: 25px;      /* Adjust height as needed */
+    padding-top: 20px; /* Added padding-top to make space for icon and text */
+    padding-bottom: 35px; /* Added padding-bottom to make space for bottom indent */
+    flex-direction: column; /* Stack icon and text vertically */
+}
+
+/* בליטה בצד ימין - הבליטה העיקרית של הפאזל */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
+#programming-area .block-container[data-type="repeat"] .scratch-block::after {
+    content: ''; /* Required for pseudo-elements */
+    position: absolute;
+    right: -15px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    background-color: inherit; /* Inherit block color */
+    border-radius: 50%;
+    z-index: 1;
+}
+
+/* שקע בצד שמאל - השקע של הפאזל - הוזז 5px ימינה, ללא צל */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+    content: ''; /* Required for pseudo-elements */
+    position: absolute;
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    background-color: #f0f4ff; /* Background color of your page */
+    border-radius: 50%;
+    box-shadow: none;
+}
+
+/* שקע מלבני בפאה התחתונה - ללא צל */
+#control-blocks .block-container[data-type="repeat"] .scratch-block .bottom-indent,
+#programming-area .block-container[data-type="repeat"] .scratch-block .bottom-indent {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90px;
+    height: 65px;
+    background-color: #f0f4ff; /* Background color of your page */
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    box-shadow: none;
+    z-index: 0; /* Ensure it's behind the main block content */
+}
+
+/* בליטה בפאה השמאלית של השקע התחתון */
+#control-blocks .block-container[data-type="repeat"] .scratch-block .bottom-left-protrusion,
+#programming-area .block-container[data-type="repeat"] .scratch-block .bottom-left-protrusion {
+    position: absolute;
+    bottom: 20px;
+    left: calc(50% - 55px);
+    width: 20px;
+    height: 20px;
+    background-color: inherit; /* Inherit block color */
+    border-radius: 50%;
+    z-index: 2;
+}
+
+/* שקע בפאה הימנית של השקע התחתון - הוזזה לימין + 5px נוספים ימינה, ללא צל */
+#control-blocks .block-container[data-type="repeat"] .scratch-block .bottom-right-indent,
+#programming-area .block-container[data-type="repeat"] .scratch-block .bottom-right-indent {
+    position: absolute;
+    bottom: 20px;
+    right: calc(50% - 55px - 5px);
+    width: 20px;
+    height: 20px;
+    background-color: #f0f4ff; /* Background color of your page */
+    border-radius: 50%;
+    box-shadow: none;
+    z-index: 2;
+}
+
+/* Optional: Style for the icon within the REPEAT block - adjust as needed */
+#control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
+#programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
+    max-width: 40px; /* Adjust icon size */
+    max-height: 40px;
+    margin-bottom: 5px; /* Space between icon and text */
+}
+
+/* Optional: Style for the block name text within the REPEAT block - adjust as needed */
+#control-blocks .block-container[data-type="repeat"] .scratch-block .block-name-text,
+#programming-area .block-container[data-type="repeat"] .scratch-block .block-name-text {
+    font-size: 18px; /* Adjust text size */
+    white-space: nowrap; /* Prevent text from wrapping */
+}
