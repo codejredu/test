@@ -239,8 +239,8 @@ main {
 
 #block-palette .block-container,
 #programming-area .block-container {
-    position: relative;
-    width: 100px;
+    position: relative; /* Keep position relative */
+    width: 100px;      /* Default width */
     height: 100px;
     margin: 8px;
     cursor: pointer;
@@ -248,8 +248,8 @@ main {
 }
 
 #block-palette .scratch-block,
-#programming-area .scratch-block {
-    position: relative;
+#programming-area .scratch-block,
+.scratch-block { /* Apply to scratch-block directly for general styling */
     width: 87px;
     height: 80px;
     background-color: #ffff00;
@@ -264,16 +264,14 @@ main {
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
-/* SVG Icon styling */
-.block-svg-icon {
-    width: 40px;
-    height: 40px;
-    display: block;
-    margin: 0 auto;
+/* Styles for the REPEAT block - double width */
+#block-palette .block-container.repeat-block-container,
+#programming-area .block-container.repeat-block-container {
+    width: 200px; /* Double the width */
 }
 
-#block-palette .scratch-block::after,
-#programming-area .scratch-block::after {
+#block-svg-icon {
+    width: 40px;
     content: '';
     position: absolute;
     right: -14px;
@@ -285,8 +283,8 @@ main {
     border-radius: 50%;
 }
 
-#block-palette .scratch-block::before,
-#programming-area .scratch-block::before {
+#block-palette .scratch-block::after,
+#programming-area .scratch-block::after {
     content: '';
     position: absolute;
     left: 0;
@@ -295,6 +293,15 @@ main {
     width: 18px;
     height: 18px;
     background-color: #f0f4ff;
+    border-radius: 50%;
+}
+
+/* SVG Icon styling */
+.block-svg-icon {
+    width: 40px;
+    height: 40px;
+    display: block;
+    margin: 0 auto;
     border-radius: 50%;
 }
 
