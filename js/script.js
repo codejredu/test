@@ -155,19 +155,7 @@ const blocks = {
             type: "repeat",
             icon: "assets/images/blocks/repeat.svg",
             color: "var(--control-color)"
-        },
-        {
-            name: "Repeat Forever",
-            type: "repeatForever",
-            icon: "assets/images/blocks/repeat-forever.svg",
-            color: "var(--control-color)"
-        },
-        {
-            name: "Go To Page",
-            color: "var(--control-color)",
-            type: "goToPage",
-            icon: "assets/images/blocks/go-to-page.svg",
-        },
+        }
     ],
     end: [
         {
@@ -181,6 +169,18 @@ const blocks = {
             color: "var(--end-color)",
             type: "end",
             icon: "assets/images/blocks/end.svg",
+        },
+        {
+            name: "Repeat Forever",
+            type: "repeatForever",
+            icon: "assets/images/blocks/repeat-forever.svg",
+            color: "var(--end-color)"  // שים לב שהצבע השתנה ל-end-color
+        },
+        {
+            name: "Go To Page",
+            color: "var(--end-color)",  // שים לב שהצבע השתנה ל-end-color
+            type: "goToPage",
+            icon: "assets/images/blocks/go-to-page.svg",
         },
     ],
 };
