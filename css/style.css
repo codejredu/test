@@ -385,7 +385,7 @@ main {
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #control-blocks.active .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
-    width: 120px; /* רוחב מורחב לבלוק repeat */
+    width: 150px; /* רוחב מורחב לבלוק repeat */
 }
 
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
