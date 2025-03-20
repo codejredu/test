@@ -1,4 +1,4 @@
-/* style.css - עם צבעים מעודכנים לילדי גן - תוקן ל"ח" ופתח תחתון */
+/* style.css - עם צבעים מעודכנים לילדי גן */
 :root {
     --motion-color: #66D2FF;    /* כחול-תכלת בהיר */
     --triggering-color: #FFE866; /* צהוב בננה רך */
@@ -389,48 +389,23 @@ main {
     background-color: var(--end-color);
 }
 
-/* סגנון מיוחד לבלוק Repeat - צורת "ח" ופתח תחתון */
+/* סגנון מיוחד לבלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
     width: 140px; /* רוחב לבנה 140px */
-    border-radius: 50px 10px 10px 50px; /* צורת "ח" משופרת */
-    padding-right: 10px;
+    border-radius: 30px 10px 10px 30px; /* צורת "ח" -  מעוגל יותר בצדדים שמאל וימין פחות */
+    padding-right: 10px; /* קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה */
     padding-left: 10px;
-    text-align: center;
-    font-size: 20px;
-    overflow: hidden; /* כדי שהפתח לא יגלוש החוצה */
+    text-align: center; /* מרכוז טקסט אם יש */
+    font-size: 20px; /* גודל גופן מתאים לרוחב החדש */
 }
-
-/* פתח תחתון לבלוק Repeat */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
-    content: '';
-    position: absolute;
-    bottom: 0; /* מתחיל מהקצה התחתון */
-    left: 50%; /* מרכוז אופקי */
-    transform: translateX(-50%); /* מרכוז אופקי מדויק */
-    width: 70px;  /* רוחב פתח 70px */
-    height: 30px; /* גובה פתח 30px */
-    background-color: inherit; /* צבע זהה ללבנה */
-    border-top-left-radius: 10px; /* עיגול פינות עליונות */
-    border-top-right-radius: 10px; /* עיגול פינות עליונות */
-    /* הסתרת חלק מהפתח מאחורי הלבנה */
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%); /* מסתיר את החלק התחתון של ה pseudo-element */
-}
-
 
 /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    max-width: 30%;
+    position: absolute; /* כדי לאפשר מיקום פינתי */
+    top: 5px;          /* מרחק קטן מהקצה העליון */
+    right: 5px;         /* מרחק קטן מהקצה הימני */
+    max-width: 30%;   /* הקטנת האייקון אם צריך */
     max-height: 30%;
-}
-
-/* מחברים נראים בתוך הפתח התחתון */
-#control-blocks .block-container[data-type="repeat"] .right-connector,
-#programming-area .block-container[data-type="repeat"] .right-connector {
-    z-index: 1; /* מוודא שהמחבר מעל הפתח */
 }
