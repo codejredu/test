@@ -386,31 +386,40 @@ main {
 #control-blocks.active .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
     width: 140px; /* רוחב מורחב לבלוק repeat - שונה ל-140px */
-    flex-direction: row-reverse; /* העברת האיקון לימין */
+    flex-direction: column-reverse; /* שינוי לטור הפוך כדי ליישר איקון למעלה */
+    align-items: flex-end; /* יישור איקון לקצה הימני */
+    padding-top: 10px; /* מרווח פנימי עליון לאיקון */
     padding-right: 10px; /* מרווח פנימי ימני לאיקון */
-    justify-content: flex-start; /* יישור התוכן לתחילת הבלוק (ימין במקרה זה) */
+    justify-content: flex-start; /* יישור התוכן לתחילת הבלוק (למעלה במקרה זה) */
+    text-align: right; /* יישור טקסט לימין אם יש */
+    padding-bottom: 60px; /* מרווח תחתון כדי לפנות מקום לשקע */
+    height: 140px; /* גובה מוגדל כדי להכיל איקון ושקע */
+    display: flex; /* לוודא ש-display flex פעיל */
 }
+
 
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #control-blocks.active .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
     right: -14px; /* שמירה על מיקום המחבר הימני */
+    top: auto; /* ביטול הגדרה קודמת של top */
+    bottom: 60px; /* מיקום המחבר מעל השקע */
 }
 
-/* יצירת שקע עמוק בחלק התחתון של בלוק ה-REPEAT */
+/* יצירת שקע עמוק בפאה התחתונה של בלוק ה-REPEAT */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #control-blocks.active .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
     content: '';
     position: absolute;
     left: 50%; /* מרכז אופקית */
-    bottom: -20px; /* מיקום השקע מתחת לבלוק */
+    bottom: 0px; /* מיקום השקע בתחתית הבלוק */
     transform: translateX(-50%); /* מרכוז השקע */
-    width: 50px; /* רוחב השקע */
-    height: 20px; /* גובה השקע */
+    width: 100px; /* רוחב השקע - 100px */
+    height: 60px; /* גובה השקע - 60px */
     background-color: inherit; /* צבע השקע זהה לבלוק */
     border-radius: 0 0 25px 25px; /* עיגול פינות תחתונות ליצירת שקע */
-    box-shadow: inset 0 5px 5px rgba(0, 0, 0, 0.2); /* צל פנימי לשקע עמוק */
+    box-shadow: inset 0 10px 10px rgba(0, 0, 0, 0.3); /* צל פנימי לשקע עמוק יותר */
     z-index: -1; /* מיקום השקע מאחורי התוכן */
 }
 
@@ -423,5 +432,7 @@ main {
 #control-blocks.active .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
     margin-left: 0; /* הסרת מרווח שמאלי מהאיקון בבלוק repeat */
-    margin-right: 10px; /* הוספת מרווח ימני לאיקון בבלוק repeat */
+    margin-right: 0; /* הסרת מרווח ימני מהאיקון בבלוק repeat */
+    margin-top: 0; /* הסרת מרווח עליון מהאיקון בבלוק repeat */
+    margin-bottom: auto; /* אפשור מרווח אוטומטי מלמטה כדי לדחוף אותו לפינה */
 }
