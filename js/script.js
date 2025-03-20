@@ -155,7 +155,19 @@ const blocks = {
             type: "repeat",
             icon: "assets/images/blocks/repeat.svg",
             color: "var(--control-color)"
-        }
+        },
+        {
+            name: "Repeat Forever",
+            type: "repeatForever",
+            icon: "assets/images/blocks/repeat-forever.svg",
+            color: "var(--control-color)"
+        },
+        {
+            name: "Go To Page",
+            color: "var(--control-color)",
+            type: "goToPage",
+            icon: "assets/images/blocks/go-to-page.svg",
+        },
     ],
     end: [
         {
@@ -169,18 +181,6 @@ const blocks = {
             color: "var(--end-color)",
             type: "end",
             icon: "assets/images/blocks/end.svg",
-        },
-        {
-            name: "Repeat Forever",
-            type: "repeatForever",
-            icon: "assets/images/blocks/repeat-forever.svg",
-            color: "var(--end-color)"  // שים לב שהצבע השתנה ל-end-color
-        },
-        {
-            name: "Go To Page",
-            color: "var(--end-color)",  // שים לב שהצבע השתנה ל-end-color
-            type: "goToPage",
-            icon: "assets/images/blocks/go-to-page.svg",
         },
     ],
 };
@@ -209,7 +209,7 @@ function createLeftConnector() {
     return leftConnectorWrapper;
 }
 
-// פונקציה ליצירת בלוק גרפי - עודכנה להוספת תמונות SVG
+// פונקציה ליצירת בלוק גרפי - עודכנה עבור בלוק REPEAT
 function createScratchBlock(block) {
     const scratchBlock = document.createElement("div");
     scratchBlock.classList.add("scratch-block");
@@ -221,7 +221,32 @@ function createScratchBlock(block) {
     iconImg.alt = block.name;
     iconImg.classList.add("block-icon-img");
 
+    // יצירת אלמנט טקסט עבור שם הבלוק
+    const blockNameText = document.createElement("span");
+    blockNameText.classList.add("block-name-text");
+    blockNameText.textContent = block.name; // Use block.name for text
+    blockNameText.style.userSelect = 'none'; // Prevent text selection during drag
+
     scratchBlock.appendChild(iconImg);
+    scratchBlock.appendChild(blockNameText);
+
+
+    if (block.type === "repeat") {
+        // Create bottom puzzle piece elements only for "repeat" block
+
+        const bottomIndent = document.createElement("div");
+        bottomIndent.classList.add("bottom-indent");
+        scratchBlock.appendChild(bottomIndent);
+
+        const bottomLeftProtrusion = document.createElement("div");
+        bottomLeftProtrusion.classList.add("bottom-left-protrusion");
+        scratchBlock.appendChild(bottomLeftProtrusion);
+
+        const bottomRightIndent = document.createElement("div");
+        bottomRightIndent.classList.add("bottom-right-indent");
+        scratchBlock.appendChild(bottomRightIndent);
+    }
+
     return scratchBlock;
 }
 
