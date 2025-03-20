@@ -398,6 +398,17 @@ main {
     padding-left: 10px;
     text-align: center; /* מרכוז טקסט אם יש */
     font-size: 20px; /* גודל גופן מתאים לרוחב החדש */
+    /* Add the new style for bottom notch */
+    clip-path: polygon(
+        0% 0%, 
+        100% 0%, 
+        100% 70%, 
+        70% 70%, 
+        70% 100%, 
+        30% 100%, 
+        30% 70%, 
+        0% 70%
+    );
 }
 
 /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
