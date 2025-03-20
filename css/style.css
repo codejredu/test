@@ -385,11 +385,43 @@ main {
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #control-blocks.active .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
-    width: 150px; /* רוחב מורחב לבלוק repeat */
+    width: 140px; /* רוחב מורחב לבלוק repeat - שונה ל-140px */
+    flex-direction: row-reverse; /* העברת האיקון לימין */
+    padding-right: 10px; /* מרווח פנימי ימני לאיקון */
+    justify-content: flex-start; /* יישור התוכן לתחילת הבלוק (ימין במקרה זה) */
 }
 
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #control-blocks.active .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
     right: -14px; /* שמירה על מיקום המחבר הימני */
+}
+
+/* יצירת שקע עמוק בחלק התחתון של בלוק ה-REPEAT */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#control-blocks.active .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+    content: '';
+    position: absolute;
+    left: 50%; /* מרכז אופקית */
+    bottom: -20px; /* מיקום השקע מתחת לבלוק */
+    transform: translateX(-50%); /* מרכוז השקע */
+    width: 50px; /* רוחב השקע */
+    height: 20px; /* גובה השקע */
+    background-color: inherit; /* צבע השקע זהה לבלוק */
+    border-radius: 0 0 25px 25px; /* עיגול פינות תחתונות ליצירת שקע */
+    box-shadow: inset 0 5px 5px rgba(0, 0, 0, 0.2); /* צל פנימי לשקע עמוק */
+    z-index: -1; /* מיקום השקע מאחורי התוכן */
+}
+
+.block-icon-img {
+    margin-left: 10px; /* מרווח בין האיקון לקצה השמאלי של הבלוקים הרגילים */
+}
+
+/* תיקון מרווח איקון בבלוק repeat */
+#control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
+#control-blocks.active .block-container[data-type="repeat"] .scratch-block .block-icon-img,
+#programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
+    margin-left: 0; /* הסרת מרווח שמאלי מהאיקון בבלוק repeat */
+    margin-right: 10px; /* הוספת מרווח ימני לאיקון בבלוק repeat */
 }
