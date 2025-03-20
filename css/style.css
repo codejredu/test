@@ -1,3 +1,5 @@
+--- START OF FILE style.css ---
+
 /* style.css - עם צבעים מעודכנים לילדי גן */
 :root {
     --motion-color: #66D2FF;    /* כחול-תכלת בהיר */
@@ -398,6 +400,7 @@ main {
     padding-left: 10px;
     text-align: center; /* מרכוז טקסט אם יש */
     font-size: 20px; /* גודל גופן מתאים לרוחב החדש */
+    position: relative; /* כדי שהפסאודו אלמנט יהיה יחסי לבלוק */
 }
 
 /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
@@ -408,4 +411,18 @@ main {
     right: 5px;         /* מרחק קטן מהקצה הימני */
     max-width: 30%;   /* הקטנת האייקון אם צריך */
     max-height: 30%;
+}
+
+/* הוספת מלבן תחתון לבלוק Repeat */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
+#programming-area .block-container[data-type="repeat"] .scratch-block::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0; /* מתחיל מהפאה התחתונה */
+    width: 100%;
+    height: 50%; /* גובה עד אמצע הלבנה (50% מהגובה המקורי של הלבנה) */
+    background-color: var(--control-color); /* צבע כתום */
+    border-radius: 0 0 10px 30px; /* התאמת פינות תחתונות לבלוק */
+    z-index: -1; /* להבטיח שהמלבן מאחורי הטקסט והאייקון */
 }
