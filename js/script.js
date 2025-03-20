@@ -418,9 +418,7 @@ clearAllButton.addEventListener("click", () => {
 });
 
 // אתחול הלוח עם הקטגוריה הפעילה הראשונה
-// исправление: вызываем handleCategoryChange с первой категорией
-handleCategoryChange("triggering");
-
+populateBlockPalette("triggering");
 
 // ========================================================================
 // גרירה של הדמות
