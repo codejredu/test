@@ -211,10 +211,14 @@ function createLeftConnector() {
 
 // פונקציה ליצירת בלוק גרפי - עודכנה להוספת תמונות SVG
 function createScratchBlock(block) {
+
     const scratchBlock = document.createElement("div");
     scratchBlock.classList.add("scratch-block");
     scratchBlock.style.backgroundColor = block.color;
 
+    if (block.type === 'repeat') {
+        scratchBlock.style.width = '174px'; // Double width for REPEAT block
+    }
     // יצירת אלמנט תמונה עבור האיקון
     const iconImg = document.createElement("img");
     iconImg.src = block.icon;
@@ -227,8 +231,12 @@ function createScratchBlock(block) {
 
 // פונקציה ליצירת HTML עבור בלוק
 function createBlockElement(block, category) {
+
     const blockContainer = document.createElement("div");
     blockContainer.classList.add("block-container");
+    if (block.type === 'repeat') {
+        blockContainer.classList.add("repeat-block-container"); // Specific class for REPEAT block container
+    }
 
     const scratchBlock = createScratchBlock(block);
     const rightConnector = createRightConnector(block.color);
@@ -296,6 +304,7 @@ function handleDrop(event) {
         const blockColor = data.color; // צבע הבלוק המקורי
         const blockName = data.name;
 
+        const isRepeatBlock =  blockType === 'repeat';
         // יצירת אלמנט בלוק חדש (שיבוט)
         const newBlock = document.createElement("div");
         newBlock.classList.add("block-container");
@@ -303,6 +312,9 @@ function handleDrop(event) {
 
         const scratchBlock = document.createElement("div");
         scratchBlock.classList.add("scratch-block");
+        if (isRepeatBlock) {
+            scratchBlock.style.width = '174px'; // Double width for REPEAT block
+        }
         scratchBlock.style.backgroundColor = blockColor; // שימוש בצבע המקורי של הבלוק
 
         // יצירת אלמנט תמונה עבור האיקון
@@ -331,6 +343,9 @@ function handleDrop(event) {
         // הוספת הכל ל container
         newBlock.appendChild(scratchBlock);
         newBlock.appendChild(rightConnector);
+        if (isRepeatBlock) {
+             newBlock.classList.add("repeat-block-container"); // Specific class for REPEAT block container
+        }
         newBlock.appendChild(leftConnectorWrapper);
         newBlock.dataset.type = blockType;
         newBlock.draggable = true; // אפשר גרירה לבלוקים חדשים
