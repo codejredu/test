@@ -411,8 +411,8 @@ main {
     bottom: -10px; /* Position the hole slightly below the block */
     left: 50%;
     transform: translateX(-50%);
-    width: 20px; /* Width of the hole */
-    height: 10px; /* Height of the hole */
+    width: 80px; /* Width of the hole */
+    height: 30px; /* Height of the hole */
     background-color: #f0f4ff; /* Match the background color of the stage */
     border-radius: 0 0 10px 10px; /* Rounded bottom corners */
     pointer-events: none; /* Allow clicks to pass through */
