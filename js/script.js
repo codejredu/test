@@ -418,7 +418,9 @@ clearAllButton.addEventListener("click", () => {
 });
 
 // אתחול הלוח עם הקטגוריה הפעילה הראשונה
-populateBlockPalette("triggering");
+// исправление: вызываем handleCategoryChange с первой категорией
+handleCategoryChange("triggering");
+
 
 // ========================================================================
 // גרירה של הדמות
@@ -442,4 +444,12 @@ stage.addEventListener('drop', (event) => {
     const characterHeight = character.offsetHeight;
 
     let x = event.clientX - stageRect.left - characterWidth / 2;
-    let y = event.clientY - stageRect.
+    let y = event.clientY - stageRect.top - characterHeight / 2;
+
+    // Stay within stage bounds
+    x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
+    y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
+
+    character.style.left = x + 'px';
+    character.style.top = y + 'px';
+});
