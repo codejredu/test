@@ -401,40 +401,22 @@ main {
     position: relative; /* Required for the "hole" positioning */
     overflow: visible; /* Ensure the "hole" is not clipped */
     height: 80px; /* Keep the height consistent */
-    background-color: #FF9933; /* צבע כתום - התאם לפי הצבע המדויק של הבלוק */
 }
 /* הוספת החור לבלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
     content: '';
     position: absolute;
-    top: 15px; /* שימוש ב-top להצבה מהחלק העליון */
+    top: 15px; /* עדכון המיקום - 10px למעלה מהמיקום הקודם */
     left: 50%;
     transform: translateX(-50%);
     width: 80px; /* Width of the hole */
-    height: 50px; /* Height of the hole */
+    height: 65px; /* Height of the hole */
     background-color: #f0f4ff; /* Match the background color of the stage */
-    border-radius: 10px 10px 10px 10px; /* פינות עגולות (10px לכל הפינות) */
+    border-radius: 10px 10px 10px 10px; /* הוספת עיגול לפינות העליונות (10px לכל הפינות) */
     pointer-events: none; /* Allow clicks to pass through */
     z-index: 1; /* Ensure the hole is above the block's content, but below the icon*/
 }
-
-/* הוספת בליטה בפאה הימנית */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
-    content: '';
-    position: absolute;
-    top: 50%; /* מיקום אנכי במרכז */
-    right: -10px; /* מיקום מעבר לגבול הימני */
-    transform: translateY(-50%); /* יישור אנכי מדויק */
-    width: 10px; /* רוחב הבליטה */
-    height: 20px; /* גובה הבליטה */
-    background-color: #FF9933; /* צבע זהה לצבע הבלוק (כתום) */
-    border-radius: 0 10px 10px 0; /* עיגול בצד ימין בלבד */
-    pointer-events: none; /* אפשור מעבר קליקים */
-    z-index: 1; /* שכבה זהה למלבן הלבן */
-}
-
 /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
