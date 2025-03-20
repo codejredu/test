@@ -391,7 +391,7 @@ main {
     background-color: var(--end-color);
 }
 
-/* סגנון מיוחד לבלוק Repeat */
+/* סגנון מיוחד לבלוק Repeat עם פתח לבן בצורת "ח" */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
     width: 140px; /* רוחב לבנה 140px */
@@ -400,6 +400,23 @@ main {
     padding-left: 10px;
     text-align: center; /* מרכוז טקסט אם יש */
     font-size: 20px; /* גודל גופן מתאים לרוחב החדש */
+    position: relative; /* חשוב להוסיף position: relative כדי למקם את ה-::after באופן אבסולוטי בתוכו */
+    overflow: hidden; /* חשוב למנוע מה"פתח" לבלוט מעבר לגבולות הבלוק */
+}
+
+/* יצירת ה"פתח" הלבן */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
+#programming-area .block-container[data-type="repeat"] .scratch-block::after {
+    content: '';
+    position: absolute;
+    top: 50%; /* מרכז אנכית */
+    left: 50%; /* מרכז אופקית */
+    transform: translate(-50%, -50%); /* מרכוז מדויק */
+    width: 20px; /* רוחב הפתח הלבן */
+    height: 40px; /* גובה הפתח הלבן */
+    background-color: white; /* צבע לבן לפתח */
+    border-radius: 5px; /* עיגול קל לפינות הפתח */
+    z-index: 1; /* מוודא שהפתח מעל צבע הבלוק */
 }
 
 /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
@@ -410,21 +427,5 @@ main {
     right: 5px;         /* מרחק קטן מהקצה הימני */
     max-width: 30%;   /* הקטנת האייקון אם צריך */
     max-height: 30%;
-    z-index: 2; /* לוודא שהאייקון מעל הפתח */
+    z-index: 2; /* מוודא שהאייקון מעל ה"פתח" הלבן */
 }
-
-/* הוספת פתח/גשר ללבנת REPEAT */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
-    content: ''; /* תוכן ריק */
-    position: absolute; /* מיקום אבסולוטי בתוך הלבנה */
-    top: 35%; /* מיקום אנכי - אמצע בערך */
-    left: 10%; /* הזזה קלה משמאל כדי למרכז יחסית */
-    width: 80%; /* רוחב הפתח - כ-80% מרוחב הלבנה */
-    height: 30%; /* גובה הפתח - כ-30% מגובה הלבנה */
-    background-color: #f0f0f0; /* צבע הרקע של הפתח - צריך להיות זהה לרקע של הפלטה או אזור התכנות */
-    border-radius: 5px; /* מעגליות קלה לפינות הפתח */
-    z-index: 1; /* לוודא שהפתח מעל הרקע של הלבנה */
-}
-
---- END OF FILE style.css ---
