@@ -1,3 +1,5 @@
+--- START OF FILE style.css ---
+
 /* style.css - עם צבעים מעודכנים לילדי גן */
 :root {
     --motion-color: #66D2FF;    /* כחול-תכלת בהיר */
@@ -408,4 +410,21 @@ main {
     right: 5px;         /* מרחק קטן מהקצה הימני */
     max-width: 30%;   /* הקטנת האייקון אם צריך */
     max-height: 30%;
+    z-index: 2; /* לוודא שהאייקון מעל הפתח */
 }
+
+/* הוספת פתח/גשר ללבנת REPEAT */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+    content: ''; /* תוכן ריק */
+    position: absolute; /* מיקום אבסולוטי בתוך הלבנה */
+    top: 35%; /* מיקום אנכי - אמצע בערך */
+    left: 10%; /* הזזה קלה משמאל כדי למרכז יחסית */
+    width: 80%; /* רוחב הפתח - כ-80% מרוחב הלבנה */
+    height: 30%; /* גובה הפתח - כ-30% מגובה הלבנה */
+    background-color: #f0f0f0; /* צבע הרקע של הפתח - צריך להיות זהה לרקע של הפלטה או אזור התכנות */
+    border-radius: 5px; /* מעגליות קלה לפינות הפתח */
+    z-index: 1; /* לוודא שהפתח מעל הרקע של הלבנה */
+}
+
+--- END OF FILE style.css ---
