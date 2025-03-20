@@ -380,3 +380,16 @@ main {
 #end-blocks.active .block-container .scratch-block {
     background-color: var(--end-color);
 }
+
+/* הרחבת בלוק ה-REPEAT בלבד */
+#control-blocks .block-container[data-type="repeat"] .scratch-block,
+#control-blocks.active .block-container[data-type="repeat"] .scratch-block,
+#programming-area .block-container[data-type="repeat"] .scratch-block {
+    width: 120px; /* רוחב מורחב לבלוק repeat */
+}
+
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
+#control-blocks.active .block-container[data-type="repeat"] .scratch-block::after,
+#programming-area .block-container[data-type="repeat"] .scratch-block::after {
+    right: -14px; /* שמירה על מיקום המחבר הימני */
+}
