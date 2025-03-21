@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>לחצן כתום מעוגל עם תיבת קלט</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding-left: 12.5px;
+            padding-right: 12.5px;
+        }
+
+        .orange-button {
+            width: 264px;
+            height: 135px;
+            background-color: orange;
+            border-radius: 50px 50px 5px 5px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            position: relative;
+            z-index: 2;
+        }
+
+        .orange-button:hover {
+            background-color: #ff8c00;
+        }
+
+        .orange-button:active {
+            background-color: #ff7f00;
+        }
+
+        .semi-circle {
+            width: 12.5px;
+            height: 28.125px;
+            border-radius: 50% 0 0 50%;
+            position: absolute;
+            top: 63.4375px;
+            z-index: 3;
+        }
+
+        .left-circle {
+            background-color: green;
+            left: 13px;
+            transform: scaleX(-1);
+        }
+
+        .right-circle {
+            background-color: brown;
+            right: 0px;
+            border-radius: 0 50% 50% 0;
+        }
+
+        .white-rectangle {
+            width: 130px;
+            height: 90px;
+            background-color: white;
+            position: absolute;
+            bottom: 0;
+            left: calc(50% - 10px);
+            transform: translateX(-50%);
+            border-radius: 10px 10px 0 0;
+        }
+
+        .blue-semi-circle {
+            width: 12.5px;
+            height: 28.125px;
+            border-radius: 0 50% 50% 0;
+            background-color: blue;
+            position: absolute;
+            top: 75px;
+            left: 190px;
+            z-index: 4;
+            transform: scaleX(-1);
+        }
+
+        .gray-semi-circle {
+            width: 12.5px;
+            height: 28.125px;
+            border-radius: 50% 0 0 50%;
+            background-color: gray;
+            position: absolute;
+            top: 75px;
+            left: 58px;
+            z-index: 4;
+            transform: scaleY(-1);
+        }
+
+        .input-container {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            z-index: 5;
+        }
+
+        .input-label {
+            display: none;
+            color: white;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .number-input {
+            width: 40px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 12px;
+            height: 25px;
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="semi-circle left-circle"></div>
+        <button class="orange-button">
+            <div class="white-rectangle"></div>
+        </button>
+        <div class="semi-circle right-circle"></div>
+        <div class="blue-semi-circle"></div>
+        <div class="gray-semi-circle"></div>
+        <div class="input-container">
+            <label for="number-input" class="input-label">הזן מספר:</label>
+            <input type="number" id="number-input" class="number-input" placeholder="0">
+        </div>
+    </div>
+</body>
+</html>
