@@ -417,6 +417,7 @@ main {
     pointer-events: none; /* Allow clicks to pass through */
     z-index: 1; /* Ensure the hole is above the block's content, but below the icon*/
 }
+
 /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
@@ -427,3 +428,15 @@ main {
     max-height: 30%;
     z-index: 2; /*Ensure the icon is above the hole*/
 }
+ /* בליטה בצד ימין - חצי עיגול בצבע זהה למלבן הגדול (צהוב) */
+        .puzzle-protrusion {
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            background-color: #FFCC00; /* צהוב - זהה למלבן הגדול */
+            border-radius: 0 20px 20px 0;
+            z-index: 1;
+        }
