@@ -430,16 +430,16 @@ main {
     z-index: 2;
 }
 
-/* הוספת חצי עיגול לבן בצד שמאל */
+/* הוספת חצי עיגול לבן בצד שמאל - שינוי גודל */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
     content: '';
     position: absolute;
     top: 0;
-    left: -20px; /* מיקום החצי עיגול מחוץ ללחצן */
-    width: 40px; /* קוטר החצי עיגול */
-    height: 20px; /* גובה זהה לגובה הלחצן */
+    left: -10px; /* מיקום החצי עיגול מחוץ ללחצן - שינוי מיקום */
+    width: 20px; /* קוטר החצי עיגול - שינוי גודל */
+    height: 10px; /* גובה זהה לגובה הלחצן - שינוי גודל */
     background-color: red;
-    border-radius: 20px 0 0 20px; /* יצירת חצי עיגול */
+    border-radius: 10px 0 0 10px; /* יצירת חצי עיגול */
     z-index: 3; /* מיקום מעל החור והאייקון */
 }
