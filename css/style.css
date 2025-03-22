@@ -436,7 +436,7 @@ main {
             transform: translateY(-50%);
             width: 20px;
             height: 20px;
-            background-color: #FFCC00; /* צהוב - זהה למלבן הגדול */
+            background-color: #00000; /* צהוב - זהה למלבן הגדול */
             border-radius: 0 20px 20px 0;
             z-index: 1;
         }
