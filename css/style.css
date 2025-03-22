@@ -392,137 +392,38 @@ main {
 /* סגנון מיוחד לבלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
-    width: 264px; /* רוחב לבנה 264px */
-    height: 135px; /* גובה לבנה 135px */
-    background-color: var(--control-color); /* הצבע של הבלוק */
-    border-radius: 50px 50px 5px 5px; /* צורת הכפתור */
-    color: white; /* צבע הטקסט */
-    font-size: 16px; /* גודל גופן */
-    cursor: pointer; /* סמן העכבר */
-    border: none;
-    position: relative; /* Required for positioning the semi-circles and the inner white rectangle */
-    padding: 0; /* Remove default padding */
-    overflow: visible; /* Ensure the semi-circles are not clipped */
-    z-index: 2; /* Ensure the block is above other elements */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
+    width: 140px; /* רוחב לבנה 140px */
+    border-radius: 30px 10px 10px 30px; /* צורת "ח" -  מעוגל יותר בצדדים שמאל וימין פחות */
+    padding-right: 10px; /* קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה */
+    padding-left: 10px;
+    text-align: center; /* מרכוז טקסט אם יש */
+    font-size: 20px; /* גודל גופן מתאים לרוחב החדש */
+    position: relative; /* Required for the "hole" positioning */
+    overflow: visible; /* Ensure the "hole" is not clipped */
+    height: 80px; /* Keep the height consistent */
 }
-
-/* Hover effect */
-#control-blocks .block-container[data-type="repeat"] .scratch-block:hover,
-#programming-area .block-container[data-type="repeat"] .scratch-block:hover {
-    background-color: #FFBD67; /*  הוסף צבע חיוור יותר על ריחוף */
-}
-
-/* Active state effect */
-#control-blocks .block-container[data-type="repeat"] .scratch-block:active,
-#programming-area .block-container[data-type="repeat"] .scratch-block:active {
-    background-color: #FFBD67; /*  הוסף צבע חיוור יותר על לחיצה */
-}
-
-/* Left Semi-Circle - Added for the left semi-circle */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
-    content: '';
-    width: 12.5px;
-    height: 28.125px;
-    border-radius: 50% 0 0 50%;
-    background-color: white;
-    position: absolute;
-    top: 63.4375px; /* Adjusted to match the design */
-    left: 13px;
-    transform: scaleX(-1);
-    z-index: 3;
-}
-
-/* Right Semi-Circle - Added for the right semi-circle */
+/* הוספת החור לבלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
     content: '';
-    width: 12.5px;
-    height: 28.125px;
-    border-radius: 0 50% 50% 0;
-    background-color: var(--control-color); /* Match block's background */
     position: absolute;
-    top: 63.4375px; /* Adjusted to match the design */
-    right: 0px;
-    z-index: 3;
-}
-
-/* White Rectangle */
-#control-blocks .block-container[data-type="repeat"] .scratch-block .white-rectangle,
-#programming-area .block-container[data-type="repeat"] .scratch-block .white-rectangle {
-    width: 130px;
-    height: 90px;
-    background-color: white;
-    position: absolute;
-    bottom: 0;
+    top: 15px; /* עדכון המיקום - 10px למעלה מהמיקום הקודם */
     left: 50%;
     transform: translateX(-50%);
-    border-radius: 10px 10px 0 0;
-    z-index: 1; /* Ensure it's behind the text */
+    width: 80px; /* Width of the hole */
+    height: 65px; /* Height of the hole */
+    background-color: #f0f4ff; /* Match the background color of the stage */
+    border-radius: 10px 10px 10px 10px; /* הוספת עיגול לפינות העליונות (10px לכל הפינות) */
+    pointer-events: none; /* Allow clicks to pass through */
+    z-index: 1; /* Ensure the hole is above the block's content, but below the icon*/
 }
-
-/* Additional semi circles - Blue */
-#control-blocks .block-container[data-type="repeat"] .scratch-block .blue-semi-circle,
-#programming-area .block-container[data-type="repeat"] .scratch-block .blue-semi-circle {
-    width: 12.5px;
-    height: 28.125px;
-    border-radius: 0 50% 50% 0;
-    background-color: var(--control-color); /* Match block's background */
-    position: absolute;
-    top: 75px;
-    left: 190px;
-    z-index: 4;
-    transform: scaleX(-1);
-}
-
-/* Additional semi circles - Gray */
-#control-blocks .block-container[data-type="repeat"] .scratch-block .gray-semi-circle,
-#programming-area .block-container[data-type="repeat"] .scratch-block .gray-semi-circle {
-    width: 12.5px;
-    height: 28.125px;
-    border-radius: 50% 0 0 50%;
-    background-color: white;
-    position: absolute;
-    top: 75px;
-    left: 58px;
-    z-index: 4;
-    transform: scaleY(-1);
-}
-
-/* Input Container  */
-#control-blocks .block-container[data-type="repeat"] .scratch-block .input-container,
-#programming-area .block-container[data-type="repeat"] .scratch-block .input-container {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    z-index: 5;
-    transform: translateX(-20px); /* הזזה שמאלה ב-20 פיקסלים */
-}
-
-/* Input Label */
-#control-blocks .block-container[data-type="repeat"] .scratch-block .input-container .input-label,
-#programming-area .block-container[data-type="repeat"] .scratch-block .input-container .input-label {
-    display: none; /* Hide the label by default */
-    color: white;
-    font-size: 12px;
-    margin-bottom: 4px;
-}
-
-/* Number Input */
-#control-blocks .block-container[data-type="repeat"] .scratch-block .input-container .number-input,
-#programming-area .block-container[data-type="repeat"] .scratch-block .input-container .number-input {
-    width: 40px;
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 12px;
-    height: 25px;
-    text-align: center;
+/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
+#control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
+#programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
+    position: absolute; /* כדי לאפשר מיקום פינתי */
+    top: 5px;          /* מרחק קטן מהקצה העליון */
+    right: 5px;         /* מרחק קטן מהקצה הימני */
+    max-width: 30%;   /* הקטנת האייקון אם צריך */
+    max-height: 30%;
+    z-index: 2; /*Ensure the icon is above the hole*/
 }
