@@ -402,32 +402,6 @@ main {
     overflow: visible; /* Ensure the "hole" is not clipped */
     height: 80px; /* Keep the height consistent */
 }
-/* הוספת החור לבלוק Repeat */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
-#programming-area .block-container[data-type="repeat"] .scratch-block::after {
-    content: '';
-    position: absolute;
-    top: 15px; /* עדכון המיקום - 10px למעלה מהמיקום הקודם */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80px; /* Width of the hole */
-    height: 65px; /* Height of the hole */
-    background-color: #f0f4ff; /* Match the background color of the stage */
-    border-radius: 10px 10px 10px 10px; /* הוספת עיגול לפינות העליונות (10px לכל הפינות) */
-    pointer-events: none; /* Allow clicks to pass through */
-    z-index: 1; /* Ensure the hole is above the block's content, but below the icon*/
-}
-
-/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
-#control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
-#programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
-    position: absolute; /* כדי לאפשר מיקום פינתי */
-    top: 5px;          /* מרחק קטן מהקצה העליון */
-    right: 5px;         /* מרחק קטן מהקצה הימני */
-    max-width: 30%;   /* הקטנת האייקון אם צריך */
-    max-height: 30%;
-    z-index: 2; /*Ensure the icon is above the hole*/
-}
  /* בליטה בצד ימין - חצי עיגול בצבע זהה למלבן הגדול (צהוב) */
         .puzzle-protrusion {
             position: absolute;
@@ -464,3 +438,30 @@ main {
             box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
             z-index: 2;
         }
+
+/* הוספת החור לבלוק Repeat */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
+#programming-area .block-container[data-type="repeat"] .scratch-block::after {
+    content: '';
+    position: absolute;
+    top: 15px; /* עדכון המיקום - 10px למעלה מהמיקום הקודם */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px; /* Width of the hole */
+    height: 65px; /* Height of the hole */
+    background-color: #f0f4ff; /* Match the background color of the stage */
+    border-radius: 10px 10px 10px 10px; /* הוספת עיגול לפינות העליונות (10px לכל הפינות) */
+    pointer-events: none; /* Allow clicks to pass through */
+    z-index: 1; /* Ensure the hole is above the block's content, but below the icon*/
+}
+
+/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
+#control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
+#programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
+    position: absolute; /* כדי לאפשר מיקום פינתי */
+    top: 5px;          /* מרחק קטן מהקצה העליון */
+    right: 5px;         /* מרחק קטן מהקצה הימני */
+    max-width: 30%;   /* הקטנת האייקון אם צריך */
+    max-height: 30%;
+    z-index: 2; /*Ensure the icon is above the hole*/
+}
