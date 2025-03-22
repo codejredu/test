@@ -319,7 +319,6 @@ main {
     margin: auto; /* Center the image */
 }
 
-
 #triggering-blocks .block-container .scratch-block {
     background-color: var(--triggering-color);
 }
@@ -389,41 +388,138 @@ main {
     background-color: var(--end-color);
 }
 
-/* סגנון מיוחד לבלוק Repeat */
+/* סגנון חדש ומשופר לבלוק Repeat - שילוב בין שני העיצובים */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
+    position: relative;
     width: 140px; /* רוחב לבנה 140px */
-    border-radius: 30px 10px 10px 30px; /* צורת "ח" -  מעוגל יותר בצדדים שמאל וימין פחות */
-    padding-right: 10px; /* קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה */
-    padding-left: 10px;
+    height: 105px; /* הגדלת הגובה כדי להתאים לעיצוב החדש */
+    border-radius: 12px;
+    padding: 5px;
     text-align: center; /* מרכוז טקסט אם יש */
     font-size: 20px; /* גודל גופן מתאים לרוחב החדש */
-    position: relative; /* Required for the "hole" positioning */
-    overflow: visible; /* Ensure the "hole" is not clipped */
-    height: 80px; /* Keep the height consistent */
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    overflow: visible; /* Ensure elements are not clipped */
+    background-color: var(--control-color); /* שימוש בצבע המוגדר למשתנה */
 }
-/* הוספת החור לבלוק Repeat */
+
+/* בליטה בצד ימין - חצי עיגול בצבע זהה לבלוק */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
     content: '';
     position: absolute;
-    top: 15px; /* עדכון המיקום - 10px למעלה מהמיקום הקודם */
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background-color: inherit; /* שימוש בצבע זהה לבלוק */
+    border-radius: 50%;
+    z-index: 1;
+}
+
+/* שקע בצד שמאל - חצי עיגול בצבע הרקע */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background-color: #f0f4ff; /* צבע הרקע של הדף */
+    border-radius: 50%;
+    z-index: 1;
+}
+
+/* הוספת השקע המלבני בתחתית בלוק הrepeat */
+#control-blocks .block-container[data-type="repeat"] .scratch-block .bottom-indent,
+#programming-area .block-container[data-type="repeat"] .scratch-block .bottom-indent {
+    position: absolute;
+    bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 80px; /* Width of the hole */
-    height: 65px; /* Height of the hole */
-    background-color: #f0f4ff; /* Match the background color of the stage */
-    border-radius: 10px 10px 10px 10px; /* הוספת עיגול לפינות העליונות (10px לכל הפינות) */
-    pointer-events: none; /* Allow clicks to pass through */
-    z-index: 1; /* Ensure the hole is above the block's content, but below the icon*/
+    width: 90px;
+    height: 65px;
+    background-color: #f0f4ff; /* צבע הרקע של הדף */
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+    z-index: 1;
 }
+
 /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
-    position: absolute; /* כדי לאפשר מיקום פינתי */
-    top: 5px;          /* מרחק קטן מהקצה העליון */
-    right: 5px;         /* מרחק קטן מהקצה הימני */
-    max-width: 30%;   /* הקטנת האייקון אם צריך */
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    max-width: 30%;
     max-height: 30%;
-    z-index: 2; /*Ensure the icon is above the hole*/
+    z-index: 2;
+}
+
+/* הוספת מונה בפינה התחתונה-ימנית של בלוק הrepeat */
+#control-blocks .block-container[data-type="repeat"] .scratch-block .counter,
+#programming-area .block-container[data-type="repeat"] .scratch-block .counter {
+    position: absolute;
+    right: 15px;
+    bottom: 5px;
+    background-color: white;
+    color: #333;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
+    z-index: 2;
+}
+
+/* חץ לכיוון ימין בתוך בלוק הrepeat */
+#control-blocks .block-container[data-type="repeat"] .scratch-block .arrow,
+#programming-area .block-container[data-type="repeat"] .scratch-block .arrow {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    z-index: 2;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+/* בליטה בפאה השמאלית של השקע התחתון */
+#control-blocks .block-container[data-type="repeat"] .scratch-block .bottom-left-protrusion,
+#programming-area .block-container[data-type="repeat"] .scratch-block .bottom-left-protrusion {
+    position: absolute;
+    bottom: 15px;
+    left: calc(50% + 25px);
+    width: 20px;
+    height: 20px;
+    background-color: inherit; /* שימוש בצבע זהה לבלוק */
+    border-radius: 20px 0 0 20px;
+    z-index: 2;
+}
+
+/* שקע בפאה הימנית של השקע התחתון */
+#control-blocks .block-container[data-type="repeat"] .scratch-block .bottom-right-indent,
+#programming-area .block-container[data-type="repeat"] .scratch-block .bottom-right-indent {
+    position: absolute;
+    bottom: 15px;
+    left: calc(50% - 65px);
+    width: 20px;
+    height: 20px;
+    background-color: #f0f4ff; /* צבע הרקע של הדף */
+    border-radius: 20px 0 0 20px;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+    z-index: 2;
 }
