@@ -439,7 +439,7 @@ main {
     left: -20px; /* מיקום החצי עיגול מחוץ ללחצן */
     width: 40px; /* קוטר החצי עיגול */
     height: 80px; /* גובה זהה לגובה הלחצן */
-    background-color: white;
+    background-color: red;
     border-radius: 20px 0 0 20px; /* יצירת חצי עיגול */
     z-index: 3; /* מיקום מעל החור והאייקון */
 }
