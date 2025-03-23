@@ -430,14 +430,16 @@ main {
     z-index: 2; /*Ensure the icon is above the hole*/
 }
 
-/* הוספת חיצי עיגול אדומים */
+/* הוספת חצי עיגול אדום בצד שמאל */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
-    content: '↺'; /* סימן חיצי עיגול */
+    content: '';
     position: absolute;
     top: 5px; /* מרחק קטן מהקצה העליון */
-    right: 5px; /* מרחק קטן מהקצה הימני */
-    font-size: 20px; /* גודל האייקון */
-    color: red; /* צבע אדום */
-    z-index: 3; /* ודא שהאייקון מעל החור והאייקון הקיים */
+    left: 5px; /* מרחק קטן מהקצה השמאלי */
+    width: 20px; /* רוחב חצי העיגול */
+    height: 40px; /* גובה חצי העיגול */
+    background-color: red; /* צבע אדום */
+    border-radius: 20px 0 0 20px; /* עיגול רק בצד שמאל */
+    z-index: 3; /* ודא שהוא מעל החור והאייקון הקיים */
 }
