@@ -1,19 +1,11 @@
 /* style.css - עם צבעים מעודכנים לילדי גן */
 :root {
-    --motion-color: #66D2FF;    /* כחול-תכלת בהיר (תנועה) */
-    --triggering-color: #FFE866; /* צהוב בננה רך (הדלקה) */
-    --looks-color: #D295F6;     /* סגול לבנדר רך (מראה) */
-    --sound-color: #7ED957;     /* ירוק תפוח בהיר (קול) */
-    --control-color: #FFBD67;   /* כתום אפרסק (בקרה) */
-    --end-color: #FF6B6B;       /* אדום קורל רך (סיום) */
-
-    /* צבעים מעודכנים לפי התמונה */
-    --triggering-tab-color: #FF6B6B;   /* אדום */
-    --control-tab-color: #FFC163;      /* כתום בהיר */
-    --sound-tab-color: #81C784;       /* ירוק בהיר */
-    --looks-tab-color: #D1C4E9;       /* סגול בהיר */
-    --motion-tab-color: #64B5F6;      /* כחול בהיר */
-    --end-tab-color: #FFF59D;         /* צהוב בהיר */
+    --motion-color: #66D2FF;    /* כחול-תכלת בהיר */
+    --triggering-color: #FFE866; /* צהוב בננה רך */
+    --looks-color: #D295F6;     /* סגול לבנדר רך */
+    --sound-color: #7ED957;     /* ירוק תפוח בהיר */
+    --control-color: #FFBD67;   /* כתום אפרסק */
+    --end-color: #FF6B6B;       /* אדום קורל רך */
 }
 
 body {
@@ -154,89 +146,28 @@ main {
 
 }
 
-.category-tab.active {
-    border: 2px solid #333; /* סימון טאב פעיל */
+.category-tab[data-category="triggering"] {
+    background-color: var(--triggering-color);
 }
 
-.category-tab:focus {
-    outline: none; /* הסרת סימון ברירת מחדל של פוקוס */
-    border: 2px solid #333; /* סימון פוקוס מותאם אישית */
+.category-tab[data-category="motion"] {
+    background-color: var(--motion-color);
 }
 
-.category-tab::-moz-focus-inner {
-    border: 0; /* הסרת סימון פנימי של פוקוס בפיירפוקס */
+.category-tab[data-category="looks"] {
+    background-color: var(--looks-color);
 }
 
-.category-tab:hover {
-    opacity: 0.9;
+.category-tab[data-category="sound"] {
+    background-color: var(--sound-color);
 }
 
-.category-tab:active {
-    opacity: 0.8;
-    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+.category-tab[data-category="control"] {
+    background-color: var(--control-color);
 }
 
-.category-tab-text {
-    pointer-events: none;
-}
-
-.category-tab-icon {
-    pointer-events: none;
-}
-
-.category-tab-icon svg {
-    width: 40px;
-    height: 40px;
-}
-
-.category-tab-icon img {
-    max-width: 60%;
-    max-height: 60%;
-}
-
-.category-tab-label {
-    font-size: 12px;
-    text-align: center;
-    display: block;
-    margin-top: 5px;
-    pointer-events: none;
-}
-
-.category-tab-vertical {
-    flex-direction: column;
-    width: auto;
-    height: auto;
-    margin: 5px 5px 0 0;
-    padding: 10px;
-}
-
-.category-tab-vertical img,
-.category-tab-vertical svg {
-    margin-bottom: 5px;
-}
-
-.category-tab.triggering {
-    background-color: var(--triggering-tab-color); /* אדום */
-}
-
-.category-tab.control {
-    background-color: var(--control-tab-color);    /* כתום בהיר */
-}
-
-.category-tab.sound {
-    background-color: var(--sound-tab-color);      /* ירוק בהיר */
-}
-
-.category-tab.looks {
-    background-color: var(--looks-tab-color);      /* סגול בהיר */
-}
-
-.category-tab.motion {
-    background-color: var(--motion-tab-color);     /* כחול בהיר */
-}
-
-.category-tab.end {
-    background-color: var(--end-tab-color);        /* צהוב בהיר */
+.category-tab[data-category="end"] {
+    background-color: var(--end-color);
 }
 
 .block-category {
@@ -246,15 +177,14 @@ main {
     height: 100%;
     border-right: 1px solid #e0e0e0;
     margin-left: 0px; /* Remove margin-left to align with tabs */
-    background-color: #f0f0f0; /* gray background behind programming blocks */
-    overflow-y: auto; /* Added scroll for many blocks */
+    background-color: #0D66CA; /* blue background behind programming blocks */
 }
 
 .block-category.active {
     display: flex;
     flex-wrap: wrap;
     padding: 10px;
-    background-color: #f0f0f0; /* gray background behind programming blocks */
+    background-color: #0D66CA; /* blue background behind programming blocks */
 }
 
 #programming-area {
@@ -265,7 +195,6 @@ main {
     border-radius: 10px;
     flex: 2; /* Increased to make programming area taller */
     min-height: 200px; /* Set minimum height */
-    overflow-y: auto; /* Added scroll for many dragged blocks */
 }
 
 .program-header {
@@ -314,7 +243,7 @@ main {
     width: 100px;
     height: 100px;
     margin: 8px;
-    cursor: grab;
+    cursor: pointer;
     background-color: transparent;
 }
 
@@ -390,6 +319,7 @@ main {
     margin: auto; /* Center the image */
 }
 
+
 #triggering-blocks .block-container .scratch-block {
     background-color: var(--triggering-color);
 }
@@ -459,62 +389,41 @@ main {
     background-color: var(--end-color);
 }
 
-/* סגנון מיוחד לבלוק Repeat עם בליטה בצד שמאל */
-#control-blocks .block-container-repeat .scratch-block,
-#programming-area .block-container-repeat .scratch-block {
+/* סגנון מיוחד לבלוק Repeat */
+#control-blocks .block-container[data-type="repeat"] .scratch-block,
+#programming-area .block-container[data-type="repeat"] .scratch-block {
     width: 140px; /* רוחב לבנה 140px */
     border-radius: 30px 10px 10px 30px; /* צורת "ח" -  מעוגל יותר בצדדים שמאל וימין פחות */
     padding-right: 10px; /* קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה */
-    padding-left: 25px; /* הוספת ריווח שמאלי לבליטה */
+    padding-left: 10px;
     text-align: center; /* מרכוז טקסט אם יש */
     font-size: 20px; /* גודל גופן מתאים לרוחב החדש */
-    position: relative; /* Required for the "hole" and "bump" positioning */
+    position: relative; /* Required for the "hole" positioning */
     overflow: visible; /* Ensure the "hole" is not clipped */
     height: 80px; /* Keep the height consistent */
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
-
 /* הוספת החור לבלוק Repeat */
-#control-blocks .block-container-repeat .scratch-block::after,
-#programming-area .block-container-repeat .scratch-block::after {
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
+#programming-area .block-container[data-type="repeat"] .scratch-block::after {
     content: '';
     position: absolute;
-    top: 15px; /* עדכון המיקום */
+    top: 15px; /* עדכון המיקום - 10px למעלה מהמיקום הקודם */
     left: 50%;
     transform: translateX(-50%);
     width: 80px; /* Width of the hole */
     height: 65px; /* Height of the hole */
     background-color: #f0f4ff; /* Match the background color of the stage */
-    border-radius: 10px; /* הוספת עיגול לפינות החור */
+    border-radius: 10px 10px 10px 10px; /* הוספת עיגול לפינות העליונות (10px לכל הפינות) */
     pointer-events: none; /* Allow clicks to pass through */
     z-index: 1; /* Ensure the hole is above the block's content, but below the icon*/
 }
-
-/* הוספת הבליטה לבלוק Repeat בצד שמאל */
-#control-blocks .block-container-repeat .scratch-block::before,
-#programming-area .block-container-repeat .scratch-block::before {
-    content: '';
-    position: absolute;
-    left: -12px; /* מיקום הבליטה משמאל לבלוק */
-    top: 50%;
-    transform: translateY(-50%);
-    width: 24px; /* רוחב הבליטה */
-    height: 24px; /* גובה הבליטה */
-    background-color: inherit; /* יורש את צבע הרקע של הבלוק */
-    border-radius: 50%; /* יוצר צורה עגולה */
-    box-shadow: -3px 0px 5px rgba(0, 0, 0, 0.2) inset; /* הוספת צל פנימי ליצירת תחושת בליטה */
-    z-index: 2; /* Ensure the bump is above the hole if they overlap visually */
-}
-
 /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
-#control-blocks .block-container-repeat .scratch-block .block-icon-img,
-#programming-area .block-container-repeat .scratch-block .block-icon-img {
+#control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
+#programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
     position: absolute; /* כדי לאפשר מיקום פינתי */
     top: 5px;          /* מרחק קטן מהקצה העליון */
     right: 5px;         /* מרחק קטן מהקצה הימני */
     max-width: 30%;   /* הקטנת האייקון אם צריך */
     max-height: 30%;
-    z-index: 3; /*Ensure the icon is above the hole and the bump*/
+    z-index: 2; /*Ensure the icon is above the hole*/
 }
