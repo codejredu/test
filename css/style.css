@@ -247,6 +247,11 @@ main {
     background-color: transparent;
 }
 
+/* Doubling the width for triggering blocks */
+#triggering-blocks .block-container {
+    width: 200px;
+}
+
 #block-palette .scratch-block,
 #programming-area .scratch-block {
     position: relative;
@@ -262,6 +267,11 @@ main {
     font-weight: bold;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
     transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
+}
+
+/* Doubling the width of triggering blocks while keeping shape */
+#triggering-blocks .block-container .scratch-block {
+    width: 174px;
 }
 
 /* SVG Icon styling */
@@ -318,7 +328,6 @@ main {
     display: block;
     margin: auto; /* Center the image */
 }
-
 
 #triggering-blocks .block-container .scratch-block {
     background-color: var(--triggering-color);
@@ -388,6 +397,3 @@ main {
 #end-blocks.active .block-container .scratch-block {
     background-color: var(--end-color);
 }
-
-
-
