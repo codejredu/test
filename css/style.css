@@ -427,3 +427,17 @@ main {
     max-height: 30%;
     z-index: 2; /*Ensure the icon is above the hole*/
 }
+/* הוספת עיגול לבן מתחת לאייקון בבלוק Repeat /
+#control-blocks .block-container-repeat .scratch-block::before,
+#programming-area .block-container-repeat .scratch-block::before {
+content: '';
+position: absolute;
+top: 35px; / מיקום מתחת לאייקון (בערך) - יש להתאים לפי גודל האייקון /
+right: 10px; / קצת פנימה מהקצה הימני /
+width: 15px;
+height: 15px;
+background-color: white;
+border-radius: 50%;
+z-index: 4; / מעל האייקון והחור /
+box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); / אפקט צל קל */
+}
