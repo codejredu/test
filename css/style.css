@@ -427,3 +427,10 @@ main {
     max-height: 30%;
     z-index: 2; /*Ensure the icon is above the hole*/
 }
+.half-circle {
+  width: 100px; /* רוחב */
+  height: 50px; /* גובה - חצי מהרוחב */
+  background-color: #007bff; /* צבע רקע */
+  border-top-left-radius: 50px; /* רדיוס פינה עליונה שמאלית = גובה */
+  border-top-right-radius: 50px; /* רדיוס פינה עליונה ימנית = גובה */
+}
