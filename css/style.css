@@ -427,3 +427,16 @@ main {
     max-height: 30%;
     z-index: 2; /*Ensure the icon is above the hole*/
 }
+/* הוספת העיגול האדום בפינה הימנית התחתונה */
+#control-blocks .block-container [data-type="repeat"] .scratch-block::before,
+#programming-area .block-container [data-type="repeat"] .scratch-block::before {
+    content: '';
+    position: absolute;
+    bottom: 5px; /* מרחק קטן מהקצה התחתון */
+    right: 5px; /* מרחק קטן מהקצה הימני */
+    width: 10px; /* קוטר העיגול */
+    height: 10px; /* קוטר העיגול */
+    background-color: red; /* צבע אדום */
+    border-radius: 50%; /* הופך אותו לעיגול */
+    z-index: 2; /* מוודא שהעיגול מעל הרקע */
+}
