@@ -371,23 +371,39 @@ background-color: var(--control-color);
 background-color: var(--end-color);
 }
 
-/* סגנון מיוחד לבלוק Repeat /
-#control-blocks .block-container.repeat .scratch-block,
-#programming-area .block-container.repeat .scratch-block {
-width: 140px; / רוחב לבנה 140px /
-border-radius: 30px 10px 10px 30px; / צורת "ח" - מעוגל יותר בצדדים שמאל וימין פחות /
-padding-right: 10px; / קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה /
+/* סגנון מיוחד לבלוק Repeat עם בליטה ימנית /
+#control-blocks .block-container[data-type="repeat"] .scratch-block,
+#programming-area .block-container[data-type="repeat"] .scratch-block {
+width: 140px;
+border-radius: 30px 10px 10px 30px;
+padding-right: 10px;
 padding-left: 10px;
-text-align: center; / מרכוז טקסט אם יש /
-font-size: 20px; / גודל גופן מתאים לרוחב החדש /
-position: relative; / חובה למיקום בליטה /
-overflow: visible; / לוודא שהבליטה לא נחתכת /
-height: 80px; / לשמור על גובה אחיד */
+text-align: center;
+font-size: 20px;
+position: relative;
+overflow: visible;
+height: 80px;
+background-color: var(--control-color); / מוודאים שהצבע כתום */
 }
 
-/* הוספת החור לבלוק Repeat /
-#control-blocks .block-container.repeat .scratch-block::after,
-#programming-area .block-container.repeat .scratch-block::after {
+/* הבליטה הימנית /
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+content: '';
+position: absolute;
+right: -10px; / קצת מחוץ לקצה הבלוק /
+top: 50%;
+transform: translateY(-50%);
+width: 20px; / רוחב הבליטה /
+height: 20px; / גובה הבליטה /
+background-color: var(--control-color); / צבע הבליטה זהה לבלוק /
+border-radius: 10px 0 0 10px; / עיגול רק בצד שמאל כדי ליצור בליטה /
+z-index: 0; / מוודאים שהבליטה מתחת לאייקון */
+}
+
+/* הוספת החור לבלוק Repeat */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
+#programming-area .block-container[data-type="repeat"] .scratch-block::after {
 content: '';
 position: absolute;
 top: 15px;
@@ -395,36 +411,19 @@ left: 50%;
 transform: translateX(-50%);
 width: 80px;
 height: 65px;
-background-color: #f0f4ff; / להתאים לצבע הרקע של הבמה /
+background-color: #f0f4ff;
 border-radius: 10px;
 pointer-events: none;
-z-index: 1; / לוודא שהחור מעל תוכן הבלוק */
+z-index: 1;
 }
 
-/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat /
-#control-blocks .block-container.repeat .scratch-block .block-icon-img,
-#programming-area .block-container.repeat .scratch-block .block-icon-img {
+/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
+#control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
+#programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
 position: absolute;
 top: 5px;
 right: 5px;
 max-width: 30%;
 max-height: 30%;
-z-index: 2; / לוודא שהאייקון מעל החור */
+z-index: 2;
 }
-
-/* הוספת הבליטה בצד ימין /
-#control-blocks .block-container.repeat .scratch-block::before,
-#programming-area .block-container.repeat .scratch-block::before {
-content: '';
-position: absolute;
-top: 50%;
-right: -20px; / למקם את הבליטה מעבר לקצה הבלוק /
-transform: translateY(-50%);
-width: 20px; / רוחב הבליטה /
-height: 40px; / גובה הבליטה /
-background-color: inherit; / יורש את צבע הרקע של הבלוק /
-border-radius: 10px 0 0 10px; / עיגול רק בצד שמאל של הבליטה /
-z-index: 0; / למקם את הבליטה מתחת לחור ולאייקון */
-}
-
-הסברים:
