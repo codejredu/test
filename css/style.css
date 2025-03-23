@@ -389,92 +389,92 @@ main {
     background-color: var(--end-color);
 }
 
-/* סגנון מיוחד לבלוק Repeat - צורה מלבנית מתוקנת /
+/* סגנון מיוחד לבלוק Repeat - גודל מוגדל ומיקום אייקון /
 #control-blocks .block-container#repeat-block .scratch-block,
 #programming-area .block-container#repeat-block .scratch-block {
-width: 140px; / רוחב לבנה 140px /
-border-radius: 30px 10px 10px 30px; / מעוגל בצדדים, ישר למעלה ולמטה /
-padding-right: 10px;
-padding-left: 10px;
+width: 280px; / רוחב כפול (140px * 2) /
+border-radius: 60px 20px 20px 60px; / התאמת רדיוס הפינות לגודל החדש /
+padding-right: 20px; / ריווח פנימי מוגדל /
+padding-left: 20px;
 text-align: center;
-font-size: 20px;
+font-size: 30px; / גודל גופן מוגדל (אופציונלי) /
 position: relative;
 overflow: hidden;
-height: 80px;
+height: 160px; / גובה כפול (80px * 2) /
 background-color: var(--control-color); / צבע רקע כתום */
 display: flex;
 align-items: center;
 justify-content: center;
 }
 
-/* הוספת "חור" לבן לבלוק Repeat /
+/* הוספת "חור" לבן לבלוק Repeat - מיקום וגודל מותאמים /
 #control-blocks .block-container#repeat-block .scratch-block::before,
 #programming-area .block-container#repeat-block .scratch-block::before {
 content: '';
 position: absolute;
-top: 15px;
-left: 15px;
-width: 80px;
-height: 50px;
-background-color: #f0f4ff; / צבע לבן */
-border-radius: 10px;
+top: 30px; / מיקום מותאם /
+left: 30px; / מיקום מותאם /
+width: 160px; / רוחב מותאם /
+height: 100px; / גובה מותאם /
+background-color: #f0f4ff; / צבע לבן /
+border-radius: 20px; / רדיוס פינות מותאם */
 pointer-events: none;
 z-index: 1;
 }
 
-/* הוספת חצי עיגול כתום בולט מימין /
+/* הוספת חצי עיגול כתום בולט מימין - מיקום וגודל מותאמים /
 #control-blocks .block-container#repeat-block .scratch-block::after,
 #programming-area .block-container#repeat-block .scratch-block::after {
 content: '';
 position: absolute;
 top: 50%;
-right: -15px;
+right: -30px; / הוצאה מוגדלת /
 transform: translateY(-50%);
-width: 30px;
-height: 50px;
-background-color: var(--control-color); / צבע כתום */
-border-radius: 0 15px 15px 0;
+width: 60px; / רוחב מותאם /
+height: 100px; / גובה מותאם /
+background-color: var(--control-color); / צבע כתום /
+border-radius: 0 30px 30px 0; / רדיוס פינות מותאם */
 z-index: 2;
 }
 
-/* הוספת חצי עיגול ירוק בצד ימין של השקע הלבן /
+/* הוספת חצי עיגול ירוק בצד ימין של השקע הלבן - מיקום וגודל מותאמים /
 #control-blocks .block-container#repeat-block .scratch-block .hole-right,
 #programming-area .block-container#repeat-block .scratch-block .hole-right {
 content: '';
 position: absolute;
 top: 50%;
-right: 15px;
+right: 30px; / מיקום מותאם /
 transform: translateY(-50%);
-width: 15px;
-height: 50px;
-background-color: var(--sound-color); / צבע ירוק */
-border-radius: 0 8px 8px 0;
+width: 30px; / רוחב מותאם /
+height: 100px; / גובה מותאם /
+background-color: var(--sound-color); / צבע ירוק /
+border-radius: 0 15px 15px 0; / רדיוס פינות מותאם */
 z-index: 3;
 }
 
-/* הוספת חצי עיגול כחול בצד שמאל של השקע הלבן /
+/* הוספת חצי עיגול כחול בצד שמאל של השקע הלבן - מיקום וגודל מותאמים /
 #control-blocks .block-container#repeat-block .scratch-block .hole-left,
 #programming-area .block-container#repeat-block .scratch-block .hole-left {
 content: '';
 position: absolute;
 top: 50%;
-left: 15px;
+left: 30px; / מיקום מותאם /
 transform: translateY(-50%);
-width: 15px;
-height: 50px;
-background-color: var(--motion-color); / צבע כחול */
-border-radius: 8px 0 0 8px;
+width: 30px; / רוחב מותאם /
+height: 100px; / גובה מותאם /
+background-color: var(--motion-color); / צבע כחול /
+border-radius: 15px 0 0 15px; / רדיוס פינות מותאם */
 z-index: 3;
 }
 
-/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
+/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat - מיקום וגודל מותאמים /
 #control-blocks .block-container#repeat-block .scratch-block .block-icon-img,
 #programming-area .block-container#repeat-block .scratch-block .block-icon-img {
 position: absolute;
-top: 5px;
-right: 5px;
-max-width: 30%;
-max-height: 30%;
+top: 10px; / מיקום בפינה העליונה /
+right: 10px; / מיקום בפינה הימנית /
+max-width: 60%; / גודל מותאם */
+max-height: 60%;
 z-index: 4;
 }
 
