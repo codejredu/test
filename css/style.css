@@ -442,7 +442,7 @@ main {
     position: absolute;
     top: 5px;
     right: 5px;
-    max-width: 30%;
-    max-height: 30%;
+    max-width: 15%;
+    max-height: 15%;
     z-index: 3; /* מעל העיגול האדום */
 }
