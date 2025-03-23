@@ -393,7 +393,7 @@ main {
 /* סגנון מיוחד לבלוק Repeat - כולל עיגול אדום במרכז */
 #control-blocks .block-container\[data-type="repeat"] .scratch-block,
 #programming-area .block-container\[data-type="repeat"] .scratch-block {
-    width: 180px; /* רוחב לבנה 140px */
+    width: 360px; /* רוחב לבנה 140px */
     border-radius: 30px 10px 10px 30px; /* צורת "ח" -  מעוגל יותר בצדדים שמאל וימין פחות */
     padding-right: 10px; /* קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה */
     padding-left: 10px;
