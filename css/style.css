@@ -403,8 +403,8 @@ main {
     height: 80px; /* Keep the height consistent */
 }
 /* הוספת העיגול האדום בפינה הימנית התחתונה */
-#control-blocks .block-container [data-type="repeat"] .scratch-block::before,
-#programming-area .block-container [data-type="repeat"] .scratch-block::before {
+#control-blocks .block-container [data-type="repeat"] .scratch-block::after,
+#programming-area .block-container [data-type="repeat"] .scratch-block::after {
     content: '';
     position: absolute;
     bottom: 5px; /* מרחק קטן מהקצה התחתון */
