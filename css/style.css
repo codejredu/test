@@ -402,6 +402,21 @@ position: relative; / Required for the "hole" positioning /
 overflow: visible; / Ensure the "hole" is not clipped /
 height: 80px; / Keep the height consistent /
 }
+
+/* הוספת עיגול לבן ללבנת REPEAT הכתומה /
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after {
+content: '';
+position: absolute;
+top: 10px; / מרחק מהקצה העליון /
+right: 10px; / מרחק מהקצה הימני /
+width: 15px; / קוטר העיגול /
+height: 15px; / קוטר העיגול /
+background-color: white; / צבע לבן /
+border-radius: 50%; / הופך אותו לעיגול /
+box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); / צל קל לעומק /
+pointer-events: none; / כדי שהקליקים יעברו דרך העיגול /
+z-index: 3; / כדי שהעיגול יהיה מעל תוכן הבלוק */
+}
 / הוספת החור לבלוק Repeat /
 #control-blocks .block-container[[data-type="repeat"]] .scratch-block::after,
 #programming-area .block-container[[data-type="repeat"]] .scratch-block::after {
