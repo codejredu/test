@@ -401,10 +401,10 @@ font-size: 20px; / גודל גופן מתאים לרוחב החדש /
 position: relative; / Required for the "hole" and semi-circle positioning /
 overflow: visible; / Ensure the "hole" and semi-circles are not clipped /
 height: 80px; / Keep the height consistent /
-background-color: var(--control-color); / Ensure the base color is correct */
+/ שימו לב: הסרתי את background-color מכאן כדי למנוע שינוי צבע כללי */
 }
 
-/* הוספת החור הלבן לבלוק Repeat /
+/* הוספת "חור" לבן לבלוק Repeat /
 #control-blocks .block-container#repeat-block .scratch-block::before,
 #programming-area .block-container#repeat-block .scratch-block::before {
 content: '';
@@ -420,11 +420,22 @@ z-index: 1; / Ensure the hole is above the block's content */
 }
 
 /* הוספת חצי עיגול כתום בולט מימין /
-#control-blocks .block-container#repeat-block .scratch-block::after,
-#programming-area .block-container#repeat-block .scratch-block::after {
+#control-blocks .block-container#repeat-block .scratch-block::after {
 content: '';
 position: absolute;
 top: 15px; / יישור אנכי עם השקע /
+right: -15px; / הוצאה של חצי עיגול מימין /
+width: 30px;
+height: 50px;
+background-color: var(--control-color); / צבע כתום /
+border-radius: 0 15px 15px 0; / עיגול רק בצד ימין /
+z-index: 2; / מעל החור הלבן */
+}
+
+#programming-area .block-container#repeat-block .scratch-block::after {
+content: '';
+position: absolute;
+top: 15px; /* יישור אנכי עם השקע /
 right: -15px; / הוצאה של חצי עיגול מימין /
 width: 30px;
 height: 50px;
