@@ -428,7 +428,7 @@ top: 20px; / מיקום אנכי /
 left: calc(50% - 25px); / מיקום אופקי - קצת משמאל למרכז /
 width: 10px; / רוחב העיגול /
 height: 10px; / גובה העיגול /
-background-color: white; / צבע העיגול /
+background-color: rgb(14, 160, 75); / צבע העיגול /
 border-radius: 50%; / הופך ל עיגול /
 z-index: 2; / מעל החור */
 pointer-events: none;
