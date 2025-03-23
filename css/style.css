@@ -146,27 +146,27 @@ pointer-events: none;
 
 }
 
-.category-tab[[data-category="triggering"]] {
+.category-tab:nth-child(1) { /* triggering */
 background-color: var(--triggering-color);
 }
 
-.category-tab[[data-category="motion"]] {
+.category-tab:nth-child(2) { /* motion */
 background-color: var(--motion-color);
 }
 
-.category-tab[[data-category="looks"]] {
+.category-tab:nth-child(3) { /* looks */
 background-color: var(--looks-color);
 }
 
-.category-tab[[data-category="sound"]] {
+.category-tab:nth-child(4) { /* sound */
 background-color: var(--sound-color);
 }
 
-.category-tab[[data-category="control"]] {
+.category-tab:nth-child(5) { /* control */
 background-color: var(--control-color);
 }
 
-.category-tab[[data-category="end"]] {
+.category-tab:nth-child(6) { /* end */
 background-color: var(--end-color);
 }
 
@@ -389,8 +389,8 @@ background-color: var(--end-color);
 }
 
 /* סגנון מיוחד לבלוק Repeat /
-#control-blocks .block-container[[data-type="repeat"]] .scratch-block,
-#programming-area .block-container[[data-type="repeat"]] .scratch-block {
+#control-blocks .block-container.block-repeat .scratch-block,
+#programming-area .block-container.block-repeat .scratch-block {
 width: 140px; / רוחב לבנה 140px /
 border-radius: 30px 10px 10px 30px; / צורת "ח" - מעוגל יותר בצדדים שמאל וימין פחות /
 padding-right: 10px; / קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה /
@@ -402,8 +402,8 @@ overflow: visible; / Ensure the "hole" is not clipped /
 height: 80px; / Keep the height consistent /
 }
 / הוספת החור לבלוק Repeat /
-#control-blocks .block-container[[data-type="repeat"]] .scratch-block::after,
-#programming-area .block-container[[data-type="repeat"]] .scratch-block::after {
+#control-blocks .block-container.block-repeat .scratch-block::after,
+#programming-area .block-container.block-repeat .scratch-block::after {
 content: '';
 position: absolute;
 top: 15px; / עדכון המיקום - 10px למעלה מהמיקום הקודם /
@@ -412,41 +412,32 @@ transform: translateX(-50%);
 width: 80px; / Width of the hole /
 height: 65px; / Height of the hole /
 background-color: #f0f4ff; / Match the background color of the stage /
-border-radius: 10px; / הוספת עיגול לפינות העליונות (10px לכל הפינות) /
+border-radius: 10px 10px 10px 10px; / הוספת עיגול לפינות העליונות (10px לכל הפינות) /
 pointer-events: none; / Allow clicks to pass through /
 z-index: 1; / Ensure the hole is above the block's content, but below the icon*/
 }
 /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat /
-#control-blocks .block-container[[data-type="repeat"]] .scratch-block .block-icon-img,
-#programming-area .block-container[[data-type="repeat"]] .scratch-block .block-icon-img {
+#control-blocks .block-container.block-repeat .scratch-block .block-icon-img,
+#programming-area .block-container.block-repeat .scratch-block .block-icon-img {
 position: absolute; / כדי לאפשר מיקום פינתי /
 top: 5px; / מרחק קטן מהקצה העליון /
 right: 5px; / מרחק קטן מהקצה הימני /
-max-width: 30%; / הקטנת האייקון אם צריך /
+max-width: 30%; / הקטנת האייקון אם צריך */
 max-height: 30%;
 z-index: 2; /Ensure the icon is above the hole/
 }
-/ הוספת הבליטה בצד ימין של בלוק Repeat /
-#control-blocks .block-container[[data-type="repeat"]] .scratch-block::before,
-#programming-area .block-container[[data-type="repeat"]] .scratch-block::before {
+
+/* הוספת עיגול אדום מתחת לאיקון של הלחצן REPEAT /
+#control-blocks .block-container.block-repeat .scratch-block::before,
+#programming-area .block-container.block-repeat .scratch-block::before {
 content: '';
 position: absolute;
-top: 50%;
-right: -10px; / מוציא את הבליטה קצת החוצה /
-transform: translateY(-50%);
-width: 20px; / רוחב הבליטה /
-height: 40px; / גובה הבליטה /
-background-color: inherit; / יורש את צבע הרקע של הבלוק /
-border-radius: 0 10px 10px 0; / מעגל רק את הפינות הימניות /
-z-index: 3; / מוודא שהבליטה מעל החור /
-}
-/ יצירת חצי עיגול בצד ימין של הבליטה /
-#control-blocks .block-container[[data-type="repeat"]] .scratch-block::after,
-#programming-area .block-container[[data-type="repeat"]] .scratch-block::after {
-border-radius: 50%;
-width: 20px;
-height: 20px;
-top: 50%;
-right: -20px; / מזיז את חצי העיגול ימינה כך שהוא נושק לבליטה */
-transform: translateY(-50%);
+top: 25px; / מיקום מתחת לאייקון (בערך) /
+right: 5px; / יישור לקצה הימני כמו האייקון /
+width: 15px; / גודל העיגול /
+height: 15px;
+background-color: #FF0000; / צבע אדום /
+border-radius: 50%; / הופך אותו לעיגול /
+z-index: 3; / מוודא שהוא בשכבה הקדמית /
+border: none; / הסרת גבול אם קיים */
 }
