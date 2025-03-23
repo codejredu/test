@@ -389,41 +389,74 @@ main {
     background-color: var(--end-color);
 }
 
-/* סגנון מיוחד לבלוק Repeat */
+/* סגנון מיוחד לבלוק Repeat /
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
-    width: 140px; /* רוחב לבנה 140px */
-    border-radius: 30px 10px 10px 30px; /* צורת "ח" -  מעוגל יותר בצדדים שמאל וימין פחות */
-    padding-right: 10px; /* קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה */
-    padding-left: 10px;
-    text-align: center; /* מרכוז טקסט אם יש */
-    font-size: 20px; /* גודל גופן מתאים לרוחב החדש */
-    position: relative; /* Required for the "hole" positioning */
-    overflow: visible; /* Ensure the "hole" is not clipped */
-    height: 80px; /* Keep the height consistent */
+width: 140px; / רוחב לבנה 140px /
+border-radius: 30px 10px 10px 30px; / צורת "ח" - מעוגל יותר בצדדים שמאל וימין פחות /
+padding-right: 10px; / קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה /
+padding-left: 10px;
+text-align: center; / מרכוז טקסט אם יש /
+font-size: 20px; / גודל גופן מתאים לרוחב החדש /
+position: relative; / Required for the "hole" positioning /
+overflow: visible; / Ensure the "hole" is not clipped /
+height: 80px; / Keep the height consistent */
 }
-/* הוספת החור לבלוק Repeat */
+
+/* הוספת החור לבלוק Repeat ושני עיגולים קטנים /
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
-    content: '';
-    position: absolute;
-    top: 15px; /* עדכון המיקום - 10px למעלה מהמיקום הקודם */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80px; /* Width of the hole */
-    height: 65px; /* Height of the hole */
-    background-color:rgb(241, 6, 6); /* Match the background color of the stage */
-    border-radius: 10px 10px 10px 10px; /* הוספת עיגול לפינות העליונות (10px לכל הפינות) */
-    pointer-events: none; /* Allow clicks to pass through */
-    z-index: 1; /* Ensure the hole is above the block's content, but below the icon*/
+content: '';
+position: absolute;
+top: 15px; / עדכון המיקום /
+left: 50%;
+transform: translateX(-50%);
+width: 80px; / רוחב החור /
+height: 65px; / גובה החור /
+background-color: rgb(241, 6, 6); / צבע רקע אדום /
+border-radius: 10px; / עיגול פינות החור /
+pointer-events: none; / אפשרות ללחוץ דרך החור /
+z-index: 1; / ודא שהחור מעל תוכן הבלוק, אך מתחת לאייקון */
 }
-/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
+
+/* הוספת עיגול קטן שמאלי /
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+content: '';
+position: absolute;
+top: 20px; / מיקום אנכי /
+left: calc(50% - 25px); / מיקום אופקי - קצת משמאל למרכז /
+width: 10px; / רוחב העיגול /
+height: 10px; / גובה העיגול /
+background-color: white; / צבע העיגול /
+border-radius: 50%; / הופך ל עיגול /
+z-index: 2; / מעל החור */
+pointer-events: none;
+}
+
+/* הוספת עיגול קטן ימני /
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before, / משתמשים שוב ב-before /
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+/ רוב הסגנונות זהים, רק משנים את המיקום השמאלי /
+content: '';
+position: absolute;
+top: 20px; / מיקום אנכי /
+left: calc(50% + 15px); / מיקום אופקי - קצת מימין למרכז /
+width: 10px; / רוחב העיגול /
+height: 10px; / גובה העיגול /
+background-color: white; / צבע העיגול /
+border-radius: 50%; / הופך ל עיגול /
+z-index: 2; / מעל החור */
+pointer-events: none;
+}
+
+/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat /
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
-    position: absolute; /* כדי לאפשר מיקום פינתי */
-    top: 5px;          /* מרחק קטן מהקצה העליון */
-    right: 5px;         /* מרחק קטן מהקצה הימני */
-    max-width: 30%;   /* הקטנת האייקון אם צריך */
-    max-height: 30%;
-    z-index: 2; /*Ensure the icon is above the hole*/
+position: absolute; / כדי לאפשר מיקום פינתי /
+top: 5px; / מרחק קטן מהקצה העליון /
+right: 5px; / מרחק קטן מהקצה הימני /
+max-width: 30%; / הקטנת האייקון אם צריך /
+max-height: 30%;
+z-index: 3; / ודא שהאייקון מעל העיגולים והחור */
 }
