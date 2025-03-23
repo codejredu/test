@@ -371,63 +371,58 @@ background-color: var(--control-color);
 background-color: var(--end-color);
 }
 
-/* סגנון מיוחד לבלוק Repeat /
-#control-blocks .block-container:not([data-type="repeat"]) .scratch-block,
-#programming-area .block-container:not([data-type="repeat"]) .scratch-block {
-background-color: #ffff00; / חזרה לצבע ברירת מחדל לכל הבלוקים פרט ל-repeat */
+* עדכון לבלוק Repeat כדי להוסיף בליטה בצד ימין כמו חלק פאזל */
+#control-blocks .block-container[data-type="repeat"] .scratch-block,
+#programming-area .block-container[data-type="repeat"] .scratch-block {
+    width: 140px; /* רוחב לבנה 140px */
+    border-radius: 30px 10px 10px 30px; /* צורת "ח" -  מעוגל יותר בצדדים שמאל וימין פחות */
+    padding-right: 10px; /* קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה */
+    padding-left: 10px;
+    text-align: center; /* מרכוז טקסט אם יש */
+    font-size: 20px; /* גודל גופן מתאים לרוחב החדש */
+    position: relative; /* Required for the "hole" positioning */
+    overflow: visible; /* Ensure the "hole" is not clipped */
+    height: 80px; /* Keep the height consistent */
 }
 
-#control-blocks .block-container:is([data-type="repeat"]) .scratch-block,
-#programming-area .block-container:is([data-type="repeat"]) .scratch-block {
-background-color: var(--control-color); /* צבע רקע כתום לבלוק Repeat /
-width: 140px; / רוחב לבנה 140px /
-border-radius: 30px 0 0 30px; / צורת "ח" - מעוגל יותר בצדדים שמאל וימין פחות - תיקון פינה ימנית /
-padding-right: 10px; / קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה /
-padding-left: 10px;
-text-align: center; / מרכוז טקסט אם יש /
-font-size: 20px; / גודל גופן מתאים לרוחב החדש /
-position: relative; / Required for the "hole" positioning /
-overflow: visible; / Ensure the "hole" is not clipped /
-height: 80px; / Keep the height consistent /
-box-shadow: 3px 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2); / קצת יותר צל כדי להדגיש את הבליטה /
-}
-/ הוספת החור לבלוק Repeat /
-#control-blocks .block-container:is([data-type="repeat"]) .scratch-block::after,
-#programming-area .block-container:is([data-type="repeat"]) .scratch-block::after {
-content: '';
-position: absolute;
-top: 15px; / עדכון המיקום /
-left: 50%;
-transform: translateX(-50%);
-width: 80px; / Width of the hole /
-height: 65px; / Height of the hole /
-background-color: #f0f4ff; / Match the background color /
-border-radius: 10px; / עיגול פינות החור /
-pointer-events: none; / Allow clicks to pass through /
-z-index: 1; / Ensure the hole is above the block's content */
+/* הוספת החור לבלוק Repeat */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
+#programming-area .block-container[data-type="repeat"] .scratch-block::after {
+    content: '';
+    position: absolute;
+    top: 15px; /* עדכון המיקום - 10px למעלה מהמיקום הקודם */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px; /* Width of the hole */
+    height: 65px; /* Height of the hole */
+    background-color: #f0f4ff; /* Match the background color of the stage */
+    border-radius: 10px 10px 10px 10px; /* הוספת עיגול לפינות העליונות (10px לכל הפינות) */
+    pointer-events: none; /* Allow clicks to pass through */
+    z-index: 1; /* Ensure the hole is above the block's content, but below the icon*/
 }
 
-/* הוספת הבליטה (כמו פאזל) /
-#control-blocks .block-container:is([data-type="repeat"]) .scratch-block::before,
-#programming-area .block-container:is([data-type="repeat"]) .scratch-block::before {
-content: '';
-position: absolute;
-top: 20px;
-right: -20px; / הוצאה של הבליטה מימין /
-width: 20px;
-height: 40px;
-background-color: inherit; / ירושה של צבע הכתום /
-border-radius: 10px 0 0 10px; / עיגול רק בצד השמאלי של הבליטה /
-box-shadow: 2px 0 3px rgba(0, 0, 0, 0.2); / צל קל לבליטה */
+/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
+#control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
+#programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
+    position: absolute; /* כדי לאפשר מיקום פינתי */
+    top: 5px;          /* מרחק קטן מהקצה העליון */
+    right: 5px;         /* מרחק קטן מהקצה הימני */
+    max-width: 30%;   /* הקטנת האייקון אם צריך */
+    max-height: 30%;
+    z-index: 2; /*Ensure the icon is above the hole*/
 }
 
-/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat /
-#control-blocks .block-container:is([data-type="repeat"]) .scratch-block .block-icon-img,
-#programming-area .block-container:is([data-type="repeat"]) .scratch-block .block-icon-img {
-position: absolute; / כדי לאפשר מיקום פינתי /
-top: 5px; / מרחק קטן מהקצה העליון /
-right: 5px; / מרחק קטן מהקצה הימני /
-max-width: 30%; / הקטנת האייקון אם צריך */
-max-height: 30%;
-z-index: 2; /Ensure the icon is above the hole and the bulge/
+/* הוספת בליטת פאזל בצד ימין של בלוק Repeat */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+    content: '';
+    position: absolute;
+    right: -10px; /* מיקום הבליטה מחוץ לבלוק בצד ימין */
+    top: 50%; /* ממוקם באמצע הגובה */
+    transform: translateY(-50%); /* הזזה כלפי מעלה ב-50% מגובה הבליטה עצמה */
+    width: 18px;
+    height: 18px;
+    background-color: inherit; /* הבליטה תירש את הצבע של הבלוק */
+    border-radius: 50%; /* עיגול מלא */
+    z-index: 2; /* מעל שכבות אחרות */
 }
