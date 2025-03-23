@@ -427,3 +427,31 @@ main {
     max-height: 30%;
     z-index: 2; /*Ensure the icon is above the hole*/
 }
+   /* סגנון לחצאי העיגול */
+        .semi-circle {
+            width: 10px; /* קוטר 10 פיקסלים */
+            height: 20px; /* גובה 20 פיקסלים (פעמיים הקוטר) */
+            border-radius: 10px 0 0 10px; /* עיגול רק בצד שמאל */
+            position: absolute; /* מיקום אבסולוטי בתוך הבלוק */
+        }
+
+        .semi-circle.red {
+            background-color: #fff; /* Changed to white */
+            transform: rotate(180deg) scaleX(-1);
+            top: 35px;
+            left: 30px;
+        }
+        .semi-circle.blue {
+            background-color: #ff6600;
+            transform: rotate(180deg);
+        }
+        .semi-circle.green {
+            background-color: #fff; /* Changed to white */
+            transform: rotate(180deg);
+            left: 2px;
+        }
+        .semi-circle.yellow {
+            background-color: #ff6600;
+            left: 110px;
+            z-index: 3;
+        }
