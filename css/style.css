@@ -417,20 +417,6 @@ main {
     pointer-events: none; /* Allow clicks to pass through */
     z-index: 1; /* Ensure the hole is above the block's content, but below the icon*/
 }
-/* הוספת עיגול לבן ללבנת REPEAT הכתומה /
-#control-blocks .block-container[data-type="repeat"] .scratch-block::after {
-content: '';
-position: absolute;
-top: 10px; / מרחק מהקצה העליון /
-right: 10px; / מרחק מהקצה הימני /
-width: 15px; / קוטר העיגול /
-height: 15px; / קוטר העיגול /
-background-color: white; / צבע לבן /
-border-radius: 50%; / הופך אותו לעיגול /
-box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); / צל קל לעומק /
-pointer-events: none; / כדי שהקליקים יעברו דרך העיגול /
-z-index: 3; / כדי שהעיגול יהיה מעל תוכן הבלוק */
-}
 /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
