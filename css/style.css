@@ -1,11 +1,19 @@
 /* style.css - עם צבעים מעודכנים לילדי גן */
 :root {
-    --motion-color: #66D2FF;    /* כחול-תכלת בהיר */
-    --triggering-color: #FFE866; /* צהוב בננה רך */
-    --looks-color: #D295F6;     /* סגול לבנדר רך */
-    --sound-color: #7ED957;     /* ירוק תפוח בהיר */
-    --control-color: #FFBD67;   /* כתום אפרסק */
-    --end-color: #FF6B6B;       /* אדום קורל רך */
+    --motion-color: #66D2FF;    /* כחול-תכלת בהיר (תנועה) */
+    --triggering-color: #FFE866; /* צהוב בננה רך (הדלקה) */
+    --looks-color: #D295F6;     /* סגול לבנדר רך (מראה) */
+    --sound-color: #7ED957;     /* ירוק תפוח בהיר (קול) */
+    --control-color: #FFBD67;   /* כתום אפרסק (בקרה) */
+    --end-color: #FF6B6B;       /* אדום קורל רך (סיום) */
+
+    /* צבעים מעודכנים לפי התמונה */
+    --triggering-tab-color: #FF6B6B;   /* אדום */
+    --control-tab-color: #FFC163;      /* כתום בהיר */
+    --sound-tab-color: #81C784;       /* ירוק בהיר */
+    --looks-tab-color: #D1C4E9;       /* סגול בהיר */
+    --motion-tab-color: #64B5F6;      /* כחול בהיר */
+    --end-tab-color: #FFF59D;         /* צהוב בהיר */
 }
 
 body {
@@ -207,6 +215,30 @@ main {
     margin-bottom: 5px;
 }
 
+.category-tab.triggering {
+    background-color: var(--triggering-tab-color); /* אדום */
+}
+
+.category-tab.control {
+    background-color: var(--control-tab-color);    /* כתום בהיר */
+}
+
+.category-tab.sound {
+    background-color: var(--sound-tab-color);      /* ירוק בהיר */
+}
+
+.category-tab.looks {
+    background-color: var(--looks-tab-color);      /* סגול בהיר */
+}
+
+.category-tab.motion {
+    background-color: var(--motion-tab-color);     /* כחול בהיר */
+}
+
+.category-tab.end {
+    background-color: var(--end-tab-color);        /* צהוב בהיר */
+}
+
 .block-category {
     display: none;
     padding: 10px;
@@ -356,30 +388,6 @@ main {
     max-height: 60%;
     display: block;
     margin: auto; /* Center the image */
-}
-
-.category-tab.triggering {
-    background-color: var(--triggering-color);
-}
-
-.category-tab.motion {
-    background-color: var(--motion-color);
-}
-
-.category-tab.looks {
-    background-color: var(--looks-color);
-}
-
-.category-tab.sound {
-    background-color: var(--sound-color);
-}
-
-.category-tab.control {
-    background-color: var(--control-color);
-}
-
-.category-tab.end {
-    background-color: var(--end-color);
 }
 
 #triggering-blocks .block-container .scratch-block {
