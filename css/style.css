@@ -389,67 +389,41 @@ main {
     background-color: var(--end-color);
 }
 
-/* Base style for the REPEAT block in control category */
+/* סגנון מיוחד לבלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
-    width: 140px; /* Width of 140px */
-    border-radius: 30px 10px 10px 30px; /* C-shape with more rounding on sides */
-    padding-right: 10px; /* Internal spacing so text isn't against the edge */
+    width: 140px; /* רוחב לבנה 140px */
+    border-radius: 30px 10px 10px 30px; /* צורת "ח" -  מעוגל יותר בצדדים שמאל וימין פחות */
+    padding-right: 10px; /* קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה */
     padding-left: 10px;
-    text-align: center; /* Center text if any */
-    font-size: 20px; /* Font size appropriate for the new width */
+    text-align: center; /* מרכוז טקסט אם יש */
+    font-size: 20px; /* גודל גופן מתאים לרוחב החדש */
     position: relative; /* Required for the "hole" positioning */
     overflow: visible; /* Ensure the "hole" is not clipped */
     height: 80px; /* Keep the height consistent */
-    background-color: var(--control-color); /* Peach orange color */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: black;
-    font-weight: bold;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
-    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
-
-/* Creating the C-shape hole in the REPEAT block */
+/* הוספת החור לבלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
     content: '';
     position: absolute;
-    top: 15px; /* Position from the top */
+    top: 15px; /* עדכון המיקום - 10px למעלה מהמיקום הקודם */
     left: 50%;
     transform: translateX(-50%);
     width: 80px; /* Width of the hole */
     height: 65px; /* Height of the hole */
     background-color: #f0f4ff; /* Match the background color of the stage */
-    border-radius: 10px; /* Add rounding to all corners */
+    border-radius: 10px 10px 10px 10px; /* הוספת עיגול לפינות העליונות (10px לכל הפינות) */
     pointer-events: none; /* Allow clicks to pass through */
-    z-index: 1; /* Ensure the hole is above the block's content, but below the icon */
+    z-index: 1; /* Ensure the hole is above the block's content, but below the icon*/
 }
-
-/* Creating the right-side protrusion on the REPEAT block */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
-    content: '';
-    position: absolute;
-    left: auto; /* Override previous definition */
-    right: -10px; /* Protrusion of 10px from the right side */
-    top: 40px; /* Positioned in the middle height of the block */
-    transform: none; /* Override previous definition */
-    width: 20px;
-    height: 20px;
-    background-color: inherit; /* Same color as the block */
-    border-radius: 50%; /* Perfect circle */
-    z-index: 2; /* Above the block and the hole */
-}
-
-/* Positioning the icon in the top right corner of the REPEAT block */
+/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
-    position: absolute; /* To allow corner positioning */
-    top: 5px;           /* Small distance from the top edge */
-    right: 5px;         /* Small distance from the right edge */
-    max-width: 30%;     /* Resize the icon if needed */
+    position: absolute; /* כדי לאפשר מיקום פינתי */
+    top: 5px;          /* מרחק קטן מהקצה העליון */
+    right: 5px;         /* מרחק קטן מהקצה הימני */
+    max-width: 30%;   /* הקטנת האייקון אם צריך */
     max-height: 30%;
-    z-index: 3; /* Ensure the icon is above the hole and protrusion */
+    z-index: 2; /*Ensure the icon is above the hole*/
 }
