@@ -389,69 +389,81 @@ main {
     background-color: var(--end-color);
 }
 
-/* סגנון מיוחד לבלוק Repeat */
-#control-blocks .block-container[data-type="repeat"] .scratch-block,
-#programming-area .block-container[data-type="repeat"] .scratch-block {
-    width: 140px; /* רוחב לבנה 140px */
-    border-radius: 30px 10px 10px 30px; /* צורת "ח" -  מעוגל יותר בצדדים שמאל וימין פחות */
-    padding-right: 10px; /* קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה */
-    padding-left: 10px;
-    text-align: center; /* מרכוז טקסט אם יש */
-    font-size: 20px; /* גודל גופן מתאים לרוחב החדש */
-    position: relative; /* Required for the "hole" positioning */
-    overflow: visible; /* Ensure the "hole" is not clipped */
-    height: 80px; /* Keep the height consistent */
-}
-/* הוספת החור לבלוק Repeat */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
-#programming-area .block-container[data-type="repeat"] .scratch-block::after {
-    content: '';
-    position: absolute;
-    top: 15px; /* עדכון המיקום - 10px למעלה מהמיקום הקודם */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80px; /* Width of the hole */
-    height: 65px; /* Height of the hole */
-    background-color: #f0f4ff; /* Match the background color of the stage */
-    border-radius: 10px 10px 10px 10px; /* הוספת עיגול לפינות העליונות (10px לכל הפינות) */
-    pointer-events: none; /* Allow clicks to pass through */
-    z-index: 1; /* Ensure the hole is above the block's content, but below the icon*/
-}
-/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
-#control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
-#programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
-    position: absolute; /* כדי לאפשר מיקום פינתי */
-    top: 5px;          /* מרחק קטן מהקצה העליון */
-    right: 5px;         /* מרחק קטן מהקצה הימני */
-    max-width: 30%;   /* הקטנת האייקון אם צריך */
-    max-height: 30%;
-    z-index: 2; /*Ensure the icon is above the hole*/
-}
-   /* סגנון לחצאי העיגול */
-        .semi-circle {
-            width: 10px; /* קוטר 10 פיקסלים */
-            height: 20px; /* גובה 20 פיקסלים (פעמיים הקוטר) */
-            border-radius: 10px 0 0 10px; /* עיגול רק בצד שמאל */
-            position: absolute; /* מיקום אבסולוטי בתוך הבלוק */
-        }
+    /* סגנון מיוחד לבלוק Repeat */
+    .repeat-block {
+        width: 140px;
+        border-radius: 30px 10px 10px 30px;
+        padding-right: 10px;
+        padding-left: 10px;
+        text-align: center;
+        font-size: 20px;
+        position: relative;
+        overflow: visible;
+        height: 80px;
+        background-color: #ff6600; /* צבע רקע כתום */
+        color: white; /* צבע טקסט לבן */
+        display: flex; /* שימוש ב-Flexbox ליישור אנכי */
+        align-items: center; /* מרכוז אנכי של הטקסט */
+        justify-content: center; /* מרכוז אופקי של הטקסט */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* הוספת צל */
+        left: -10px;
+    }
 
-        .semi-circle.red {
-            background-color: #fff; /* Changed to white */
-            transform: rotate(180deg) scaleX(-1);
-            top: 35px;
-            left: 30px;
-        }
-        .semi-circle.blue {
-            background-color: #ff6600;
-            transform: rotate(180deg);
-        }
-        .semi-circle.green {
-            background-color: #fff; /* Changed to white */
-            transform: rotate(180deg);
-            left: 2px;
-        }
-        .semi-circle.yellow {
-            background-color: #ff6600;
-            left: 110px;
-            z-index: 3;
-        }
+    /* הוספת החור לבלוק Repeat */
+    .repeat-block::after {
+        content: '';
+        position: absolute;
+        top: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 65px;
+        background-color: #ffffff; /* צבע רקע לבן */
+        border-radius: 10px 10px 10px 10px;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
+    .repeat-block .block-icon-img {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        max-width: 30%;
+        max-height: 30%;
+        z-index: 2;
+    }
+
+    .block-icon-img {
+        /* תמונה של אייקון repeat */
+        content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 2v4m6 6h-4m4 0a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 0v4m-6-6h4m-4 0a4 4 0 1 0 0 8 4 4 0 0 0 0-8z'%3E%3C/path%3E%3C/svg%3E");
+    }
+
+    /* סגנון לחצאי העיגול */
+    .semi-circle {
+        width: 10px; /* קוטר 10 פיקסלים */
+        height: 20px; /* גובה 20 פיקסלים (פעמיים הקוטר) */
+        border-radius: 10px 0 0 10px; /* עיגול רק בצד שמאל */
+        position: absolute; /* מיקום אבסולוטי בתוך הבלוק */
+    }
+
+    .semi-circle.red {
+        background-color: #fff; /* Changed to white */
+        transform: rotate(180deg) scaleX(-1);
+        top: 35px;
+        left: 30px;
+    }
+    .semi-circle.blue {
+        background-color: #ff6600;
+        transform: rotate(180deg);
+    }
+    .semi-circle.green {
+        background-color: #fff; /* Changed to white */
+        transform: rotate(180deg);
+        left: 2px;
+    }
+    .semi-circle.yellow {
+        background-color: #ff6600;
+        left: 110px;
+        z-index: 3;
+    }
