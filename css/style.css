@@ -402,7 +402,6 @@ main {
     overflow: visible; /* Ensure the "hole" is not clipped */
     height: 80px; /* Keep the height consistent */
 }
-
 /* הוספת החור לבלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
@@ -418,28 +417,13 @@ main {
     pointer-events: none; /* Allow clicks to pass through */
     z-index: 1; /* Ensure the hole is above the block's content, but below the icon*/
 }
-
 /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
     position: absolute; /* כדי לאפשר מיקום פינתי */
-    top: 5px;       /* מרחק קטן מהקצה העליון */
-    right: 5px;      /* מרחק קטן מהקצה הימני */
+    top: 5px;          /* מרחק קטן מהקצה העליון */
+    right: 5px;         /* מרחק קטן מהקצה הימני */
     max-width: 30%;   /* הקטנת האייקון אם צריך */
     max-height: 30%;
     z-index: 2; /*Ensure the icon is above the hole*/
-}
-
-/* הוספת חצי עיגול אדום בצד שמאל */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
-    content: '';
-    position: absolute;
-    top: 5px; /* מרחק קטן מהקצה העליון */
-    left: 5px; /* מרחק קטן מהקצה השמאלי */
-    width: 20px; /* רוחב חצי העיגול */
-    height: 40px; /* גובה חצי העיגול */
-    background-color: red; /* צבע אדום */
-    border-radius: 20px 0 0 20px; /* עיגול רק בצד שמאל */
-    z-index: 3; /* ודא שהוא מעל החור והאייקון הקיים */
 }
