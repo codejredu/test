@@ -371,58 +371,60 @@ background-color: var(--control-color);
 background-color: var(--end-color);
 }
 
-* עדכון לבלוק Repeat כדי להוסיף בליטה בצד ימין כמו חלק פאזל */
-#control-blocks .block-container[data-type="repeat"] .scratch-block,
-#programming-area .block-container[data-type="repeat"] .scratch-block {
-    width: 140px; /* רוחב לבנה 140px */
-    border-radius: 30px 10px 10px 30px; /* צורת "ח" -  מעוגל יותר בצדדים שמאל וימין פחות */
-    padding-right: 10px; /* קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה */
-    padding-left: 10px;
-    text-align: center; /* מרכוז טקסט אם יש */
-    font-size: 20px; /* גודל גופן מתאים לרוחב החדש */
-    position: relative; /* Required for the "hole" positioning */
-    overflow: visible; /* Ensure the "hole" is not clipped */
-    height: 80px; /* Keep the height consistent */
+/* סגנון מיוחד לבלוק Repeat /
+#control-blocks .block-container.repeat .scratch-block,
+#programming-area .block-container.repeat .scratch-block {
+width: 140px; / רוחב לבנה 140px /
+border-radius: 30px 10px 10px 30px; / צורת "ח" - מעוגל יותר בצדדים שמאל וימין פחות /
+padding-right: 10px; / קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה /
+padding-left: 10px;
+text-align: center; / מרכוז טקסט אם יש /
+font-size: 20px; / גודל גופן מתאים לרוחב החדש /
+position: relative; / חובה למיקום בליטה /
+overflow: visible; / לוודא שהבליטה לא נחתכת /
+height: 80px; / לשמור על גובה אחיד */
 }
 
-/* הוספת החור לבלוק Repeat */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
-#programming-area .block-container[data-type="repeat"] .scratch-block::after {
-    content: '';
-    position: absolute;
-    top: 15px; /* עדכון המיקום - 10px למעלה מהמיקום הקודם */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80px; /* Width of the hole */
-    height: 65px; /* Height of the hole */
-    background-color: #f0f4ff; /* Match the background color of the stage */
-    border-radius: 10px 10px 10px 10px; /* הוספת עיגול לפינות העליונות (10px לכל הפינות) */
-    pointer-events: none; /* Allow clicks to pass through */
-    z-index: 1; /* Ensure the hole is above the block's content, but below the icon*/
+/* הוספת החור לבלוק Repeat /
+#control-blocks .block-container.repeat .scratch-block::after,
+#programming-area .block-container.repeat .scratch-block::after {
+content: '';
+position: absolute;
+top: 15px;
+left: 50%;
+transform: translateX(-50%);
+width: 80px;
+height: 65px;
+background-color: #f0f4ff; / להתאים לצבע הרקע של הבמה /
+border-radius: 10px;
+pointer-events: none;
+z-index: 1; / לוודא שהחור מעל תוכן הבלוק */
 }
 
-/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
-#control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
-#programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
-    position: absolute; /* כדי לאפשר מיקום פינתי */
-    top: 5px;          /* מרחק קטן מהקצה העליון */
-    right: 5px;         /* מרחק קטן מהקצה הימני */
-    max-width: 30%;   /* הקטנת האייקון אם צריך */
-    max-height: 30%;
-    z-index: 2; /*Ensure the icon is above the hole*/
+/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat /
+#control-blocks .block-container.repeat .scratch-block .block-icon-img,
+#programming-area .block-container.repeat .scratch-block .block-icon-img {
+position: absolute;
+top: 5px;
+right: 5px;
+max-width: 30%;
+max-height: 30%;
+z-index: 2; / לוודא שהאייקון מעל החור */
 }
 
-/* הוספת בליטת פאזל בצד ימין של בלוק Repeat */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
-    content: '';
-    position: absolute;
-    right: -10px; /* מיקום הבליטה מחוץ לבלוק בצד ימין */
-    top: 50%; /* ממוקם באמצע הגובה */
-    transform: translateY(-50%); /* הזזה כלפי מעלה ב-50% מגובה הבליטה עצמה */
-    width: 18px;
-    height: 18px;
-    background-color: inherit; /* הבליטה תירש את הצבע של הבלוק */
-    border-radius: 50%; /* עיגול מלא */
-    z-index: 2; /* מעל שכבות אחרות */
+/* הוספת הבליטה בצד ימין /
+#control-blocks .block-container.repeat .scratch-block::before,
+#programming-area .block-container.repeat .scratch-block::before {
+content: '';
+position: absolute;
+top: 50%;
+right: -20px; / למקם את הבליטה מעבר לקצה הבלוק /
+transform: translateY(-50%);
+width: 20px; / רוחב הבליטה /
+height: 40px; / גובה הבליטה /
+background-color: inherit; / יורש את צבע הרקע של הבלוק /
+border-radius: 10px 0 0 10px; / עיגול רק בצד שמאל של הבליטה /
+z-index: 0; / למקם את הבליטה מתחת לחור ולאייקון */
 }
+
+הסברים:
