@@ -436,7 +436,7 @@ main {
   content: '';
   position: absolute;
   top: 50px; /* ממקם את חצי העיגול מתחת לאייקון */
-  right: 100px;
+  right: 5px; /* שינוי הערך כדי להזיז את חצי העיגול ימינה */
   width: 20px; /* רוחב חצי העיגול */
   height: 10px; /* גובה חצי העיגול */
   background-color: red;
