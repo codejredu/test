@@ -389,19 +389,22 @@ main {
     background-color: var(--end-color);
 }
 
-/* סגנון מיוחד לבלוק Repeat /
+/* סגנון מיוחד לבלוק Repeat - צורה מלבנית מתוקנת /
 #control-blocks .block-container#repeat-block .scratch-block,
 #programming-area .block-container#repeat-block .scratch-block {
 width: 140px; / רוחב לבנה 140px /
-border-radius: 30px 10px 10px 30px; / צורת "ח" - מעוגל יותר בצדדים שמאל וימין פחות /
-padding-right: 10px; / קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה /
+border-radius: 30px 10px 10px 30px; / מעוגל בצדדים, ישר למעלה ולמטה /
+padding-right: 10px;
 padding-left: 10px;
-text-align: center; / מרכוז טקסט אם יש /
-font-size: 20px; / גודל גופן מתאים לרוחב החדש /
-position: relative; / Required for the "hole" and semi-circle positioning /
-overflow: visible; / Ensure the "hole" and semi-circles are not clipped /
-height: 80px; / Keep the height consistent /
-/ שימו לב: הסרתי את background-color מכאן כדי למנוע שינוי צבע כללי */
+text-align: center;
+font-size: 20px;
+position: relative;
+overflow: hidden;
+height: 80px;
+background-color: var(--control-color); / צבע רקע כתום */
+display: flex;
+align-items: center;
+justify-content: center;
 }
 
 /* הוספת "חור" לבן לבלוק Repeat /
@@ -409,39 +412,29 @@ height: 80px; / Keep the height consistent /
 #programming-area .block-container#repeat-block .scratch-block::before {
 content: '';
 position: absolute;
-top: 15px; / עדכון המיקום /
-left: 10px; / יישור עם תחילת הקימור השמאלי /
-width: 80px; / Width of the hole /
-height: 50px; / Height of the hole /
-background-color: #f0f4ff; / Match the background color /
-border-radius: 10px; / מעוגל פינות /
-pointer-events: none; / Allow clicks to pass through /
-z-index: 1; / Ensure the hole is above the block's content */
+top: 15px;
+left: 15px;
+width: 80px;
+height: 50px;
+background-color: #f0f4ff; / צבע לבן */
+border-radius: 10px;
+pointer-events: none;
+z-index: 1;
 }
 
 /* הוספת חצי עיגול כתום בולט מימין /
-#control-blocks .block-container#repeat-block .scratch-block::after {
-content: '';
-position: absolute;
-top: 15px; / יישור אנכי עם השקע /
-right: -15px; / הוצאה של חצי עיגול מימין /
-width: 30px;
-height: 50px;
-background-color: var(--control-color); / צבע כתום /
-border-radius: 0 15px 15px 0; / עיגול רק בצד ימין /
-z-index: 2; / מעל החור הלבן */
-}
-
+#control-blocks .block-container#repeat-block .scratch-block::after,
 #programming-area .block-container#repeat-block .scratch-block::after {
 content: '';
 position: absolute;
-top: 15px; /* יישור אנכי עם השקע /
-right: -15px; / הוצאה של חצי עיגול מימין /
+top: 50%;
+right: -15px;
+transform: translateY(-50%);
 width: 30px;
 height: 50px;
-background-color: var(--control-color); / צבע כתום /
-border-radius: 0 15px 15px 0; / עיגול רק בצד ימין /
-z-index: 2; / מעל החור הלבן */
+background-color: var(--control-color); / צבע כתום */
+border-radius: 0 15px 15px 0;
+z-index: 2;
 }
 
 /* הוספת חצי עיגול ירוק בצד ימין של השקע הלבן /
@@ -449,13 +442,14 @@ z-index: 2; / מעל החור הלבן */
 #programming-area .block-container#repeat-block .scratch-block .hole-right {
 content: '';
 position: absolute;
-top: 15px;
-right: 10px; / צמוד לקצה הימני של השקע /
+top: 50%;
+right: 15px;
+transform: translateY(-50%);
 width: 15px;
 height: 50px;
-background-color: var(--sound-color); / צבע ירוק /
-border-radius: 0 8px 8px 0; / חצי עיגול ימני /
-z-index: 3; / מעל החור הלבן */
+background-color: var(--sound-color); / צבע ירוק */
+border-radius: 0 8px 8px 0;
+z-index: 3;
 }
 
 /* הוספת חצי עיגול כחול בצד שמאל של השקע הלבן /
@@ -463,22 +457,29 @@ z-index: 3; / מעל החור הלבן */
 #programming-area .block-container#repeat-block .scratch-block .hole-left {
 content: '';
 position: absolute;
-top: 15px;
-left: 10px; / צמוד לקצה השמאלי של השקע /
+top: 50%;
+left: 15px;
+transform: translateY(-50%);
 width: 15px;
 height: 50px;
-background-color: var(--motion-color); / צבע כחול /
-border-radius: 8px 0 0 8px; / חצי עיגול שמאלי /
-z-index: 3; / מעל החור הלבן */
+background-color: var(--motion-color); / צבע כחול */
+border-radius: 8px 0 0 8px;
+z-index: 3;
 }
 
-/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat /
+/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
 #control-blocks .block-container#repeat-block .scratch-block .block-icon-img,
 #programming-area .block-container#repeat-block .scratch-block .block-icon-img {
-position: absolute; / כדי לאפשר מיקום פינתי /
-top: 5px; / מרחק קטן מהקצה העליון /
-right: 5px; / מרחק קטן מהקצה הימני /
-max-width: 30%; / הקטנת האייקון אם צריך */
+position: absolute;
+top: 5px;
+right: 5px;
+max-width: 30%;
 max-height: 30%;
-z-index: 4; /Ensure the icon is above all other pseudo-elements/
+z-index: 4;
+}
+
+/* הסתרת הטקסט הזמני (אם היה) */
+#control-blocks .block-container#repeat-block .scratch-block > span,
+#programming-area .block-container#repeat-block .scratch-block > span {
+display: none;
 }
