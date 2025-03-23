@@ -159,16 +159,6 @@ main {
     border: 0; /* הסרת סימון פנימי של פוקוס בפיירפוקס */
 }
 
-.category-tab.active::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 10%;
-    width: 80%;
-    height: 2px;
-    background-color: #333;
-}
-
 .category-tab:hover {
     opacity: 0.9;
 }
@@ -368,6 +358,29 @@ main {
     margin: auto; /* Center the image */
 }
 
+.category-tab.triggering {
+    background-color: var(--triggering-color);
+}
+
+.category-tab.motion {
+    background-color: var(--motion-color);
+}
+
+.category-tab.looks {
+    background-color: var(--looks-color);
+}
+
+.category-tab.sound {
+    background-color: var(--sound-color);
+}
+
+.category-tab.control {
+    background-color: var(--control-color);
+}
+
+.category-tab.end {
+    background-color: var(--end-color);
+}
 
 #triggering-blocks .block-container .scratch-block {
     background-color: var(--triggering-color);
