@@ -388,8 +388,7 @@ main {
 #end-blocks.active .block-container .scratch-block {
     background-color: var(--end-color);
 }
-
-/* סגנון בלוק Repeat עם בליטה עגולה בימין ושקע עגול לבן בשמאל */
+/* סגנון בלוק Repeat עם שקע בצד שמאל */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
     /* מידות הבלוק הבסיסי */
@@ -404,62 +403,54 @@ main {
     font-size: 20px;
     font-weight: normal;
     
-    /* מיקום יחסי כדי לאפשר הוספת אלמנטים נוספים */
+    /* מיקום יחסי וסגנון */
     position: relative;
-    
-    /* פינות מעוגלות ליצירת מראה רך יותר */
     border-radius: 10px;
-    
-    /* הסרת עודף תוכן מעבר לגבולות הבלוק */
     overflow: visible;
+    
+    /* צל וטקסטורה */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* בליטה עגולה במרכז הפאה הימנית */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
-#programming-area .block-container[data-type="repeat"] .scratch-block::after {
-    /* יצירת אלמנט נוסף כבליטה עגולה */
+/* שקע בצד שמאל של הבלוק */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+    /* יצירת אלמנט נוסף כשקע */
     content: '';
     position: absolute;
     
-    /* מיקום הבליטה במרכז הפאה הימנית */
-    right: -12px; 
-    top: 50%; 
-    transform: translateY(-50%);
+    /* מיקום השקע - 15 פיקסלים ימינה מהקצה השמאלי */
+    left: 15px; 
+    top: 25%; /* מרחק מהראש */
     
-    /* מימדי הבליטה העגולה */
-    width: 24px;
-    height: 24px;
-    border-radius: 50%; /* יצירת צורה עגולה מושלמת */
+    /* מימדי השקע */
+    width: 15px;
+    height: 50%;
     
     /* צביעה וסגנון זהים לבלוק הראשי */
     background-color: var(--control-color);
     
-    /* צל קל ליצירת עומק */
-    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-/* שקע עגול לבן בצד שמאל */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
-    /* יצירת אלמנט נוסף כשקע עגול */
-    content: '';
-    position: absolute;
-    
-    /* מיקום השקע במרכז הפאה השמאלית */
-    left: -12px; 
-    top: 50%; 
-    transform: translateY(-50%);
-    
-    /* מימדי השקע העגול */
-    width: 24px;
-    height: 24px;
-    border-radius: 50%; /* יצירת צורה עגולה מושלמת */
-    
-    /* צבע לבן עבור השקע */
-    background-color: white;
+    /* עיגול פינות השקע */
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
     
     /* צל קל ליצירת עומק */
     box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* בליטה בצד ימין של הבלוק */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
+#programming-area .block-container[data-type="repeat"] .scratch-block::after {
+    content: '';
+    position: absolute;
+    right: -15px;
+    top: 25%;
+    width: 15px;
+    height: 50%;
+    background-color: var(--control-color);
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* מיקום האייקון בפינה הימנית העליונה */
@@ -470,12 +461,11 @@ main {
     right: 5px;
     max-width: 30%;
     max-height: 30%;
-    z-index: 2; /* להבטיח שהאייקון יופיע מעל שאר האלמנטים */
+    z-index: 2;
 }
 
-/* אפקט hover קל להדגשה */
+/* אפקט hover קל */
 #control-blocks .block-container[data-type="repeat"] .scratch-block:hover,
 #programming-area .block-container[data-type="repeat"] .scratch-block:hover {
-    /* הגברת הבהירות מעט בעת העברת העכבר מעל הבלוק */
     filter: brightness(1.1);
 }
