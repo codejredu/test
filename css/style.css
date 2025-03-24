@@ -388,32 +388,17 @@ main {
 #end-blocks.active .block-container .scratch-block {
     background-color: var(--end-color);
 }
-/* סגנון לבנת פאזל מדויק לבלוק Repeat */
+/* סגנון בלוק Repeat עם פינות מעוגלות */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
     width: 140px;
     height: 80px;
-    background-color: #FFC107; /* צהוב זהוב כמו בתמונה */
+    background-color: #FFC107; /* צהוב זהוב */
     color: white;
     font-size: 20px;
     font-weight: normal;
     position: relative;
-    overflow: visible;
-    
-    /* יצירת צורת פאזל מדויקת בהתבסס על התמונה */
-    clip-path: 
-        polygon(
-            0% 20%, 
-            20% 0%, 
-            80% 0%, 
-            100% 20%, 
-            100% 80%, 
-            80% 100%, 
-            20% 100%, 
-            0% 80%,
-            0% 40%, 
-            20% 20%
-        );
+    border-radius: 15px; /* פינות מעוגלות */
     
     /* אפקט תלת-מימד וצל */
     box-shadow: 
@@ -426,17 +411,18 @@ main {
     justify-content: center;
     text-align: center;
     padding: 0 15px;
+    overflow: hidden;
 }
 
-/* סגנון מספר הבלוק בדומה לתמונה */
+/* סגנון מספר הבלוק */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
     content: '4';
     position: absolute;
-    bottom: -15px;
-    right: 5px;
-    background-color: #FFC107;
-    color: white;
+    bottom: -10px;
+    right: 10px;
+    background-color: white;
+    color: #FFC107;
     width: 25px;
     height: 25px;
     border-radius: 50%;
@@ -452,8 +438,8 @@ main {
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
     position: absolute;
-    top: 5px;
-    right: 5px;
+    top: 10px;
+    right: 10px;
     max-width: 30%;
     max-height: 30%;
     z-index: 2;
