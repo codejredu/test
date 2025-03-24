@@ -448,3 +448,11 @@ main {
     font-size: 24px;
     color: black;
 }
+
+/* שקע לבן */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+    background-color: white; /* רקע לבן */
+    border-radius: 50%; /* צורה עגולה */
+    padding: 5px; /* ריווח פנימי */
+}
