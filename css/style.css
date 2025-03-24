@@ -1,11 +1,11 @@
-/* style.css - עם צבעים מעודכנים לילדי גן */
+/* style.css - עם צבעים מעודכנים לילדי גן וסגנון REPEAT */
 :root {
-    --motion-color: #66D2FF;    /* כחול-תכלת בהיר */
-    --triggering-color: #FFE866; /* צהוב בננה רך */
-    --looks-color: #D295F6;     /* סגול לבנדר רך */
-    --sound-color: #7ED957;     /* ירוק תפוח בהיר */
-    --control-color: #FFBD67;   /* כתום אפרסק */
-    --end-color: #FF6B6B;       /* אדום קורל רך */
+    --motion-color: #66D2FF;      /* כחול-תכלת בהיר */
+    --triggering-color: #FFE866;   /* צהוב בננה רך */
+    --looks-color: #D295F6;       /* סגול לבנדר רך */
+    --sound-color: #7ED957;       /* ירוק תפוח בהיר */
+    --control-color: #FFBD67;     /* כתום אפרסק */
+    --end-color: #FF6B6B;         /* אדום קורל רך */
 }
 
 body {
@@ -393,7 +393,7 @@ main {
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
     width: 140px;
-    border-radius: 30px 10px 10px 30px;
+    border-radius: 10px; /* מעוגל יותר */
     padding-right: 10px;
     padding-left: 10px;
     text-align: center;
@@ -401,20 +401,24 @@ main {
     position: relative;
     overflow: visible;
     height: 80px;
+    background-color: var(--control-color); /* צבע כתום אפרסק */
+    color: white; /* טקסט לבן לניגודיות */
+    font-weight: normal; /* משקל גופן רגיל */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* הוספת "חור" לבלוק Repeat */
+/* הוספת "חור" לבלוק Repeat - סגנון מעודכן */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
     content: '';
     position: absolute;
-    top: 15px;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
-    width: 80px;
-    height: 65px;
+    transform: translate(-50%, -50%);
+    width: 70%;
+    height: 60%;
     background-color: #f0f4ff; /* צבע הרקע של הבמה */
-    border-radius: 10px;
+    border-radius: 5px;
     pointer-events: none;
     z-index: 1;
 }
@@ -430,17 +434,21 @@ main {
     z-index: 2;
 }
 
-/* הוספת בליטה מתחת לאייקון */
+/* הוספת בליטה בצד ימין - סגנון מעודכן */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
     content: '';
     position: absolute;
-    top: 35px;
-    right: 25px; /* הערך תוקן ל-5px */
+    top: 50%;
+    right: -10px;
     transform: translateY(-50%);
-    width: 30px;
-    height: 30px;
-    background-color: red;
-    border-radius: 15px;
+    width: 20px;
+    height: 40px;
+    background-color: var(--control-color); /* צבע רקע זהה */
+    border-radius: 10px 0 0 10px;
     z-index: 3;
 }
+
+/* הוספת בליטה בצד שמאל - סגנון מעודכן */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before-left,
+#programming-area .block-container[data-type="repeat"] .scratch-block
