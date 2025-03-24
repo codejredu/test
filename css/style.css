@@ -401,38 +401,58 @@ main {
     position: relative; /* Required for the "hole" positioning */
     overflow: visible !important; /* חשוב מאוד - מבטיח שהבליטה לא תיחתך */
     height: 80px; /* Keep the height consistent */
+    background-color: #FFA500; /* צבע כתום לבלוק */
+    /* שינוי צורת הבלוק כך שהצד השמאלי יהיה עיגול לבן */
+    border-top-left-radius: 40px; 
+    border-bottom-left-radius: 40px;
 }
 
-/* בליטת פאזל בצד ימני - גרסה חדשה */
+/* בליטת פאזל בצד ימני */
 #control-blocks .block-container[data-type="repeat"] .scratch-block:before,
 #programming-area .block-container[data-type="repeat"] .scratch-block:before {
     content: "";
     display: block;
     position: absolute;
-    width: 20px;
-    height: 20px;
-    background-color: #FFA500; /* צבע כתום - התאם לצבע הבלוק שלך */
+    width: 24px;
+    height: 24px;
+    background-color: #FFA500; /* צבע כתום כמו הבלוק */
     border-radius: 50%;
-    right: -10px;
-    top: 40px; /* ממוקם באמצע הבלוק בערך */
-    z-index: 100 !important; /* ערך גבוה מאוד להבטחת נראות */
-    box-shadow: 0 0 0 2px rgba(0,0,0,0.2); /* מסגרת דקה */
+    right: -12px;
+    top: 50%;
+    transform: translateY(-50%); /* ממרכז אנכית */
+    z-index: 100 !important;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.1); /* מסגרת דקה */
 }
 
-/* הוספת החור לבלוק Repeat */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
-#programming-area .block-container[data-type="repeat"] .scratch-block::after {
+/* הוספת העיגול הלבן בצד שמאל */
+#control-blocks .block-container[data-type="repeat"] .scratch-block:after,
+#programming-area .block-container[data-type="repeat"] .scratch-block:after {
     content: '';
     position: absolute;
-    top: 15px; /* עדכון המיקום - 10px למעלה מהמיקום הקודם */
+    top: 50%;
+    left: 0;
+    transform: translate(-50%, -50%); /* ממרכז את העיגול */
+    width: 24px;
+    height: 24px;
+    background-color: white; /* צבע לבן לעיגול השמאלי */
+    border-radius: 50%;
+    z-index: 1;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.1); /* מסגרת דקה */
+}
+
+/* החור המרכזי בבלוק */
+#control-blocks .block-container[data-type="repeat"] .scratch-block .block-center-hole,
+#programming-area .block-container[data-type="repeat"] .scratch-block .block-center-hole {
+    position: absolute;
+    top: 15px;
     left: 50%;
     transform: translateX(-50%);
-    width: 80px; /* Width of the hole */
-    height: 65px; /* Height of the hole */
-    background-color: #f0f4ff; /* Match the background color of the stage */
-    border-radius: 10px 10px 10px 10px; /* הוספת עיגול לפינות העליונות (10px לכל הפינות) */
-    pointer-events: none; /* Allow clicks to pass through */
-    z-index: 1; /* Ensure the hole is above the block's content, but below the icon*/
+    width: 80px; /* רוחב החור */
+    height: 65px; /* גובה החור */
+    background-color: #f0f4ff; /* צבע הרקע של הבמה */
+    border-radius: 10px;
+    pointer-events: none;
+    z-index: 1;
 }
 
 /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
