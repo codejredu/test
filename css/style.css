@@ -389,41 +389,42 @@ main {
     background-color: var(--end-color);
 }
 
-/* סגנון בסיסי לבלוק Repeat */
+/* Puzzle-like Repeat Block Styling */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
     width: 140px;
-    border-radius: 10px; /* מעוגל יותר */
-    padding-right: 10px;
-    padding-left: 10px;
-    text-align: center;
+    height: 80px;
+    background-color: var(--control-color);
+    color: white;
     font-size: 20px;
+    font-weight: normal;
     position: relative;
     overflow: visible;
-    height: 80px;
-    background-color: var(--control-color); /* צבע כתום אפרסק */
-    color: white; /* טקסט לבן לניגודיות */
-    font-weight: normal; /* משקל גופן רגיל */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    
+    /* Puzzle-like shape with right protrusion and left indentation */
+    clip-path: 
+        polygon(
+            0% 20%, /* Left indentation start */
+            10% 0%,  /* Left indentation peak */
+            10% 0%,  /* Left indentation top */
+            90% 0%,  /* Right side top */
+            100% 20%, /* Right protrusion start */
+            100% 80%, /* Right side bottom */
+            90% 100%, /* Bottom right */
+            10% 100%, /* Bottom left */
+            0% 80%    /* Left side bottom */
+        );
+    
+    /* Enhanced shadow for 3D effect */
+    box-shadow: 
+        0 4px 8px rgba(0, 0, 0, 0.2), 
+        inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    
+    text-align: center;
+    padding: 10px;
 }
 
-/* הוספת "חור" לבלוק Repeat - סגנון מעודכן */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
-#programming-area .block-container[data-type="repeat"] .scratch-block::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 70%;
-    height: 60%;
-    background-color: #f0f4ff; /* צבע הרקע של הבמה */
-    border-radius: 5px;
-    pointer-events: none;
-    z-index: 1;
-}
-
-/* מיקום אייקון בפינה הימנית העליונה של בלוק Repeat */
+/* Adjust icon position to fit the new shape */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
     position: absolute;
@@ -434,21 +435,8 @@ main {
     z-index: 2;
 }
 
-/* הוספת בליטה בצד ימין - סגנון מעודכן */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: -10px;
-    transform: translateY(-50%);
-    width: 20px;
-    height: 40px;
-    background-color: var(--control-color); /* צבע רקע זהה */
-    border-radius: 10px 0 0 10px;
-    z-index: 3;
+/* Optional: Add a subtle hover effect */
+#control-blocks .block-container[data-type="repeat"] .scratch-block:hover,
+#programming-area .block-container[data-type="repeat"] .scratch-block:hover {
+    filter: brightness(1.1);
 }
-
-/* הוספת בליטה בצד שמאל - סגנון מעודכן */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before-left,
-#programming-area .block-container[data-type="repeat"] .scratch-block
