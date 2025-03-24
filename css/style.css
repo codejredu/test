@@ -435,13 +435,12 @@ main {
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
     content: '';
     position: absolute;
-    top: 35px; /* שינוי מיקום הבליטה מתחת לאייקון */
-    right: -15px;
+    top: 35px;
+    right: 5px; /* הערך תוקן ל-5px */
     transform: translateY(-50%);
     width: 30px;
     height: 30px;
-    background-color: orange; /* צבע כתום */
-    border-radius: 15px; /* עיגול מושלם */
-    z-index: 3; /* מעל "החור" והאייקון */
+    background-color: orange;
+    border-radius: 15px;
+    z-index: 3;
 }
-השינוי העיקרי:
