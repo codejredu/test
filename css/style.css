@@ -388,46 +388,67 @@ main {
 #end-blocks.active .block-container .scratch-block {
     background-color: var(--end-color);
 }
-/* סגנון בלוק Repeat בצורת פאזל */
+/* סגנון לבנת פאזל מדויק לבלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
-    /* מידות הבלוק הבסיסי */
     width: 140px;
     height: 80px;
-    
-    /* צבע רקע וטקסט */
-    background-color: var(--control-color);
+    background-color: #FFC107; /* צהוב זהוב כמו בתמונה */
     color: white;
-    
-    /* עיצוב טקסט */
     font-size: 20px;
     font-weight: normal;
-    
-    /* מיקום יחסי וסגנון */
     position: relative;
+    overflow: visible;
     
-    /* שימוש ב-clip-path ליצירת צורת פאזל מדויקת */
+    /* יצירת צורת פאזל מדויקת בהתבסס על התמונה */
     clip-path: 
         polygon(
-            0% 20%, /* שקע שמאלי למטה */
-            10% 0%, /* שקע שמאלי למעלה */
-            25% 0%, /* סיום שקע שמאלי */
-            
-            75% 0%, /* התחלת בליטה ימנית למעלה */
-            90% 0%, /* סיום בליטה ימנית למעלה */
-            100% 20%, /* בליטה ימנית למטה */
-            
-            100% 80%, /* צד ימני למטה */
-            90% 100%, /* פינה ימנית תחתונה */
-            10% 100%, /* פינה שמאלית תחתונה */
-            0% 80% /* צד שמאלי למטה */
+            0% 20%, 
+            20% 0%, 
+            80% 0%, 
+            100% 20%, 
+            100% 80%, 
+            80% 100%, 
+            20% 100%, 
+            0% 80%,
+            0% 40%, 
+            20% 20%
         );
     
-    /* צל וטקסטורה */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    /* אפקט תלת-מימד וצל */
+    box-shadow: 
+        0 4px 8px rgba(0, 0, 0, 0.3), 
+        inset 0 2px 4px rgba(255, 255, 255, 0.2);
+    
+    /* מרכוז טקסט */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 15px;
 }
 
-/* מיקום האייקון בפינה הימנית העליונה */
+/* סגנון מספר הבלוק בדומה לתמונה */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
+#programming-area .block-container[data-type="repeat"] .scratch-block::after {
+    content: '4';
+    position: absolute;
+    bottom: -15px;
+    right: 5px;
+    background-color: #FFC107;
+    color: white;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* מיקום אייקון בפינה הימנית העליונה */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
     position: absolute;
@@ -438,8 +459,9 @@ main {
     z-index: 2;
 }
 
-/* אפקט hover קל */
+/* אפקט הנפה קלה כאשר מרחפים מעל הבלוק */
 #control-blocks .block-container[data-type="repeat"] .scratch-block:hover,
 #programming-area .block-container[data-type="repeat"] .scratch-block:hover {
-    filter: brightness(1.1);
+    transform: scale(1.05);
+    transition: transform 0.2s ease;
 }
