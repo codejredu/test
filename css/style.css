@@ -402,12 +402,11 @@ main {
     overflow: visible !important; /* חשוב מאוד - מבטיח שהבליטה לא תיחתך */
     height: 80px; /* Keep the height consistent */
     background-color: #FFA500; /* צבע כתום לבלוק */
-    /* שינוי צורת הבלוק כך שהצד השמאלי יהיה עיגול לבן */
     border-top-left-radius: 40px; 
     border-bottom-left-radius: 40px;
 }
 
-/* בליטת פאזל בצד ימני */
+/* בליטת פאזל בצד ימני - כעת זזה 150px ימינה */
 #control-blocks .block-container[data-type="repeat"] .scratch-block:before,
 #programming-area .block-container[data-type="repeat"] .scratch-block:before {
     content: "";
@@ -417,21 +416,21 @@ main {
     height: 24px;
     background-color: #FFA500; /* צבע כתום כמו הבלוק */
     border-radius: 50%;
-    right: -12px;
+    right: -150px; /* הזזה 150px לימין */
     top: 50%;
     transform: translateY(-50%); /* ממרכז אנכית */
     z-index: 100 !important;
     box-shadow: 0 0 0 2px rgba(0,0,0,0.1); /* מסגרת דקה */
 }
 
-/* הוספת העיגול הלבן בצד שמאל */
+/* העיגול הלבן בצד שמאל - כעת זז 15px ימינה */
 #control-blocks .block-container[data-type="repeat"] .scratch-block:after,
 #programming-area .block-container[data-type="repeat"] .scratch-block:after {
     content: '';
     position: absolute;
     top: 50%;
-    left: 0;
-    transform: translate(-50%, -50%); /* ממרכז את העיגול */
+    left: 15px; /* הזזה 15px לימין (במקום -50% להעביר מחוץ לבלוק) */
+    transform: translateY(-50%); /* ממרכז רק אנכית */
     width: 24px;
     height: 24px;
     background-color: white; /* צבע לבן לעיגול השמאלי */
