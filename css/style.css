@@ -430,13 +430,13 @@ main {
     z-index: 2;
 }
 
-/* הוספת בליטה בצד ימין כמו בלבנת פאזל */
+/* הוספת בליטה מתחת לאייקון */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
     content: '';
     position: absolute;
-    top: 50%;
-    right: -15px; /* מיקום הבליטה מחוץ לבלוק */
+    top: 35px; /* שינוי מיקום הבליטה מתחת לאייקון */
+    right: -15px;
     transform: translateY(-50%);
     width: 30px;
     height: 30px;
@@ -444,3 +444,4 @@ main {
     border-radius: 15px; /* עיגול מושלם */
     z-index: 3; /* מעל "החור" והאייקון */
 }
+השינוי העיקרי:
