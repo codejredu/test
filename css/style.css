@@ -388,81 +388,63 @@ main {
 #end-blocks.active .block-container .scratch-block {
     background-color: var(--end-color);
 }
+/* סגנון בסיסי לבלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
-    width: 140px;
-    height: 80px;
-    background-color: #FFC107;
-    color: white;
+    width: 200px; /* רוחב מוגדל */
+    border-radius: 20px; /* רדיוס פינות מוגדל */
+    padding: 15px 20px; /* ריווח פנימי מוגדל */
+    text-align: left; /* יישור טקסט לשמאל */
     font-size: 20px;
-    font-weight: normal;
     position: relative;
-    border-radius: 15px;
-    border: 2px solid #FFA000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 0 15px;
-    overflow: visible; /* שנה את זה ל-visible */
+    overflow: visible;
+    height: 100px; /* גובה מוגדל */
+    background-color: #FFD700; /* צבע צהוב בהיר */
+    color: black; /* צבע טקסט שחור */
+    font-weight: bold; /* טקסט מודגש */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2), inset 0 4px 8px rgba(0, 0, 0, 0.2);
+    display: flex; /* שימוש ב-flexbox לפריסה */
+    align-items: center; /* יישור אנכי למרכז */
 }
 
-#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
-#programming-area .block-container[data-type="repeat"] .scratch-block::after {
-    content: '4';
-    position: absolute;
-    bottom: -10px;
-    right: 10px;
-    background-color: white;
-    color: #FFC107;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: bold;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    border: 2px solid #FFA000;
-    padding: 2px;
-}
-
+/* מיקום אייקון בפינה הימנית העליונה של בלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
     position: absolute;
     top: 10px;
     right: 10px;
-    max-width: 30%;
-    max-height: 30%;
+    max-width: 30px; /* גודל אייקון מוגבל */
+    max-height: 30px;
     z-index: 2;
-    border: 1px solid #FFA000;
-    padding: 2px;
 }
 
-#control-blocks .block-container[data-type="repeat"] .scratch-block:hover,
-#programming-area .block-container[data-type="repeat"] .scratch-block:hover {
-    transform: scale(1.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow:
-        0 6px 12px rgba(0, 0, 0, 0.4),
-        inset 0 2px 4px rgba(255, 255, 255, 0.2);
+/* עיגול עם המספר 4 */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
+#programming-area .block-container[data-type="repeat"] .scratch-block::after {
+    content: "4"; /* תוכן המספר */
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background-color: white; /* רקע לבן */
+    color: black; /* צבע טקסט שחור */
+    width: 30px; /* רוחב עיגול */
+    height: 30px; /* גובה עיגול */
+    border-radius: 50%; /* צורה עגולה */
+    display: flex;
+    justify-content: center; /* יישור אופקי למרכז */
+    align-items: center; /* יישור אנכי למרכז */
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* הוספת CSS זה כדי ליצור את הבליטה */
+/* חץ ימני */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
-    content: '';
+    content: "→"; /* תוכן החץ */
     position: absolute;
     top: 50%;
-    right: 0;
-    transform: translateY(-50%);
-    width: 20px; /* רוחב הבליטה */
-    height: 30px; /* גובה הבליטה */
-    background-color: #FFC107; /* צבע זהה לבלוק */
-    border-top-right-radius: 10px; /* עיגול פינה ימנית עליונה */
-    border-bottom-right-radius: 10px; /* עיגול פינה ימנית תחתונה */
-    /* כדי למקם אותו בדיוק על הגבול, השתמש במיקום שלילי */
-    margin-right: -20px; /* זה צריך להיות שלילי מרוחב הבליטה */
-    box-shadow: 2px 0 2px rgba(0, 0, 0, 0.2); /* צל קל */
+    right: -15px; /* מיקום מחוץ לבלוק */
+    transform: translateY(-50%); /* יישור אנכי למרכז */
+    font-size: 24px;
+    color: black;
 }
