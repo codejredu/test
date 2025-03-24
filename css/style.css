@@ -389,3 +389,10 @@ main {
     background-color: var(--end-color);
 }
 
+#repeated-line {
+width: 200px; /* רוחב כפול (ניתן לשנות לפי הצורך) /
+height: 1px; / גובה הלבנה (ניתן לשנות לפי הצורך) /
+background-image: linear-gradient(to right, black 50%, transparent 50%);
+background-size: 20px 1px; / גודל החזרה של הדוגמה /
+background-repeat: repeat-x; / חזרה אופקית */
+}
