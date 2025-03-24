@@ -431,8 +431,8 @@ main {
 }
 
 /* הוספת בליטה בצד ימין כמו בלבנת פאזל */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
-#programming-area .block-container[data-type="repeat"] .scratch-block::after {
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
     content: '';
     position: absolute;
     top: 50%;
