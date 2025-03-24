@@ -389,7 +389,7 @@ main {
     background-color: var(--end-color);
 }
 
-/* Puzzle-like Repeat Block Styling */
+/* Puzzle-like Repeat Block Styling with Right-Side Protrusion */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
     width: 140px;
@@ -399,29 +399,41 @@ main {
     font-size: 20px;
     font-weight: normal;
     position: relative;
+    border-radius: 10px; /* Rounded corners */
     overflow: visible;
     
-    /* Puzzle-like shape with right protrusion and left indentation */
-    clip-path: 
-        polygon(
-            0% 20%, /* Left indentation start */
-            10% 0%,  /* Left indentation peak */
-            10% 0%,  /* Left indentation top */
-            90% 0%,  /* Right side top */
-            100% 20%, /* Right protrusion start */
-            100% 80%, /* Right side bottom */
-            90% 100%, /* Bottom right */
-            10% 100%, /* Bottom left */
-            0% 80%    /* Left side bottom */
-        );
-    
-    /* Enhanced shadow for 3D effect */
-    box-shadow: 
-        0 4px 8px rgba(0, 0, 0, 0.2), 
-        inset 0 2px 4px rgba(0, 0, 0, 0.2);
-    
-    text-align: center;
-    padding: 10px;
+    /* Create a protrusion on the right side */
+    position: relative;
+}
+
+/* Right-side protrusion */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
+#programming-area .block-container[data-type="repeat"] .scratch-block::after {
+    content: '';
+    position: absolute;
+    right: -15px; /* Extend slightly outside the main block */
+    top: 25%; /* Position vertically */
+    width: 15px; /* Width of the protrusion */
+    height: 50%; /* Height of the protrusion */
+    background-color: var(--control-color);
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Left-side indentation */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+    content: '';
+    position: absolute;
+    left: -15px; /* Extend slightly outside the main block */
+    top: 25%; /* Position vertically */
+    width: 15px; /* Width of the indentation */
+    height: 50%; /* Height of the indentation */
+    background-color: var(--control-color);
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+    box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Adjust icon position to fit the new shape */
