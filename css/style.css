@@ -388,33 +388,25 @@ main {
 #end-blocks.active .block-container .scratch-block {
     background-color: var(--end-color);
 }
-/* סגנון בלוק Repeat עם פינות מעוגלות */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
     width: 140px;
     height: 80px;
-    background-color: #FFC107; /* צהוב זהוב */
+    background-color: #FFC107;
     color: white;
     font-size: 20px;
     font-weight: normal;
     position: relative;
-    border-radius: 15px; /* פינות מעוגלות */
-    
-    /* אפקט תלת-מימד וצל */
-    box-shadow: 
-        0 4px 8px rgba(0, 0, 0, 0.3), 
-        inset 0 2px 4px rgba(255, 255, 255, 0.2);
-    
-    /* מרכוז טקסט */
+    border-radius: 15px;
+    border: 2px solid #FFA000;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     padding: 0 15px;
-    overflow: hidden;
+    overflow: visible; /* שנה את זה ל-visible */
 }
 
-/* סגנון מספר הבלוק */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
     content: '4';
@@ -423,18 +415,19 @@ main {
     right: 10px;
     background-color: white;
     color: #FFC107;
-    width: 25px;
-    height: 25px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: bold;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    border: 2px solid #FFA000;
+    padding: 2px;
 }
 
-/* מיקום אייקון בפינה הימנית העליונה */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
     position: absolute;
@@ -443,11 +436,33 @@ main {
     max-width: 30%;
     max-height: 30%;
     z-index: 2;
+    border: 1px solid #FFA000;
+    padding: 2px;
 }
 
-/* אפקט הנפה קלה כאשר מרחפים מעל הבלוק */
 #control-blocks .block-container[data-type="repeat"] .scratch-block:hover,
 #programming-area .block-container[data-type="repeat"] .scratch-block:hover {
     transform: scale(1.05);
-    transition: transform 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow:
+        0 6px 12px rgba(0, 0, 0, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.2);
+}
+
+/* הוספת CSS זה כדי ליצור את הבליטה */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    width: 20px; /* רוחב הבליטה */
+    height: 30px; /* גובה הבליטה */
+    background-color: #FFC107; /* צבע זהה לבלוק */
+    border-top-right-radius: 10px; /* עיגול פינה ימנית עליונה */
+    border-bottom-right-radius: 10px; /* עיגול פינה ימנית תחתונה */
+    /* כדי למקם אותו בדיוק על הגבול, השתמש במיקום שלילי */
+    margin-right: -20px; /* זה צריך להיות שלילי מרוחב הבליטה */
+    box-shadow: 2px 0 2px rgba(0, 0, 0, 0.2); /* צל קל */
 }
