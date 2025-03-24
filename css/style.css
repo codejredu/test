@@ -406,7 +406,7 @@ main {
     border-bottom-left-radius: 40px;
 }
 
-/* בליטת פאזל בצד ימני - כעת זזה 150px ימינה */
+/* בליטת פאזל בצד ימני - ממוקמת בדיוק בקצה הימני של הבלוק */
 #control-blocks .block-container[data-type="repeat"] .scratch-block:before,
 #programming-area .block-container[data-type="repeat"] .scratch-block:before {
     content: "";
@@ -416,20 +416,20 @@ main {
     height: 24px;
     background-color: #FFA500; /* צבע כתום כמו הבלוק */
     border-radius: 50%;
-    right: -150px; /* הזזה 150px לימין */
+    right: -12px; /* הבליטה נמצאת בקצה הימני */
     top: 50%;
     transform: translateY(-50%); /* ממרכז אנכית */
     z-index: 100 !important;
     box-shadow: 0 0 0 2px rgba(0,0,0,0.1); /* מסגרת דקה */
 }
 
-/* העיגול הלבן בצד שמאל - כעת זז 15px ימינה */
+/* העיגול הלבן בצד שמאל */
 #control-blocks .block-container[data-type="repeat"] .scratch-block:after,
 #programming-area .block-container[data-type="repeat"] .scratch-block:after {
     content: '';
     position: absolute;
     top: 50%;
-    left: 15px; /* הזזה 15px לימין (במקום -50% להעביר מחוץ לבלוק) */
+    left: 15px; /* מיקום 15px מהקצה השמאלי */
     transform: translateY(-50%); /* ממרכז רק אנכית */
     width: 24px;
     height: 24px;
