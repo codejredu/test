@@ -389,54 +389,80 @@ main {
     background-color: var(--end-color);
 }
 
-/* Puzzle-like Repeat Block Styling with Right-Side Protrusion */
+/* סגנון בלוק Repeat עם בליטה עגולה בימין ושקע עגול לבן בשמאל */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
+    /* מידות הבלוק הבסיסי */
     width: 140px;
     height: 80px;
+    
+    /* צבע רקע וטקסט */
     background-color: var(--control-color);
     color: white;
+    
+    /* עיצוב טקסט */
     font-size: 20px;
     font-weight: normal;
-    position: relative;
-    border-radius: 10px; /* Rounded corners */
-    overflow: visible;
     
-    /* Create a protrusion on the right side */
+    /* מיקום יחסי כדי לאפשר הוספת אלמנטים נוספים */
     position: relative;
+    
+    /* פינות מעוגלות ליצירת מראה רך יותר */
+    border-radius: 10px;
+    
+    /* הסרת עודף תוכן מעבר לגבולות הבלוק */
+    overflow: visible;
 }
 
-/* Right-side protrusion */
+/* בליטה עגולה במרכז הפאה הימנית */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
+    /* יצירת אלמנט נוסף כבליטה עגולה */
     content: '';
     position: absolute;
-    right: -15px; /* Extend slightly outside the main block */
-    top: 25%; /* Position vertically */
-    width: 15px; /* Width of the protrusion */
-    height: 50%; /* Height of the protrusion */
+    
+    /* מיקום הבליטה במרכז הפאה הימנית */
+    right: -12px; 
+    top: 50%; 
+    transform: translateY(-50%);
+    
+    /* מימדי הבליטה העגולה */
+    width: 24px;
+    height: 24px;
+    border-radius: 50%; /* יצירת צורה עגולה מושלמת */
+    
+    /* צביעה וסגנון זהים לבלוק הראשי */
     background-color: var(--control-color);
-    border-top-right-radius: 10px;
-    border-bottom-right-radius: 10px;
+    
+    /* צל קל ליצירת עומק */
     box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Left-side indentation */
+/* שקע עגול לבן בצד שמאל */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
+    /* יצירת אלמנט נוסף כשקע עגול */
     content: '';
     position: absolute;
-    left: -15px; /* Extend slightly outside the main block */
-    top: 25%; /* Position vertically */
-    width: 15px; /* Width of the indentation */
-    height: 50%; /* Height of the indentation */
-    background-color: var(--control-color);
-    border-top-left-radius: 10px;
-    border-bottom-left-radius: 10px;
+    
+    /* מיקום השקע במרכז הפאה השמאלית */
+    left: -12px; 
+    top: 50%; 
+    transform: translateY(-50%);
+    
+    /* מימדי השקע העגול */
+    width: 24px;
+    height: 24px;
+    border-radius: 50%; /* יצירת צורה עגולה מושלמת */
+    
+    /* צבע לבן עבור השקע */
+    background-color: white;
+    
+    /* צל קל ליצירת עומק */
     box-shadow: -2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Adjust icon position to fit the new shape */
+/* מיקום האייקון בפינה הימנית העליונה */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
     position: absolute;
@@ -444,11 +470,12 @@ main {
     right: 5px;
     max-width: 30%;
     max-height: 30%;
-    z-index: 2;
+    z-index: 2; /* להבטיח שהאייקון יופיע מעל שאר האלמנטים */
 }
 
-/* Optional: Add a subtle hover effect */
+/* אפקט hover קל להדגשה */
 #control-blocks .block-container[data-type="repeat"] .scratch-block:hover,
 #programming-area .block-container[data-type="repeat"] .scratch-block:hover {
+    /* הגברת הבהירות מעט בעת העברת העכבר מעל הבלוק */
     filter: brightness(1.1);
 }
