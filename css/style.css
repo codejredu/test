@@ -388,7 +388,7 @@ main {
 #end-blocks.active .block-container .scratch-block {
     background-color: var(--end-color);
 }
-/* סגנון בלוק Repeat עם פינות מעוגלות */
+/* סגנון בלוק Repeat עם בליטת פאזל בצד ימין */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
     width: 140px;
@@ -399,6 +399,17 @@ main {
     font-weight: normal;
     position: relative;
     border-radius: 15px; /* פינות מעוגלות */
+    
+    /* יצירת בליטה בצד ימין כמו לבנת פאזל */
+    clip-path: 
+        polygon(
+            0% 0%, 
+            calc(100% - 20px) 0%, 
+            calc(100% - 20px) 50%, 
+            100% 50%, 
+            100% 100%, 
+            0% 100%
+        );
     
     /* אפקט תלת-מימד וצל */
     box-shadow: 
