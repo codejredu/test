@@ -146,28 +146,107 @@ pointer-events: none;
 
 }
 
-.category-tab?.[data-category="triggering"] {
-background-color: var(--triggering-color);
+.category-tab:nth-child(1) { /* End */
+order: 6;
 }
 
-.category-tab?.[data-category="motion"] {
-background-color: var(--motion-color);
+.category-tab:nth-child(2) { /* Control */
+order: 5;
 }
 
-.category-tab?.[data-category="looks"] {
-background-color: var(--looks-color);
+.category-tab:nth-child(3) { /* Sound */
+order: 4;
 }
 
-.category-tab?.[data-category="sound"] {
-background-color: var(--sound-color);
+.category-tab:nth-child(4) { /* Looks */
+order: 3;
 }
 
-.category-tab?.[data-category="control"] {
-background-color: var(--control-color);
+.category-tab:nth-child(5) { /* Motion */
+order: 2;
 }
 
-.category-tab?.[data-category="end"] {
-background-color: var(--end-color);
+.category-tab:nth-child(6) { /* Triggering */
+order: 1;
+}
+
+.category-tab.active {
+/* אין צורך בשינוי סדר כאן */
+}
+
+.category-tab.active:nth-child(1) { /* End /
+/ אין צורך בשינוי סדר כאן */
+}
+
+.category-tab.active:nth-child(2) { /* Control /
+/ אין צורך בשינוי סדר כאן */
+}
+
+.category-tab.active:nth-child(3) { /* Sound /
+/ אין צורך בשינוי סדר כאן */
+}
+
+.category-tab.active:nth-child(4) { /* Looks /
+/ אין צורך בשינוי סדר כאן */
+}
+
+.category-tab.active:nth-child(5) { /* Motion /
+/ אין צורך בשינוי סדר כאן */
+}
+
+.category-tab.active:nth-child(6) { /* Triggering /
+/ אין צורך בשינוי סדר כאן */
+}
+
+.category-tab.active {
+/* סגנון נוסף לטאב הפעיל אם יש צורך */
+}
+
+.category-tab.active img {
+/* סגנון נוסף לאיקון בטאב הפעיל אם יש צורך */
+}
+
+.category-tab:hover {
+opacity: 0.9;
+}
+
+.category-tab:active {
+box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.3);
+border-bottom: none;
+}
+
+.category-tab::-moz-focus-inner {
+border: 0;
+}
+
+.category-tab:focus {
+outline: none; /* Optionally add a custom focus style */
+}
+
+.category-tab::after {
+content: '';
+position: absolute;
+left: 0;
+bottom: 0;
+width: 100%;
+height: 3px;
+background-color: transparent; /* Initially transparent */
+border-radius: 3px 3px 0 0;
+transition: background-color 0.2s ease-in-out;
+}
+
+.category-tab.active::after {
+background-color: #337ab7; /* Example active tab indicator color */
+}
+
+.category-tab img {
+max-width: 60%;
+max-height: 60%;
+pointer-events: none;
+}
+
+.category-tab.active {
+/* ניתן להוסיף סגנון נוסף לטאב הפעיל */
 }
 
 .block-category {
@@ -388,10 +467,22 @@ background-color: var(--control-color);
 background-color: var(--end-color);
 }
 
-/* סגנון מיוחד לבלוק Repeat - רוחב מוגדל /
-#control-blocks .block-container?.[data-type="repeat"] .scratch-block,
-#programming-area .block-container?.[data-type="repeat"] .scratch-block {
-width: 160px; / רוחב חדש של 160px /
+/* סגנון מיוחד לבלוק Repeat בפלטה /
+#control-blocks .block-container:not(.duplicated-repeat-block)[data-type="repeat"] .scratch-block {
+width: 87px; / רוחב מקורי בפלטה /
+border-radius: 10px; / עיגול רגיל בפלטה */
+padding-right: 0;
+padding-left: 0;
+text-align: center;
+font-size: 24px;
+position: relative;
+overflow: hidden;
+height: 80px;
+}
+
+/* סגנון מיוחד לבלוק Repeat המשוכפל באזור התכנות /
+#programming-area .block-container.duplicated-repeat-block .scratch-block {
+width: 140px; / רוחב לבנה 140px /
 border-radius: 30px 10px 10px 30px; / צורת "ח" - מעוגל יותר בצדדים שמאל וימין פחות /
 padding-right: 10px; / קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה /
 padding-left: 10px;
@@ -402,33 +493,8 @@ overflow: visible; / Ensure the "hole" is not clipped /
 height: 80px; / Keep the height consistent */
 }
 
-בקטע הבא:
-
-/* סגנון מיוחד לבלוק Repeat - רוחב מוגדל /
-#control-blocks .block-container?.[data-type="repeat"],
-#programming-area .block-container?.[data-type="repeat"] {
-width: 180px; / רוחב חדש של 180px עבור הקונטיינר */
-}
-
-#control-blocks .block-container?.[data-type="repeat"] .scratch-block,
-#programming-area .block-container?.[data-type="repeat"] .scratch-block {
-width: 160px; /* רוחב חדש של 160px עבור הבלוק הפנימי /
-border-radius: 30px 10px 10px 30px; / צורת "ח" - מעוגל יותר בצדדים שמאל וימין פחות /
-padding-right: 10px; / קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה /
-padding-left: 10px;
-text-align: center; / מרכוז טקסט אם יש /
-font-size: 20px; / גודל גופן מתאים לרוחב החדש /
-position: relative; / Required for the "hole" positioning /
-overflow: visible; / Ensure the "hole" is not clipped /
-height: 80px; / Keep the height consistent /
-display: flex; / הוספה כדי למרכז את התוכן /
-justify-content: center; / מרכוז אופקי /
-align-items: center; / מרכוז אנכי */
-}
-
-/* הוספת החור לבלוק Repeat /
-#control-blocks .block-container?.[data-type="repeat"] .scratch-block::after,
-#programming-area .block-container?.[data-type="repeat"] .scratch-block::after {
+/* הוספת החור לבלוק Repeat המשוכפל /
+#programming-area .block-container.duplicated-repeat-block .scratch-block::after {
 content: '';
 position: absolute;
 top: 15px; / עדכון המיקום - 10px למעלה מהמיקום הקודם /
@@ -436,19 +502,123 @@ left: 50%;
 transform: translateX(-50%);
 width: 80px; / Width of the hole /
 height: 65px; / Height of the hole /
-background-color: #f0f4ff; / Match the background color of the stage /
+background-color: #fff; / Match the background color of the programming area /
 border-radius: 10px 10px 10px 10px; / הוספת עיגול לפינות העליונות (10px לכל הפינות) /
 pointer-events: none; / Allow clicks to pass through /
 z-index: 1; / Ensure the hole is above the block's content, but below the icon*/
 }
 
-/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat /
-#control-blocks .block-container?.[data-type="repeat"] .scratch-block .block-icon-img,
-#programming-area .block-container?.[data-type="repeat"] .scratch-block .block-icon-img {
+/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat המשוכפל /
+#programming-area .block-container.duplicated-repeat-block .scratch-block .block-icon-img {
 position: absolute; / כדי לאפשר מיקום פינתי /
 top: 5px; / מרחק קטן מהקצה העליון /
 right: 5px; / מרחק קטן מהקצה הימני /
 max-width: 30%; / הקטנת האייקון אם צריך */
 max-height: 30%;
 z-index: 2; /Ensure the icon is above the hole/
+}
+
+/* סגנון זה מיועד לבלוק Repeat בפלטה הבלוקים */
+#control-blocks .block-container:not(.duplicated-repeat-block)[data-type="repeat"] .scratch-block {
+display: flex;
+justify-content: center;
+align-items: center;
+}
+
+#control-blocks .block-container:not(.duplicated-repeat-block)[data-type="repeat"] .scratch-block .block-icon-img {
+max-width: 50%;
+max-height: 50%;
+}
+
+#control-blocks .block-container:not(.duplicated-repeat-block)[data-type="repeat"] .scratch-block::after {
+display: none;
+}
+
+#control-blocks .block-container:not(.duplicated-repeat-block)[data-type="repeat"] .scratch-block::before {
+display: none;
+}
+
+/* בטל את העיצוב הספציפי אם הבלוק בפלטה */
+#block-palette #control-blocks .block-container .scratch-block {
+width: 87px;
+border-radius: 10px;
+padding-right: 0;
+padding-left: 0;
+text-align: center;
+font-size: 24px;
+position: relative;
+overflow: hidden;
+height: 80px;
+display: flex;
+justify-content: center;
+align-items: center;
+}
+
+#block-palette #control-blocks .block-container .scratch-block .block-icon-img {
+max-width: 50%;
+max-height: 50%;
+}
+
+#block-palette #control-blocks .block-container .scratch-block::after,
+#block-palette #control-blocks .block-container .scratch-block::before {
+display: none;
+}
+
+/* סגנון בסיסי לכל בלוק container באזור התכנות /
+#programming-area .block-container {
+/ כבר מוגדר */
+}
+
+/* סגנון בסיסי לכל scratch-block באזור התכנות /
+#programming-area .block-container .scratch-block {
+/ כבר מוגדר */
+}
+
+/* ודא שבלוקים אחרים לא מושפעים /
+#programming-area .block-container:not(.duplicated-repeat-block) .scratch-block {
+width: 87px;
+border-radius: 10px;
+/ המשך סגנונות אחרים */
+}
+
+#programming-area .block-container:not(.duplicated-repeat-block) .scratch-block::after {
+content: '';
+position: absolute;
+right: -14px;
+top: 50%;
+transform: translateY(-50%);
+width: 18px;
+height: 18px;
+background-color: inherit;
+border-radius: 50%;
+}
+
+#programming-area .block-container:not(.duplicated-repeat-block) .scratch-block::before {
+content: '';
+position: absolute;
+left: 0;
+top: 50%;
+transform: translateY(-50%);
+width: 18px;
+height: 18px;
+background-color: #fff;
+border-radius: 50%;
+}
+
+/* סגנון למחברים של בלוק REPEAT המשוכפל /
+#programming-area .block-container.duplicated-repeat-block .right-connector {
+right: -14px; / התאמה לרוחב החדש */
+}
+
+#programming-area .block-container.duplicated-repeat-block .left-connector-wrapper {
+left: -14px; /* התאמה לרוחב החדש */
+}
+
+/* התאמת מיקום המחברים עבור בלוקים אחרים */
+#programming-area .block-container:not(.duplicated-repeat-block) .right-connector {
+right: -14px;
+}
+
+#programming-area .block-container:not(.duplicated-repeat-block) .left-connector-wrapper {
+left: -14px;
 }
