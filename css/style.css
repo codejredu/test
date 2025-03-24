@@ -399,9 +399,34 @@ text-align: center; / מרכוז טקסט אם יש /
 font-size: 20px; / גודל גופן מתאים לרוחב החדש /
 position: relative; / Required for the "hole" positioning /
 overflow: visible; / Ensure the "hole" is not clipped /
-height: 80px; / Keep the height consistent /
+height: 80px; / Keep the height consistent */
 }
-/ הוספת החור לבלוק Repeat /
+
+בקטע הבא:
+
+/* סגנון מיוחד לבלוק Repeat - רוחב מוגדל /
+#control-blocks .block-container?.[data-type="repeat"],
+#programming-area .block-container?.[data-type="repeat"] {
+width: 180px; / רוחב חדש של 180px עבור הקונטיינר */
+}
+
+#control-blocks .block-container?.[data-type="repeat"] .scratch-block,
+#programming-area .block-container?.[data-type="repeat"] .scratch-block {
+width: 160px; /* רוחב חדש של 160px עבור הבלוק הפנימי /
+border-radius: 30px 10px 10px 30px; / צורת "ח" - מעוגל יותר בצדדים שמאל וימין פחות /
+padding-right: 10px; / קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה /
+padding-left: 10px;
+text-align: center; / מרכוז טקסט אם יש /
+font-size: 20px; / גודל גופן מתאים לרוחב החדש /
+position: relative; / Required for the "hole" positioning /
+overflow: visible; / Ensure the "hole" is not clipped /
+height: 80px; / Keep the height consistent /
+display: flex; / הוספה כדי למרכז את התוכן /
+justify-content: center; / מרכוז אופקי /
+align-items: center; / מרכוז אנכי */
+}
+
+/* הוספת החור לבלוק Repeat /
 #control-blocks .block-container?.[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container?.[data-type="repeat"] .scratch-block::after {
 content: '';
@@ -416,6 +441,7 @@ border-radius: 10px 10px 10px 10px; / הוספת עיגול לפינות העל�
 pointer-events: none; / Allow clicks to pass through /
 z-index: 1; / Ensure the hole is above the block's content, but below the icon*/
 }
+
 /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat /
 #control-blocks .block-container?.[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container?.[data-type="repeat"] .scratch-block .block-icon-img {
