@@ -391,7 +391,7 @@ main {
 
 /* סגנון בסיסי למלבן הכתום */
 .repeat-block {
-    width: 140px;
+    width: 200px;
     height: 80px;
     background-color: #FFA500; /* צבע כתום */
     border-radius: 15px 15px 0 0; /* עיגול רק בפינות העליונות */
