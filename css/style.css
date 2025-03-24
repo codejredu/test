@@ -436,7 +436,7 @@ main {
     content: '';
     position: absolute;
     top: 35px;
-    right: 5px; /* הערך תוקן ל-5px */
+    right: 25px; /* הערך תוקן ל-5px */
     transform: translateY(-50%);
     width: 30px;
     height: 30px;
