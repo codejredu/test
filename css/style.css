@@ -388,10 +388,10 @@ main {
 #end-blocks.active .block-container .scratch-block {
     background-color: var(--end-color);
 }
-/* סגנון בלוק Repeat עם בליטת פאזל בצד ימין */
+/* סגנון בלוק Repeat עם בליטת פאזל בצד ימני */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
-    width: 140px;
+    width: 160px; /* הוספת רוחב עבור הבליטה */
     height: 80px;
     background-color: #FFC107; /* צהוב זהוב */
     color: white;
@@ -400,29 +400,24 @@ main {
     position: relative;
     border-radius: 15px; /* פינות מעוגלות */
     
-    /* יצירת בליטה בצד ימין כמו לבנת פאזל */
-    clip-path: 
-        polygon(
-            0% 0%, 
-            calc(100% - 20px) 0%, 
-            calc(100% - 20px) 50%, 
-            100% 50%, 
-            100% 100%, 
-            0% 100%
-        );
-    
-    /* אפקט תלת-מימד וצל */
-    box-shadow: 
-        0 4px 8px rgba(0, 0, 0, 0.3), 
-        inset 0 2px 4px rgba(255, 255, 255, 0.2);
-    
-    /* מרכוז טקסט */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 0 15px;
-    overflow: hidden;
+    /* יצירת בליטה מעוגלת בצד ימין */
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+/* בליטת הפאזל בצד ימני */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+    content: '';
+    position: absolute;
+    top: 50%; /* מרכוז אנכית */
+    right: -20px; /* הבלטה החוצה */
+    transform: translateY(-50%);
+    width: 20px;
+    height: 40px;
+    background-color: #FFC107;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
 }
 
 /* סגנון מספר הבלוק */
