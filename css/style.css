@@ -402,6 +402,7 @@ main {
     overflow: visible; /* Ensure the "hole" is not clipped */
     height: 80px; /* Keep the height consistent */
 }
+
 /* הוספת החור לבלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
@@ -417,6 +418,7 @@ main {
     pointer-events: none; /* Allow clicks to pass through */
     z-index: 1; /* Ensure the hole is above the block's content, but below the icon*/
 }
+
 /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
@@ -426,4 +428,18 @@ main {
     max-width: 30%;   /* הקטנת האייקון אם צריך */
     max-height: 30%;
     z-index: 2; /*Ensure the icon is above the hole*/
+}
+
+/* הוספת בליטת פאזל בצד ימני של הבלוק */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+    content: '';
+    position: absolute;
+    top: 30px; /* מיקום אנכי במרכז בערך */
+    right: -10px; /* בליטה מחוץ לקצה הימני */
+    width: 20px;
+    height: 20px;
+    background-color: inherit; /* אותו צבע כמו הבלוק עצמו */
+    border-radius: 50%; /* עיגול מושלם */
+    z-index: 1; /* מעל הבלוק אבל מתחת לאייקון */
 }
