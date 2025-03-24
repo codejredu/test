@@ -146,105 +146,6 @@ pointer-events: none;
 
 }
 
-.category-tab:nth-child(1) { /* End */
-order: 6;
-}
-
-.category-tab:nth-child(2) { /* Control */
-order: 5;
-}
-
-.category-tab:nth-child(3) { /* Sound */
-order: 4;
-}
-
-.category-tab:nth-child(4) { /* Looks */
-order: 3;
-}
-
-.category-tab:nth-child(5) { /* Motion */
-order: 2;
-}
-
-.category-tab:nth-child(6) { /* Triggering */
-order: 1;
-}
-
-.category-tab.active {
-/* אין צורך בשינוי סדר כאן */
-}
-
-.category-tab.active:nth-child(1) { /* End /
-/ אין צורך בשינוי סדר כאן */
-}
-
-.category-tab.active:nth-child(2) { /* Control /
-/ אין צורך בשינוי סדר כאן */
-}
-
-.category-tab.active:nth-child(3) { /* Sound /
-/ אין צורך בשינוי סדר כאן */
-}
-
-.category-tab.active:nth-child(4) { /* Looks /
-/ אין צורך בשינוי סדר כאן */
-}
-
-.category-tab.active:nth-child(5) { /* Motion /
-/ אין צורך בשינוי סדר כאן */
-}
-
-.category-tab.active:nth-child(6) { /* Triggering /
-/ אין צורך בשינוי סדר כאן */
-}
-
-.category-tab.active {
-/* סגנון נוסף לטאב הפעיל אם יש צורך */
-}
-
-.category-tab.active img {
-/* סגנון נוסף לאיקון בטאב הפעיל אם יש צורך */
-}
-
-.category-tab:hover {
-opacity: 0.9;
-}
-
-.category-tab:active {
-box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.3);
-border-bottom: none;
-}
-
-.category-tab::-moz-focus-inner {
-border: 0;
-}
-
-.category-tab:focus {
-outline: none; /* Optionally add a custom focus style */
-}
-
-.category-tab::after {
-content: '';
-position: absolute;
-left: 0;
-bottom: 0;
-width: 100%;
-height: 3px;
-background-color: transparent; /* Initially transparent */
-border-radius: 3px 3px 0 0;
-transition: background-color 0.2s ease-in-out;
-}
-
-.category-tab.active::after {
-background-color: #337ab7; /* Example active tab indicator color */
-}
-
-.category-tab img {
-max-width: 60%;
-max-height: 60%;
-pointer-events: none;
-}
-
 .category-tab.active {
 /* ניתן להוסיף סגנון נוסף לטאב הפעיל */
 }
@@ -467,19 +368,6 @@ background-color: var(--control-color);
 background-color: var(--end-color);
 }
 
-/* סגנון מיוחד לבלוק Repeat בפלטה /
-#control-blocks .block-container:not(.duplicated-repeat-block)[data-type="repeat"] .scratch-block {
-width: 87px; / רוחב מקורי בפלטה /
-border-radius: 10px; / עיגול רגיל בפלטה */
-padding-right: 0;
-padding-left: 0;
-text-align: center;
-font-size: 24px;
-position: relative;
-overflow: hidden;
-height: 80px;
-}
-
 /* סגנון מיוחד לבלוק Repeat המשוכפל באזור התכנות /
 #programming-area .block-container.duplicated-repeat-block .scratch-block {
 width: 140px; / רוחב לבנה 140px /
@@ -518,8 +406,9 @@ max-height: 30%;
 z-index: 2; /Ensure the icon is above the hole/
 }
 
-/* סגנון זה מיועד לבלוק Repeat בפלטה הבלוקים */
+/* סגנון זה מיועד לבלוק Repeat בפלטה הבלוקים - שומר על הגודל המקורי /
 #control-blocks .block-container:not(.duplicated-repeat-block)[data-type="repeat"] .scratch-block {
+/ אין שינויים בגודל או בצורה עבור הפלטה */
 display: flex;
 justify-content: center;
 align-items: center;
@@ -538,47 +427,70 @@ display: none;
 display: none;
 }
 
-/* בטל את העיצוב הספציפי אם הבלוק בפלטה */
+/* בטל את העיצוב הספציפי אם הבלוק בפלטה /
 #block-palette #control-blocks .block-container .scratch-block {
+/ חזרה לסגנון ברירת המחדל של בלוק בפלטה */
 width: 87px;
-border-radius: 10px;
-padding-right: 0;
-padding-left: 0;
-text-align: center;
-font-size: 24px;
-position: relative;
-overflow: hidden;
 height: 80px;
+border-radius: 10px;
 display: flex;
 justify-content: center;
 align-items: center;
 }
 
 #block-palette #control-blocks .block-container .scratch-block .block-icon-img {
-max-width: 50%;
-max-height: 50%;
+max-width: 60%;
+max-height: 60%;
 }
 
 #block-palette #control-blocks .block-container .scratch-block::after,
 #block-palette #control-blocks .block-container .scratch-block::before {
-display: none;
+/* חזרה לסגנון ברירת המחדל של מחברים בפלטה */
+content: '';
+position: absolute;
+right: -14px;
+top: 50%;
+transform: translateY(-50%);
+width: 18px;
+height: 18px;
+background-color: inherit;
+border-radius: 50%;
+}
+
+#block-palette #control-blocks .block-container .scratch-block::before {
+background-color: #f0f4ff;
 }
 
 /* סגנון בסיסי לכל בלוק container באזור התכנות /
 #programming-area .block-container {
-/ כבר מוגדר */
+position: absolute; / חשוב עבור מיקום הבלוקים בגרירה /
+width: 100px; / ברירת מחדל /
+height: 100px; / ברירת מחדל */
+margin: 8px;
+cursor: pointer;
+background-color: transparent;
 }
 
-/* סגנון בסיסי לכל scratch-block באזור התכנות /
+/* סגנון בסיסי לכל scratch-block באזור התכנות */
 #programming-area .block-container .scratch-block {
-/ כבר מוגדר */
+position: relative;
+width: 87px;
+height: 80px;
+background-color: #ffff00;
+border-radius: 10px;
+display: flex;
+justify-content: center;
+align-items: center;
+color: black;
+font-size: 24px;
+font-weight: bold;
+box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
+transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
 /* ודא שבלוקים אחרים לא מושפעים /
 #programming-area .block-container:not(.duplicated-repeat-block) .scratch-block {
-width: 87px;
-border-radius: 10px;
-/ המשך סגנונות אחרים */
+/ כבר מוגדר */
 }
 
 #programming-area .block-container:not(.duplicated-repeat-block) .scratch-block::after {
