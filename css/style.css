@@ -388,16 +388,6 @@ main {
 #end-blocks.active .block-container .scratch-block {
     background-color: var(--end-color);
 }
-#repeat-block .scratch-block {
-    background-color: #FF9933; /* צבע כתום בהיר */
-    color: #000; /* טקסט שחור */
-    border: 2px solid #CC7A00; /* גבול עבה יותר */
-    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3), inset 0 3px 6px rgba(0, 0, 0, 0.2); /* צל עמוק יותר */
-    font-size: 26px; /* גודל טקסט גדול יותר */
-    width: 189px; /* רוחב הבלוק */
-    height: 85px; /* גובה הבלוק */
-}
-
-#repeat-block .scratch-block::after {
-    background-color: #FF9933; /* צבע כתום בהיר */
+#control-blocks .block-container:first-child .scratch-block {
+  width: 174px; /* רוחב כפול (87px * 2) */
 }
