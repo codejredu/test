@@ -403,6 +403,22 @@ main {
     height: 80px; /* Keep the height consistent */
 }
 
+/* בליטת פאזל בצד ימני - גרסה חדשה */
+#control-blocks .block-container[data-type="repeat"] .scratch-block:before,
+#programming-area .block-container[data-type="repeat"] .scratch-block:before {
+    content: "";
+    display: block;
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background-color: #FFA500; /* צבע כתום - התאם לצבע הבלוק שלך */
+    border-radius: 50%;
+    right: -10px;
+    top: 40px; /* ממוקם באמצע הבלוק בערך */
+    z-index: 100 !important; /* ערך גבוה מאוד להבטחת נראות */
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.2); /* מסגרת דקה */
+}
+
 /* הוספת החור לבלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
@@ -430,22 +446,9 @@ main {
     z-index: 2; /*Ensure the icon is above the hole*/
 }
 
-/* הוספת בליטת פאזל בצד ימני של הבלוק - גרסה מתוקנת */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
-    content: '';
-    position: absolute;
-    top: 30px; /* מיקום אנכי במרכז בערך */
-    right: -15px; /* בליטה גדולה יותר מחוץ לקצה הימני */
-    width: 25px;
-    height: 25px;
-    background-color: currentColor; /* שימוש בצבע הנוכחי של האלמנט */
-    border-radius: 50%; /* עיגול מושלם */
-    z-index: 3 !important; /* ערך גבוה יותר להבטחת נראות */
-    box-shadow: 0 0 2px rgba(0,0,0,0.3); /* צל קל להדגשת הבליטה */
-}
-
-/* הוספת דיב הורה עם הגדרת overflow כדי להבטיח נראות הבליטה */
+/* וידוא שכל המכילים מאפשרים גלישה */
+#control-blocks, #programming-area,
+#control-blocks .block-container, #programming-area .block-container,
 #control-blocks .block-container[data-type="repeat"],
 #programming-area .block-container[data-type="repeat"] {
     overflow: visible !important;
