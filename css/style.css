@@ -399,7 +399,7 @@ main {
     text-align: center; /* מרכוז טקסט אם יש */
     font-size: 20px; /* גודל גופן מתאים לרוחב החדש */
     position: relative; /* Required for the "hole" positioning */
-    overflow: visible; /* Ensure the "hole" is not clipped */
+    overflow: visible !important; /* חשוב מאוד - מבטיח שהבליטה לא תיחתך */
     height: 80px; /* Keep the height consistent */
 }
 
@@ -430,16 +430,23 @@ main {
     z-index: 2; /*Ensure the icon is above the hole*/
 }
 
-/* הוספת בליטת פאזל בצד ימני של הבלוק */
+/* הוספת בליטת פאזל בצד ימני של הבלוק - גרסה מתוקנת */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
     content: '';
     position: absolute;
     top: 30px; /* מיקום אנכי במרכז בערך */
-    right: -10px; /* בליטה מחוץ לקצה הימני */
-    width: 20px;
-    height: 20px;
-    background-color: inherit; /* אותו צבע כמו הבלוק עצמו */
+    right: -15px; /* בליטה גדולה יותר מחוץ לקצה הימני */
+    width: 25px;
+    height: 25px;
+    background-color: currentColor; /* שימוש בצבע הנוכחי של האלמנט */
     border-radius: 50%; /* עיגול מושלם */
-    z-index: 1; /* מעל הבלוק אבל מתחת לאייקון */
+    z-index: 3 !important; /* ערך גבוה יותר להבטחת נראות */
+    box-shadow: 0 0 2px rgba(0,0,0,0.3); /* צל קל להדגשת הבליטה */
+}
+
+/* הוספת דיב הורה עם הגדרת overflow כדי להבטיח נראות הבליטה */
+#control-blocks .block-container[data-type="repeat"],
+#programming-area .block-container[data-type="repeat"] {
+    overflow: visible !important;
 }
