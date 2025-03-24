@@ -440,7 +440,7 @@ main {
     transform: translateY(-50%);
     width: 30px;
     height: 30px;
-    background-color: orange;
+    background-color: red;
     border-radius: 15px;
     z-index: 3;
 }
