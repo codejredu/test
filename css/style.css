@@ -417,6 +417,20 @@ main {
     pointer-events: none; /* Allow clicks to pass through */
     z-index: 1; /* Ensure the hole is above the block's content, but below the icon*/
 }
+/* הוספת הבליטה בצד ימין /
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
+#programming-area .block-container[data-type="repeat"] .scratch-block::after {
+content: '';
+position: absolute;
+top: 50%;
+right: -20px; / מוציא את הבליטה קצת החוצה /
+transform: translateY(-50%);
+width: 40px; / רוחב הבליטה /
+height: 40px; / גובה הבליטה /
+background-color: inherit; / יורש את צבע הרקע של הבלוק /
+border-radius: 0 20px 20px 0; / מעגל את הצד הימני של הבליטה /
+box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1); / הוספת צל קל כדי לתת תחושת תלת מימד */
+}
 /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
