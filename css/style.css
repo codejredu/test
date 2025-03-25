@@ -435,11 +435,10 @@ box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1); / הוספת צל קל כדי לתת �
 /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
-position: absolute;
-top: 5px;
-right: 5px;
-max-width: 30%;
-max-height: 30%;
-z-index: 2;
+position: absolute !important;
+top: 5px !important;
+right: 5px !important;
+max-width: 30% !important;
+max-height: 30% !important;
+z-index: 2 !important;
 }
-
