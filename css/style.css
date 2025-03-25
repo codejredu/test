@@ -432,13 +432,13 @@ border-radius: 0 20px 20px 0; / מעגל את הצד הימני של הבליט�
 box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1); / הוספת צל קל כדי לתת תחושת תלת מימד */
 }
 
-/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
+/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat - גודל מוקטן /
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
 position: absolute !important;
 top: 5px !important;
 right: 5px !important;
-max-width: 30% !important;
-max-height: 30% !important;
+max-width: 15% !important; / הקטנת הרוחב המרבי /
+max-height: 15% !important; / הקטנת הגובה המרבי */
 z-index: 2 !important;
 }
