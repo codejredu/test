@@ -427,3 +427,14 @@ main {
     max-height: 30%;
     z-index: 2; /*Ensure the icon is above the hole*/
 }
+#control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
+#programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
+.container
+ {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-start;
+            width: 410px;
+            max-width: 800px;
+            margin: auto;
+        }
