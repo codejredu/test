@@ -392,9 +392,15 @@ main {
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
     
-
- 
-.container {
+body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: transparent;
+        }
+        .container {
             display: flex;
             justify-content: space-around;
             align-items: flex-start;
