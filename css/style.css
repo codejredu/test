@@ -389,49 +389,34 @@ main {
     background-color: var(--end-color);
 }
 
-/* סגנון מיוחד לבלוק Repeat עם חור בצד שמאל ובליטה בצד ימין /
+/* סגנון מיוחד לבלוק Repeat עם בליטה בצד ימין */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
 width: 140px;
 border-radius: 30px 10px 10px 30px;
-padding-right: 20px; / הגדלת הריווח בצד ימין כדי לפנות מקום לבליטה /
-padding-left: 20px; / הגדלת הריווח בצד שמאל כדי לפנות מקום לחור /
+padding-right: 10px;
+padding-left: 10px;
 text-align: center;
 font-size: 20px;
 position: relative;
 overflow: visible;
 height: 80px;
-display: flex;
-justify-content: center; / מרכוז הטקסט /
-align-items: center; / מרכוז הטקסט */
 }
 
-/* הוספת החור בצד שמאל /
+/* הוספת החור לבלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
 content: '';
 position: absolute;
-left: -20px; / מוציא את החור קצת החוצה /
-top: 50%;
-transform: translateY(-50%);
-width: 40px; / קוטר החור /
-height: 40px; / קוטר החור /
-background-color: #7ED957; / ירוק תפוח בהיר - כמו בתמונה /
-border-radius: 50%; / יוצר עיגול */
+top: 15px;
+left: 50%;
+transform: translateX(-50%);
+width: 80px;
+height: 65px;
+background-color: #f0f4ff;
+border-radius: 10px;
 pointer-events: none;
 z-index: 1;
-}
-
-/* הוספת המסגרת הפנימית הלבנה /
-#control-blocks .block-container[data-type="repeat"] .scratch-block > div,
-#programming-area .block-container[data-type="repeat"] .scratch-block > div {
-background-color: #f0f4ff; / לבן /
-border-radius: 10px;
-padding: 10px;
-width: 90%; / רוחב המסגרת הפנימית /
-height: 70%; / גובה המסגרת הפנימית /
-position: relative; / כדי שהטקסט יהיה מעל */
-z-index: 2;
 }
 
 /* הוספת הבליטה בצד ימין /
@@ -445,15 +430,20 @@ transform: translateY(-50%);
 width: 40px; / רוחב הבליטה /
 height: 40px; / גובה הבליטה /
 background-color: inherit; / יורש את צבע הרקע של הבלוק /
-border-radius: 20px 0 0 20px; / מעגל את הצד השמאלי של הבליטה /
-box-shadow: -3px 0 5px rgba(0, 0, 0, 0.1); / הוספת צל קל כדי לתת תחושת תלת מימד /
+border-radius: 0 20px 20px 0; / מעגל את הצד הימני של הבליטה /
+box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1); / הוספת צל קל כדי לתת תחושת תלת מימד /
 z-index: 0; / מוודא שהבליטה מתחת לחור ולא מסתירה אותו */
 }
 
-/* הסתרת האייקון שהיה בפינה הימנית העליונה */
+/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
-display: none;
+position: absolute;
+top: 5px;
+right: 5px;
+max-width: 30%;
+max-height: 30%;
+z-index: 2;
 }
 
-
+השינוי ה
