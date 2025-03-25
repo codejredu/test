@@ -392,43 +392,6 @@ main {
 /* סגנון מיוחד לבלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
-    width: 140px; /* רוחב לבנה 140px */
-    border-radius: 30px 10px 10px 30px; /* צורת "ח" -  מעוגל יותר בצדדים שמאל וימין פחות */
-    padding-right: 10px; /* קצת ריווח פנימי כדי שהטקסט לא יהיה צמוד לקצה */
-    padding-left: 10px;
-    text-align: center; /* מרכוז טקסט אם יש */
-    font-size: 20px; /* גודל גופן מתאים לרוחב החדש */
-    position: relative; /* Required for the "hole" positioning */
-    overflow: visible; /* Ensure the "hole" is not clipped */
-    height: 80px; /* Keep the height consistent */
-}
-/* הוספת החור לבלוק Repeat */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
-#programming-area .block-container[data-type="repeat"] .scratch-block::after {
-    content: '';
-    position: absolute;
-    top: 15px; /* עדכון המיקום - 10px למעלה מהמיקום הקודם */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80px; /* Width of the hole */
-    height: 65px; /* Height of the hole */
-    background-color: #f0f4ff; /* Match the background color of the stage */
-    border-radius: 10px 10px 10px 10px; /* הוספת עיגול לפינות העליונות (10px לכל הפינות) */
-    pointer-events: none; /* Allow clicks to pass through */
-    z-index: 1; /* Ensure the hole is above the block's content, but below the icon*/
-}
-/* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
-#control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
-#programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
-    position: absolute; /* כדי לאפשר מיקום פינתי */
-    top: 5px;          /* מרחק קטן מהקצה העליון */
-    right: 5px;         /* מרחק קטן מהקצה הימני */
-    max-width: 30%;   /* הקטנת האייקון אם צריך */
-    max-height: 30%;
-    z-index: 2; /*Ensure the icon is above the hole*/
-}
-#control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
-#programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
 .container
  {
             display: flex;
@@ -437,4 +400,48 @@ main {
             width: 410px;
             max-width: 800px;
             margin: auto;
+        }  
+/* הוספת החור לבלוק Repeat */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
+#programming-area .block-container[data-type="repeat"] .scratch-block::after {
+.pillar {
+            width: 80px;
+            height: 200px;
+            background-color: orange;
+            position: relative;
+        }
+    
+#control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
+#programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
+.bridge {
+            width: 250px;
+            height: 60px;
+            background-color: orange;
+            position: relative;
+        }
+    #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
+#programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
+.pillar:first-child::after { /* ORANGE BULGE - LABELED */
+            content: "";
+            position: absolute;
+            right: -15px;
+            top: 60%;
+            transform: translateY(-50%);
+            width: 15px;
+            height: 30px;
+            background-color: orange;
+            border-radius: 0 15px 15px 0;
+        }    
+     #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
+#programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
+     .pillar:first-child::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%) rotate(180deg);
+            width: 15px;
+            height: 30px;
+            background-color: white;
+            border-radius: 15px 0 0 15px;
         }
