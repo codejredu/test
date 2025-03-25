@@ -402,20 +402,19 @@ overflow: visible;
 height: 80px;
 }
 
-/* הוספת החור לבלוק Repeat */
+/* הוספת החור לבלוק Repeat - מוזז לשמאל */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
-  content: '';
-  position: absolute;
-  top: 15px;
-  left: 50%; /* ממקם את הקצה השמאלי במרכז */
-  transform: translateX(-50%); /* מזיז את האלמנט חצי מרוחבו שמאלה כדי למרכז אותו */
-  width: 80px;
-  height: 65px;
-  background-color: #f0f4ff;
-  border-radius: 10px;
-  pointer-events: none;
-  z-index: 1;
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: 10px; /* מזיז את הקצה השמאלי 10 פיקסלים מימין */
+  width: 80px;
+  height: 65px;
+  background-color: #f0f4ff;
+  border-radius: 10px;
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* הוספת הבליטה בצד ימין /
@@ -445,4 +444,4 @@ z-index: 2;
 }
 }
 
-השינוי ה
+
