@@ -388,7 +388,6 @@ main {
 #end-blocks.active .block-container .scratch-block {
     background-color: var(--end-color);
 }
-
 /* סגנון מיוחד לבלוק Repeat עם בליטה בצד ימין */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
@@ -431,8 +430,7 @@ width: 40px; / רוחב הבליטה /
 height: 40px; / גובה הבליטה /
 background-color: inherit; / יורש את צבע הרקע של הבלוק /
 border-radius: 0 20px 20px 0; / מעגל את הצד הימני של הבליטה /
-box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1); / הוספת צל קל כדי לתת תחושת תלת מימד /
-z-index: 0; / מוודא שהבליטה מתחת לחור ולא מסתירה אותו */
+box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1); / הוספת צל קל כדי לתת תחושת תלת מימד */
 }
 
 /* מיקום האייקון בפינה הימנית העליונה של בלוק Repeat */
@@ -444,6 +442,7 @@ right: 5px;
 max-width: 30%;
 max-height: 30%;
 z-index: 2;
+}
 }
 
 השינוי ה
