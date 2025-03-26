@@ -418,19 +418,19 @@ main {
   z-index: 1;
 }
 
-/* הוספת הבליטה בצד ימין */
+/* הוספת הבליטה בצד ימין - הקטנה ב-50% */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
   content: '';
   position: absolute;
   top: 50%;
-  right: -20px; /* מוציא את הבליטה קצת החוצה */
+  right: -10px; /* הוזז כדי להתאים לגודל המוקטן */
   transform: translateY(-50%);
-  width: 40px; /* רוחב הבליטה */
-  height: 40px; /* גובה הבליטה */
+  width: 20px; /* רוחב הבליטה - הוקטן ב-50% */
+  height: 20px; /* גובה הבליטה - הוקטן ב-50% */
   background-color: inherit; /* יורש את צבע הרקע של הבלוק */
-  border-radius: 0 20px 20px 0; /* מעגל את הצד הימני של הבליטה */
-  box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1); /* הוספת צל קל כדי לתת תחושת תלת מימד */
+  border-radius: 0 10px 10px 0; /* רדיוס פינות מותאם */
+  box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1); /* הוספת צל קל */
   z-index: 2;
 }
 
