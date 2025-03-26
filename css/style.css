@@ -402,19 +402,6 @@ main {
   overflow: visible;
   height: 80px;
 }
-/* סגנון מיוחד לבלוק Repeat עם בליטה בצד ימין */
-#control-blocks .block-container[data-type="repeat"] .scratch-block,
-#programming-area .block-container[data-type="repeat"] .scratch-block {
-  width: 140px;
-  border-radius: 30px 10px 10px 30px;
-  padding-right: 10px;
-  padding-left: 10px;
-  text-align: center;
-  font-size: 20px;
-  position: relative;
-  overflow: visible;
-  height: 80px;
-}
 
 /* הסרת עיגול לבן בצד שמאל אם קיים */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
@@ -423,8 +410,8 @@ main {
 }
 
 /* הוספת הבליטה בצד ימין - הקטנה ב-50% */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
-#programming-area .block-container[data-type="repeat"] .scratch-block::after {
+#control-blocks .block-container[data-type="repeat"] .scratch-block .right-bump,
+#programming-area .block-container[data-type="repeat"] .scratch-block .right-bump {
   content: '';
   position: absolute;
   top: 50%;
@@ -456,8 +443,8 @@ main {
 }
 
 /* הוספת ריבוע אדום בפינה השמאלית העליונה */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+#control-blocks .block-container[data-type="repeat"] .scratch-block .red-square,
+#programming-area .block-container[data-type="repeat"] .scratch-block .red-square {
   content: '';
   position: absolute;
   top: 5px;
@@ -469,8 +456,8 @@ main {
 }
 
 /* הוספת עיגול צהוב בפינה הימנית התחתונה */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
-#programming-area .block-container[data-type="repeat"] .scratch-block::after {
+#control-blocks .block-container[data-type="repeat"] .scratch-block .yellow-circle,
+#programming-area .block-container[data-type="repeat"] .scratch-block .yellow-circle {
   content: '';
   position: absolute;
   bottom: 5px;
@@ -480,4 +467,36 @@ main {
   background-color: yellow;
   border-radius: 50%;
   z-index: 5;
+}
+
+/* הוספת האלמנטים לדף */
+#control-blocks .block-container[data-type="repeat"] .scratch-block,
+#programming-area .block-container[data-type="repeat"] .scratch-block {
+  position: relative;
+}
+
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
+#programming-area .block-container[data-type="repeat"] .scratch-block::after {
+  content: '';
+  display: block;
+}
+
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+  content: '';
+  display: block;
+}
+
+#control-blocks .block-container[data-type="repeat"] .scratch-block {
+  position: relative;
+}
+
+#control-blocks .block-container[data-type="repeat"] .scratch-block .right-bump,
+#programming-area .block-container[data-type="repeat"] .scratch-block .right-bump,
+#control-blocks .block-container[data-type="repeat"] .scratch-block .red-square,
+#programming-area .block-container[data-type="repeat"] .scratch-block .red-square,
+#control-blocks .block-container[data-type="repeat"] .scratch-block .yellow-circle,
+#programming-area .block-container[data-type="repeat"] .scratch-block .yellow-circle {
+  position: absolute;
+  display: block;
 }
