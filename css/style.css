@@ -389,37 +389,77 @@ main {
     background-color: var(--end-color);
 }
 
-/* סגנון מיוחד לבלוק Repeat עם בליטה בצד ימין */
+/* סגנון מיוחד לבלוק Repeat - צורת פאזל */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
   width: 140px;
-  border-radius: 30px 10px 10px 30px;
-  padding-right: 10px;
-  padding-left: 10px;
+  height: 80px;
+  background-color: #f0ad4e; /* כתום - ניתן לשנות */
+  color: white;
   text-align: center;
   font-size: 20px;
   position: relative;
-  overflow: visible;
-  height: 80px;
+  overflow: hidden; /* חשוב למניעת חריגה של פסאודו-אלמנטים */
+  border-radius: 10px; /* עיגול קל לפינות הכלליות */
+  padding: 10px; /* ריווח פנימי */
+  box-sizing: border-box; /* כולל padding ו-border בחישוב המידות */
 }
 
-/* הוספת הבליטה בצד ימין - הקטנה ב-50% */
+/* יצירת "בליטה" בצד ימין - חלק פאזל בולט */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
   content: '';
   position: absolute;
   top: 50%;
-  right: -10px; /* הוזז כדי להתאים לגודל המוקטן */
+  right: -15px; /* מיקום הבליטה */
   transform: translateY(-50%);
-  width: 20px; /* רוחב הבליטה - הוקטן ב-50% */
-  height: 20px; /* גובה הבליטה - הוקטן ב-50% */
-  background-color: inherit; /* יורש את צבע הרקע של הבלוק */
-  border-radius: 0 10px 10px 0; /* רדיוס פינות מותאם */
-  box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1); /* הוספת צל קל */
-  z-index: 2;
+  width: 30px;
+  height: 30px;
+  background-color: inherit;
+  border-radius: 15px; /* יוצר עיגול */
+  box-shadow: 5px 0 5px rgba(0, 0, 0, 0.1); /* צל קל */
 }
 
-/* מיקום והקטנת איקון בפינה הימנית העליונה של בלוק Repeat */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -30px; /* מיקום כיסוי הבליטה */
+  transform: translateY(-50%);
+  width: 15px;
+  height: 30px;
+  background-color: inherit;
+  z-index: 1; /* מעל ה-"בליטה" ליצירת מראה מחובר */
+}
+
+/* יצירת "שקע" בצד שמאל - חלק פאזל נכנס */
+#control-blocks .block-container[data-type="repeat"] .scratch-block .puzzle-notch-left,
+#programming-area .block-container[data-type="repeat"] .scratch-block .puzzle-notch-left {
+  position: absolute;
+  left: -15px; /* מיקום השקע */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  background-color: inherit;
+  border-radius: 15px; /* יוצר חצי עיגול */
+  clip-path: circle(50% at 50% 50%); /* חיתוך לחצי עיגול */
+}
+
+#control-blocks .block-container[data-type="repeat"] .scratch-block .puzzle-notch-inner-left,
+#programming-area .block-container[data-type="repeat"] .scratch-block .puzzle-notch-inner-left {
+  position: absolute;
+  left: -30px; /* מיקום החלק הפנימי של השקע */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 30px;
+  background-color: inherit;
+  z-index: 1; /* מתחת ל-"שקע" ליצירת מראה חתוך */
+}
+
+/* מיקום והקטנת איקון (אם עדיין רלוונטי) */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
   position: absolute !important;
@@ -436,33 +476,9 @@ main {
   padding: 0 !important;
 }
 
-/* הוספת חור עגול בצד שמאל */
+/* הסתרת השקע המלבני הקודם */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: -10px; /* מיקום החור - ניתן לשנות */
-  transform: translateY(-50%);
-  width: 20px; /* קוטר החור - ניתן לשנות */
-  height: 20px; /* קוטר החור - ניתן לשנות */
-  background-color: transparent; /* החור יהיה שקוף */
-  border-radius: 50%; /* יוצר צורה עגולה */
-  z-index: 4; /* מוודא שהחור מעל השקע והבליטה */
-}
-
-/* הוספת שקע בגוף הלבנה */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
-#programming-area .block-container[data-type="repeat"] .scratch-block::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80px;
-  height: 45px;
-  background-color: #ddd; /* צבע אפור בהיר לשקע - ניתן לשנות */
-  border-radius: 5px; /* עיגול קל לפינות השקע - ניתן לשנות */
-  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.2); /* הוספת צל פנימי ליצירת תחושת שקע */
-  z-index: 1; /* מוודא שהשקע מתחת לבליטה ולאיקון */
+  /* ... סגנונות קודמים של השקע ... */
+  content: none !important; /* הסתרת השקע המלבני */
 }
