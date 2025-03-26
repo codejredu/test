@@ -432,18 +432,18 @@ main {
   z-index: 1;
 }
 
-/* הוספת הבליטה בצד ימין - הקטנה ב-50% */
+/* הוספת הבליטה בצד ימין */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
   content: '';
   position: absolute;
   top: 50%;
-  right: -10px; /* הוזז כדי להתאים לגודל המוקטן */
+  right: -20px; /* מוציא את הבליטה קצת החוצה */
   transform: translateY(-50%);
-  width: 20px; /* רוחב הבליטה - הוקטן ב-50% */
-  height: 20px; /* גובה הבליטה - הוקטן ב-50% */
+  width: 40px; /* רוחב הבליטה */
+  height: 40px; /* גובה הבליטה */
   background-color: inherit; /* יורש את צבע הרקע של הבלוק */
-  border-radius: 0 10px 10px 0; /* רדיוס פינות מותאם */
+  border-radius: 0 20px 20px 0; /* מעגל את הצד הימני של הבליטה */
   box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1); /* הוספת צל קל */
   z-index: 2;
 }
@@ -463,29 +463,4 @@ main {
   max-height: none !important;
   margin: 0 !important;
   padding: 0 !important;
-}
-
-/* הוספת שקע חצי עיגול לבן בצד שמאל */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -20px; /* הוצאה של חצי מהרוחב כדי ליצור שקע */
-  width: 20px;
-  height: 80px; /* גובה זהה לבלוק */
-  background-color: white;
-  border-radius: 10px 0 0 10px; /* עיגול הצד השמאלי */
-  z-index: 2; /* מוודא שהוא מעל הרקע של הבלוק */
-}
-
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -20px;
-  width: 20px;
-  height: 80px;
-  background-color: white;
-  border-radius: 10px 0 0 10px;
-  z-index: 2;
 }
