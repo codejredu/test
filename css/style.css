@@ -385,18 +385,27 @@ main {
 
 /* --- סגנון מיוחד לבלוק Repeat --- */
 
-/* עיצוב הבלוק הכתום עם חצי עיגול צהוב שמאלי */
+/* עיצוב הבלוק הכתום עם חצי צהוב שמאלי + חצי סגול הפוך מימין לאדום */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
   position: relative;
-  /* הגדרת הרקע: חצי עיגול צהוב + צבע רקע כתום */
+
+  /* הגדרת הרקע המרובה החדשה */
   background:
+    /* 1. שכבה עליונה: חצי עיגול צהוב (בקצה השמאלי של הכתום) */
     radial-gradient(circle at 0% 50%, yellow 10px, transparent 10.5px) no-repeat center left 0px / 10px 20px,
+
+    /* 2. שכבה שניה: חצי עיגול סגול הפוך (מימין למלבן האדום) */
+    radial-gradient(circle at 100% 50%, var(--looks-color) 10px, transparent 10.5px) no-repeat calc(50% + 40px) center / 10px 20px,
+
+    /* 3. שכבה תחתונה: צבע הרקע הכתום המקורי */
     var(--control-color);
+
+  /* שאר ההגדרות של הבלוק הכתום */
   width: 140px;
   border-radius: 10px 10px 10px 10px;
   padding-right: 10px;
-  padding-left: 15px; /* ריווח משמאל לחצי העיגול */
+  padding-left: 15px;
   text-align: center;
   font-size: 20px;
   overflow: visible;
@@ -419,10 +428,10 @@ main {
   transform: translateY(-50%);
   width: 20px;
   height: 20px;
-  background-color: inherit; /* יורש את הרקע הכתום עם/בלי החצי צהוב */
+  background-color: inherit; /* יורש את הרקע המורכב של הבלוק הכתום */
   border-radius: 0 10px 10px 0;
   box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1);
-  z-index: 2;
+  z-index: 2; /* מעל הרקע, מתחת למלבן האדום (::before) */
 }
 
 /* מיקום איקון (אם יש) בבלוק repeat */
@@ -435,14 +444,14 @@ main {
   width: auto !important;
   transform: scale(0.5) !important;
   transform-origin: top right !important;
-  z-index: 3 !important;
+  z-index: 3 !important; /* מעל הכל */
   max-width: none !important;
   max-height: none !important;
   margin: 0 !important;
   padding: 0 !important;
 }
 
-/* הגדרת המלבן האדום (::before) עם חצי עיגול ירוק שמאלי וחצי עיגול סגול ימני */
+/* הגדרת המלבן האדום (::before) עם חצי עיגול ירוק שמאלי בלבד */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
   content: '' !important; /* דרוס את content:none המקורי */
@@ -454,18 +463,16 @@ main {
   width: 80px;
   height: auto; /* גובה דינמי */
 
-  /* הגדרת הרקע המרובה המעודכנת */
+  /* רקע: חצי ירוק שמאלי + אדום */
   background:
     /* 1. שכבה עליונה: חצי עיגול ירוק (פונה ימינה) */
     radial-gradient(circle at 0% 50%, var(--sound-color) 10px, transparent 10.5px) no-repeat left center / 10px 20px,
-    /* 2. שכבה שניה: חצי עיגול סגול (פונה שמאלה) */
-    radial-gradient(circle at 100% 50%, var(--looks-color) 10px, transparent 10.5px) no-repeat right center / 10px 20px,
-    /* 3. שכבה תחתונה: צבע הרקע האדום המקורי */
+    /* 2. שכבה תחתונה: צבע הרקע האדום המקורי */
     red;
 
   /* עיגול הפינות העליונות של המלבן האדום עצמו */
   border-radius: 10px 10px 0 0;
 
-  z-index: 10; /* מעל הרקע הכתום */
+  z-index: 10; /* מעל הבלוק הכתום והבליטה הימנית שלו */
   box-shadow: none; /* הסר צל מיותר */
 }
