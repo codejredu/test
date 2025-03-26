@@ -402,14 +402,14 @@ main {
   height: 80px;
 }
 
-/* הוספת החור לבלוק Repeat - מוזז לשמאל - תיקון מיקום */
+/* הוספת החור לבלוק Repeat - מוזז לשמאל ב-10px מהמרכז */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
   content: '';
   position: absolute;
-  top: 50%; /* מרכוז אנכי */
-  left: 10px; /* מזיז את הקצה השמאלי 10 פיקסלים מימין */
-  transform: translateY(-50%); /* תיקון מרכוז אנכי */
+  top: 50%;
+  left: calc(50% + 10px); /* הזזה של 50% מהרוחב ואז עוד 10px ימינה */
+  transform: translateY(-50%) translateX(-50%); /* עדיין צריך את ה-translateX כדי למרכז ביחס לנקודה החדשה */
   width: 80px;
   height: 65px;
   background-color: #f0f4ff;
@@ -418,7 +418,7 @@ main {
   z-index: 1;
 }
 
-/* הוספת הבליטה בצד ימין - תיקון גודל */
+/* הוספת הבליטה בצד ימין */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
   content: '';
@@ -427,7 +427,7 @@ main {
   right: -20px; /* מוציא את הבליטה קצת החוצה */
   transform: translateY(-50%);
   width: 40px; /* רוחב הבליטה */
-  height: 40px; /* גובה הבליטה - הוחזר לגודל המקורי */
+  height: 40px; /* גובה הבליטה */
   background-color: inherit; /* יורש את צבע הרקע של הבלוק */
   border-radius: 0 20px 20px 0; /* מעגל את הצד הימני של הבליטה */
   box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1); /* הוספת צל קל כדי לתת תחושת תלת מימד */
