@@ -16,8 +16,6 @@ body {
     direction: ltr; /* Make sure direction is LTR */
 }
 
-/* ... (כל שאר ה-CSS עד לכלל של ::before נשאר זהה) ... */
-
 .container {
     display: flex;
     flex-direction: column;
@@ -274,11 +272,12 @@ main {
     margin: 0 auto;
 }
 
+/* בליטות/שקעים סטנדרטיים (לא בבלוק repeat) */
 #block-palette .scratch-block::after,
-#programming-area .scratch-block::after {
+#programming-area .scratch-block:not([data-type="repeat"])::after { /* הוספנו :not */
     content: '';
     position: absolute;
-    right: -14px; /* שים לב שהבליטה של ה-repeat block דורסת את זה */
+    right: -14px;
     top: 50%;
     transform: translateY(-50%);
     width: 18px;
@@ -288,15 +287,15 @@ main {
 }
 
 #block-palette .scratch-block::before,
-#programming-area .scratch-block::before {
+#programming-area .scratch-block:not([data-type="repeat"])::before { /* הוספנו :not */
     content: '';
     position: absolute;
-    left: 0; /* שים לב שההסתרה של ה-repeat block דורסת את זה */
+    left: 0;
     top: 50%;
     transform: translateY(-50%);
     width: 18px;
     height: 18px;
-    background-color: #f0f4ff;
+    background-color: #f0f4ff; /* צבע הרקע של הדף */
     border-radius: 50%;
 }
 
@@ -361,7 +360,6 @@ main {
 }
 
 /* תיקונים לצבעי הבלוקים בקטגוריה פעילה */
-/* ... (כמו קודם) ... */
 .block-category.active .scratch-block {
     background-color: inherit;
 }
@@ -377,7 +375,7 @@ main {
 #sound-blocks.active .block-container .scratch-block {
     background-color: var(--sound-color);
 }
-#control-blocks.active .block-container .scratch-block {
+#control-blocks.active .block-container .scratch-block:not([data-type="repeat"]) { /* הוספנו :not */
     background-color: var(--control-color);
 }
 #end-blocks.active .block-container .scratch-block {
@@ -385,18 +383,18 @@ main {
 }
 
 
-/* סגנון מיוחד לבלוק Repeat */
+/* --- סגנון מיוחד לבלוק Repeat --- */
+
+/* עיצוב הבלוק הכתום עם חצי עיגול צהוב שמאלי */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
-  position: relative; /* ודא שהמיקום היחסי קיים */
+  position: relative;
   /* הגדרת הרקע: חצי עיגול צהוב + צבע רקע כתום */
   background:
-    /* שכבה 1: חצי עיגול צהוב (רדיוס 10px) שמרכזו בקצה השמאלי */
     radial-gradient(circle at 0% 50%, yellow 10px, transparent 10.5px) no-repeat center left 0px / 10px 20px,
-    /* שכבה 2: צבע הרקע המקורי של בלוק הבקרה */
     var(--control-color);
   width: 140px;
-  border-radius: 10px 10px 10px 10px; /* פינות מעוגלות */
+  border-radius: 10px 10px 10px 10px;
   padding-right: 10px;
   padding-left: 15px; /* ריווח משמאל לחצי העיגול */
   text-align: center;
@@ -411,36 +409,40 @@ main {
   transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
 }
 
-/* הסרת השקע השמאלי הרגיל בבלוק repeat */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
-  /* content: none !important; - מוחלף בהגדרות המלבן האדום למטה */
-}
-
-/* הבליטה הימנית הרגילה של בלוק repeat */
+/* הבליטה הימנית של בלוק repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
   content: '';
   position: absolute;
   top: 50%;
-  right: -10px; /* יוצא קצת החוצה */
+  right: -10px;
   transform: translateY(-50%);
   width: 20px;
   height: 20px;
-  background-color: inherit; /* יורש את הרקע הכתום */
-  border-radius: 0 10px 10px 0; /* צורת הבליטה */
+  background-color: inherit; /* יורש את הרקע הכתום עם/בלי החצי צהוב */
+  border-radius: 0 10px 10px 0;
   box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1);
   z-index: 2;
 }
 
-/* מיקום איקון (אם יש) */
+/* מיקום איקון (אם יש) בבלוק repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
- /* ... (הגדרות מיקום האיקון כמו קודם, אם רלוונטי) ... */
+  position: absolute !important;
+  top: 5px !important;
+  right: 5px !important;
+  height: auto !important;
+  width: auto !important;
+  transform: scale(0.5) !important;
+  transform-origin: top right !important;
+  z-index: 3 !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
-/* --- הכלל המעודכן --- */
-/* הגדרת המלבן האדום עם חצי עיגול ירוק עליון */
+/* הגדרת המלבן האדום (::before) עם חצי עיגול ירוק שמאלי */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
   content: '' !important; /* דרוס את content:none המקורי */
@@ -452,19 +454,14 @@ main {
   width: 80px;
   height: auto; /* גובה דינמי */
 
-  /* --- הגדרת הרקע החדשה --- */
+  /* הגדרת הרקע המרובה */
   background:
-    /* 1. שכבה עליונה: חצי עיגול ירוק (פונה למטה) */
-    /*    צבע: var(--sound-color), רדיוס: 10px */
-    /*    מרכז הגרדיאנט: קצה עליון, אמצע הרוחב */
-    /*    מיקום הרקע: למעלה, במרכז */
-    /*    גודל הרקע: רוחב=קוטר (20px), גובה=רדיוס (10px) */
-    radial-gradient(circle at 50% 0%, var(--sound-color) 10px, transparent 10.5px) no-repeat top center / 20px 10px,
-
+    /* 1. שכבה עליונה: חצי עיגול ירוק (פונה ימינה) */
+    radial-gradient(circle at 0% 50%, var(--sound-color) 10px, transparent 10.5px) no-repeat left center / 10px 20px,
     /* 2. שכבה תחתונה: צבע הרקע האדום המקורי */
     red;
 
-  /* שמירה על עיגול הפינות העליונות של המלבן האדום */
+  /* עיגול הפינות העליונות של המלבן האדום עצמו */
   border-radius: 10px 10px 0 0;
 
   z-index: 10; /* מעל הרקע הכתום */
