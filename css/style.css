@@ -441,23 +441,26 @@ main {
   padding: 0 !important;
 }
 
-/* הגדרת העיגול הצהוב באמצעות רקע מדורג - מוזז לקצה השמאלי */
+/* הגדרת חצי עיגול צהוב באמצעות רקע מדורג - ממוקם בקצה השמאלי */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
   position: relative; /* ודא שהמיקום היחסי קיים */
 
-  /* שנה את מיקום הרקע המדורג ל-0px מהשמאל */
+  /* שנה את הגדרת הגרדיאנט והגודל/מיקום שלו */
   background:
-    /* שכבה 1: עיגול צהוב (קוטר 20px) ממורכז אנכית בקצה השמאלי */
-    radial-gradient(circle, yellow 10px, transparent 10.5px) no-repeat center left 0px / 20px 20px,
+    /* שכבה 1: חצי עיגול צהוב (רדיוס 10px) שמרכזו בקצה השמאלי */
+    radial-gradient(circle at 0% 50%, yellow 10px, transparent 10.5px) no-repeat center left 0px / 10px 20px,
     /* שכבה 2: צבע הרקע המקורי של בלוק הבקרה */
     var(--control-color);
 
   /* --- שאר ההגדרות של הבלוק נשארות זהות --- */
   width: 140px;
-  border-radius: 30px 10px 10px 30px;
+  /* שינוי אפשרי: אם רוצים שה-border-radius השמאלי */
+  /* יתאים לחצי העיגול, אפשר לשנות ל-10px או 0 */
+  border-radius: 10px 10px 10px 10px; /* או 0 10px 10px 0; או 30px 10px 10px 30px המקורי */
   padding-right: 10px;
-  padding-left: 10px; /* שים לב, ייתכן שתרצה להגדיל את זה אם העיגול חופף לתוכן */
+  /* הגדלת ה-padding השמאלי כדי שהתוכן לא יחפוף לחצי העיגול */
+  padding-left: 15px; /* היה 10px, הגדלנו קצת */
   text-align: center;
   font-size: 20px;
   overflow: visible;
