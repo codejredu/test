@@ -385,7 +385,7 @@ main {
 
 /* --- סגנון מיוחד לבלוק Repeat --- */
 
-/* עיצוב הבלוק הכתום עם חצי צהוב שמאלי + חצי סגול הפוך מימין לאדום */
+/* עיצוב הבלוק הכתום עם חצי צהוב שמאלי + חצי סגול הפוך מימין לאדום (מיושר אנכית) */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
   position: relative;
@@ -395,8 +395,9 @@ main {
     /* 1. שכבה עליונה: חצי עיגול צהוב (בקצה השמאלי של הכתום) */
     radial-gradient(circle at 0% 50%, yellow 10px, transparent 10.5px) no-repeat center left 0px / 10px 20px,
 
-    /* 2. שכבה שניה: חצי עיגול סגול הפוך (מימין למלבן האדום) */
-    radial-gradient(circle at 100% 50%, var(--looks-color) 10px, transparent 10.5px) no-repeat calc(50% + 40px) center / 10px 20px,
+    /* 2. שכבה שניה: חצי עיגול סגול הפוך (מימין למלבן האדום, מיושר אנכית) */
+    /*    מיקום: אופקי = calc(50% + 40px), אנכי = 40px מהחלק העליון */
+    radial-gradient(circle at 100% 50%, var(--looks-color) 10px, transparent 10.5px) no-repeat calc(50% + 40px) 40px / 10px 20px,
 
     /* 3. שכבה תחתונה: צבע הרקע הכתום המקורי */
     var(--control-color);
