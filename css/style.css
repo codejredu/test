@@ -450,17 +450,17 @@ main {
   top: calc(80px - 60px); /* מיקום החלק העליון של המלבן */
 }
 
-/* הוספת השקע הצהוב בצד השמאלי - שימוש ב-::before עם סלקטור אחר */
+/* הוספת השקע הצהוב בצד השמאלי - חצי עיגול */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before:nth-child(2),
 #programming-area .block-container[data-type="repeat"] .scratch-block::before:nth-child(2) {
   content: '';
   position: absolute;
   top: 50%;
-  left: -10px;
+  left: -15px; /* הוזז כדי להתאים לקוטר */
   transform: translateY(-50%);
-  width: 20px;
-  height: 40px;
+  width: 30px; /* קוטר העיגול */
+  height: 30px; /* קוטר העיגול */
   background-color: yellow;
-  border-radius: 0 10px 10px 0;
+  border-radius: 15px 0 0 15px; /* יוצר חצי עיגול שמאלי */
   z-index: 2;
 }
