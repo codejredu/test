@@ -464,26 +464,26 @@ main {
 
 
 
-/* הגדרת הריבוע האדום באמצעות ::before - ממורכז אופקית, גובה מלא ורוחב 80px */
+/* הגדרת הריבוע האדום באמצעות ::before - ממורכז אופקית, מגיע לתחתית, מרווח מהחלק העליון */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
   content: '' !important; /* שמור על זה כדי לדרוס את ההסתרה המקורית */
   position: absolute;
 
-  /* 1. מקם את הקצה העליון למעלה ואת הקצה התחתון למטה */
-  top: 0;
+  /* 1. קבע מרווח מהחלק העליון (לדוגמה 5px, שנה לפי הצורך) */
+  top: 5px;
+
+  /* 2. הצמד את החלק התחתון לתחתית הבלוק הכתום */
   bottom: 0;
 
-  /* 2. מקם את הקצה השמאלי במרכז האופקי */
+  /* 3. מרכז אופקית */
   left: 50%;
-
-  /* 3. הזז אחורה רק אופקית בחצי מהרוחב שלו כדי למרכז אופקית */
   transform: translateX(-50%);
 
   /* 4. קבע את הרוחב הרצוי */
   width: 80px;
 
-  /* 5. אפשר לגובה להיקבע אוטומטית על ידי top ו-bottom */
+  /* 5. הגובה יקבע אוטומטית על ידי המרחק בין top ל-bottom */
   height: auto;
 
   background-color: red;
