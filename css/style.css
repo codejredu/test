@@ -389,7 +389,7 @@ main {
     background-color: var(--end-color);
 }
 
- /* סגנון מיוחד לבלוק Repeat עם בליטה בצד ימין ושקע בצד שמאל */
+/* סגנון מיוחד לבלוק Repeat עם בליטה בצד ימין */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
   width: 140px;
@@ -403,14 +403,14 @@ main {
   height: 80px;
 }
 
-/* הוספת החור הלבן לבלוק Repeat - מיושר למרכז האופקי */
+/* הוספת החור הלבן לבלוק Repeat - מיושר למרכז הלבנה הכתומה */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
   content: '';
   position: absolute;
   top: 50%;
-  left: 50%; /* יישור למרכז האופקי */
-  transform: translateY(-50%) translateX(-50%);
+  left: 50%; /* מרכוז אופקי */
+  transform: translate(-50%, -50%); /* קיזוז חצי רוחב וגובה למרכוז אמיתי */
   width: 80px;
   height: 65px;
   background-color: #f0f4ff;
@@ -452,16 +452,16 @@ main {
   padding: 0 !important;
 }
 
-/* הוספת חצי עיגול לבן בצד שמאל */
+/* הוספת חצי עיגול לבן בצד שמאל - קוטר 15px */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before {
   content: '';
   position: absolute;
   top: 0;
-  left: -20px; /* הוצאה של חצי מהרוחב ליצירת חצי עיגול */
-  width: 20px;
+  left: -7.5px; /* הוצאה של חצי מהקוטר */
+  width: 15px; /* קוטר 15px */
   height: 80px; /* גובה זהה לבלוק */
   background-color: white;
-  border-radius: 10px 0 0 10px; /* עיגול הצד השמאלי */
+  border-radius: 7.5px 0 0 7.5px; /* רדיוס חצי מהקוטר */
   z-index: 2; /* מוודא שהוא מעל הרקע של הבלוק */
 }
 
@@ -469,10 +469,10 @@ main {
   content: '';
   position: absolute;
   top: 0;
-  left: -20px;
-  width: 20px;
+  left: -7.5px;
+  width: 15px; /* קוטר 15px */
   height: 80px;
   background-color: white;
-  border-radius: 10px 0 0 10px;
+  border-radius: 7.5px 0 0 7.5px; /* רדיוס חצי מהקוטר */
   z-index: 2;
 }
