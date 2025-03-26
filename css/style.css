@@ -436,17 +436,17 @@ main {
   padding: 0 !important;
 }
 
-/* הוספת השקע במרכז */
+/* הוספת השקע במרכז - מורד כדי להשיק את הפאה התחתונה */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
   content: '';
   position: absolute;
-  top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   width: 90px; /* רוחב השקע */
   height: 60px; /* גובה השקע */
   background-color: white; /* צבע השקע - לבן */
   border-radius: 5px; /* רדיוס פינות קל לשקע */
   z-index: 1; /* מוצב מתחת לטקסט ולאיקון */
+  top: calc(80px - 60px); /* מיקום החלק העליון של המלבן */
 }
