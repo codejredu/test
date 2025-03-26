@@ -389,7 +389,7 @@ main {
     background-color: var(--end-color);
 }
 
-/* סגנון מיוחד לבלוק Repeat עם בליטה בצד ימין ושקע צהוב בצד שמאל */
+/* סגנון מיוחד לבלוק Repeat עם בליטה בצד ימין ושקע צהוב במרכז */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
   width: 140px;
@@ -436,13 +436,13 @@ main {
   padding: 0 !important;
 }
 
-/* הוספת השקע הצהוב בצד השמאלי - חצי עיגול */
+/* הוספת השקע הצהוב במרכז - חצי עיגול */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
   content: '';
   position: absolute;
   top: 50%;
-  left: -15px; /* הוזז כדי להתאים לקוטר */
+  left: 5px; /* הוזז למרכז */
   transform: translateY(-50%);
   width: 30px; /* קוטר העיגול */
   height: 30px; /* קוטר העיגול */
