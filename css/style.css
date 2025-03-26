@@ -435,3 +435,19 @@ main {
   margin: 0 !important;
   padding: 0 !important;
 }
+
+/* הוספת שקע בגוף הלבנה */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 45px;
+  background-color: #ddd; /* צבע אפור בהיר לשקע - ניתן לשנות */
+  border-radius: 5px; /* עיגול קל לפינות השקע - ניתן לשנות */
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.2); /* הוספת צל פנימי ליצירת תחושת שקע */
+  z-index: 1; /* מוודא שהשקע מתחת לבליטה ולאיקון */
+}
