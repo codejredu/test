@@ -389,7 +389,7 @@ main {
     background-color: var(--end-color);
 }
 
-/* סגנון מיוחד לבלוק Repeat עם שקע בצורת ח */
+/* סגנון מיוחד לבלוק Repeat עם בליטה בצד ימין */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
   width: 140px;
@@ -401,50 +401,25 @@ main {
   position: relative;
   overflow: visible;
   height: 80px;
-  background-color: var(--control-color); /* רקע כתום */
 }
 
-/* "חיתוך" אנכי עליון - כתום */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
-  content: '';
-  position: absolute;
-  top: 10px;
-  left: 20px;
-  width: 20px;
-  height: 25px;
-  background-color: inherit; /* יורש את הרקע הכתום */
-  z-index: 2; /* מעל הרקע */
-}
-
-/* "חיתוך" אנכי תחתון - כתום */
+/* הוספת הבליטה בצד ימין - הקטנה ב-50% */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
   content: '';
   position: absolute;
-  bottom: 10px;
-  left: 20px;
-  width: 20px;
-  height: 25px;
-  background-color: inherit; /* יורש את הרקע הכתום */
-  z-index: 2; /* מעל הרקע */
+  top: 50%;
+  right: -10px; /* הוזז כדי להתאים לגודל המוקטן */
+  transform: translateY(-50%);
+  width: 20px; /* רוחב הבליטה - הוקטן ב-50% */
+  height: 20px; /* גובה הבליטה - הוקטן ב-50% */
+  background-color: inherit; /* יורש את צבע הרקע של הבלוק */
+  border-radius: 0 10px 10px 0; /* רדיוס פינות מותאם */
+  box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1); /* הוספת צל קל */
+  z-index: 2;
 }
 
-/* "חיתוך" אופקי - כתום */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before::after,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before::after {
-  content: '';
-  position: absolute;
-  top: 35px; /* מתחת ל"חיתוך" העליון */
-  left: 10px;
-  width: 40px;
-  height: 20px;
-  background-color: inherit; /* יורש את הרקע הכתום */
-  border-radius: 10px; /* כדי ליצור את הפינות המעוגלות של השקע */
-  z-index: 2; /* מעל הרקע */
-}
-
-/* מיקום והקטנת איקון */
+/* מיקום והקטנת איקון בפינה הימנית העליונה של בלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
   position: absolute !important;
@@ -455,4 +430,8 @@ main {
   transform: scale(0.5) !important;
   transform-origin: top right !important;
   z-index: 3 !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
