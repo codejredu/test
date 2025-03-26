@@ -437,8 +437,7 @@ main {
 }
 
 /* הוספת השקע במרכז - מורד כדי להשיק את הפאה התחתונה */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before { /* סלקטור ראשון ל-::before */
   content: '';
   position: absolute;
   left: 50%;
@@ -451,9 +450,9 @@ main {
   top: calc(80px - 60px); /* מיקום החלק העליון של המלבן */
 }
 
-/* הוספת השקע הצהוב בצד השמאלי */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before.left-notch,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before.left-notch {
+/* הוספת השקע הצהוב בצד השמאלי - שימוש ב-::before עם סלקטור אחר */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before:nth-child(2),
+#programming-area .block-container[data-type="repeat"] .scratch-block::before:nth-child(2) {
   content: '';
   position: absolute;
   top: 50%;
@@ -461,7 +460,7 @@ main {
   transform: translateY(-50%);
   width: 20px;
   height: 40px;
-  background-color: yellow; /* צבע השקע השמאלי שונה לצהוב */
+  background-color: yellow;
   border-radius: 0 10px 10px 0;
-  z-index: 2; /* מעל הרקע של הבלוק */
+  z-index: 2;
 }
