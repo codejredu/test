@@ -461,24 +461,28 @@ main {
   /* padding-bottom: 28px; */
 }
 
-/* הגדרת הריבוע האדום באמצעות ::before */
+
+
+
+/* הגדרת הריבוע האדום באמצעות ::before - ממורכז ועם גודל חדש */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
-  /* הפעל מחדש את התוכן (דורס את content: none !important מהכלל הקודם) */
-  content: '' !important; /* <--- הוסף !important כאן! */
+  content: '' !important; /* שמור על זה כדי לדרוס את ההסתרה המקורית */
   position: absolute;
-  top: 5px;
-  left: 5px;
-  width: 20px;
-  height: 20px;
+
+  /* 1. מקם את הפינה השמאלית-עליונה של הריבוע במרכז הבלוק הכתום */
+  top: 50%;
+  left: 50%;
+
+  /* 2. הזז את הריבוע אחורה בחצי מהרוחב ובחצי מהגובה שלו כדי למרכז אותו */
+  transform: translate(-50%, -50%);
+
+  /* 3. קבע את הגודל החדש */
+  width: 80px;
+  height: 45px;
+
   background-color: red;
-  border-radius: 0; /* ודא שזה ריבוע */
-  z-index: 10; /* מיקום מעל הרקע של הבלוק */
-  /* איפוס תכונות שעלולות להגיע מהגדרות קודמות של ::before (אם ישנן) */
-  transform: none;
-  box-shadow: none;
-  /* ודא שהמאפיינים הבאים מהכלל הישן לא מפריעים */
-  width: 20px;  /* דרוס הגדרת רוחב קודמת אם הייתה */
-  height: 20px; /* דרוס הגדרת גובה קודמת אם הייתה */
-  background-color: red; /* דרוס הגדרת רקע קודמת אם הייתה */
+  border-radius: 0; /* ודא שהוא נשאר מלבן */
+  z-index: 10; /* שמור עליו מעל הרקע הכתום */
+  box-shadow: none; /* הסר צל אם היה קיים מהגדרות קודמות */
 }
