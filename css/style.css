@@ -402,14 +402,14 @@ main {
   height: 80px;
 }
 
-/* הוספת החור לבלוק Repeat - מוזז לשמאל ב-10px מהמרכז */
+/* הוספת החור לבלוק Repeat - מיושר למרכז האופקי */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
   content: '';
   position: absolute;
   top: 50%;
-  left: calc(50% + 5px); /* הזזה של 50% מהרוחב ואז עוד 10px ימינה */
-  transform: translateY(-50%) translateX(-50%); /* עדיין צריך את ה-translateX כדי למרכז ביחס לנקודה החדשה */
+  left: 50%; /* יישור למרכז האופקי */
+  transform: translateY(-50%) translateX(-50%);
   width: 80px;
   height: 65px;
   background-color: #f0f4ff;
