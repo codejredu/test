@@ -442,9 +442,8 @@ main {
 }
 
 /* הוספת ריבוע אדום בפינה השמאלית העליונה */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
-  content: '';
+#control-blocks .block-container[data-type="repeat"] .scratch-block .red-square,
+#programming-area .block-container[data-type="repeat"] .scratch-block .red-square {
   position: absolute;
   top: 5px;
   left: 5px;
