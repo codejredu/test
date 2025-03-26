@@ -464,22 +464,27 @@ main {
 
 
 
-/* הגדרת הריבוע האדום באמצעות ::before - ממורכז ועם גודל חדש */
+/* הגדרת הריבוע האדום באמצעות ::before - ממורכז אופקית, גובה מלא ורוחב 80px */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
   content: '' !important; /* שמור על זה כדי לדרוס את ההסתרה המקורית */
   position: absolute;
 
-  /* 1. מקם את הפינה השמאלית-עליונה של הריבוע במרכז הבלוק הכתום */
-  top: 50%;
+  /* 1. מקם את הקצה העליון למעלה ואת הקצה התחתון למטה */
+  top: 0;
+  bottom: 0;
+
+  /* 2. מקם את הקצה השמאלי במרכז האופקי */
   left: 50%;
 
-  /* 2. הזז את הריבוע אחורה בחצי מהרוחב ובחצי מהגובה שלו כדי למרכז אותו */
-  transform: translate(-50%, -50%);
+  /* 3. הזז אחורה רק אופקית בחצי מהרוחב שלו כדי למרכז אופקית */
+  transform: translateX(-50%);
 
-  /* 3. קבע את הגודל החדש */
+  /* 4. קבע את הרוחב הרצוי */
   width: 80px;
-  height: 45px;
+
+  /* 5. אפשר לגובה להיקבע אוטומטית על ידי top ו-bottom */
+  height: auto;
 
   background-color: red;
   border-radius: 0; /* ודא שהוא נשאר מלבן */
