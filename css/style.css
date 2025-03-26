@@ -444,8 +444,8 @@ main {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 60px; /* רוחב השקע */
-  height: 30px; /* גובה השקע */
+  width: 90px; /* רוחב השקע */
+  height: 60px; /* גובה השקע */
   background-color: white; /* צבע השקע - לבן */
   border-radius: 5px; /* רדיוס פינות קל לשקע */
   z-index: 1; /* מוצב מתחת לטקסט ולאיקון */
