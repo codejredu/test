@@ -432,3 +432,14 @@ border-radius: 0 20px 20px 0; / מעגל את הצד הימני של הבליט�
 box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1); / הוספת צל קל כדי לתת תחושת תלת מימד */
 }
 
+/* מיקום והקטנת איקון בפינה הימנית העליונה של בלוק Repeat */
+#control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
+#programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
+  position: absolute; /* מאפשר מיקום חופשי בתוך הבלוק */
+  top: 5px; /* מזיז מעט מהקצה העליון */
+  right: 5px; /* מזיז מעט מהקצה הימני */
+  width: 50%; /* מקטין את הרוחב ב-50% */
+  height: auto; /* שומר על יחס גובה-רוחב */
+  transform: scale(0.5); /* מקטין את האיקון ב-50% */
+  transform-origin: top right; /* נקודת מרכז השינוי היא הפינה הימנית העליונה */
+}
