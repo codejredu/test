@@ -469,7 +469,7 @@ main {
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
   content: '' !important; /* שמור על זה כדי לדרוס את ההסתרה המקורית */
   position: absolute;
- border-radius: 10px 10px 0 0; /* שנה את 10px לרדיוס הרצוי */
+
   /* 1. קבע מרווח מהחלק העליון (לדוגמה 5px, שנה לפי הצורך) */
   top: 20px;
 
@@ -487,7 +487,7 @@ main {
   height: auto;
 
   background-color: red;
-  border-radius: 0; /* ודא שהוא נשאר מלבן */
+   border-radius: 10px 10px 0 0; /* שנה את 10px לרדיוס הרצוי */
   z-index: 10; /* שמור עליו מעל הרקע הכתום */
   box-shadow: none; /* הסר צל אם היה קיים מהגדרות קודמות */
 }
