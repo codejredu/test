@@ -452,18 +452,8 @@ main {
 }
 
 /* הוספת העיגול הצהוב בצד שמאל - "שקע שמאלי כתום" */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
-#programming-area .block-container[data-type="repeat"] .scratch-block::after {
-  /* ... כל הסגנונות הקודמים של הבליטה הימנית ... */
-}
-
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
-  /* ... כל הסגנונות הקודמים של השקע המרכזי ... */
-}
-
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before[data-name="שקע שמאלי כתום"],
-#programming-area .block-container[data-type="repeat"] .scratch-block::before[data-name="שקע שמאלי כתום"] {
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before.left-yellow-circle,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before.left-yellow-circle {
   content: '';
   position: absolute;
   top: 50%;
@@ -474,31 +464,4 @@ main {
   background-color: yellow;
   border-radius: 50%; /* הופך את המלבן לעיגול */
   z-index: 2; /* מעל הרקע של הבלוק */
-}
-
-/* הוספת מאפיין data-name לאלמנט הפסאודו ::before שיוצר את העיגול */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before {
-  content: ''; /* קיים כבר */
-  /* ... שאר הסגנונות של השקע המרכזי ... */
-}
-
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before {
-  /* ... סגנונות קיימים ... */
-}
-
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before[data-name="שקע שמאלי כתום"] {
-  /* ... סגנונות העיגול הצהוב ... */
-}
-
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
-  content: ''; /* קיים כבר */
-  /* ... שאר הסגנונות של השקע המרכזי ... */
-}
-
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
-  /* ... סגנונות קיימים ... */
-}
-
-#programming-area .block-container[data-type="repeat"] .scratch-block::before[data-name="שקע שמאלי כתום"] {
-  /* ... סגנונות העיגול הצהוב ... */
 }
