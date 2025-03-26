@@ -452,8 +452,8 @@ main {
 }
 
 /* הוספת השקע בצד השמאלי */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::after.left-notch,
-#programming-area .block-container[data-type="repeat"] .scratch-block::after.left-notch {
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before.left-notch,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before.left-notch {
   content: '';
   position: absolute;
   top: 50%;
@@ -461,7 +461,7 @@ main {
   transform: translateY(-50%);
   width: 20px;
   height: 40px;
-  background-color: white; /* או yellow אם אתה רוצה צהוב */
+  background-color: inherit; /* יורש את צבע הרקע של הבלוק כדי שיראו אותו */
   border-radius: 0 10px 10px 0;
   z-index: 2; /* מעל הרקע של הבלוק */
 }
