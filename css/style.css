@@ -385,18 +385,17 @@ main {
 
 /* --- סגנון מיוחד לבלוק Repeat --- */
 
-/* עיצוב הבלוק הכתום עם חצי צהוב שמאלי + חצי סגול הפוך מימין ללבן (מיושר אנכית) */
+/* עיצוב הבלוק הכתום עם חצי לבן שמאלי + חצי סגול הפוך מימין ללבן (מיושר אנכית) */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
   position: relative;
 
   /* הגדרת הרקע המרובה החדשה */
   background:
-    /* 1. שכבה עליונה: חצי עיגול צהוב (בקצה השמאלי של הכתום) */
-    radial-gradient(circle at 0% 50%, yellow 10px, transparent 10.5px) no-repeat center left 0px / 10px 20px,
+    /* 1. שכבה עליונה: חצי עיגול לבן (בקצה השמאלי של הכתום) */
+    radial-gradient(circle at 0% 50%, white 10px, transparent 10.5px) no-repeat center left 0px / 10px 20px, /* <-- שינוי: yellow ל-white */
 
     /* 2. שכבה שניה: חצי עיגול סגול הפוך (מימין למלבן הלבן, מיושר אנכית) */
-    /*    מיקום: אופקי = calc(50% + 40px), אנכי = 40px מהחלק העליון */
     radial-gradient(circle at 100% 50%, var(--looks-color) 10px, transparent 10.5px) no-repeat calc(50% + 40px) 40px / 10px 20px,
 
     /* 3. שכבה תחתונה: צבע הרקע הכתום המקורי */
@@ -452,7 +451,7 @@ main {
   padding: 0 !important;
 }
 
-/* הגדרת המלבן הלבן (::before) עם חצי עיגול ירוק שמאלי */
+/* הגדרת המלבן הלבן (::before) עם חצי עיגול כתום שמאלי */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
   content: '' !important; /* דרוס את content:none המקורי */
@@ -464,12 +463,12 @@ main {
   width: 80px;
   height: auto; /* גובה דינמי */
 
-  /* רקע: חצי ירוק שמאלי + לבן */
+  /* רקע: חצי כתום שמאלי + לבן */
   background:
-    /* 1. שכבה עליונה: חצי עיגול ירוק (פונה ימינה) */
-    radial-gradient(circle at 0% 50%, var(--sound-color) 10px, transparent 10.5px) no-repeat left center / 10px 20px,
-    /* 2. שכבה תחתונה: צבע הרקע הלבן החדש */
-    white; /* <-- השינוי כאן */
+    /* 1. שכבה עליונה: חצי עיגול כתום (פונה ימינה) */
+    radial-gradient(circle at 0% 50%, var(--control-color) 10px, transparent 10.5px) no-repeat left center / 10px 20px, /* <-- שינוי: --sound-color ל---control-color */
+    /* 2. שכבה תחתונה: צבע הרקע הלבן */
+    white;
 
   /* עיגול הפינות העליונות של המלבן הלבן עצמו */
   border-radius: 10px 10px 0 0;
