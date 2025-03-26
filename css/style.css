@@ -389,7 +389,7 @@ main {
     background-color: var(--end-color);
 }
 
-/* סגנון מיוחד לבלוק Repeat עם בליטה בצד ימין ושקע בצד שמאל ובמרכז */
+/* סגנון מיוחד לבלוק Repeat עם בליטה בצד ימין ושקע צהוב בצד שמאל */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
   width: 140px;
@@ -436,23 +436,9 @@ main {
   padding: 0 !important;
 }
 
-/* הוספת השקע במרכז - מורד כדי להשיק את הפאה התחתונה */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before { /* סלקטור ראשון ל-::before */
-  content: '';
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90px; /* רוחב השקע */
-  height: 60px; /* גובה השקע */
-  background-color: white; /* צבע השקע - לבן */
-  border-radius: 5px; /* רדיוס פינות קל לשקע */
-  z-index: 1; /* מוצב מתחת לטקסט ולאיקון */
-  top: calc(80px - 60px); /* מיקום החלק העליון של המלבן */
-}
-
 /* הוספת השקע הצהוב בצד השמאלי - חצי עיגול */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before:nth-child(2),
-#programming-area .block-container[data-type="repeat"] .scratch-block::before:nth-child(2) {
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
   content: '';
   position: absolute;
   top: 50%;
