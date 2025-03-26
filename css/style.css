@@ -402,6 +402,20 @@ main {
   height: 80px;
 }
 
+/* סגנון מיוחד לבלוק Repeat עם בליטה בצד ימין */
+#control-blocks .block-container[data-type="repeat"] .scratch-block,
+#programming-area .block-container[data-type="repeat"] .scratch-block {
+  width: 140px;
+  border-radius: 30px 10px 10px 30px;
+  padding-right: 10px;
+  padding-left: 10px;
+  text-align: center;
+  font-size: 20px;
+  position: relative;
+  overflow: visible;
+  height: 80px;
+}
+
 /* הוספת החור הלבן לבלוק Repeat - מיושר למרכז האופקי */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
@@ -451,16 +465,16 @@ main {
   padding: 0 !important;
 }
 
-/* הוספת חצי עיגול לבן בצד שמאל */
+/* הוספת חצי עיגול לבן בצד שמאל - מצומצם לגודל */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before {
   content: '';
   position: absolute;
   top: 0;
-  left: -20px; /* הוצאה של חצי מהרוחב ליצירת חצי עיגול */
-  width: 20px;
+  left: -7px; /* הוצאה של חצי מהרוחב החדש */
+  width: 7px; /* צמצום הרוחב לשליש (בערך) */
   height: 80px; /* גובה זהה לבלוק */
   background-color: white;
-  border-radius: 10px 0 0 10px; /* עיגול הצד השמאלי */
+  border-radius: 3.5px 0 0 3.5px; /* עיגול הצד השמאלי - מותאם לרוחב */
   z-index: 2; /* מוודא שהוא מעל הרקע של הבלוק */
 }
 
@@ -468,10 +482,10 @@ main {
   content: '';
   position: absolute;
   top: 0;
-  left: -20px;
-  width: 20px;
+  left: -7px;
+  width: 7px;
   height: 80px;
   background-color: white;
-  border-radius: 10px 0 0 10px;
+  border-radius: 3.5px 0 0 3.5px;
   z-index: 2;
 }
