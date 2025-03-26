@@ -465,7 +465,7 @@ main {
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
   /* הפעל מחדש את התוכן (דורס את content: none !important מהכלל הקודם) */
-  content: '';
+  content: '' !important; /* <--- הוסף !important כאן! */
   position: absolute;
   top: 5px;
   left: 5px;
@@ -477,6 +477,8 @@ main {
   /* איפוס תכונות שעלולות להגיע מהגדרות קודמות של ::before (אם ישנן) */
   transform: none;
   box-shadow: none;
-  /* אין צורך לשנות את ::after, הוא אחראי על הבליטה הימנית */
+  /* ודא שהמאפיינים הבאים מהכלל הישן לא מפריעים */
+  width: 20px;  /* דרוס הגדרת רוחב קודמת אם הייתה */
+  height: 20px; /* דרוס הגדרת גובה קודמת אם הייתה */
+  background-color: red; /* דרוס הגדרת רקע קודמת אם הייתה */
 }
-/* --- סוף תוספת הכללים --- */
