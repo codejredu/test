@@ -435,17 +435,3 @@ main {
   margin: 0 !important;
   padding: 0 !important;
 }
-
-/* הוספת מלבן לבן במרכז בלוק Repeat */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90px;
-  height: 55px;
-  background-color: white;
-  z-index: 1; /* מוודא שהמלבן מתחת לאיקון ולטקסט */
-}
