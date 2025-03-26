@@ -441,28 +441,42 @@ main {
   padding: 0 !important;
 }
 
-/* הוספת ריבוע אדום בפינה השמאלית העליונה */
-#control-blocks .block-container[data-type="repeat"] .scratch-block .red-square,
-#programming-area .block-container[data-type="repeat"] .scratch-block .red-square {
+/* --- הוסף את הכללים הבאים --- */
+
+/* הגדרת העיגול הצהוב באמצעות רקע מדורג על הבלוק עצמו */
+#control-blocks .block-container[data-type="repeat"] .scratch-block,
+#programming-area .block-container[data-type="repeat"] .scratch-block {
+  /* ודא שהמיקום היחסי קיים (כבר אמור להיות מהכללים הקודמים) */
+  position: relative;
+
+  /* הוספת רקע מדורג שיוצר עיגול צהוב, ושמירה על צבע הרקע המקורי */
+  background:
+    /* שכבה 1: עיגול צהוב (קוטר 20px) בפינה ימנית תחתונה */
+    radial-gradient(circle, yellow 10px, transparent 10.5px) no-repeat bottom 5px right 5px / 20px 20px,
+    /* שכבה 2: צבע הרקע המקורי של בלוק הבקרה */
+    var(--control-color);
+
+  /* אופציונלי: אם התוכן הפנימי של הבלוק חופף, ניתן להוסיף padding */
+  /* padding-top: 28px; */
+  /* padding-bottom: 28px; */
+}
+
+/* הגדרת הריבוע האדום באמצעות ::before */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+  /* הפעל מחדש את התוכן (דורס את content: none !important מהכלל הקודם) */
+  content: '';
   position: absolute;
   top: 5px;
   left: 5px;
   width: 20px;
   height: 20px;
   background-color: red;
-  z-index: 100;
+  border-radius: 0; /* ודא שזה ריבוע */
+  z-index: 10; /* מיקום מעל הרקע של הבלוק */
+  /* איפוס תכונות שעלולות להגיע מהגדרות קודמות של ::before (אם ישנן) */
+  transform: none;
+  box-shadow: none;
+  /* אין צורך לשנות את ::after, הוא אחראי על הבליטה הימנית */
 }
-
-/* הוספת עיגול צהוב בפינה הימנית התחתונה */
-#control-blocks .block-container[data-type="repeat"] .scratch-block .yellow-circle,
-#programming-area .block-container[data-type="repeat"] .scratch-block .yellow-circle {
-  position: absolute;
-  bottom: 5px;
-  right: 5px;
-  width: 20px;
-  height: 20px;
-  background-color: yellow;
-  border-radius: 50%;
-  z-index: 100;
-}
-
+/* --- סוף תוספת הכללים --- */
