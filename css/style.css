@@ -389,7 +389,7 @@ main {
     background-color: var(--end-color);
 }
 
-/* סגנון מיוחד לבלוק Repeat עם בליטה בצד ימין */
+/* סגנון מיוחד לבלוק Repeat עם בליטה בצד ימין ושקע בצד שמאל */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
   width: 140px;
@@ -436,32 +436,17 @@ main {
   padding: 0 !important;
 }
 
-/* הוספת השקע במרכז - מורד כדי להשיק את הפאה התחתונה */
+/* הוספת השקע הצהוב בצד השמאלי */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
   content: '';
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90px; /* רוחב השקע */
-  height: 60px; /* גובה השקע */
-  background-color: white; /* צבע השקע - לבן */
-  border-radius: 5px; /* רדיוס פינות קל לשקע */
+  left: -10px; /* מיקום בצד השמאלי */
+  top: calc(80px - 40px); /* מיקום אנכי */
+  transform: translateY(-50%); /* מרכוז אנכי */
+  width: 20px; /* רוחב השקע */
+  height: 40px; /* גובה השקע */
+  background-color: yellow; /* צבע השקע - צהוב */
+  border-radius: 0 10px 10px 0; /* רדיוס פינות מותאם */
   z-index: 1; /* מוצב מתחת לטקסט ולאיקון */
-  top: calc(80px - 60px); /* מיקום החלק העליון של המלבן */
-}
-
-/* הוספת העיגול הצהוב בצד שמאל - "שקע שמאלי כתום" */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before.left-yellow-circle,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before.left-yellow-circle {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0;
-  transform: translate(-50%, -50%);
-  width: 10px; /* קוטר העיגול */
-  height: 10px; /* קוטר העיגול */
-  background-color: yellow;
-  border-radius: 50%; /* הופך את המלבן לעיגול */
-  z-index: 2; /* מעל הרקע של הבלוק */
 }
