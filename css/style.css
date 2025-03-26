@@ -385,7 +385,7 @@ main {
 
 /* --- סגנון מיוחד לבלוק Repeat --- */
 
-/* עיצוב הבלוק הכתום עם חצי לבן שמאלי + חצי סגול הפוך מימין ללבן (מיושר אנכית) */
+/* עיצוב הבלוק הכתום עם חצי לבן שמאלי + חצי סגול הפוך מימין ללבן (מיושר אנכית ומוזז ימינה) */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
   position: relative;
@@ -393,10 +393,11 @@ main {
   /* הגדרת הרקע המרובה החדשה */
   background:
     /* 1. שכבה עליונה: חצי עיגול לבן (בקצה השמאלי של הכתום) */
-    radial-gradient(circle at 0% 50%, white 10px, transparent 10.5px) no-repeat center left 0px / 10px 20px, /* <-- שינוי: yellow ל-white */
+    radial-gradient(circle at 0% 50%, white 10px, transparent 10.5px) no-repeat center left 0px / 10px 20px,
 
-    /* 2. שכבה שניה: חצי עיגול סגול הפוך (מימין למלבן הלבן, מיושר אנכית) */
-    radial-gradient(circle at 100% 50%, var(--looks-color) 10px, transparent 10.5px) no-repeat calc(50% + 40px) 40px / 10px 20px,
+    /* 2. שכבה שניה: חצי עיגול סגול הפוך (מימין למלבן הלבן, מיושר אנכית ומוזז) */
+    /*    מיקום: אופקי = calc(50% + 44px), אנכי = 40px מהחלק העליון */
+    radial-gradient(circle at 100% 50%, var(--looks-color) 10px, transparent 10.5px) no-repeat calc(50% + 44px) 40px / 10px 20px, /* <-- שינוי: 40px ל-44px */
 
     /* 3. שכבה תחתונה: צבע הרקע הכתום המקורי */
     var(--control-color);
@@ -466,7 +467,7 @@ main {
   /* רקע: חצי כתום שמאלי + לבן */
   background:
     /* 1. שכבה עליונה: חצי עיגול כתום (פונה ימינה) */
-    radial-gradient(circle at 0% 50%, var(--control-color) 10px, transparent 10.5px) no-repeat left center / 10px 20px, /* <-- שינוי: --sound-color ל---control-color */
+    radial-gradient(circle at 0% 50%, var(--control-color) 10px, transparent 10.5px) no-repeat left center / 10px 20px,
     /* 2. שכבה תחתונה: צבע הרקע הלבן */
     white;
 
