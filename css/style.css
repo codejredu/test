@@ -385,7 +385,7 @@ main {
 
 /* --- סגנון מיוחד לבלוק Repeat --- */
 
-/* עיצוב הבלוק הכתום עם חצי צהוב שמאלי + חצי סגול הפוך מימין לאדום (מיושר אנכית) */
+/* עיצוב הבלוק הכתום עם חצי צהוב שמאלי + חצי סגול הפוך מימין ללבן (מיושר אנכית) */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
   position: relative;
@@ -395,7 +395,7 @@ main {
     /* 1. שכבה עליונה: חצי עיגול צהוב (בקצה השמאלי של הכתום) */
     radial-gradient(circle at 0% 50%, yellow 10px, transparent 10.5px) no-repeat center left 0px / 10px 20px,
 
-    /* 2. שכבה שניה: חצי עיגול סגול הפוך (מימין למלבן האדום, מיושר אנכית) */
+    /* 2. שכבה שניה: חצי עיגול סגול הפוך (מימין למלבן הלבן, מיושר אנכית) */
     /*    מיקום: אופקי = calc(50% + 40px), אנכי = 40px מהחלק העליון */
     radial-gradient(circle at 100% 50%, var(--looks-color) 10px, transparent 10.5px) no-repeat calc(50% + 40px) 40px / 10px 20px,
 
@@ -432,7 +432,7 @@ main {
   background-color: inherit; /* יורש את הרקע המורכב של הבלוק הכתום */
   border-radius: 0 10px 10px 0;
   box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1);
-  z-index: 2; /* מעל הרקע, מתחת למלבן האדום (::before) */
+  z-index: 2; /* מעל הרקע, מתחת למלבן הלבן (::before) */
 }
 
 /* מיקום איקון (אם יש) בבלוק repeat */
@@ -452,7 +452,7 @@ main {
   padding: 0 !important;
 }
 
-/* הגדרת המלבן האדום (::before) עם חצי עיגול ירוק שמאלי בלבד */
+/* הגדרת המלבן הלבן (::before) עם חצי עיגול ירוק שמאלי */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
   content: '' !important; /* דרוס את content:none המקורי */
@@ -464,14 +464,14 @@ main {
   width: 80px;
   height: auto; /* גובה דינמי */
 
-  /* רקע: חצי ירוק שמאלי + אדום */
+  /* רקע: חצי ירוק שמאלי + לבן */
   background:
     /* 1. שכבה עליונה: חצי עיגול ירוק (פונה ימינה) */
     radial-gradient(circle at 0% 50%, var(--sound-color) 10px, transparent 10.5px) no-repeat left center / 10px 20px,
-    /* 2. שכבה תחתונה: צבע הרקע האדום המקורי */
-    red;
+    /* 2. שכבה תחתונה: צבע הרקע הלבן החדש */
+    white; /* <-- השינוי כאן */
 
-  /* עיגול הפינות העליונות של המלבן האדום עצמו */
+  /* עיגול הפינות העליונות של המלבן הלבן עצמו */
   border-radius: 10px 10px 0 0;
 
   z-index: 10; /* מעל הבלוק הכתום והבליטה הימנית שלו */
