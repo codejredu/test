@@ -425,9 +425,9 @@ main {
   position: absolute !important;
   top: 5px !important;
   right: 5px !important;
+  height: auto !important;
   width: auto !important;
-  height: 50% !important;
-  transform: scale(1) !important;
+  transform: scale(0.5) !important;
   transform-origin: top right !important;
   z-index: 3 !important;
   max-width: none !important;
