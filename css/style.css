@@ -397,18 +397,19 @@ main {
   padding-left: 10px;
   text-align: center;
   font-size: 20px;
-  position: relative; /* חשוב כדי שהמיקום האבסולוטי של האיקון יהיה יחסי לבלוק */
+  position: relative;
   overflow: visible;
   height: 80px;
 }
 
-/* הוספת החור לבלוק Repeat - מוזז לשמאל */
+/* הוספת החור לבלוק Repeat - מוזז לשמאל - תיקון מיקום */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
   content: '';
   position: absolute;
-  top: 15px;
+  top: 50%; /* מרכוז אנכי */
   left: 10px; /* מזיז את הקצה השמאלי 10 פיקסלים מימין */
+  transform: translateY(-50%); /* תיקון מרכוז אנכי */
   width: 80px;
   height: 65px;
   background-color: #f0f4ff;
@@ -417,7 +418,7 @@ main {
   z-index: 1;
 }
 
-/* הוספת הבליטה בצד ימין */
+/* הוספת הבליטה בצד ימין - תיקון גודל */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
   content: '';
@@ -426,26 +427,26 @@ main {
   right: -20px; /* מוציא את הבליטה קצת החוצה */
   transform: translateY(-50%);
   width: 40px; /* רוחב הבליטה */
-  height: 40px; /* גובה הבליטה */
+  height: 40px; /* גובה הבליטה - הוחזר לגודל המקורי */
   background-color: inherit; /* יורש את צבע הרקע של הבלוק */
   border-radius: 0 20px 20px 0; /* מעגל את הצד הימני של הבליטה */
   box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1); /* הוספת צל קל כדי לתת תחושת תלת מימד */
-  z-index: 2; /* מוודא שהבליטה מעל האיקון אם הוא זז */
+  z-index: 2;
 }
 
-/* מיקום והקטנת איקון בפינה הימנית העליונה של בלוק Repeat - שינויים */
+/* מיקום והקטנת איקון בפינה הימנית העליונה של בלוק Repeat */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
 #programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
-  position: absolute !important; /* הוספת !important כדי להגביר את הספציפיות */
+  position: absolute !important;
   top: 5px !important;
   right: 5px !important;
-  width: auto !important; /* אפשר לגובה להתאים */
-  height: 50% !important; /* הקטנה לגובה, הרוחב יתאים */
-  transform: scale(1) !important; /* הסרת סקייל כדי למנוע כפילות הקטנה */
+  width: auto !important;
+  height: 50% !important;
+  transform: scale(1) !important;
   transform-origin: top right !important;
-  z-index: 3 !important; /* מוודא שהאיקון מעל החור והבליטה */
-  max-width: none !important; /* הסרת הגבלות רוחב אפשריות */
-  max-height: none !important; /* הסרת הגבלות גובה אפשריות */
-  margin: 0 !important; /* הסרת מרווחים אפשריים */
-  padding: 0 !important; /* הסרת ריפוד אפשרי */
+  z-index: 3 !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
