@@ -403,6 +403,12 @@ main {
   height: 80px;
 }
 
+/* הסרת עיגול לבן בצד שמאל אם קיים */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+  content: none !important;
+}
+
 /* הוספת הבליטה בצד ימין - הקטנה ב-50% */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::after,
 #programming-area .block-container[data-type="repeat"] .scratch-block::after {
