@@ -442,7 +442,7 @@ main {
   padding: 0 !important;
 }
 
-/* הגדרת המלבן האדום (::before) עם חצי עיגול ירוק שמאלי */
+/* הגדרת המלבן האדום (::before) עם חצי עיגול ירוק שמאלי וחצי עיגול סגול ימני */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
   content: '' !important; /* דרוס את content:none המקורי */
@@ -454,11 +454,13 @@ main {
   width: 80px;
   height: auto; /* גובה דינמי */
 
-  /* הגדרת הרקע המרובה */
+  /* הגדרת הרקע המרובה המעודכנת */
   background:
     /* 1. שכבה עליונה: חצי עיגול ירוק (פונה ימינה) */
     radial-gradient(circle at 0% 50%, var(--sound-color) 10px, transparent 10.5px) no-repeat left center / 10px 20px,
-    /* 2. שכבה תחתונה: צבע הרקע האדום המקורי */
+    /* 2. שכבה שניה: חצי עיגול סגול (פונה שמאלה) */
+    radial-gradient(circle at 100% 50%, var(--looks-color) 10px, transparent 10.5px) no-repeat right center / 10px 20px,
+    /* 3. שכבה תחתונה: צבע הרקע האדום המקורי */
     red;
 
   /* עיגול הפינות העליונות של המלבן האדום עצמו */
