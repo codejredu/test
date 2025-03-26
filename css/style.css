@@ -388,7 +388,6 @@ main {
 #end-blocks.active .block-container .scratch-block {
     background-color: var(--end-color);
 }
-
 /* סגנון מיוחד לבלוק Repeat עם בליטה בצד ימין */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
@@ -410,18 +409,18 @@ main {
 }
 
 /* הוספת הבליטה בצד ימין - הקטנה ב-50% */
-#control-blocks .block-container[data-type="repeat"] .scratch-block .right-bump,
-#programming-area .block-container[data-type="repeat"] .scratch-block .right-bump {
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
+#programming-area .block-container[data-type="repeat"] .scratch-block::after {
   content: '';
   position: absolute;
   top: 50%;
-  right: -10px; /* הוזז כדי להתאים לגודל המוקטן */
+  right: -10px;
   transform: translateY(-50%);
-  width: 20px; /* רוחב הבליטה - הוקטן ב-50% */
-  height: 20px; /* גובה הבליטה - הוקטן ב-50% */
-  background-color: inherit; /* יורש את צבע הרקע של הבלוק */
-  border-radius: 0 10px 10px 0; /* רדיוס פינות מותאם */
-  box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1); /* הוספת צל קל */
+  width: 20px;
+  height: 20px;
+  background-color: inherit;
+  border-radius: 0 10px 10px 0;
+  box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1);
   z-index: 2;
 }
 
@@ -443,8 +442,8 @@ main {
 }
 
 /* הוספת ריבוע אדום בפינה השמאלית העליונה */
-#control-blocks .block-container[data-type="repeat"] .scratch-block .red-square,
-#programming-area .block-container[data-type="repeat"] .scratch-block .red-square {
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
+#programming-area .block-container[data-type="repeat"] .scratch-block::before {
   content: '';
   position: absolute;
   top: 5px;
@@ -458,7 +457,6 @@ main {
 /* הוספת עיגול צהוב בפינה הימנית התחתונה */
 #control-blocks .block-container[data-type="repeat"] .scratch-block .yellow-circle,
 #programming-area .block-container[data-type="repeat"] .scratch-block .yellow-circle {
-  content: '';
   position: absolute;
   bottom: 5px;
   right: 5px;
@@ -469,34 +467,3 @@ main {
   z-index: 5;
 }
 
-/* הוספת האלמנטים לדף */
-#control-blocks .block-container[data-type="repeat"] .scratch-block,
-#programming-area .block-container[data-type="repeat"] .scratch-block {
-  position: relative;
-}
-
-#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
-#programming-area .block-container[data-type="repeat"] .scratch-block::after {
-  content: '';
-  display: block;
-}
-
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
-  content: '';
-  display: block;
-}
-
-#control-blocks .block-container[data-type="repeat"] .scratch-block {
-  position: relative;
-}
-
-#control-blocks .block-container[data-type="repeat"] .scratch-block .right-bump,
-#programming-area .block-container[data-type="repeat"] .scratch-block .right-bump,
-#control-blocks .block-container[data-type="repeat"] .scratch-block .red-square,
-#programming-area .block-container[data-type="repeat"] .scratch-block .red-square,
-#control-blocks .block-container[data-type="repeat"] .scratch-block .yellow-circle,
-#programming-area .block-container[data-type="repeat"] .scratch-block .yellow-circle {
-  position: absolute;
-  display: block;
-}
