@@ -408,7 +408,7 @@ main {
   content: '';
   position: absolute;
   top: 50%;
-  left: calc(50% + 10px); /* הזזה של 50% מהרוחב ואז עוד 10px ימינה */
+  left: calc(50% + 5px); /* הזזה של 50% מהרוחב ואז עוד 10px ימינה */
   transform: translateY(-50%) translateX(-50%); /* עדיין צריך את ה-translateX כדי למרכז ביחס לנקודה החדשה */
   width: 80px;
   height: 65px;
