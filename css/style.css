@@ -389,7 +389,7 @@ main {
     background-color: var(--end-color);
 }
 
-/* סגנון מיוחד לבלוק Repeat עם בליטה בצד ימין ושקע צהוב במרכז מסובב */
+/* סגנון מיוחד לבלוק Repeat עם בליטה בצד ימין ושני חצאי עיגול במרכז */
 #control-blocks .block-container[data-type="repeat"] .scratch-block,
 #programming-area .block-container[data-type="repeat"] .scratch-block {
   width: 140px;
@@ -404,24 +404,22 @@ main {
 }
 
 /* הוספת הבליטה בצד ימין - הקטנה ב-50% */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
-#programming-area .block-container[data-type="repeat"] .scratch-block::after {
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after { /* ::after משמש כעת רק לבליטה */
   content: '';
   position: absolute;
   top: 50%;
-  right: -10px; /* הוזז כדי להתאים לגודל המוקטן */
+  right: -10px;
   transform: translateY(-50%);
-  width: 20px; /* רוחב הבליטה - הוקטן ב-50% */
-  height: 20px; /* גובה הבליטה - הוקטן ב-50% */
-  background-color: inherit; /* יורש את צבע הרקע של הבלוק */
-  border-radius: 0 10px 10px 0; /* רדיוס פינות מותאם */
-  box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1); /* הוספת צל קל */
+  width: 20px;
+  height: 20px;
+  background-color: inherit;
+  border-radius: 0 10px 10px 0;
+  box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1);
   z-index: 2;
 }
 
 /* מיקום והקטנת איקון בפינה הימנית העליונה של בלוק Repeat */
-#control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
-#programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
+#control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img {
   position: absolute !important;
   top: 5px !important;
   right: 5px !important;
@@ -436,17 +434,30 @@ main {
   padding: 0 !important;
 }
 
-/* הוספת השקע הצהוב במרכז - חצי עיגול מסובב */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
+/* הוספת חצי עיגול צהוב במרכז */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::before {
   content: '';
   position: absolute;
   top: 50%;
-  left: 50%; /* מרכוז אופקי ראשוני */
-  transform: translate(-50%, -50%) rotate(90deg); /* מרכוז אנכי ואופקי + סיבוב */
-  width: 30px; /* קוטר העיגול */
-  height: 30px; /* קוטר העיגול */
+  left: calc(50% - 15px); /* הוזז שמאלה בחצי מהרוחב */
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
   background-color: yellow;
-  border-radius: 15px 0 0 15px; /* יוצר חצי עיגול שמאלי */
+  border-radius: 15px 0 0 15px; /* חצי עיגול שמאלי */
+  z-index: 2;
+}
+
+/* הוספת חצי עיגול לבן במרכז - משתמשים ב-::after נוסף */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after.second {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: calc(50% + 15px); /* הוזז ימינה בחצי מהרוחב */
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  background-color: white;
+  border-radius: 0 15px 15px 0; /* חצי עיגול ימני */
   z-index: 2;
 }
