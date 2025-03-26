@@ -436,9 +436,24 @@ main {
   padding: 0 !important;
 }
 
-/* הוספת שקע בגוף הלבנה */
+/* הוספת חור עגול בצד שמאל */
 #control-blocks .block-container[data-type="repeat"] .scratch-block::before,
 #programming-area .block-container[data-type="repeat"] .scratch-block::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -10px; /* מיקום החור - ניתן לשנות */
+  transform: translateY(-50%);
+  width: 20px; /* קוטר החור - ניתן לשנות */
+  height: 20px; /* קוטר החור - ניתן לשנות */
+  background-color: transparent; /* החור יהיה שקוף */
+  border-radius: 50%; /* יוצר צורה עגולה */
+  z-index: 4; /* מוודא שהחור מעל השקע והבליטה */
+}
+
+/* הוספת שקע בגוף הלבנה */
+#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
+#programming-area .block-container[data-type="repeat"] .scratch-block::after {
   content: '';
   position: absolute;
   top: 50%;
