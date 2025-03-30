@@ -487,6 +487,6 @@ main {
 /* Make the right edge of END blocks rounded */
 #end-blocks .block-container .scratch-block,
 #programming-area .block-container[data-category="end"] .scratch-block {
-    border-radius: 10px; /* Regular rounded corners on all sides */
-    padding-right: 10px; /* Add some padding on the right side */
+    border-radius: 30px; /* Regular rounded corners on all sides */
+    padding-right: 30px; /* Add some padding on the right side */
 }
