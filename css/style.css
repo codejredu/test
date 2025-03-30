@@ -287,8 +287,8 @@ main {
 }
 
 /* Change the full circle to half circle on the left side */
-#block-palette .scratch-block::before,
-#programming-area .scratch-block:not([data-type="repeat"])::before {
+#block-palette .scratch-block:not([data-category="end"])::before,
+#programming-area .scratch-block:not([data-type="repeat"]):not([data-category="end"])::before {
     content: '';
     position: absolute;
     left: 0;
@@ -478,15 +478,47 @@ main {
   box-shadow: none; /* הסר צל מיותר */
 }
 
-/* Special styling for END blocks - rounded right edge without protrusion */
-#end-blocks .block-container .scratch-block::after,
-#programming-area .block-container[data-category="end"] .scratch-block::after {
-    content: none; /* Remove the right-side protrusion */
-}
-
-/* Make the right edge of END blocks rounded */
+/* --- עיצוב מיוחד לבלוקי END --- */
+/* סגנון לרוחב מוקטן ופינות מעוגלות בבלוקי END */
 #end-blocks .block-container .scratch-block,
 #programming-area .block-container[data-category="end"] .scratch-block {
-    border-radius: 10px; /* Regular rounded corners on all sides */
-    padding-right: 10px; /* Add some padding on the right side */
+    width: 65px; /* רוחב מוקטן מ-87px */
+    border-radius: 10px; /* פינות מעוגלות בכל הצדדים */
+    padding-right: 10px; /* מרווח מימין */
+}
+
+/* הסרת השקע הסטנדרטי בצד שמאל */
+#end-blocks .block-container .scratch-block::before,
+#programming-area .block-container[data-category="end"] .scratch-block::before {
+    content: none; /* הסרת השקע החצי עיגול הסטנדרטי בצד שמאל */
+}
+
+/* הסרת הבליטה הסטנדרטית בצד ימין */
+#end-blocks .block-container .scratch-block::after,
+#programming-area .block-container[data-category="end"] .scratch-block::after {
+    content: none; /* הסרת הבליטה בצד ימין */
+}
+
+/* עיצוב פינות מעוגלות שונות לצד שמאל וימין */
+#end-blocks .block-container .scratch-block,
+#programming-area .block-container[data-category="end"] .scratch-block {
+    border-top-left-radius: 5px; /* פינה שמאלית עליונה מעוגלת קלות */
+    border-bottom-left-radius: 5px; /* פינה שמאלית תחתונה מעוגלת קלות */
+    border-top-right-radius: 10px; /* פינה ימנית עליונה מעוגלת באופן מלא */
+    border-bottom-right-radius: 10px; /* פינה ימנית תחתונה מעוגלת באופן מלא */
+}
+
+/* מרכוז האיקון בתוך הבלוק */
+#end-blocks .block-container .scratch-block .block-icon-img,
+#programming-area .block-container[data-category="end"] .scratch-block .block-icon-img {
+    margin: 0 auto;
+    display: block;
+    position: relative;
+    left: 0;
+}
+
+/* התאמת מיכל הבלוק לרוחב המוקטן */
+#end-blocks .block-container,
+#programming-area .block-container[data-category="end"] {
+    width: 80px; /* התאמת רוחב המיכל לבלוק המוקטן */
 }
