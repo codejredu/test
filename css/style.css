@@ -286,17 +286,18 @@ main {
     border-radius: 50%;
 }
 
+/* Change the full circle to half circle on the left side */
 #block-palette .scratch-block::before,
-#programming-area .scratch-block:not([data-type="repeat"])::before { /* הוספנו :not */
+#programming-area .scratch-block:not([data-type="repeat"])::before {
     content: '';
     position: absolute;
     left: 0;
     top: 50%;
     transform: translateY(-50%);
-    width: 18px;
-    height: 18px;
-    background-color: #f0f4ff; /* צבע הרקע של הדף */
-    border-radius: 50%;
+    width: 9px; /* Half the original width of 18px */
+    height: 18px; /* Keep the original height */
+    background-color: #f0f4ff; /* Keep the background color */
+    border-radius: 0 9px 9px 0; /* Make only the right side rounded */
 }
 
 .block-icon {
