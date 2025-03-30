@@ -1,11 +1,11 @@
 /* style.css - עם צבעים מעודכנים לילדי גן */
 :root {
-    --motion-color: #66D2FF;     /* כחול-תכלת בהיר */
+    --motion-color: #66D2FF;        /* כחול-תכלת בהיר */
     --triggering-color: #FFE866; /* צהוב בננה רך */
-    --looks-color: #D295F6;       /* סגול לבנדר רך */
-    --sound-color: #7ED957;       /* ירוק תפוח בהיר */
-    --control-color: #FFBD67;     /* כתום אפרסק */
-    --end-color: #FF6B6B;         /* אדום קורל רך */
+    --looks-color: #D295F6;          /* סגול לבנדר רך */
+    --sound-color: #7ED957;          /* ירוק תפוח בהיר */
+    --control-color: #FFBD67;        /* כתום אפרסק */
+    --end-color: #FF6B6B;            /* אדום קורל רך */
 }
 
 body {
@@ -168,6 +168,9 @@ main {
 
 .category-tab[data-category="end"] {
     background-color: var(--end-color);
+    /* הוספת עיגול לפינה הימנית העליונה והתחתונה */
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
 }
 
 .block-category {
@@ -427,7 +430,4 @@ main {
     top: 50%;
     right: -10px;
     transform: translateY(-50%);
-    width: 10px; /* שינוי מ-20px ל-10px (חצי מהרוחב) */
-    height: 20px; /* נשאר הגובה המקורי */
-    background-color: inherit;
-    border-radius: 0 10px
+    width: 10
