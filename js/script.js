@@ -139,6 +139,12 @@ const blocks = {
     ],
     control: [
         {
+            name: "Stop",
+            color: "var(--control-color)",
+            type: "stop",
+            icon: "assets/images/blocks/stop.svg",
+        },
+        {
             name: "Wait",
             color: "var(--control-color)",
             type: "wait",
@@ -155,12 +161,6 @@ const blocks = {
             type: "repeat",
             icon: "assets/images/blocks/repeat.svg",
             color: "var(--control-color)"
-        },
-        {
-            name: "Stop",
-            color: "var(--control-color)",
-            type: "stop",
-            icon: "assets/images/blocks/stop.svg",
         }
     ],
     end: [
