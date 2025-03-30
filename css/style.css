@@ -482,9 +482,9 @@ main {
 /* סגנון לרוחב מוקטן ופינות מעוגלות בבלוקי END */
 #end-blocks .block-container .scratch-block,
 #programming-area .block-container[data-category="end"] .scratch-block {
-    width: 65px; /* רוחב מוקטן מ-87px */
+    w width: 65px; /* רוחב מוקטן מ-87px */
     height: 80px;
-    border-radius: 10px; /* פינות מעוגלות בכל הצדדים */
+    border-radius: 10px 30px 30px 10px; /* פינות מעוגלות בהתאמה */
     padding-right: 10px; /* מרווח מימין */
     display: flex;
     justify-content: center;
