@@ -483,14 +483,28 @@ main {
 #end-blocks .block-container .scratch-block,
 #programming-area .block-container[data-category="end"] .scratch-block {
     width: 65px; /* רוחב מוקטן מ-87px */
+    height: 80px;
     border-radius: 10px; /* פינות מעוגלות בכל הצדדים */
     padding-right: 10px; /* מרווח מימין */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--end-color);
 }
 
-/* הסרת השקע הסטנדרטי בצד שמאל */
+/* החזרת השקע הסטנדרטי בצד שמאל */
 #end-blocks .block-container .scratch-block::before,
 #programming-area .block-container[data-category="end"] .scratch-block::before {
-    content: none; /* הסרת השקע החצי עיגול הסטנדרטי בצד שמאל */
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 9px; /* חצי מהרוחב המקורי של 18px */
+    height: 18px; /* הגובה המקורי */
+    background-color: #f0f4ff; /* צבע הרקע */
+    border-radius: 0 9px 9px 0; /* רק הצד הימני מעוגל */
+    z-index: 2;
 }
 
 /* הסרת הבליטה הסטנדרטית בצד ימין */
@@ -499,22 +513,12 @@ main {
     content: none; /* הסרת הבליטה בצד ימין */
 }
 
-/* עיצוב פינות מעוגלות שונות לצד שמאל וימין */
-#end-blocks .block-container .scratch-block,
-#programming-area .block-container[data-category="end"] .scratch-block {
-    border-top-left-radius: 5px; /* פינה שמאלית עליונה מעוגלת קלות */
-    border-bottom-left-radius: 5px; /* פינה שמאלית תחתונה מעוגלת קלות */
-    border-top-right-radius: 10px; /* פינה ימנית עליונה מעוגלת באופן מלא */
-    border-bottom-right-radius: 10px; /* פינה ימנית תחתונה מעוגלת באופן מלא */
-}
-
 /* מרכוז האיקון בתוך הבלוק */
 #end-blocks .block-container .scratch-block .block-icon-img,
 #programming-area .block-container[data-category="end"] .scratch-block .block-icon-img {
     margin: 0 auto;
     display: block;
     position: relative;
-    left: 0;
 }
 
 /* התאמת מיכל הבלוק לרוחב המוקטן */
