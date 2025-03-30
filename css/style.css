@@ -480,34 +480,34 @@ main {
 }
 /* תיקון סגנון מיוחד לבלוקים בקטגוריית 'סוף' - פינה ימנית מעוגלת /
 #end-blocks.active .block-container .scratch-block {
-border-radius: 10px 20px 20px 10px; / הוספת עיגול בצד ימין */
+  border-radius: 0 20px 20px 0; /* פינה שמאלית עליונה, ימנית עליונה, ימנית תחתונה, שמאלית תחתונה */
 }
 
 /* --- סגנון מיוחד לבלוקים 'חזור לנצח', 'עבור לדף' ו'סוף' --- */
 
 /* עיגול פינה ימנית והסרת בליטה עבור 'חזור לנצח' */
 #end-blocks.active .block-container [data-type="repeatForever"] .scratch-block {
-border-radius: 10px 20px 20px 10px;
+  border-radius: 0 20px 20px 0;
 }
 
 #end-blocks.active .block-container [data-type="repeatForever"] .scratch-block::after {
-display: none;
+  display: none;
 }
 
 /* עיגול פינה ימנית והסרת בליטה עבור 'עבור לדף' */
 #end-blocks.active .block-container [data-type="goToPage"] .scratch-block {
-border-radius: 10px 20px 20px 10px;
+  border-radius: 0 20px 20px 0;
 }
 
 #end-blocks.active .block-container [data-type="goToPage"] .scratch-block::after {
-display: none;
+  display: none;
 }
 
 /* עיגול פינה ימנית והסרת בליטה עבור 'סוף' */
 #end-blocks.active .block-container [data-type="end"] .scratch-block {
-border-radius: 10px 20px 20px 10px;
+  border-radius: 0 20px 20px 0;
 }
 
 #end-blocks.active .block-container [data-type="end"] .scratch-block::after {
-display: none;
+  display: none;
 }
