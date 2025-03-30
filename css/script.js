@@ -4,9 +4,10 @@
 
 const blocks = {
     triggering: [
+        // ... (triggering blocks remain the same)
         {
             name: "Green Flag",
-            color: "var(--triggering-color)", // שימוש במשתנה CSS במקום ערך קבוע
+            color: "var(--triggering-color)",
             type: "startOnGreenFlag",
             icon: "assets/images/green-flag.svg",
         },
@@ -36,6 +37,7 @@ const blocks = {
         },
     ],
     motion: [
+        // ... (motion blocks remain the same)
         {
             name: "Move Right",
             color: "var(--motion-color)",
@@ -86,7 +88,8 @@ const blocks = {
         },
     ],
     looks: [
-        {
+        // ... (looks blocks remain the same)
+         {
             name: "Say",
             color: "var(--looks-color)",
             type: "say",
@@ -124,6 +127,7 @@ const blocks = {
         },
     ],
     sound: [
+        // ... (sound blocks remain the same)
         {
             name: "Play Sound",
             color: "var(--sound-color)",
@@ -138,6 +142,7 @@ const blocks = {
         },
     ],
     control: [
+        // --- START OF CONTROL BLOCKS ---
         {
             name: "Wait",
             color: "var(--control-color)",
@@ -156,20 +161,18 @@ const blocks = {
             icon: "assets/images/blocks/repeat.svg",
             color: "var(--control-color)"
         },
-        // --- START CHANGE ---
-        // Moved Stop block from END to CONTROL and updated color
+        // --- THIS IS THE MOVED BLOCK ---
         {
             name: "Stop",
-            color: "var(--control-color)", // Changed from var(--end-color)
+            color: "var(--control-color)", // Color updated to control
             type: "stop",
             icon: "assets/images/blocks/stop.svg",
         },
-        // --- END CHANGE ---
+        // --- END OF CONTROL BLOCKS ---
     ],
     end: [
-        // --- START CHANGE ---
-        // Removed Stop block from here
-        // --- END CHANGE ---
+        // --- START OF END BLOCKS ---
+        // --- Stop block is NO LONGER HERE ---
         {
             name: "End",
             color: "var(--end-color)",
@@ -180,98 +183,69 @@ const blocks = {
             name: "Repeat Forever",
             type: "repeatForever",
             icon: "assets/images/blocks/repeat-forever.svg",
-            color: "var(--end-color)"  // שים לב שהצבע השתנה ל-end-color
+            color: "var(--end-color)"
         },
         {
             name: "Go To Page",
-            color: "var(--end-color)",  // שים לב שהצבע השתנה ל-end-color
+            color: "var(--end-color)",
             type: "goToPage",
             icon: "assets/images/blocks/go-to-page.svg",
         },
+        // --- END OF END BLOCKS ---
     ],
 };
 
 // ========================================================================
-// פונקציות ליצירת אלמנטים
+// פונקציות ליצירת אלמנטים (no changes needed here from previous version)
 // ========================================================================
-
-// פונקציה ליצירת מחבר ימני
+// ... (rest of the create functions: createRightConnector, createLeftConnector, createScratchBlock, createBlockElement) ...
 function createRightConnector(color) {
     const rightConnector = document.createElement("div");
     rightConnector.classList.add("right-connector");
     rightConnector.style.backgroundColor = color;
     return rightConnector;
 }
-
-// פונקציה ליצירת מחבר שמאלי
 function createLeftConnector() {
     const leftConnectorWrapper = document.createElement("div");
     leftConnectorWrapper.classList.add("left-connector-wrapper");
-
     const leftConnector = document.createElement("div");
     leftConnector.classList.add("left-connector");
-
     leftConnectorWrapper.appendChild(leftConnector);
     return leftConnectorWrapper;
 }
-
-// פונקציה ליצירת בלוק גרפי - עודכנה להוספת תמונות SVG
 function createScratchBlock(block) {
     const scratchBlock = document.createElement("div");
     scratchBlock.classList.add("scratch-block");
+    // Color is now mainly set by CSS based on category/type, but we can keep this as fallback/initial
     scratchBlock.style.backgroundColor = block.color;
-
-    // יצירת אלמנט תמונה עבור האיקון
     const iconImg = document.createElement("img");
     iconImg.src = block.icon;
     iconImg.alt = block.name;
     iconImg.classList.add("block-icon-img");
-
     scratchBlock.appendChild(iconImg);
     return scratchBlock;
 }
-
-// פונקציה ליצירת HTML עבור בלוק
 function createBlockElement(block, category) {
     const blockContainer = document.createElement("div");
     blockContainer.classList.add("block-container");
-
-    // --- START CHANGE ---
-    // Set data-type attribute, important for special styling (like repeat block)
-    blockContainer.dataset.type = block.type;
-    // --- END CHANGE ---
+    blockContainer.dataset.type = block.type; // Ensure type is set for styling (e.g., repeat)
+    blockContainer.dataset.category = category; // Store category info
 
     const scratchBlock = createScratchBlock(block);
-    // --- START CHANGE ---
-    // Removed connector creation logic from here as CSS ::before and ::after handles it
-    // const rightConnector = createRightConnector(block.color);
-    // const leftConnectorWrapper = createLeftConnector();
-    // --- END CHANGE ---
-
     blockContainer.appendChild(scratchBlock);
-    // --- START CHANGE ---
-    // blockContainer.appendChild(rightConnector); // Removed
-    // blockContainer.appendChild(leftConnectorWrapper); // Removed
-    // --- END CHANGE ---
 
-    // --- START CHANGE ---
-    // Moved dataset.type assignment higher up
-    // --- END CHANGE ---
     blockContainer.draggable = true;
-
-    // טיפול באירוע התחלת גרירה (dragstart)
     blockContainer.addEventListener("dragstart", (event) => {
         handleDragStart(event, block, category);
     });
-
     return blockContainer;
 }
 
-// ========================================================================
-// פונקציות טיפול באירועים
-// ========================================================================
 
-// פונקציה לטיפול בהתחלת גרירה
+// ========================================================================
+// פונקציות טיפול באירועים (no changes needed here from previous version)
+// ========================================================================
+// ... (rest of the event handlers: handleDragStart, handleDrop) ...
 function handleDragStart(event, block, category) {
     const data = {
         type: block.type,
@@ -284,103 +258,76 @@ function handleDragStart(event, block, category) {
     event.dataTransfer.effectAllowed = "move";
 }
 
-// פונקציה לטיפול בשחרור באזור התכנות
 function handleDrop(event) {
     event.preventDefault();
+    const blockIndex = event.dataTransfer.getData('block-index');
 
-    const blockIndex = event.dataTransfer.getData('block-index'); // נסה לקבל אינדקס, אם קיים
-
-    if (blockIndex) { // אם קיים block-index, זה אומר שגוררים בלוק בתוך אזור התכנות
+    if (blockIndex !== undefined && blockIndex !== '') { // Check if blockIndex is valid
+        const programmingArea = document.getElementById("program-blocks");
         const draggedBlockIndex = parseInt(blockIndex);
-        const draggedBlock = programmingArea.children[draggedBlockIndex];
-
-        if (draggedBlock) {
-            // הסר את הבלוק מהמיקום הישן
-            // programmingArea.removeChild(draggedBlock); // Don't remove immediately if it's the same container
-
-            // מצא את מיקום השחרור ועדכן מיקום
-            const rect = programmingArea.getBoundingClientRect();
-            draggedBlock.style.position = "absolute";
-            // Adjust for the block's dimensions to center it under the cursor
-            draggedBlock.style.left = `${event.clientX - rect.left - (draggedBlock.offsetWidth / 2)}px`;
-            draggedBlock.style.top = `${event.clientY - rect.top - (draggedBlock.offsetHeight / 2)}px`;
-
-            // Append again ensures it's at the end visually if not removed/re-added,
-            // but here we just need to update position.
-            // If we want z-index stacking, appending might be desired.
-            // programmingArea.appendChild(draggedBlock);
+        // Ensure the index is valid before trying to access the element
+        if (draggedBlockIndex >= 0 && draggedBlockIndex < programmingArea.children.length) {
+             const draggedBlock = programmingArea.children[draggedBlockIndex];
+            if (draggedBlock) {
+                const rect = programmingArea.getBoundingClientRect();
+                draggedBlock.style.position = "absolute";
+                draggedBlock.style.left = `${event.clientX - rect.left - (draggedBlock.offsetWidth / 2)}px`;
+                draggedBlock.style.top = `${event.clientY - rect.top - (draggedBlock.offsetHeight / 2)}px`;
+                // No need to remove/append if just moving within the same container
+            }
+        } else {
+             console.warn("Invalid block index received during drop:", blockIndex);
         }
-    } else { // אם אין block-index, זה אומר שגוררים בלוק מלוח הלבנים (התנהגות קודמת)
-        const data = JSON.parse(event.dataTransfer.getData("text/plain"));
-        const blockType = data.type;
-        const blockCategory = data.category;
-        const blockIcon = data.icon;
-        const blockColor = data.color; // צבע הבלוק המקורי
-        const blockName = data.name;
 
-        // יצירת אלמנט בלוק חדש (שיבוט)
-        const newBlock = document.createElement("div");
-        newBlock.classList.add("block-container");
-        newBlock.dataset.category = blockCategory; // שמירת הקטגוריה בנתוני הבלוק
-        newBlock.dataset.type = blockType; // --- ADDED: Keep type info for styling ---
+    } else {
+        const programmingArea = document.getElementById("program-blocks");
+        const dataString = event.dataTransfer.getData("text/plain");
+         if (!dataString) {
+             console.error("No data transferred on drop.");
+             return;
+         }
+        try {
+            const data = JSON.parse(dataString);
+            const blockCategory = data.category;
+            const blockDefinition = blocks[blockCategory]?.find(b => b.type === data.type);
 
-        const scratchBlock = document.createElement("div");
-        scratchBlock.classList.add("scratch-block");
-        // --- START CHANGE ---
-        // No longer need to set color here if CSS handles it based on category/type
-        // scratchBlock.style.backgroundColor = blockColor;
-        // --- END CHANGE ---
+            if (!blockDefinition) {
+                 console.error("Could not find block definition for dropped item:", data);
+                 return;
+            }
 
-        // יצירת אלמנט תמונה עבור האיקון
-        const iconImg = document.createElement("img");
-        iconImg.src = blockIcon;
-        iconImg.alt = blockName;
-        iconImg.classList.add("block-icon-img");
+            // Create new block element using the full definition
+            const newBlock = createBlockElement(blockDefinition, blockCategory);
 
-        scratchBlock.appendChild(iconImg);
+            programmingArea.appendChild(newBlock);
 
-        // --- START CHANGE ---
-        // Removed connector element creation - handled by CSS ::before/::after on .scratch-block
-        // --- END CHANGE ---
+            // Add drag listener for the new block within the programming area
+             newBlock.addEventListener("dragstart", (e) => {
+                  // Find the index *after* appending
+                  const index = Array.from(programmingArea.children).indexOf(newBlock);
+                  e.dataTransfer.setData('block-index', index.toString());
+                  e.dataTransfer.effectAllowed = "move";
+             });
 
-        // הוספת הכל ל container
-        newBlock.appendChild(scratchBlock);
-        // --- START CHANGE ---
-        // newBlock.appendChild(rightConnector); // Removed
-        // newBlock.appendChild(leftConnectorWrapper); // Removed
-        // --- END CHANGE ---
-        // --- START CHANGE ---
-        // Moved dataset.type assignment higher up
-        // --- END CHANGE ---
-        newBlock.draggable = true; // אפשר גרירה לבלוקים חדשים
-
-        // הוספת event listener לגרירה של בלוקים בתוך אזור התכנות
-        newBlock.addEventListener("dragstart", (event) => {
-            const index = Array.from(programmingArea.children).indexOf(newBlock);
-            event.dataTransfer.setData('block-index', index.toString());
-            event.dataTransfer.effectAllowed = "move";
-        });
-
-        // הוספת הבלוק החדש לאזור התכנות
-        programmingArea.appendChild(newBlock);
-
-        // מיקום הבלוק החדש יחסי לאזור התכנות - מתחת לעכבר
-        const rect = programmingArea.getBoundingClientRect();
-        newBlock.style.position = "absolute"; // השתמש במיקום אבסולוטי
-        // Adjust for the block's dimensions to center it under the cursor
-        const blockWidth = newBlock.offsetWidth || 100; // Use default if offsetWidth is 0 initially
-        const blockHeight = newBlock.offsetHeight || 100; // Use default if offsetHeight is 0 initially
-        newBlock.style.left = `${event.clientX - rect.left - (blockWidth / 2)}px`; // מרכז את הבלוק אופקית
-        newBlock.style.top = `${event.clientY - rect.top - (blockHeight / 2)}px`; // מרכז את הבלוק אנכית
+            // Position the new block
+            const rect = programmingArea.getBoundingClientRect();
+            newBlock.style.position = "absolute";
+            // Use offsetWidth/Height *after* appending to DOM
+            const blockWidth = newBlock.offsetWidth || 100;
+            const blockHeight = newBlock.offsetHeight || 100;
+            newBlock.style.left = `${event.clientX - rect.left - (blockWidth / 2)}px`;
+            newBlock.style.top = `${event.clientY - rect.top - (blockHeight / 2)}px`;
+        } catch (e) {
+            console.error("Error parsing dropped data or creating block:", e, dataString);
+        }
     }
 }
 
 
 // ========================================================================
-// פונקציות אתחול
+// פונקציות אתחול (no changes needed here from previous version)
 // ========================================================================
-
-// הוספת הבלוקים ללוח הלבנים
+// ... (populateBlockPalette, handleCategoryChange) ...
 function populateBlockPalette(category) {
     const categoryDiv = document.getElementById(`${category}-blocks`);
     if (!categoryDiv) {
@@ -390,34 +337,42 @@ function populateBlockPalette(category) {
     categoryDiv.innerHTML = ""; // Clear existing blocks
 
     if (!blocks[category]) {
-        console.error(`No blocks defined for category ${category}`);
+        console.warn(`No blocks defined for category ${category}`); // Use warn instead of error if it might be intentional
         return;
     }
 
+    console.log(`Populating category: ${category} with`, blocks[category]); // Debug log
+
     blocks[category].forEach(block => {
+        console.log(`Creating element for: ${block.name}`); // Debug log
         const blockElement = createBlockElement(block, category);
         categoryDiv.appendChild(blockElement);
     });
 }
 
-
-// פונקציה לטיפול בשינוי קטגוריה
 function handleCategoryChange(category) {
+    const categoryTabs = document.querySelectorAll(".category-tab");
+    const blockCategories = document.querySelectorAll(".block-category");
+
+    console.log(`Changing category to: ${category}`); // Debug log
+
     blockCategories.forEach(element => element.classList.remove("active"));
-    categoryTabs.forEach(tab => tab.classList.remove("active")); // Assuming .active styles the tab
+    categoryTabs.forEach(tab => tab.classList.remove("active"));
 
     const tab = document.querySelector(`.category-tab[data-category="${category}"]`);
     const categoryDiv = document.getElementById(`${category}-blocks`);
 
     if (tab) {
-        tab.classList.add("active"); // Style the clicked tab
+        tab.classList.add("active");
+        console.log('Activated tab:', tab); // Debug log
     } else {
         console.warn(`Tab not found for category: ${category}`);
     }
 
     if (categoryDiv) {
-        categoryDiv.classList.add("active"); // Show the blocks for this category
-        populateBlockPalette(category); // Load the blocks into the div
+        categoryDiv.classList.add("active");
+        console.log('Activated category div:', categoryDiv); // Debug log
+        populateBlockPalette(category); // Populate the now active category
     } else {
         console.warn(`Block category container not found for: ${category}`);
     }
@@ -425,22 +380,22 @@ function handleCategoryChange(category) {
 
 
 // ========================================================================
-//  לוגיקת גרירה ושחרור (Drag and Drop)
+//  לוגיקת גרירה ושחרור (Drag and Drop) Setup (no changes needed here from previous version)
 // ========================================================================
-
 const programmingArea = document.getElementById("program-blocks");
-
-// טיפול באירוע גרירה מעל אזור התכנות (dragover)
-programmingArea.addEventListener("dragover", (event) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-});
-
-// טיפול באירוע שחרור באזור התכנות (drop)
-programmingArea.addEventListener("drop", handleDrop);
-
 const categoryTabs = document.querySelectorAll(".category-tab");
-const blockCategories = document.querySelectorAll(".block-category");
+const blockCategories = document.querySelectorAll(".block-category"); // Define these earlier if needed
+
+// Ensure programmingArea exists before adding listeners
+if (programmingArea) {
+    programmingArea.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
+    });
+    programmingArea.addEventListener("drop", handleDrop);
+} else {
+    console.error("Programming area element (#program-blocks) not found!");
+}
 
 categoryTabs.forEach(tab => {
     tab.addEventListener("click", () => {
@@ -449,93 +404,87 @@ categoryTabs.forEach(tab => {
     });
 });
 
-// הוספת כפתור קווי GRID
+// ========================================================================
+// Grid Toggle Setup (no changes needed here from previous version)
+// ========================================================================
 const gridToggle = document.getElementById("grid-toggle");
 const stage = document.getElementById("stage");
-
 if (gridToggle && stage) {
     gridToggle.addEventListener("click", () => {
         stage.classList.toggle("show-grid");
     });
-} else {
-    console.warn("Grid toggle button or stage element not found.");
 }
 
-
-// ניקוי כל הבלוקים מאזור התכנות
+// ========================================================================
+// Clear All Button Setup (no changes needed here from previous version)
+// ========================================================================
 const clearAllButton = document.getElementById("clear-all");
-if (clearAllButton && programmingArea) {
+if (clearAllButton && programmingArea) { // Check if programmingArea exists
     clearAllButton.addEventListener("click", () => {
         programmingArea.innerHTML = "";
     });
-} else {
-    console.warn("Clear all button or programming area not found.");
 }
 
-// אתחול הלוח עם הקטגוריה הפעילה הראשונה (מצא את הטאב הפעיל או ברירת מחדל)
-let initialCategory = 'triggering'; // Default
-const activeTab = document.querySelector(".category-tab.active");
-if (activeTab) {
-    initialCategory = activeTab.dataset.category;
-}
-handleCategoryChange(initialCategory); // Initialize with the correct category
-
-
 // ========================================================================
-// גרירה של הדמות
+// Character Dragging (no changes needed here from previous version)
 // ========================================================================
-
 const character = document.getElementById('character');
-// const stage = document.getElementById("stage"); // Already defined above
+// const stage = document.getElementById("stage"); // Already defined
 
 if (character && stage) {
     character.addEventListener('dragstart', (event) => {
-        // Optional: Set data for potential drop targets, though not strictly needed for just moving on stage
         event.dataTransfer.setData('text/plain', 'character');
-        // Optional: Style the ghost image (though default is usually fine)
-        // event.dataTransfer.setDragImage(character, character.offsetWidth / 2, character.offsetHeight / 2);
-        event.dataTransfer.effectAllowed = "move"; // Indicate the type of operation
-        character.style.cursor = 'grabbing'; // Change cursor during drag
+        event.dataTransfer.effectAllowed = "move";
+        character.style.cursor = 'grabbing';
     });
 
     character.addEventListener('dragend', () => {
-        character.style.cursor = 'grab'; // Restore cursor after drag
+        character.style.cursor = 'grab';
     });
 
-
     stage.addEventListener('dragover', (event) => {
-        event.preventDefault(); // Necessary to allow the drop event
-        event.dataTransfer.dropEffect = "move"; // Visual feedback to the user
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
     });
 
     stage.addEventListener('drop', (event) => {
-        event.preventDefault(); // Prevent default browser action (like opening file)
+        event.preventDefault();
+        // Simple check: if data is 'character', move it. Could be more robust.
+        if (event.dataTransfer.getData('text/plain') === 'character') {
+             const stageRect = stage.getBoundingClientRect();
+             const characterWidth = character.offsetWidth;
+             const characterHeight = character.offsetHeight;
 
-        // Check if the dropped item is the character (or originated from it)
-        // This check might be simple or complex depending on what else can be dragged
-        // For now, assume only the character drag triggers this specific logic on the stage
-        // A more robust check might involve checking event.dataTransfer.getData() if set in dragstart
+             let x = event.clientX - stageRect.left - characterWidth / 2;
+             let y = event.clientY - stageRect.top - characterHeight / 2;
 
-        const stageRect = stage.getBoundingClientRect();
-        const characterWidth = character.offsetWidth;
-        const characterHeight = character.offsetHeight;
+             x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
+             y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
 
-        // Calculate drop position relative to the stage, centered under the cursor
-        let x = event.clientX - stageRect.left - characterWidth / 2;
-        let y = event.clientY - stageRect.top - characterHeight / 2;
-
-        // Constrain the character position within the stage boundaries
-        x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
-        y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
-
-        // Update the character's position using style.left and style.top
-        // Ensure the character's CSS position is 'absolute' or 'relative' within the stage
-        character.style.left = x + 'px';
-        character.style.top = y + 'px';
-
-        character.style.cursor = 'grab'; // Restore cursor after drop
+             character.style.left = x + 'px';
+             character.style.top = y + 'px';
+             character.style.cursor = 'grab';
+        }
     });
-
-} else {
-    console.warn("Character or stage element not found for drag-and-drop functionality.");
 }
+
+
+// ========================================================================
+// Initial Setup (no changes needed here from previous version)
+// ========================================================================
+document.addEventListener('DOMContentLoaded', () => {
+    // Find the initially active tab or default to 'triggering'
+    let initialCategory = 'triggering';
+    const activeTab = document.querySelector(".category-tab.active");
+    if (activeTab && activeTab.dataset.category) {
+        initialCategory = activeTab.dataset.category;
+    } else {
+        // If no tab is active initially, make the 'triggering' tab active
+        const triggeringTab = document.querySelector('.category-tab[data-category="triggering"]');
+        if (triggeringTab) {
+            triggeringTab.classList.add('active');
+        }
+    }
+    // Ensure the DOM is ready before trying to manipulate it
+    handleCategoryChange(initialCategory);
+});
