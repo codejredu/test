@@ -478,15 +478,24 @@ main {
   box-shadow: none; /* הסר צל מיותר */
 }
 
-/* Special styling for END blocks - rounded right edge without protrusion */
-#end-blocks .block-container .scratch-block::after,
-#programming-area .block-container[data-category="end"] .scratch-block::after {
-    content: none; /* Remove the right-side protrusion */
-}
-
-/* Make the right edge of END blocks rounded */
+/* Special styling for END blocks - חצי עיגול בצד ימני */
 #end-blocks .block-container .scratch-block,
 #programming-area .block-container[data-category="end"] .scratch-block {
-    border-radius: 10px; /* Regular rounded corners on all sides */
-    padding-right: 10px; /* Add some padding on the right side */
+    position: relative;
+    border-radius: 10px 20px 20px 10px; /* עיגול יותר בצד ימין */
+    padding-right: 15px; /* הוספת ריפוד בצד ימין */
+}
+
+/* הוספת האפקט של חצי עיגול לצד ימין עם השיטה החדשה */
+#end-blocks .block-container .scratch-block::after,
+#programming-area .block-container[data-category="end"] .scratch-block::after {
+    content: '';
+    position: absolute;
+    right: -20px; /* מיקום יותר רחוק כדי ליצור אפקט חזק יותר של חצי עיגול */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px; /* רוחב גדול יותר */
+    height: 40px; /* גובה גדול יותר */
+    background-color: var(--end-color); /* צבע זהה לבלוק */
+    border-radius: 0 20px 20px 0; /* עיגול רק בצד ימין */
 }
