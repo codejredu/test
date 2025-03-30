@@ -272,9 +272,9 @@ main {
     margin: 0 auto;
 }
 
-/* בליטות/שקעים סטנדרטיים (לא בבלוק repeat) */
-#block-palette .scratch-block::after,
-#programming-area .scratch-block:not([data-type="repeat"])::after {
+/* בליטות/שקעים סטנדרטיים (לא בבלוק repeat ולא בבלוקים מקטגורית end) */
+#block-palette .scratch-block:not([data-category="end"])::after,
+#programming-area .scratch-block:not([data-type="repeat"]):not([data-category="end"])::after {
     content: '';
     position: absolute;
     right: -9px; /* שינוי מ-14px ל-9px כדי ליצור חצי עיגול */
@@ -383,7 +383,6 @@ main {
     background-color: var(--end-color);
 }
 
-
 /* --- סגנון מיוחד לבלוק Repeat --- */
 
 /* עיצוב הבלוק הכתום עם חצי לבן שמאלי + חצי לבן הפוך (פונה ימינה) צמוד לימין הלבן ומוזז */
@@ -477,4 +476,17 @@ main {
 
   z-index: 10; /* מעל הבלוק הכתום והבליטה הימנית שלו */
   box-shadow: none; /* הסר צל מיותר */
+}
+
+/* Special styling for END blocks - rounded right edge without protrusion */
+#end-blocks .block-container .scratch-block::after,
+#programming-area .block-container[data-category="end"] .scratch-block::after {
+    content: none; /* Remove the right-side protrusion */
+}
+
+/* Make the right edge of END blocks rounded */
+#end-blocks .block-container .scratch-block,
+#programming-area .block-container[data-category="end"] .scratch-block {
+    border-radius: 10px; /* Regular rounded corners on all sides */
+    padding-right: 10px; /* Add some padding on the right side */
 }
