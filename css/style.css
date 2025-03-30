@@ -483,31 +483,41 @@ main {
   border-radius: 0 20px 20px 0; /* פינה שמאלית עליונה, ימנית עליונה, ימנית תחתונה, שמאלית תחתונה */
 }
 
-/* --- סגנון מיוחד לבלוקים 'חזור לנצח', 'עבור לדף' ו'סוף' --- */
+/* --- סגנון מיוחד לבלוקים 'חזור לנצח', 'עבור לדף' ו'סוף' - פינה ימנית מעוגלת --- */
 
-/* עיגול פינה ימנית והסרת בליטה עבור 'חזור לנצח' */
-#end-blocks.active .block-container [data-type="repeatForever"] .scratch-block {
-  border-radius: 0 20px 20px 0;
+/* סגנון בסיסי לבלוקים */
+#end-blocks.active .block-container .scratch-block {
+    position: relative; /* כדי שאפשר יהיה למקם את ::after באופן אבסולוטי */
+    border-radius: 10px 0 0 10px; /* עיגול קל בצד שמאל */
+    padding-right: 10px; /* מרווח כדי שהטקסט לא יהיה צמוד מדי לקצה */
+    /* הוסף כאן את שאר הסגנונות הבסיסיים של הבלוקים */
+    /* לדוגמה: background-color, color, height, line-height וכו' */
 }
 
-#end-blocks.active .block-container [data-type="repeatForever"] .scratch-block::after {
-  display: none;
+/* הסרת הבליטה הקיימת (אם יש) */
+#end-blocks.active .block-container .scratch-block::after {
+    content: '';
+    display: none !important; /* מוודא שהבליטה המקורית מוסתרת */
 }
 
-/* עיגול פינה ימנית והסרת בליטה עבור 'עבור לדף' */
-#end-blocks.active .block-container [data-type="goToPage"] .scratch-block {
-  border-radius: 0 20px 20px 0;
+/* יצירת העיגול בצד ימין באמצעות ::after */
+#end-blocks.active .block-container [data-type="repeatForever"] .scratch-block::before,
+#end-blocks.active .block-container [data-type="goToPage"] .scratch-block::before,
+#end-blocks.active .block-container [data-type="end"] .scratch-block::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: -20px; /* מרחק מהקצה הימני של הבלוק */
+    width: 20px;
+    background-color: inherit; /* יורש את צבע הרקע של הבלוק */
+    border-radius: 0 20px 20px 0; /* יוצר חצי עיגול בצד ימין */
+    z-index: -1; /* מאחורי התוכן של הבלוק */
 }
 
-#end-blocks.active .block-container [data-type="goToPage"] .scratch-block::after {
-  display: none;
-}
-
-/* עיגול פינה ימנית והסרת בליטה עבור 'סוף' */
+/* התאמת הריפוד כדי לפנות מקום לעיגול */
+#end-blocks.active .block-container [data-type="repeatForever"] .scratch-block,
+#end-blocks.active .block-container [data-type="goToPage"] .scratch-block,
 #end-blocks.active .block-container [data-type="end"] .scratch-block {
-  border-radius: 0 20px 20px 0;
-}
-
-#end-blocks.active .block-container [data-type="end"] .scratch-block::after {
-  display: none;
+    padding-right: 20px; /* הוספת ריפוד ימני כדי למנוע חפיפה עם העיגול */
 }
