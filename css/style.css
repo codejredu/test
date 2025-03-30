@@ -274,16 +274,16 @@ main {
 
 /* בליטות/שקעים סטנדרטיים (לא בבלוק repeat) */
 #block-palette .scratch-block::after,
-#programming-area .scratch-block:not([data-type="repeat"])::after { /* הוספנו :not */
+#programming-area .scratch-block:not([data-type="repeat"])::after {
     content: '';
     position: absolute;
-    right: -14px;
+    right: -9px; /* שינוי מ-14px ל-9px כדי ליצור חצי עיגול */
     top: 50%;
     transform: translateY(-50%);
-    width: 18px;
-    height: 18px;
+    width: 9px; /* שינוי מ-18px ל-9px (חצי מהרוחב המקורי) */
+    height: 18px; /* נשאר הגובה המקורי */
     background-color: inherit;
-    border-radius: 50%;
+    border-radius: 0 9px 9px 0; /* שינוי מ-50% (עיגול מלא) לחצי עיגול בצד ימין */
 }
 
 /* Change the full circle to half circle on the left side */
@@ -428,10 +428,10 @@ main {
   top: 50%;
   right: -10px;
   transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
-  background-color: inherit; /* יורש את הרקע המורכב של הבלוק הכתום */
-  border-radius: 0 10px 10px 0;
+  width: 10px; /* שינוי מ-20px ל-10px (חצי מהרוחב) */
+  height: 20px; /* נשאר הגובה המקורי */
+  background-color: inherit;
+  border-radius: 0 10px 10px 0; /* שינוי לחצי עיגול בצד ימין בלבד */
   box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1);
   z-index: 2; /* מעל הרקע, מתחת למלבן הלבן (::before) */
 }
