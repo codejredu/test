@@ -155,15 +155,15 @@ const blocks = {
             type: "repeat",
             icon: "assets/images/blocks/repeat.svg",
             color: "var(--control-color)"
+        },
+        {
+            name: "Stop",
+            color: "var(--control-color)",
+            type: "stop",
+            icon: "assets/images/blocks/stop.svg",
         }
     ],
     end: [
-        {
-            name: "Stop",
-            color: "var(--end-color)",
-            type: "stop",
-            icon: "assets/images/blocks/stop.svg",
-        },
         {
             name: "End",
             color: "var(--end-color)",
