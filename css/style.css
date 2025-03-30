@@ -489,4 +489,5 @@ main {
 #programming-area .block-container[data-category="end"] .scratch-block {
     border-radius: 30px; /* Regular rounded corners on all sides */
     padding-right: 30px; /* Add some padding on the right side */
+    width: 55px; /* הגדר כאן את הרוחב הרצוי */
 }
