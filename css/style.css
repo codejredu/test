@@ -483,41 +483,52 @@ main {
   border-radius: 0 20px 20px 0; /* פינה שמאלית עליונה, ימנית עליונה, ימנית תחתונה, שמאלית תחתונה */
 }
 
-/* --- סגנון מיוחד לבלוקים 'חזור לנצח', 'עבור לדף' ו'סוף' - פינה ימנית מעוגלת --- */
+/* --- סגנון מיוחד לבלוקים 'חזור לנצח', 'עבור לדף' ו'סוף' - פינה ימנית מעוגלת מאוד - גם באזור התכנות --- */
 
-/* סגנון בסיסי לבלוקים */
-#end-blocks.active .block-container .scratch-block {
-    position: relative; /* כדי שאפשר יהיה למקם את ::after באופן אבסולוטי */
+/* סגנון בסיסי לבלוקים - גם באזור התכנות */
+#end-blocks.active .block-container .scratch-block,
+#programming-area .block-container .scratch-block {
+    position: relative; /* כדי שאפשר יהיה למקם את ::before באופן אבסולוטי */
     border-radius: 10px 0 0 10px; /* עיגול קל בצד שמאל */
-    padding-right: 10px; /* מרווח כדי שהטקסט לא יהיה צמוד מדי לקצה */
+    padding-right: 40px; /* מרווח */
     /* הוסף כאן את שאר הסגנונות הבסיסיים של הבלוקים */
     /* לדוגמה: background-color, color, height, line-height וכו' */
 }
 
-/* הסרת הבליטה הקיימת (אם יש) */
-#end-blocks.active .block-container .scratch-block::after {
+/* הסרת הבליטה הקיימת (אם יש) - גם באזור התכנות */
+#end-blocks.active .block-container .scratch-block::after,
+#programming-area .block-container .scratch-block::after {
     content: '';
     display: none !important; /* מוודא שהבליטה המקורית מוסתרת */
 }
 
-/* יצירת העיגול בצד ימין באמצעות ::after */
+/* יצירת העיגול בצד ימין באמצעות ::before - מעוגל יותר - גם באזור התכנות */
 #end-blocks.active .block-container [data-type="repeatForever"] .scratch-block::before,
 #end-blocks.active .block-container [data-type="goToPage"] .scratch-block::before,
-#end-blocks.active .block-container [data-type="end"] .scratch-block::before {
+#end-blocks.active .block-container [data-type="end"] .scratch-block::before,
+#programming-area .block-container [data-type="repeatForever"] .scratch-block::before,
+#programming-area .block-container [data-type="goToPage"] .scratch-block::before,
+#programming-area .block-container [data-type="end"] .scratch-block::before {
     content: '';
     position: absolute;
     top: 0;
     bottom: 0;
-    right: -20px; /* מרחק מהקצה הימני של הבלוק */
-    width: 20px;
+    right: -40px; /* הגדלת המרחק מהקצה הימני */
+    width: 40px; /* הגדלת הרוחב של העיגול */
     background-color: inherit; /* יורש את צבע הרקע של הבלוק */
-    border-radius: 0 20px 20px 0; /* יוצר חצי עיגול בצד ימין */
+    border-radius: 0 40px 40px 0; /* יוצר חצי עיגול גדול יותר בצד ימין */
     z-index: -1; /* מאחורי התוכן של הבלוק */
 }
 
-/* התאמת הריפוד כדי לפנות מקום לעיגול */
+/* התאמת הריפוד כדי לפנות מקום לעיגול הגדול יותר - גם באזור התכנות */
 #end-blocks.active .block-container [data-type="repeatForever"] .scratch-block,
 #end-blocks.active .block-container [data-type="goToPage"] .scratch-block,
+#end-blocks.active .block-container [data-type="end"] .scratch-block,
+#programming-area .block-container [data-type="repeatForever"] .scratch-block,
+#programming-area .block-container [data-type="goToPage"] .scratch-block,
+#programming-area .block-container [data-type="end"] .scratch-block {
+    padding-right: 40px; /* הוספת ריפוד ימני כדי למנוע חפיפה עם העיגול הגדול */
+}
 #end-blocks.active .block-container [data-type="end"] .scratch-block {
     padding-right: 20px; /* הוספת ריפוד ימני כדי למנוע חפיפה עם העיגול */
 }
