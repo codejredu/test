@@ -2,6 +2,10 @@
 // הגדרת בלוקים (Blocks)
 // ========================================================================
 
+// משתנים חדשים לתיקון הגרירה
+let dragOffsetX = 0;
+let dragOffsetY = 0;
+
 const blocks = {
     triggering: [
         {
@@ -421,17 +425,22 @@ clearAllButton.addEventListener("click", () => {
 populateBlockPalette("triggering");
 
 // ========================================================================
-// גרירה של הדמות
+// קוד מתוקן לגרירה של הדמות
 // ========================================================================
 
 const character = document.getElementById('character');
 
 character.addEventListener('dragstart', (event) => {
-    event.dataTransfer.setData('text/plain', ''); // Required for drag to work in Firefox
+    // שמירת המיקום היחסי של העכבר בתוך הדמות בעת תחילת הגרירה
+    const rect = character.getBoundingClientRect();
+    dragOffsetX = event.clientX - rect.left;
+    dragOffsetY = event.clientY - rect.top;
+    
+    event.dataTransfer.setData('text/plain', ''); // נדרש עבור Firefox
 });
 
 stage.addEventListener('dragover', (event) => {
-    event.preventDefault(); // Allow drop
+    event.preventDefault(); // אפשר שחרור
 });
 
 stage.addEventListener('drop', (event) => {
@@ -441,10 +450,11 @@ stage.addEventListener('drop', (event) => {
     const characterWidth = character.offsetWidth;
     const characterHeight = character.offsetHeight;
 
-    let x = event.clientX - stageRect.left - characterWidth / 2;
-    let y = event.clientY - stageRect.top - characterHeight / 2;
+    // חישוב המיקום החדש בהתחשב בנקודת האחיזה המקורית של העכבר
+    let x = event.clientX - stageRect.left - dragOffsetX;
+    let y = event.clientY - stageRect.top - dragOffsetY;
 
-    // Stay within stage bounds
+    // שמירה על הדמות בתוך גבולות הבמה
     x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
     y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
 
