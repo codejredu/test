@@ -430,12 +430,17 @@ populateBlockPalette("triggering");
 
 const character = document.getElementById('character');
 
-character.addEventListener('dragstart', (event) => {
+character.addEventListener('mousedown', (event) => {
     // שמירת המיקום היחסי של העכבר בתוך הדמות בעת תחילת הגרירה
     const rect = character.getBoundingClientRect();
     dragOffsetX = event.clientX - rect.left;
     dragOffsetY = event.clientY - rect.top;
     
+    character.setAttribute('draggable', 'true');
+});
+
+character.addEventListener('dragstart', (event) => {
+    // העברת אותם ערכי הסטייה שחושבו ב-mousedown
     event.dataTransfer.setData('text/plain', ''); // נדרש עבור Firefox
 });
 
@@ -460,4 +465,12 @@ stage.addEventListener('drop', (event) => {
 
     character.style.left = x + 'px';
     character.style.top = y + 'px';
+    
+    // הגדרת הדמות כלא גרירה לאחר השחרור
+    character.setAttribute('draggable', 'false');
+});
+
+// נוסיף גם טיפול במקרה שהגרירה מתבטלת
+character.addEventListener('dragend', () => {
+    character.setAttribute('draggable', 'false');
 });
