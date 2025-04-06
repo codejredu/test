@@ -5,7 +5,6 @@
 // משתנים חדשים לתיקון הגרירה
 let dragOffsetX = 0;
 let dragOffsetY = 0;
-let isDragging = false; // משתנה חדש למעקב אחר מצב הגרירה
 
 const blocks = {
     triggering: [
@@ -429,65 +428,49 @@ populateBlockPalette("triggering");
 // קוד מתוקן לגרירה של הדמות
 // ========================================================================
 
-// קבל את האלמנט הדמות והבמה
 const character = document.getElementById('character');
-const stage = document.getElementById('stage');
 
-// תיקון חדש - שימוש במאזיני אירועים מסוג mouse במקום drag
-character.addEventListener('mousedown', (e) => {
-    // מנע התנהגות ברירת מחדל וברירת טקסט
-    e.preventDefault();
-    
-    // קבל את מיקום העכבר ביחס לפינה השמאלית העליונה של הדמות
+character.addEventListener('mousedown', (event) => {
+    // שמירת המיקום היחסי של העכבר בתוך הדמות בעת תחילת הגרירה
     const rect = character.getBoundingClientRect();
-    dragOffsetX = e.clientX - rect.left;
-    dragOffsetY = e.clientY - rect.top;
+    dragOffsetX = event.clientX - rect.left;
+    dragOffsetY = event.clientY - rect.top;
     
-    // הפעל מצב גרירה
-    isDragging = true;
-    
-    // הוסף מאזיני אירועים למסמך כולו
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    character.setAttribute('draggable', 'true');
 });
 
-// פונקציה שמטפלת בתזוזת העכבר בזמן גרירה
-function onMouseMove(e) {
-    if (!isDragging) return;
-    
-    e.preventDefault();
-    
+character.addEventListener('dragstart', (event) => {
+    // העברת אותם ערכי הסטייה שחושבו ב-mousedown
+    event.dataTransfer.setData('text/plain', ''); // נדרש עבור Firefox
+});
+
+stage.addEventListener('dragover', (event) => {
+    event.preventDefault(); // אפשר שחרור
+});
+
+stage.addEventListener('drop', (event) => {
+    event.preventDefault();
+
     const stageRect = stage.getBoundingClientRect();
     const characterWidth = character.offsetWidth;
     const characterHeight = character.offsetHeight;
-    
+
     // חישוב המיקום החדש בהתחשב בנקודת האחיזה המקורית של העכבר
-    let x = e.clientX - stageRect.left - dragOffsetX;
-    let y = e.clientY - stageRect.top - dragOffsetY;
-    
-    // וידוא שהדמות נשארת בתוך גבולות הבמה
+    let x = event.clientX - stageRect.left - dragOffsetX;
+    let y = event.clientY - stageRect.top - dragOffsetY;
+
+    // שמירה על הדמות בתוך גבולות הבמה
     x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
     y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
-    
-    // עדכון מיקום הדמות בזמן אמת
+
     character.style.left = x + 'px';
     character.style.top = y + 'px';
-}
-
-// פונקציה שמטפלת בשחרור העכבר
-function onMouseUp(e) {
-    // בטל את מצב הגרירה
-    isDragging = false;
     
-    // הסר את מאזיני האירועים כדי לחסוך במשאבים
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
-}
+    // הגדרת הדמות כלא גרירה לאחר השחרור
+    character.setAttribute('draggable', 'false');
+});
 
-// הסר את מאזיני האירועים הישנים של dragstart, dragend, drag
-// שימוש בהם יחד עם הגישה החדשה יכול ליצור התנהגות לא צפויה
-character.removeEventListener('dragstart', () => {});
-character.removeEventListener('dragend', () => {});
-
-// הסרת התכונה draggable מהדמות - אנחנו משתמשים במאזיני mouse במקום
-character.setAttribute('draggable', 'false');
+// נוסיף גם טיפול במקרה שהגרירה מתבטלת
+character.addEventListener('dragend', () => {
+    character.setAttribute('draggable', 'false');
+});
