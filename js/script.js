@@ -1,3 +1,5 @@
+--- START OF FILE script.js ---
+
 // ========================================================================
 // הגדרת בלוקים (Blocks)
 // ========================================================================
@@ -439,8 +441,12 @@ function startDrag(e) {
     e.stopPropagation();
 
     const rect = character.getBoundingClientRect();
-    dragOffsetX = e.clientX - rect.left;
-    dragOffsetY = e.clientY - rect.top;
+    dragOffsetX = e.clientX - (rect.left + rect.width / 2);
+    dragOffsetY = e.clientY - (rect.top + rect.height / 2);
+
+    console.log('Start Drag - Offset:', dragOffsetX, dragOffsetY);
+    console.log('Start Drag - Client:', e.clientX, e.clientY);
+    console.log('Start Drag - Rect:', rect);
 
     // מפעיל מצב גרירה
     isDragging = true;
@@ -461,17 +467,23 @@ function drag(e) {
     e.stopPropagation();
 
     const stageRect = stage.getBoundingClientRect();
-    const charRect = character.getBoundingClientRect(); // get character's current rect
+    const characterWidth = character.offsetWidth;
+    const characterHeight = character.offsetHeight;
 
-    // Calculate the new position based on the mouse position and offset
+    // חישוב המיקום החדש כך שהסמן יישאר במקום המדויק שבו התחיל את הגרירה
     let x = e.clientX - stageRect.left - dragOffsetX;
     let y = e.clientY - stageRect.top - dragOffsetY;
 
-    // Keep the character within the stage boundaries
-    x = Math.max(0, Math.min(x, stageRect.width - charRect.width));
-    y = Math.max(0, Math.min(y, stageRect.height - charRect.height));
+    console.log('Dragging - Client:', e.clientX, e.clientY);
+    console.log('Dragging - Stage Rect:', stageRect);
+    console.log('Dragging - Calculated:', x, y);
 
-    // Update the character's position
+    // וידוא שהדמות נשארת בתוך גבולות הבמה
+    // תיקון: יש להשתמש ב stageRect.width ו stageRect.height ולא characterWidth/Height
+    x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
+    y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
+
+    // עדכון מיקום הדמות
     character.style.left = x + 'px';
     character.style.top = y + 'px';
 }
