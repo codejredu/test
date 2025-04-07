@@ -442,19 +442,19 @@ function startDrag(e) {
     dragOffsetX = e.clientX - (rect.left + rect.width / 2);
     dragOffsetY = e.clientY - (rect.top + rect.height / 2);
 
+    console.log('Start Drag - Offset:', dragOffsetX, dragOffsetY);
+    console.log('Start Drag - Client:', e.clientX, e.clientY);
+    console.log('Start Drag - Rect:', rect);
+
     // מפעיל מצב גרירה
     isDragging = true;
 
     // מאפשר לדמות להיגרר בחופשיות
     character.style.pointerEvents = 'none';
-    character.classList.add('dragging');
 
     // מוסיף שומרי אירועים זמניים למסמך כולו
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', endDrag);
-    
-    // שינוי סמן העכבר
-    document.body.style.cursor = 'grabbing';
 }
 
 // פונקציה שמבצעת את הגרירה
@@ -465,23 +465,20 @@ function drag(e) {
     e.stopPropagation();
 
     const stageRect = stage.getBoundingClientRect();
-    
-    // שימוש במידות המדויקות של הדמות מ-getBoundingClientRect
-    const characterRect = character.getBoundingClientRect();
-    const characterWidth = characterRect.width;
-    const characterHeight = characterRect.height;
+    const characterWidth = character.offsetWidth;
+    const characterHeight = character.offsetHeight;
 
-    // חישוב המיקום החדש
-    let x = e.clientX - stageRect.left - dragOffsetX - (characterWidth / 2);
-    let y = e.clientY - stageRect.top - dragOffsetY - (characterHeight / 2);
+    // חישוב המיקום החדש כך שהסמן יישאר במקום המדויק שבו התחיל את הגרירה
+    let x = e.clientX - stageRect.left - dragOffsetX;
+    let y = e.clientY - stageRect.top - dragOffsetY;
 
-    // חישוב מדויק של גבולות הבמה
-    const maxX = stageRect.width - characterWidth;
-    const maxY = stageRect.height - characterHeight;
+    console.log('Dragging - Client:', e.clientX, e.clientY);
+    console.log('Dragging - Stage Rect:', stageRect);
+    console.log('Dragging - Calculated:', x, y);
 
-    // וידוא שהדמות נשארת בתוך גבולות הבמה במדויק
-    x = Math.max(0, Math.min(x, maxX));
-    y = Math.max(0, Math.min(y, maxY));
+    // וידוא שהדמות נשארת בתוך גבולות הבמה
+    x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
+    y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
 
     // עדכון מיקום הדמות
     character.style.left = x + 'px';
@@ -501,10 +498,6 @@ function endDrag(e) {
 
     // מחזיר את אירועי המצביע לדמות
     character.style.pointerEvents = 'auto';
-    character.classList.remove('dragging');
-    
-    // החזרת הסמן למצב רגיל
-    document.body.style.cursor = 'default';
 
     // מסיר את שומרי האירועים מהמסמך
     document.removeEventListener('mousemove', drag);
@@ -514,8 +507,22 @@ function endDrag(e) {
 // מוסיף שומר אירועים להתחלת גרירה
 character.addEventListener('mousedown', startDrag);
 
-// מונע ברירת טקסט בעת גרירה
-character.addEventListener('dragstart', (e) => {
-    e.preventDefault();
-    return false;
+// הוספת סגנון לסמן בזמן גרירה
+document.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+        document.body.style.cursor = 'grabbing';
+    }
+});
+
+// החזרת הסמן למצב רגיל אחרי הגרירה
+document.addEventListener('mouseup', () => {
+    if (isDragging) {
+        document.body.style.cursor = 'default';
+        character.classList.remove('dragging');
+    }
+});
+
+// אם צריך לשנות את המראה של הדמות בזמן גרירה (אופציונלי)
+character.addEventListener('mousedown', () => {
+    character.classList.add('dragging');
 });
