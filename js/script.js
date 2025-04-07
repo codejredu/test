@@ -437,22 +437,21 @@ function startDrag(e) {
     // מנע התנהגות ברירת מחדל וברירת טקסט
     e.preventDefault();
     e.stopPropagation();
-    
-    // חשוב מאוד - מחשב את הנקודה המדויקת שבה העכבר לחץ על הדמות
+
     const rect = character.getBoundingClientRect();
-    dragOffsetX = e.clientX - rect.left;
-    dragOffsetY = e.clientY - rect.top;
-    
+    dragOffsetX = e.clientX - (rect.left + rect.width / 2);
+    dragOffsetY = e.clientY - (rect.top + rect.height / 2);
+
     console.log('Start Drag - Offset:', dragOffsetX, dragOffsetY);
     console.log('Start Drag - Client:', e.clientX, e.clientY);
     console.log('Start Drag - Rect:', rect);
-    
+
     // מפעיל מצב גרירה
     isDragging = true;
-    
+
     // מאפשר לדמות להיגרר בחופשיות
     character.style.pointerEvents = 'none';
-    
+
     // מוסיף שומרי אירועים זמניים למסמך כולו
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', endDrag);
@@ -461,26 +460,26 @@ function startDrag(e) {
 // פונקציה שמבצעת את הגרירה
 function drag(e) {
     if (!isDragging) return;
-    
+
     e.preventDefault();
     e.stopPropagation();
-    
+
     const stageRect = stage.getBoundingClientRect();
     const characterWidth = character.offsetWidth;
     const characterHeight = character.offsetHeight;
-    
+
     // חישוב המיקום החדש כך שהסמן יישאר במקום המדויק שבו התחיל את הגרירה
     let x = e.clientX - stageRect.left - dragOffsetX;
     let y = e.clientY - stageRect.top - dragOffsetY;
-    
+
     console.log('Dragging - Client:', e.clientX, e.clientY);
     console.log('Dragging - Stage Rect:', stageRect);
     console.log('Dragging - Calculated:', x, y);
-    
+
     // וידוא שהדמות נשארת בתוך גבולות הבמה
     x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
     y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
-    
+
     // עדכון מיקום הדמות
     character.style.left = x + 'px';
     character.style.top = y + 'px';
@@ -489,17 +488,17 @@ function drag(e) {
 // פונקציה שמסיימת את הגרירה
 function endDrag(e) {
     if (!isDragging) return;
-    
+
     // חובה למנוע התנהגות ברירת מחדל גם בשחרור
     e.preventDefault();
     e.stopPropagation();
-    
+
     // מבטל את מצב הגרירה
     isDragging = false;
-    
+
     // מחזיר את אירועי המצביע לדמות
     character.style.pointerEvents = 'auto';
-    
+
     // מסיר את שומרי האירועים מהמסמך
     document.removeEventListener('mousemove', drag);
     document.removeEventListener('mouseup', endDrag);
