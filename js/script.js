@@ -439,12 +439,8 @@ function startDrag(e) {
     e.stopPropagation();
 
     const rect = character.getBoundingClientRect();
-    dragOffsetX = e.clientX - (rect.left + rect.width / 2);
-    dragOffsetY = e.clientY - (rect.top + rect.height / 2);
-
-    console.log('Start Drag - Offset:', dragOffsetX, dragOffsetY);
-    console.log('Start Drag - Client:', e.clientX, e.clientY);
-    console.log('Start Drag - Rect:', rect);
+    dragOffsetX = e.clientX - rect.left;
+    dragOffsetY = e.clientY - rect.top;
 
     // מפעיל מצב גרירה
     isDragging = true;
@@ -465,25 +461,20 @@ function drag(e) {
     e.stopPropagation();
 
     const stageRect = stage.getBoundingClientRect();
-    const characterWidth = character.offsetWidth;
-    const characterHeight = character.offsetHeight;
 
-    // חישוב המיקום החדש כך שהסמן יישאר במקום המדויק שבו התחיל את הגרירה
+    // חישוב המיקום החדש כך שהפינה השמאלית העליונה של הדמות תישאר בתוך הבמה
     let x = e.clientX - stageRect.left - dragOffsetX;
     let y = e.clientY - stageRect.top - dragOffsetY;
 
-    console.log('Dragging - Client:', e.clientX, e.clientY);
-    console.log('Dragging - Stage Rect:', stageRect);
-    console.log('Dragging - Calculated:', x, y);
-
     // וידוא שהדמות נשארת בתוך גבולות הבמה
-    x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
-    y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
+    x = Math.max(0, Math.min(x, stageRect.width - character.offsetWidth));
+    y = Math.max(0, Math.min(y, stageRect.height - character.offsetHeight));
 
     // עדכון מיקום הדמות
     character.style.left = x + 'px';
     character.style.top = y + 'px';
 }
+
 
 // פונקציה שמסיימת את הגרירה
 function endDrag(e) {
