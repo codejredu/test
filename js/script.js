@@ -2,11 +2,12 @@
 // הגדרת בלוקים (Blocks)
 // ========================================================================
 
-// משתנים חדשים לתיקון הגרירה
-let dragOffsetX = 0;
-let dragOffsetY = 0;
-let isDragging = false; // הגדרה אחת בלבד של המשתנה
+// משתנים חדשים לתיקון הגרירה (לא רלוונטי לגרירת הדמות, אלא לגרירת הבלוקים)
+// let dragOffsetX = 0; // משתנה זה משמש לגרירת הדמות
+// let dragOffsetY = 0; // משתנה זה משמש לגרירת הדמות
+// let isDragging = false; // הגדרה אחת בלבד של המשתנה - משמש גם לגרירת הדמות
 
+// --- (שאר הגדרות הבלוקים נשארות זהות) ---
 const blocks = {
     triggering: [
         {
@@ -255,10 +256,10 @@ function createBlockElement(block, category) {
 }
 
 // ========================================================================
-// פונקציות טיפול באירועים
+// פונקציות טיפול באירועים (בלוקים)
 // ========================================================================
 
-// פונקציה לטיפול בהתחלת גרירה
+// פונקציה לטיפול בהתחלת גרירה של בלוק
 function handleDragStart(event, block, category) {
     const data = {
         type: block.type,
@@ -267,123 +268,148 @@ function handleDragStart(event, block, category) {
         category: category,
         name: block.name
     };
+    // לא להגדיר כאן dragOffsetX/Y כי אלו משמשים לגרירת הדמות
     event.dataTransfer.setData("text/plain", JSON.stringify(data));
     event.dataTransfer.effectAllowed = "move";
 }
 
-// פונקציה לטיפול בשחרור באזור התכנות
+// פונקציה לטיפול בשחרור בלוק באזור התכנות
 function handleDrop(event) {
     event.preventDefault();
+    const programmingArea = document.getElementById("program-blocks"); // ודא שההפניה קיימת
 
     const blockIndex = event.dataTransfer.getData('block-index'); // נסה לקבל אינדקס, אם קיים
 
-    if (blockIndex) { // אם קיים block-index, זה אומר שגוררים בלוק בתוך אזור התכנות
+    if (blockIndex && programmingArea) { // אם קיים block-index, זה אומר שגוררים בלוק בתוך אזור התכנות
         const draggedBlockIndex = parseInt(blockIndex);
-        const draggedBlock = programmingArea.children[draggedBlockIndex];
+        // ודא שהאינדקס תקין
+        if (draggedBlockIndex >= 0 && draggedBlockIndex < programmingArea.children.length) {
+            const draggedBlock = programmingArea.children[draggedBlockIndex];
 
-        if (draggedBlock) {
-            // הסר את הבלוק מהמיקום הישן
-            // programmingArea.removeChild(draggedBlock); // הסרת השורה הזו היא חיונית כדי שהאלמנט יישאר בזמן החישוב
+            if (draggedBlock) {
+                // מצא את מיקום השחרור ועדכן מיקום
+                const rect = programmingArea.getBoundingClientRect();
+                 // חשוב לחשב את האופסט של העכבר *ביחס לבלוק הנגרר עצמו* אם רוצים לשמור על מיקום הלחיצה עליו
+                 // אם לא שמרנו אופסט ב-dragstart של הבלוק, נשתמש במרכז הבלוק כברירת מחדל
+                const blockRect = draggedBlock.getBoundingClientRect();
+                const dropX = event.clientX - rect.left;
+                const dropY = event.clientY - rect.top;
 
-            // מצא את מיקום השחרור ועדכן מיקום
-            const rect = programmingArea.getBoundingClientRect();
-            const newLeft = event.clientX - rect.left - (draggedBlock.offsetWidth / 2);
-            const newTop = event.clientY - rect.top - (draggedBlock.offsetHeight / 2);
+                // מרכז את הבלוק תחת העכבר כברירת מחדל
+                const newLeft = dropX - (draggedBlock.offsetWidth / 2);
+                const newTop = dropY - (draggedBlock.offsetHeight / 2);
 
-            // הגבלת המיקום לגבולות אזור התכנות (אופציונלי, אך מומלץ)
-            // const boundedLeft = Math.max(0, Math.min(newLeft, programmingArea.offsetWidth - draggedBlock.offsetWidth));
-            // const boundedTop = Math.max(0, Math.min(newTop, programmingArea.offsetHeight - draggedBlock.offsetHeight));
+                // הגבלת המיקום לגבולות אזור התכנות (אופציונלי, אך מומלץ)
+                // const boundedLeft = Math.max(0, Math.min(newLeft, programmingArea.offsetWidth - draggedBlock.offsetWidth));
+                // const boundedTop = Math.max(0, Math.min(newTop, programmingArea.offsetHeight - draggedBlock.offsetHeight));
 
-            draggedBlock.style.position = "absolute";
-            draggedBlock.style.left = `${newLeft}px`; // השתמש ב- newLeft/boundedLeft
-            draggedBlock.style.top = `${newTop}px`; // השתמש ב- newTop/boundedTop
+                draggedBlock.style.position = "absolute";
+                draggedBlock.style.left = `${newLeft}px`; // השתמש ב- newLeft/boundedLeft
+                draggedBlock.style.top = `${newTop}px`; // השתמש ב- newTop/boundedTop
 
-            // אין צורך להוסיף מחדש כי לא הסרנו, רק שינינו מיקום
-            // programmingArea.appendChild(draggedBlock);
+                // ודא שהבלוק נשאר בתוך programmingArea (למקרה שיצא בטעות)
+                programmingArea.appendChild(draggedBlock);
+            }
+        } else {
+            console.warn("Invalid block index received:", blockIndex);
         }
-    } else { // אם אין block-index, זה אומר שגוררים בלוק מלוח הלבנים (התנהגות קודמת)
-        const data = JSON.parse(event.dataTransfer.getData("text/plain"));
-        const blockType = data.type;
-        const blockCategory = data.category;
-        const blockIcon = data.icon;
-        const blockColor = data.color; // צבע הבלוק המקורי
-        const blockName = data.name;
 
-        // יצירת אלמנט בלוק חדש (שיבוט)
-        const newBlock = document.createElement("div");
-        newBlock.classList.add("block-container");
-        newBlock.dataset.category = blockCategory; // שמירת הקטגוריה בנתוני הבלוק
+    } else if (programmingArea) { // אם אין block-index, זה אומר שגוררים בלוק מלוח הלבנים (התנהגות קודמת)
+        try {
+            const data = JSON.parse(event.dataTransfer.getData("text/plain"));
+            const blockType = data.type;
+            const blockCategory = data.category;
+            const blockIcon = data.icon;
+            const blockColor = data.color; // צבע הבלוק המקורי
+            const blockName = data.name;
 
-        const scratchBlock = document.createElement("div");
-        scratchBlock.classList.add("scratch-block");
-        scratchBlock.style.backgroundColor = blockColor; // שימוש בצבע המקורי של הבלוק
+            // יצירת אלמנט בלוק חדש (שיבוט)
+            const newBlock = document.createElement("div");
+            newBlock.classList.add("block-container");
+            newBlock.dataset.category = blockCategory; // שמירת הקטגוריה בנתוני הבלוק
 
-        // יצירת אלמנט תמונה עבור האיקון
-        const iconImg = document.createElement("img");
-        iconImg.src = blockIcon;
-        iconImg.alt = blockName;
-        iconImg.classList.add("block-icon-img");
+            const scratchBlock = document.createElement("div");
+            scratchBlock.classList.add("scratch-block");
+            scratchBlock.style.backgroundColor = blockColor; // שימוש בצבע המקורי של הבלוק
 
-        scratchBlock.appendChild(iconImg);
+            // יצירת אלמנט תמונה עבור האיקון
+            const iconImg = document.createElement("img");
+            iconImg.src = blockIcon;
+            iconImg.alt = blockName;
+            iconImg.classList.add("block-icon-img");
 
-        //יצירת אלמנט right-connector
-        const rightConnector = document.createElement("div");
-        rightConnector.classList.add("right-connector");
-        rightConnector.style.backgroundColor = blockColor; // שימוש באותו צבע גם למחבר
+            scratchBlock.appendChild(iconImg);
 
-        //יצירת אלמנט left-connector-wrapper
-        const leftConnectorWrapper = document.createElement("div");
-        leftConnectorWrapper.classList.add("left-connector-wrapper");
+            //יצירת אלמנט right-connector
+            const rightConnector = document.createElement("div");
+            rightConnector.classList.add("right-connector");
+            rightConnector.style.backgroundColor = blockColor; // שימוש באותו צבע גם למחבר
 
-        //יצירת אלמנט left-connector
-        const leftConnector = document.createElement("div");
-        leftConnector.classList.add("left-connector");
+            //יצירת אלמנט left-connector-wrapper
+            const leftConnectorWrapper = document.createElement("div");
+            leftConnectorWrapper.classList.add("left-connector-wrapper");
 
-        leftConnectorWrapper.appendChild(leftConnector);
+            //יצירת אלמנט left-connector
+            const leftConnector = document.createElement("div");
+            leftConnector.classList.add("left-connector");
 
-        // הוספת הכל ל container
-        newBlock.appendChild(scratchBlock);
-        newBlock.appendChild(rightConnector);
-        newBlock.appendChild(leftConnectorWrapper);
-        newBlock.dataset.type = blockType;
-        newBlock.draggable = true; // אפשר גרירה לבלוקים חדשים
+            leftConnectorWrapper.appendChild(leftConnector);
 
-        // הוספת event listener לגרירה של בלוקים בתוך אזור התכנות
-        newBlock.addEventListener("dragstart", (event) => {
-            // חשוב: ודא שאתה משתמש ב-newBlock שנוצר בהיקף הזה
-            event.dataTransfer.setData('block-index', Array.from(programmingArea.children).indexOf(newBlock).toString());
-            event.dataTransfer.effectAllowed = "move";
-            // הוספת עיכוב קטן כדי לאפשר לדפדפן לרשום את מיקום ההתחלה לפני שהאלמנט מוסתר (אם יש אפקט גרירה ויזואלי)
-            // setTimeout(() => { newBlock.style.opacity = '0.5'; }, 0); // דוגמה לאפקט
-        });
+            // הוספת הכל ל container
+            newBlock.appendChild(scratchBlock);
+            newBlock.appendChild(rightConnector);
+            newBlock.appendChild(leftConnectorWrapper);
+            newBlock.dataset.type = blockType;
+            newBlock.draggable = true; // אפשר גרירה לבלוקים חדשים
 
-        // (אופציונלי) טיפול בסיום גרירה כדי להחזיר את המראה
-        // newBlock.addEventListener("dragend", (event) => {
-        //     newBlock.style.opacity = '1';
-        // });
+             // הוספת הבלוק החדש לאזור התכנות *לפני* חישוב הגודל והמיקום
+            programmingArea.appendChild(newBlock);
 
+            // הוספת event listener לגרירה של בלוקים בתוך אזור התכנות
+            newBlock.addEventListener("dragstart", (dragEvent) => {
+                // חשוב: ודא שאתה משתמש ב-newBlock שנוצר בהיקף הזה
+                const index = Array.from(programmingArea.children).indexOf(newBlock);
+                if (index > -1) { // ודא שהאלמנט נמצא לפני שמירת האינדקס
+                    dragEvent.dataTransfer.setData('block-index', index.toString());
+                    dragEvent.dataTransfer.effectAllowed = "move";
+                } else {
+                    console.error("Could not find new block in programming area during dragstart.");
+                }
+                // אפשר להוסיף כאן חישוב ושמירה של אופסט הלחיצה על הבלוק אם רוצים דיוק בגרירה פנימית
+                // const blockRect = newBlock.getBoundingClientRect();
+                // dragEvent.dataTransfer.setData('offset-x', dragEvent.clientX - blockRect.left);
+                // dragEvent.dataTransfer.setData('offset-y', dragEvent.clientY - blockRect.top);
+            });
 
-        // הוספת הבלוק החדש לאזור התכנות
-        programmingArea.appendChild(newBlock);
+            // מיקום הבלוק החדש יחסי לאזור התכנות - מתחת לעכבר
+            const rect = programmingArea.getBoundingClientRect();
+            // השתמש ב offsetWidth/offsetHeight רק *אחרי* שהאלמנט נוסף ל-DOM
+            const newBlockWidth = newBlock.offsetWidth;
+            const newBlockHeight = newBlock.offsetHeight;
 
-        // מיקום הבלוק החדש יחסי לאזור התכנות - מתחת לעכבר
-        const rect = programmingArea.getBoundingClientRect();
-        // השתמש ב offsetWidth/offsetHeight רק *אחרי* שהאלמנט נוסף ל-DOM
-        const newBlockWidth = newBlock.offsetWidth;
-        const newBlockHeight = newBlock.offsetHeight;
+            // חשב מיקום למרכז הבלוק מתחת לעכבר
+            const newLeft = event.clientX - rect.left - (newBlockWidth / 2);
+            const newTop = event.clientY - rect.top - (newBlockHeight / 2);
 
-        const newLeft = event.clientX - rect.left - (newBlockWidth / 2);
-        const newTop = event.clientY - rect.top - (newBlockHeight / 2);
+            newBlock.style.position = "absolute"; // השתמש במיקום אבסולוטי
+            newBlock.style.left = `${newLeft}px`; // מרכז את הבלוק אופקית
+            newBlock.style.top = `${newTop}px`; // מרכז את הבלוק אנכית
 
-        newBlock.style.position = "absolute"; // השתמש במיקום אבסולוטי
-        newBlock.style.left = `${newLeft}px`; // מרכז את הבלוק אופקית
-        newBlock.style.top = `${newTop}px`; // מרכז את הבלוק אנכית
+        } catch (e) {
+            console.error("Error handling drop:", e);
+            // ייתכן שה- dataTransfer לא הכיל JSON תקין
+        }
+    } else if (!programmingArea) {
+         console.error("Programming area not found during drop event.");
     }
 }
+
 
 // ========================================================================
 // פונקציות אתחול
 // ========================================================================
+let blockCategories = []; // אתחול מערכים ריקים
+let categoryTabs = [];    // כדי למנוע שגיאות אם ה-DOM לא מוכן
 
 // הוספת הבלוקים ללוח הלבנים
 function populateBlockPalette(category) {
@@ -392,11 +418,12 @@ function populateBlockPalette(category) {
       console.error(`Category div not found: ${category}-blocks`);
       return; // מונע שגיאה אם ה-div לא קיים
     }
-    categoryDiv.innerHTML = "";
+    categoryDiv.innerHTML = ""; // נקה לפני הוספה
 
     if (!blocks[category]) {
-      console.error(`Blocks not found for category: ${category}`);
-      return; // מונע שגיאה אם הקטגוריה לא מוגדרת
+      console.warn(`Blocks not found for category: ${category}. Displaying empty.`);
+      // אפשר להציג הודעה למשתמש או פשוט להשאיר ריק
+      return;
     }
 
     blocks[category].forEach(block => {
@@ -407,194 +434,167 @@ function populateBlockPalette(category) {
 
 // פונקציה לטיפול בשינוי קטגוריה
 function handleCategoryChange(category) {
+    // ודא שהמערכים אותחלו
+    if (!blockCategories || !categoryTabs) return;
+
     blockCategories.forEach(element => element.classList.remove("active"));
     categoryTabs.forEach(tab => tab.classList.remove("active"));
 
     const tab = document.querySelector(`.category-tab[data-category="${category}"]`);
     const categoryDiv = document.getElementById(`${category}-blocks`);
 
-    if(tab) tab.classList.add("active");
-    if(categoryDiv) categoryDiv.classList.add("active");
-
-    populateBlockPalette(category);
+    if(tab) {
+      tab.classList.add("active");
+    } else {
+      console.warn(`Tab not found for category: ${category}`);
+    }
+    if(categoryDiv) {
+      categoryDiv.classList.add("active");
+      populateBlockPalette(category); // טען בלוקים רק אם ה-div קיים
+    } else {
+       console.warn(`Block category div not found: ${category}-blocks`);
+    }
 }
 
 // ========================================================================
-//  לוגיקת גרירה ושחרור (Drag and Drop)
+//  אתחול כללי והוספת Event Listeners
 // ========================================================================
 
-const programmingArea = document.getElementById("program-blocks");
-
-// טיפול באירוע גרירה מעל אזור התכנות (dragover)
-programmingArea.addEventListener("dragover", (event) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-});
-
-// טיפול באירוע שחרור באזור התכנות (drop)
-programmingArea.addEventListener("drop", handleDrop);
-
-const categoryTabs = document.querySelectorAll(".category-tab");
-const blockCategories = document.querySelectorAll(".block-category");
-
-categoryTabs.forEach(tab => {
-    tab.addEventListener("click", () => {
-        const category = tab.dataset.category;
-        handleCategoryChange(category);
-    });
-});
-
-// הוספת כפתור קווי GRID
-const gridToggle = document.getElementById("grid-toggle");
-const stage = document.getElementById("stage");
-
-gridToggle.addEventListener("click", () => {
-    stage.classList.toggle("show-grid");
-});
-
-// ניקוי כל הבלוקים מאזור התכנות
-const clearAllButton = document.getElementById("clear-all");
-clearAllButton.addEventListener("click", () => {
-    programmingArea.innerHTML = "";
-});
-
-// אתחול הלוח עם הקטגוריה הפעילה הראשונה
-// ודא שה-DOM טעון לפני קריאה לפונקציות אתחול
 document.addEventListener('DOMContentLoaded', (event) => {
-    // בדוק שוב אם האלמנטים קיימים לפני האתחול
-    if (document.getElementById("triggering-blocks")) {
-        handleCategoryChange("triggering"); // טען את הקטגוריה הראשונה
+    const programmingArea = document.getElementById("program-blocks");
+    const stage = document.getElementById("stage");
+    const character = document.getElementById('character'); // הפניה לדמות
+    const gridToggle = document.getElementById("grid-toggle");
+    const clearAllButton = document.getElementById("clear-all");
+
+    // אתחול הפניות לקטגוריות רק אחרי שה-DOM מוכן
+    blockCategories = document.querySelectorAll(".block-category");
+    categoryTabs = document.querySelectorAll(".category-tab");
+
+    // הגדרת משתני גרירה גלובליים (או בהיקף גבוה יותר)
+    dragOffsetX = 0; // אופסט X לגרירת הדמות
+    dragOffsetY = 0; // אופסט Y לגרירת הדמות
+    isDragging = false; // האם הדמות נגררת כעת?
+
+    // --- Event Listeners לאזור התכנות (בלוקים) ---
+    if (programmingArea) {
+        programmingArea.addEventListener("dragover", (event) => {
+            event.preventDefault(); // אפשר שחרור
+            event.dataTransfer.dropEffect = "move";
+        });
+        programmingArea.addEventListener("drop", handleDrop); // טפל בשחרור
     } else {
-        console.error("Initial category 'triggering-blocks' not found on DOMContentLoaded.");
+        console.error("Programming area ('program-blocks') not found!");
     }
 
-    // הפעלת קוד הגרירה של הדמות רק לאחר שה-DOM טעון והדמות קיימת
-    const characterElement = document.getElementById('character');
-    if (characterElement) {
-        characterElement.addEventListener('mousedown', startDrag);
+    // --- Event Listeners לטאבים של הקטגוריות ---
+    if (categoryTabs.length > 0) {
+        categoryTabs.forEach(tab => {
+            tab.addEventListener("click", () => {
+                const category = tab.dataset.category;
+                if (category) {
+                    handleCategoryChange(category);
+                }
+            });
+        });
+        // אתחול הלוח עם הקטגוריה הפעילה הראשונה (אם קיימת)
+        const firstCategory = categoryTabs[0]?.dataset.category;
+        if (firstCategory) {
+            handleCategoryChange(firstCategory);
+        } else {
+           console.warn("No category tabs found to initialize.");
+        }
     } else {
-        console.error("Character element not found on DOMContentLoaded.");
+        console.warn("No category tabs found.");
     }
 
-    // אתחול אירועי סמן גרירה
-    document.addEventListener('mousemove', (e) => {
-        if (isDragging) {
-            document.body.style.cursor = 'grabbing';
+    // --- Event Listener לכפתור Grid ---
+    if (gridToggle && stage) {
+        gridToggle.addEventListener("click", () => {
+            stage.classList.toggle("show-grid");
+        });
+    }
+
+    // --- Event Listener לכפתור ניקוי ---
+    if (clearAllButton && programmingArea) {
+        clearAllButton.addEventListener("click", () => {
+            programmingArea.innerHTML = ""; // נקה את אזור התכנות
+        });
+    }
+
+    // --- Event Listeners לגרירת הדמות ---
+    if (character && stage) {
+        // פונקציה שמתחילה את הגרירה
+        function startDragCharacter(e) {
+            // ודא שהאלמנט הוא הדמות עצמה
+            if (!e.target.closest('#character')) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            const rect = character.getBoundingClientRect();
+            dragOffsetX = e.clientX - rect.left; // שמור אופסט X
+            dragOffsetY = e.clientY - rect.top; // שמור אופסט Y
+
+            isDragging = true; // סמן שאנו גוררים את הדמות
+            character.classList.add('dragging'); // הוסף קלאס לעיצוב (אופציונלי)
+            character.style.pointerEvents = 'none'; // מנע אירועים על הדמות בזמן הגרירה
+            document.body.style.cursor = 'grabbing'; // שנה סמן גוף הדף
+
+            // הוסף מאזינים למסמך כולו
+            document.addEventListener('mousemove', dragCharacter);
+            document.addEventListener('mouseup', endDragCharacter, { once: true });
         }
-    });
 
-    document.addEventListener('mouseup', () => {
-        // החזר סמן רק אם הגרירה הסתיימה (isDragging יהיה false כבר מ-endDrag)
-        // בדיקה זו מיותרת אם endDrag תמיד נקראת, אבל לא מזיקה
-        if (!isDragging) {
-            document.body.style.cursor = 'default';
-            const characterElement = document.getElementById('character');
-            if (characterElement) {
-                 characterElement.classList.remove('dragging');
-            }
+        // פונקציה שמבצעת את הגרירה
+        function dragCharacter(e) {
+            if (!isDragging) return; // רק אם אנחנו במצב גרירה
+
+            // מניעת התנהגות ברירת מחדל (כמו בחירת טקסט)
+            // e.preventDefault(); // לא תמיד נחוץ ב-mousemove ויכול להפריע לאירועים אחרים
+            e.stopPropagation();
+
+            const stageRect = stage.getBoundingClientRect();
+            const characterWidth = character.offsetWidth;
+            const characterHeight = character.offsetHeight;
+
+            // חשב מיקום חדש תוך שימוש באופסט שנשמר
+            let x = e.clientX - stageRect.left - dragOffsetX;
+            let y = e.clientY - stageRect.top - dragOffsetY;
+
+            // ודא שהדמות נשארת בתוך גבולות הבמה
+            x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
+            y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
+
+            // עדכן מיקום הדמות
+            character.style.left = x + 'px';
+            character.style.top = y + 'px';
         }
-    });
-});
 
+        // פונקציה שמסיימת את הגרירה
+        function endDragCharacter(e) {
+            if (!isDragging) return; // אם לא היינו בגרירה, צא
 
-// ========================================================================
-// קוד גרירה של הדמות - **נראה תקין ושומר על מיקום הלחיצה**
-// ========================================================================
+            isDragging = false; // סיים מצב גרירה
 
-// מקבל הפניה לאלמנט הדמות - עדיף לעשות זאת בתוך DOMContentLoaded
-// const character = document.getElementById('character'); // מועבר ל-DOMContentLoaded
+            // הסר מאזינים מהמסמך
+            document.removeEventListener('mousemove', dragCharacter);
+            // אין צורך להסיר mouseup ידנית בזכות { once: true }
 
-// פונקציה שמתחילה את הגרירה
-function startDrag(e) {
-    // ודא שהאלמנט הוא הדמות עצמה
-    const character = e.target.closest('#character'); // ודא שלוחצים על הדמות או אלמנט בתוכה
-    if (!character) return;
+            // אפשר אירועים חזרה על הדמות והסר קלאס
+            character.style.pointerEvents = 'auto';
+            character.classList.remove('dragging');
+            document.body.style.cursor = 'default'; // החזר סמן ברירת מחדל לגוף
 
-    // מנע התנהגות ברירת מחדל וברירת טקסט
-    e.preventDefault();
-    e.stopPropagation();
+            // e.stopPropagation(); // חשוב למנוע השפעה על אלמנטים אחרים
+        }
 
-    // חשוב מאוד - מחשב את הנקודה המדויקת שבה העכבר לחץ על הדמות
-    const rect = character.getBoundingClientRect();
-    dragOffsetX = e.clientX - rect.left;
-    dragOffsetY = e.clientY - rect.top;
+        // הוסף מאזין להתחלת גרירה על הדמות
+        character.addEventListener('mousedown', startDragCharacter);
 
-    // מפעיל מצב גרירה
-    isDragging = true;
-
-    // מוסיף קלאס לעיצוב (אופציונלי)
-    character.classList.add('dragging');
-
-    // מאפשר לדמות להיגרר בחופשיות (מונע אירועים על הדמות עצמה בזמן הגרירה)
-    character.style.pointerEvents = 'none';
-
-    // מוסיף שומרי אירועים זמניים למסמך כולו
-    document.addEventListener('mousemove', drag);
-    document.addEventListener('mouseup', endDrag, { once: true }); // { once: true } מבטיח שהאירוע יוסר אוטומטית לאחר הפעלה אחת
-}
-
-// פונקציה שמבצעת את הגרירה
-function drag(e) {
-    if (!isDragging) return;
-
-    // הפניה לדמות - חשוב לקבל אותה שוב או להשתמש במשתנה גלובלי/בהיקף גבוה יותר
-    const character = document.getElementById('character');
-    if (!character) { // בדיקת בטיחות
-        endDrag(e); // סיים את הגרירה אם הדמות נעלמה
-        return;
+    } else {
+        if (!character) console.error("Character element ('character') not found!");
+        if (!stage) console.error("Stage element ('stage') not found!");
     }
 
-    // מניעת התנהגות ברירת מחדל אפשרית בזמן גרירה
-    e.preventDefault();
-    e.stopPropagation();
-
-    const stageRect = stage.getBoundingClientRect();
-    const characterWidth = character.offsetWidth;
-    const characterHeight = character.offsetHeight;
-
-    // חישוב המיקום החדש כך שהסמן יישאר במקום המדויק שבו התחיל את הגרירה
-    let x = e.clientX - stageRect.left - dragOffsetX;
-    let y = e.clientY - stageRect.top - dragOffsetY;
-
-    // וידוא שהדמות נשארת בתוך גבולות הבמה
-    x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
-    y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
-
-    // עדכון מיקום הדמות
-    character.style.left = x + 'px';
-    character.style.top = y + 'px';
-}
-
-// פונקציה שמסיימת את הגרירה
-function endDrag(e) {
-    if (!isDragging) return;
-
-    // הפניה לדמות
-    const character = document.getElementById('character');
-
-    // חובה למנוע התנהגות ברירת מחדל גם בשחרור
-    // e.preventDefault(); // יכול לגרום לבעיות אם השחרור הוא על אלמנט אחר עם אירוע קליק
-    e.stopPropagation(); // חשוב למנוע bubbling
-
-    // מבטל את מצב הגרירה *לפני* הסרת ה-listeners
-    isDragging = false;
-
-    // מסיר את שומרי האירועים מהמסמך
-    document.removeEventListener('mousemove', drag);
-    // אין צורך להסיר את mouseup אם השתמשנו ב- { once: true }
-    // document.removeEventListener('mouseup', endDrag); // מוסר אוטומטית עם once: true
-
-    // מחזיר את אירועי המצביע לדמות ומסיר קלאס עיצובי
-    if (character) {
-      character.style.pointerEvents = 'auto';
-      character.classList.remove('dragging');
-    }
-
-    // איפוס סמן העכבר - ייעשה ע"י ה-listener הכללי של mouseup על ה-document
-    document.body.style.cursor = 'default';
-
-}
-
-// הוספת Listener להתחלת גרירה - הועבר ל-DOMContentLoaded
-
-// הוספת סגנון לסמן וטיפול בסיום - הועבר ל-DOMContentLoaded
+}); // סוף DOMContentLoaded
