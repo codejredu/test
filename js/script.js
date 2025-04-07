@@ -446,12 +446,15 @@ function startDrag(e) {
     // מפעיל מצב גרירה
     isDragging = true;
     
-    // מאפשר לדמות להיגרר בחופשיות
-    character.style.pointerEvents = 'none';
+    // מוסיף מחלקה לדמות בזמן גרירה
+    character.classList.add('dragging');
     
     // מוסיף שומרי אירועים זמניים למסמך כולו
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', endDrag);
+    
+    // משנה את סמן העכבר
+    document.body.style.cursor = 'grabbing';
 }
 
 // פונקציה שמבצעת את הגרירה
@@ -462,20 +465,18 @@ function drag(e) {
     e.stopPropagation();
     
     const stageRect = stage.getBoundingClientRect();
-    const characterWidth = character.offsetWidth;
-    const characterHeight = character.offsetHeight;
     
-    // חישוב המיקום החדש כך שהסמן יישאר במקום המדויק שבו התחיל את הגרירה
-    let x = e.clientX - stageRect.left - dragOffsetX;
-    let y = e.clientY - stageRect.top - dragOffsetY;
+    // חישוב המיקום החדש תוך שמירה על ההיסט המקורי
+    let newX = e.clientX - stageRect.left - dragOffsetX;
+    let newY = e.clientY - stageRect.top - dragOffsetY;
     
     // וידוא שהדמות נשארת בתוך גבולות הבמה
-    x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
-    y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
+    newX = Math.max(0, Math.min(newX, stageRect.width - character.offsetWidth));
+    newY = Math.max(0, Math.min(newY, stageRect.height - character.offsetHeight));
     
     // עדכון מיקום הדמות
-    character.style.left = x + 'px';
-    character.style.top = y + 'px';
+    character.style.left = newX + 'px';
+    character.style.top = newY + 'px';
 }
 
 // פונקציה שמסיימת את הגרירה
@@ -489,8 +490,11 @@ function endDrag(e) {
     // מבטל את מצב הגרירה
     isDragging = false;
     
-    // מחזיר את אירועי המצביע לדמות
-    character.style.pointerEvents = 'auto';
+    // מסיר את המחלקה מהדמות
+    character.classList.remove('dragging');
+    
+    // מחזיר את סמן העכבר למצב רגיל
+    document.body.style.cursor = 'default';
     
     // מסיר את שומרי האירועים מהמסמך
     document.removeEventListener('mousemove', drag);
@@ -499,23 +503,3 @@ function endDrag(e) {
 
 // מוסיף שומר אירועים להתחלת גרירה
 character.addEventListener('mousedown', startDrag);
-
-// הוספת סגנון לסמן בזמן גרירה
-document.addEventListener('mousemove', (e) => {
-    if (isDragging) {
-        document.body.style.cursor = 'grabbing';
-    }
-});
-
-// החזרת הסמן למצב רגיל אחרי הגרירה
-document.addEventListener('mouseup', () => {
-    if (isDragging) {
-        document.body.style.cursor = 'default';
-        character.classList.remove('dragging');
-    }
-});
-
-// אם צריך לשנות את המראה של הדמות בזמן גרירה (אופציונלי)
-character.addEventListener('mousedown', () => {
-    character.classList.add('dragging');
-});
