@@ -441,8 +441,9 @@ function startDrag(e) {
     e.stopPropagation();
 
     const rect = character.getBoundingClientRect();
-    dragOffsetX = e.clientX - (rect.left + rect.width / 2);
-    dragOffsetY = e.clientY - (rect.top + rect.height / 2);
+    // חשב את ההיסט מנקודת הלחיצה בתוך הדמות, לא מהמרכז
+    dragOffsetX = e.clientX - rect.left;
+    dragOffsetY = e.clientY - rect.top;
 
     console.log('Start Drag - Offset:', dragOffsetX, dragOffsetY);
     console.log('Start Drag - Client:', e.clientX, e.clientY);
@@ -459,7 +460,7 @@ function startDrag(e) {
     document.addEventListener('mouseup', endDrag);
 }
 
-// פונקציה שמבצעת את הגרירה
+// פונקציה שמבצעת את הגרירה - **מתוקן**
 function drag(e) {
     if (!isDragging) return;
 
@@ -470,18 +471,21 @@ function drag(e) {
     const characterWidth = character.offsetWidth;
     const characterHeight = character.offsetHeight;
 
-    // חישוב המיקום החדש כך שהסמן יישאר במקום המדויק שבו התחיל את הגרירה
-    let x = e.clientX - stageRect.left - dragOffsetX;
-    let y = e.clientY - stageRect.top - dragOffsetY;
+    // חשב מיקום חדש על סמך מיקום העכבר וההיסט שחושב בהתחלה
+    let x = e.clientX - dragOffsetX - stageRect.left; // תיקון: החסר את stageRect.left
+    let y = e.clientY - dragOffsetY - stageRect.top;  // תיקון: החסר את stageRect.top
 
     console.log('Dragging - Client:', e.clientX, e.clientY);
     console.log('Dragging - Stage Rect:', stageRect);
-    console.log('Dragging - Calculated:', x, y);
+    console.log('Dragging - Calculated before constraint:', x, y);
 
     // וידוא שהדמות נשארת בתוך גבולות הבמה
-    // תיקון: יש להשתמש ב stageRect.width ו stageRect.height ולא characterWidth/Height
+    // **תיקון חשוב**:  השתמש ב-stageRect.width ו-stageRect.height לגבולות
     x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
     y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
+
+    console.log('Dragging - Calculated after constraint:', x, y);
+
 
     // עדכון מיקום הדמות
     character.style.left = x + 'px';
