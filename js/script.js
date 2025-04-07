@@ -5,7 +5,7 @@
 // משתנים חדשים לתיקון הגרירה
 let dragOffsetX = 0;
 let dragOffsetY = 0;
-let isDragging = false; // משתנה חדש למעקב אחר מצב הגרירה
+let isDragging = false; // הגדרה אחת בלבד של המשתנה
 
 const blocks = {
     triggering: [
@@ -327,7 +327,7 @@ function handleDrop(event) {
         const leftConnectorWrapper = document.createElement("div");
         leftConnectorWrapper.classList.add("left-connector-wrapper");
 
-         //יצירת אלמנט left-connector
+        //יצירת אלמנט left-connector
         const leftConnector = document.createElement("div");
         leftConnector.classList.add("left-connector");
 
@@ -429,39 +429,40 @@ populateBlockPalette("triggering");
 // קוד מתוקן לגרירה של הדמות
 // ========================================================================
 
-// מקבל הפניה לאלמנט הדמות - לא מגדירים את stage שוב כי כבר הוגדר קודם
+// מקבל הפניה לאלמנט הדמות - לא מגדירים שוב את isDragging כי הוגדר בתחילת הקובץ
 const character = document.getElementById('character');
-let isDragging = false; // משתנה חדש למעקב אחר מצב הגרירה
 
-// תיקון חדש - שימוש במאזיני אירועים מסוג mouse במקום drag
-character.addEventListener('mousedown', (e) => {
+// פונקציה שמתחילה את הגרירה
+function startDrag(e) {
     // מנע התנהגות ברירת מחדל וברירת טקסט
     e.preventDefault();
+    e.stopPropagation();
     
-    // קבל את מיקום העכבר ביחס לפינה השמאלית העליונה של הדמות
+    // מחשב את המרחק בין נקודת האחיזה למיקום האלמנט
     const rect = character.getBoundingClientRect();
     dragOffsetX = e.clientX - rect.left;
     dragOffsetY = e.clientY - rect.top;
     
-    // הפעל מצב גרירה
+    // מפעיל מצב גרירה
     isDragging = true;
     
-    // הוסף מאזיני אירועים למסמך כולו
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-});
+    // מוסיף שומרי אירועים זמניים למסמך כולו
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', endDrag);
+}
 
-// פונקציה שמטפלת בתזוזת העכבר בזמן גרירה
-function onMouseMove(e) {
+// פונקציה שמבצעת את הגרירה
+function drag(e) {
     if (!isDragging) return;
     
     e.preventDefault();
+    e.stopPropagation();
     
     const stageRect = stage.getBoundingClientRect();
     const characterWidth = character.offsetWidth;
     const characterHeight = character.offsetHeight;
     
-    // חישוב המיקום החדש בהתחשב בנקודת האחיזה המקורית של העכבר
+    // חישוב המיקום החדש עם התחשבות בנקודת האחיזה
     let x = e.clientX - stageRect.left - dragOffsetX;
     let y = e.clientY - stageRect.top - dragOffsetY;
     
@@ -469,17 +470,35 @@ function onMouseMove(e) {
     x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
     y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
     
-    // עדכון מיקום הדמות בזמן אמת
+    // עדכון מיקום הדמות
     character.style.left = x + 'px';
     character.style.top = y + 'px';
 }
 
-// פונקציה שמטפלת בשחרור העכבר
-function onMouseUp(e) {
-    // בטל את מצב הגרירה
+// פונקציה שמסיימת את הגרירה
+function endDrag(e) {
+    // חובה למנוע התנהגות ברירת מחדל גם בשחרור
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // מבטל את מצב הגרירה
     isDragging = false;
     
-    // הסר את מאזיני האירועים כדי לחסוך במשאבים
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
+    // מסיר את שומרי האירועים מהמסמך
+    document.removeEventListener('mousemove', drag);
+    document.removeEventListener('mouseup', endDrag);
 }
+
+// מוסיף שומר אירועים להתחלת גרירה
+character.addEventListener('mousedown', startDrag);
+
+// הוספת סגנון לדמות בזמן גרירה (אופציונלי)
+// עם תחילת הגרירה, מוסיף מחלקת CSS שתשנה את המראה של הדמות
+character.addEventListener('mousedown', () => {
+    character.classList.add('dragging');
+});
+
+// עם סיום הגרירה, מסיר את מחלקת ה-CSS
+document.addEventListener('mouseup', () => {
+    character.classList.remove('dragging');
+});
