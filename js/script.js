@@ -461,20 +461,20 @@ function drag(e) {
     e.stopPropagation();
 
     const stageRect = stage.getBoundingClientRect();
+    const charRect = character.getBoundingClientRect(); // get character's current rect
 
-    // חישוב המיקום החדש כך שהפינה השמאלית העליונה של הדמות תישאר בתוך הבמה
+    // Calculate the new position based on the mouse position and offset
     let x = e.clientX - stageRect.left - dragOffsetX;
     let y = e.clientY - stageRect.top - dragOffsetY;
 
-    // וידוא שהדמות נשארת בתוך גבולות הבמה
-    x = Math.max(0, Math.min(x, stageRect.width - character.offsetWidth));
-    y = Math.max(0, Math.min(y, stageRect.height - character.offsetHeight));
+    // Keep the character within the stage boundaries
+    x = Math.max(0, Math.min(x, stageRect.width - charRect.width));
+    y = Math.max(0, Math.min(y, stageRect.height - charRect.height));
 
-    // עדכון מיקום הדמות
+    // Update the character's position
     character.style.left = x + 'px';
     character.style.top = y + 'px';
 }
-
 
 // פונקציה שמסיימת את הגרירה
 function endDrag(e) {
