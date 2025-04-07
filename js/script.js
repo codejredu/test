@@ -279,19 +279,26 @@ function handleDrop(event) {
 
     if (blockIndex) { // אם קיים block-index, זה אומר שגוררים בלוק בתוך אזור התכנות
         const draggedBlockIndex = parseInt(blockIndex);
-        const draggedBlock = programmingArea.children[draggedBlockIndex];
+        // Use .item() for safer access to HTMLCollection items
+        const draggedBlock = programmingArea.children.item(draggedBlockIndex);
 
         if (draggedBlock) {
-            // הסר את הבלוק מהמיקום הישן
-            programmingArea.removeChild(draggedBlock);
+             // Get the offset of the mouse relative to the dragged block
+             const blockRect = draggedBlock.getBoundingClientRect();
+             const offsetX = event.clientX - blockRect.left;
+             const offsetY = event.clientY - blockRect.top;
 
-            // מצא את מיקום השחרור ועדכן מיקום
+            // No need to remove and re-append if just moving
+            // programmingArea.removeChild(draggedBlock); // REMOVED
+
+            // Find the drop location and update position
             const rect = programmingArea.getBoundingClientRect();
             draggedBlock.style.position = "absolute";
-            draggedBlock.style.left = `${event.clientX - rect.left - (draggedBlock.offsetWidth / 2)}px`;
-            draggedBlock.style.top = `${event.clientY - rect.top - (draggedBlock.offsetHeight / 2)}px`;
+             // Adjust position based on where the mouse grabbed the block
+            draggedBlock.style.left = `${event.clientX - rect.left - offsetX}px`;
+            draggedBlock.style.top = `${event.clientY - rect.top - offsetY}px`;
 
-            programmingArea.appendChild(draggedBlock); // הוסף את הבלוק במיקום החדש (כרגע בסוף)
+            // programmingArea.appendChild(draggedBlock); // REMOVED - block is already in the area
         }
     } else { // אם אין block-index, זה אומר שגוררים בלוק מלוח הלבנים (התנהגות קודמת)
         const data = JSON.parse(event.dataTransfer.getData("text/plain"));
@@ -342,7 +349,12 @@ function handleDrop(event) {
 
         // הוספת event listener לגרירה של בלוקים בתוך אזור התכנות
         newBlock.addEventListener("dragstart", (event) => {
-            event.dataTransfer.setData('block-index', Array.from(programmingArea.children).indexOf(newBlock).toString());
+            // Get the offset of the mouse relative to the dragged block
+             const blockRect = newBlock.getBoundingClientRect();
+             const offsetX = event.clientX - blockRect.left;
+             const offsetY = event.clientY - blockRect.top;
+             // Store the index AND the offset
+             event.dataTransfer.setData('block-index', Array.from(programmingArea.children).indexOf(newBlock).toString());
             event.dataTransfer.effectAllowed = "move";
         });
 
@@ -352,6 +364,7 @@ function handleDrop(event) {
         // מיקום הבלוק החדש יחסי לאזור התכנות - מתחת לעכבר
         const rect = programmingArea.getBoundingClientRect();
         newBlock.style.position = "absolute"; // השתמש במיקום אבסולוטי
+        // Use offsetWidth/offsetHeight *after* adding to DOM for accurate values
         newBlock.style.left = `${event.clientX - rect.left - (newBlock.offsetWidth / 2)}px`; // מרכז את הבלוק אופקית
         newBlock.style.top = `${event.clientY - rect.top - (newBlock.offsetHeight / 2)}px`; // מרכז את הבלוק אנכית
     }
@@ -364,11 +377,13 @@ function handleDrop(event) {
 // הוספת הבלוקים ללוח הלבנים
 function populateBlockPalette(category) {
     const categoryDiv = document.getElementById(`${category}-blocks`);
-    categoryDiv.innerHTML = "";
+    // Add optional chaining for safety
+    categoryDiv?.innerHTML = "";
 
-    blocks[category].forEach(block => {
+    // Add optional chaining for safety
+    blocks?.[category]?.forEach(block => {
         const blockElement = createBlockElement(block, category);
-        categoryDiv.appendChild(blockElement);
+        categoryDiv.appendChild(blockElement); // Append inside the loop
     });
 }
 
@@ -377,9 +392,10 @@ function handleCategoryChange(category) {
     blockCategories.forEach(element => element.classList.remove("active"));
     categoryTabs.forEach(tab => tab.classList.remove("active"));
 
+    // Add optional chaining for safety
     const tab = document.querySelector(`.category-tab[data-category="${category}"]`);
-    tab.classList.add("active");
-    document.getElementById(`${category}-blocks`).classList.add("active");
+    tab?.classList?.add("active");
+    document.getElementById(`${category}-blocks`)?.classList?.add("active");
     populateBlockPalette(category);
 }
 
@@ -389,14 +405,20 @@ function handleCategoryChange(category) {
 
 const programmingArea = document.getElementById("program-blocks");
 
-// טיפול באירוע גרירה מעל אזור התכנות (dragover)
-programmingArea.addEventListener("dragover", (event) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-});
+// Check if programmingArea exists before adding listeners
+if (programmingArea) {
+    // טיפול באירוע גרירה מעל אזור התכנות (dragover)
+    programmingArea.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
+    });
 
-// טיפול באירוע שחרור באזור התכנות (drop)
-programmingArea.addEventListener("drop", handleDrop);
+    // טיפול באירוע שחרור באזור התכנות (drop)
+    programmingArea.addEventListener("drop", handleDrop);
+} else {
+    console.error("Element with ID 'program-blocks' not found.");
+}
+
 
 const categoryTabs = document.querySelectorAll(".category-tab");
 const blockCategories = document.querySelectorAll(".block-category");
@@ -412,92 +434,143 @@ categoryTabs.forEach(tab => {
 const gridToggle = document.getElementById("grid-toggle");
 const stage = document.getElementById("stage");
 
-gridToggle.addEventListener("click", () => {
-    stage.classList.toggle("show-grid");
-});
+// Check if elements exist before adding listeners
+if (gridToggle && stage) {
+    gridToggle.addEventListener("click", () => {
+        stage.classList.toggle("show-grid");
+    });
+} else {
+    if (!gridToggle) console.error("Element with ID 'grid-toggle' not found.");
+    if (!stage) console.error("Element with ID 'stage' not found.");
+}
+
 
 // ניקוי כל הבלוקים מאזור התכנות
 const clearAllButton = document.getElementById("clear-all");
-clearAllButton.addEventListener("click", () => {
-    programmingArea.innerHTML = "";
-});
+// Check if clearAllButton exists before adding listener
+if (clearAllButton) {
+    clearAllButton.addEventListener("click", () => {
+        if (programmingArea) {
+            programmingArea.innerHTML = "";
+        }
+    });
+} else {
+    console.error("Element with ID 'clear-all' not found.");
+}
 
-// אתחול הלוח עם הקטגוריה הפעילה הראשונה
-populateBlockPalette("triggering");
+
+// אתחול הלוח עם הקטגוריה הפעילה הראשונה (only if elements exist)
+if (categoryTabs.length > 0 && blockCategories.length > 0 && programmingArea) {
+     // Ensure the first tab is active initially if needed
+     const firstCategory = categoryTabs[0]?.dataset?.category;
+     if (firstCategory) {
+         handleCategoryChange(firstCategory); // Call handleCategoryChange to populate and set active
+     } else {
+        // Fallback or default category if the first tab has no category data
+        populateBlockPalette("triggering"); // Or your default category
+        document.getElementById("triggering-blocks")?.classList.add("active");
+        document.querySelector('.category-tab[data-category="triggering"]')?.classList.add('active');
+     }
+}
 
 // ========================================================================
-// קוד מתוקן לגרירה של הדמות - הסמן במרכז הדמות
+// קוד מתוקן לגרירה של הדמות
 // ========================================================================
 
 // מקבל הפניה לאלמנט הדמות
 const character = document.getElementById('character');
 
-// פונקציה שמתחילה את הגרירה
-function startDrag(e) {
-    // מנע התנהגות ברירת מחדל
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // מפעיל מצב גרירה
-    isDragging = true;
-    
-    // מוסיף מחלקה לדמות בזמן גרירה
-    character.classList.add('dragging');
-    
-    // מוסיף שומרי אירועים זמניים למסמך כולו
-    document.addEventListener('mousemove', drag);
-    document.addEventListener('mouseup', endDrag);
-    
-    // משנה את סמן העכבר
-    document.body.style.cursor = 'grabbing';
-    
-    // מתחיל את הגרירה מיד עם הלחיצה
-    drag(e);
-}
+// Check if character and stage elements exist before proceeding
+if (character && stage) {
 
-// פונקציה שמבצעת את הגרירה
-function drag(e) {
-    if (!isDragging) return;
-    
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const stageRect = stage.getBoundingClientRect();
-    
-    // חישוב המיקום החדש כך שהסמן יהיה במרכז הדמות
-    let newX = e.clientX - stageRect.left - (character.offsetWidth / 2);
-    let newY = e.clientY - stageRect.top - (character.offsetHeight / 2);
-    
-    // וידוא שהדמות נשארת בתוך גבולות הבמה
-    newX = Math.max(0, Math.min(newX, stageRect.width - character.offsetWidth));
-    newY = Math.max(0, Math.min(newY, stageRect.height - character.offsetHeight));
-    
-    // עדכון מיקום הדמות
-    character.style.left = newX + 'px';
-    character.style.top = newY + 'px';
-}
+    // פונקציה שמתחילה את הגרירה
+    function startDrag(e) {
+        // מנע התנהגות ברירת מחדל וברירת טקסט
+        // Check if the event target is the character itself or a child
+        // This prevents dragging if clicking on interactive elements *inside* the character later
+        if (e.target !== character && !character.contains(e.target)) {
+             return;
+        }
 
-// פונקציה שמסיימת את הגרירה
-function endDrag(e) {
-    if (!isDragging) return;
-    
-    // מניעת התנהגות ברירת מחדל
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // מבטל את מצב הגרירה
-    isDragging = false;
-    
-    // מסיר את המחלקה מהדמות
-    character.classList.remove('dragging');
-    
-    // מחזיר את סמן העכבר למצב רגיל
-    document.body.style.cursor = 'default';
-    
-    // מסיר את שומרי האירועים מהמסמך
-    document.removeEventListener('mousemove', drag);
-    document.removeEventListener('mouseup', endDrag);
-}
+        e.preventDefault();
+        // e.stopPropagation(); // Usually not needed here, might interfere if needed elsewhere
 
-// מוסיף שומר אירועים להתחלת גרירה
-character.addEventListener('mousedown', startDrag);
+        // חשוב מאוד - מחשב את הנקודה המדויקת שבה העכבר לחץ על הדמות
+        const rect = character.getBoundingClientRect();
+        dragOffsetX = e.clientX - rect.left;
+        dragOffsetY = e.clientY - rect.top;
+
+        // מפעיל מצב גרירה
+        isDragging = true;
+
+        // Optional: Add a class for visual feedback during drag
+        character.classList.add('dragging');
+        document.body.style.cursor = 'grabbing'; // Change cursor immediately
+
+        // מאפשר לדמות להיגרר בחופשיות (already handled by class/cursor)
+        // character.style.pointerEvents = 'none'; // Can cause issues with mouseup if not handled carefully
+
+        // מוסיף שומרי אירועים זמניים למסמך כולו
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', endDrag, { once: true }); // Use { once: true } for automatic removal
+        document.addEventListener('mouseleave', endDrag, { once: true }); // Handle leaving the window
+    }
+
+    // פונקציה שמבצעת את הגרירה
+    function drag(e) {
+        if (!isDragging) return;
+
+        // No need for preventDefault/stopPropagation here usually in mousemove
+        // e.preventDefault();
+        // e.stopPropagation();
+
+        const stageRect = stage.getBoundingClientRect();
+        const characterWidth = character.offsetWidth;
+        const characterHeight = character.offsetHeight;
+
+        // חישוב המיקום החדש כך שהסמן יישאר במקום המדויק שבו התחיל את הגרירה
+        let x = e.clientX - stageRect.left - dragOffsetX;
+        let y = e.clientY - stageRect.top - dragOffsetY;
+
+        // וידוא שהדמות נשארת בתוך גבולות הבמה
+        x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
+        y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
+
+        // עדכון מיקום הדמות
+        character.style.left = x + 'px';
+        character.style.top = y + 'px';
+    }
+
+    // פונקציה שמסיימת את הגרירה
+    function endDrag(e) {
+        if (!isDragging) return;
+
+        // חובה למנוע התנהגות ברירת מחדל גם בשחרור (less critical here, but good practice)
+        // e.preventDefault();
+        // e.stopPropagation();
+
+        // מבטל את מצב הגרירה
+        isDragging = false;
+
+        // מחזיר את אירועי המצביע לדמות וסטייל
+        // character.style.pointerEvents = 'auto'; // Reset if 'none' was used
+        character.classList.remove('dragging');
+        document.body.style.cursor = 'default'; // Reset cursor
+
+        // מסיר את שומרי האירועים מהמסמך (automatically done with { once: true })
+        document.removeEventListener('mousemove', drag);
+        // document.removeEventListener('mouseup', endDrag); // Not needed with { once: true }
+        // document.removeEventListener('mouseleave', endDrag); // Not needed with { once: true }
+
+    }
+
+    // מוסיף שומר אירועים להתחלת גרירה
+    character.addEventListener('mousedown', startDrag);
+
+    // Prevent browser's default drag behavior on the image/character
+    character.addEventListener('dragstart', (e) => e.preventDefault());
+
+} else {
+     if (!character) console.error("Element with ID 'character' not found.");
+     if (!stage) console.error("Element with ID 'stage' not found. Character dragging disabled.");
+}
