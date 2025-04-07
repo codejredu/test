@@ -5,7 +5,7 @@
 // משתנים חדשים לתיקון הגרירה
 let dragOffsetX = 0;
 let dragOffsetY = 0;
-let isDragging = false; // הגדרה אחת בלבד של המשתנה
+let isDraggingCharacter = false; // משתנה ייעודי לגרירת הדמות
 
 const blocks = {
     triggering: [
@@ -384,7 +384,7 @@ function handleCategoryChange(category) {
 }
 
 // ========================================================================
-//  לוגיקת גרירה ושחרור (Drag and Drop)
+//  לוגיקת גרירה ושחרור (Drag and Drop) עבור בלוקים
 // ========================================================================
 
 const programmingArea = document.getElementById("program-blocks");
@@ -412,15 +412,24 @@ categoryTabs.forEach(tab => {
 const gridToggle = document.getElementById("grid-toggle");
 const stage = document.getElementById("stage");
 
-gridToggle.addEventListener("click", () => {
-    stage.classList.toggle("show-grid");
-});
+// ודא שהאלמנט stage קיים לפני הוספת event listener
+if (gridToggle) {
+    gridToggle.addEventListener("click", () => {
+        if (stage) {
+            stage.classList.toggle("show-grid");
+        }
+    });
+}
 
 // ניקוי כל הבלוקים מאזור התכנות
 const clearAllButton = document.getElementById("clear-all");
-clearAllButton.addEventListener("click", () => {
-    programmingArea.innerHTML = "";
-});
+if (clearAllButton) {
+    clearAllButton.addEventListener("click", () => {
+        if (programmingArea) {
+            programmingArea.innerHTML = "";
+        }
+    });
+}
 
 // אתחול הלוח עם הקטגוריה הפעילה הראשונה
 populateBlockPalette("triggering");
@@ -430,99 +439,4 @@ populateBlockPalette("triggering");
 // ========================================================================
 
 // מקבל הפניה לאלמנט הדמות
-const character = document.getElementById('character');
-
-// פונקציה שמתחילה את הגרירה
-function startDrag(e) {
-    // מנע התנהגות ברירת מחדל וברירת טקסט
-    e.preventDefault();
-    e.stopPropagation();
-
-    const rect = character.getBoundingClientRect();
-    dragOffsetX = e.clientX - (rect.left + rect.width / 2);
-    dragOffsetY = e.clientY - (rect.top + rect.height / 2);
-
-    console.log('Start Drag - Offset:', dragOffsetX, dragOffsetY);
-    console.log('Start Drag - Client:', e.clientX, e.clientY);
-    console.log('Start Drag - Rect:', rect);
-
-    // מפעיל מצב גרירה
-    isDragging = true;
-
-    // מאפשר לדמות להיגרר בחופשיות
-    character.style.pointerEvents = 'none';
-
-    // מוסיף שומרי אירועים זמניים למסמך כולו
-    document.addEventListener('mousemove', drag);
-    document.addEventListener('mouseup', endDrag);
-}
-
-// פונקציה שמבצעת את הגרירה
-function drag(e) {
-    if (!isDragging) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    const stageRect = stage.getBoundingClientRect();
-    const characterWidth = character.offsetWidth;
-    const characterHeight = character.offsetHeight;
-
-    // חישוב המיקום החדש כך שהסמן יישאר במקום המדויק שבו התחיל את הגרירה
-    let x = e.clientX - stageRect.left - dragOffsetX;
-    let y = e.clientY - stageRect.top - dragOffsetY;
-
-    console.log('Dragging - Client:', e.clientX, e.clientY);
-    console.log('Dragging - Stage Rect:', stageRect);
-    console.log('Dragging - Calculated:', x, y);
-
-    // וידוא שהדמות נשארת בתוך גבולות הבמה
-    x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
-    y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
-
-    // עדכון מיקום הדמות
-    character.style.left = x + 'px';
-    character.style.top = y + 'px';
-}
-
-// פונקציה שמסיימת את הגרירה
-function endDrag(e) {
-    if (!isDragging) return;
-
-    // חובה למנוע התנהגות ברירת מחדל גם בשחרור
-    e.preventDefault();
-    e.stopPropagation();
-
-    // מבטל את מצב הגרירה
-    isDragging = false;
-
-    // מחזיר את אירועי המצביע לדמות
-    character.style.pointerEvents = 'auto';
-
-    // מסיר את שומרי האירועים מהמסמך
-    document.removeEventListener('mousemove', drag);
-    document.removeEventListener('mouseup', endDrag);
-}
-
-// מוסיף שומר אירועים להתחלת גרירה
-character.addEventListener('mousedown', startDrag);
-
-// הוספת סגנון לסמן בזמן גרירה
-document.addEventListener('mousemove', (e) => {
-    if (isDragging) {
-        document.body.style.cursor = 'grabbing';
-    }
-});
-
-// החזרת הסמן למצב רגיל אחרי הגרירה
-document.addEventListener('mouseup', () => {
-    if (isDragging) {
-        document.body.style.cursor = 'default';
-        character.classList.remove('dragging');
-    }
-});
-
-// אם צריך לשנות את המראה של הדמות בזמן גרירה (אופציונלי)
-character.addEventListener('mousedown', () => {
-    character.classList.add('dragging');
-});
+const character = document.
