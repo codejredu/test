@@ -416,6 +416,21 @@ gridToggle.addEventListener("click", () => {
     stage.classList.toggle("show-grid");
 });
 
+// הוספת לחצן שינוי רקע
+const backgroundButton = document.getElementById("background-button");
+const backgrounds = [
+    "url('assets/images/backgrounds/background1.jpg')",
+    "url('assets/images/backgrounds/background2.jpg')",
+    "url('assets/images/backgrounds/background3.jpg')"
+];
+let currentBackgroundIndex = 0;
+
+backgroundButton.addEventListener("click", () => {
+    currentBackgroundIndex = (currentBackgroundIndex + 1) % backgrounds.length;
+    stage.style.backgroundImage = backgrounds[currentBackgroundIndex];
+    stage.style.backgroundSize = 'cover'; // מוודא שהתמונה מכסה את כל הבמה
+});
+
 // ניקוי כל הבלוקים מאזור התכנות
 const clearAllButton = document.getElementById("clear-all");
 clearAllButton.addEventListener("click", () => {
