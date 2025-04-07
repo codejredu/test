@@ -1,11 +1,11 @@
 /* style.css - עם צבעים מעודכנים לילדי גן */
 :root {
-    --motion-color: #66D2FF;    /* כחול-תכלת בהיר */
-    --triggering-color: #FFE866; /* צהוב בננה רך */
-    --looks-color: #D295F6;     /* סגול לבנדר רך */
-    --sound-color: #7ED957;     /* ירוק תפוח בהיר */
-    --control-color: #FFBD67;   /* כתום אפרסק */
-    --end-color: #FF6B6B;       /* אדום קורל רך */
+    --motion-color: #66D2FF;
+    --triggering-color: #FFE866;
+    --looks-color: #D295F6;
+    --sound-color: #7ED957;
+    --control-color: #FFBD67;
+    --end-color: #FF6B6B;
 }
 
 body {
@@ -13,7 +13,7 @@ body {
     margin: 0;
     padding: 0;
     background-color: #f0f4ff;
-    direction: ltr; /* Make sure direction is LTR */
+    direction: ltr;
 }
 
 .container {
@@ -55,6 +55,7 @@ main {
     position: relative;
     gap: 1px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    overflow: hidden; /* כדי שהתמונה לא תשבור את המסגרת */
 }
 
 #stage::before {
@@ -76,8 +77,8 @@ main {
   background-image:
     linear-gradient(to right, lightgrey 1px, transparent 1px),
     linear-gradient(to bottom, lightgrey 1px, transparent 1px);
-  background-size: 56px 46px; /* Set the size of the grid lines */
-  background-position: top left; /* Align the grid to the top left */
+  background-size: 56px 46px;
+  background-position: top left;
 }
 
 #character {
@@ -99,16 +100,16 @@ main {
 }
 
 #block-palette {
-    background-color: #f0f0f0; /* Gray background as requested */
+    background-color: #f0f0f0;
     border: 1px solid #e0e0e0;
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    height: 105px; /* Fixed height of 114px as requested */
+    height: 105px;
     display: flex;
     flex-direction: row;
     align-items: stretch;
-    overflow: hidden; /* Prevent content from overflowing */
+    overflow: hidden;
 }
 
 .category-tabs {
@@ -118,7 +119,7 @@ main {
     margin-bottom: 0;
     height: 100%;
     align-content: flex-start;
-    background-color: #f0f0f0; /* Gray background behind tabs */
+    background-color: #f0f0f0;
 }
 
 .category-tab {
@@ -143,7 +144,6 @@ main {
     max-width: 60%;
     max-height: 60%;
     pointer-events: none;
-
 }
 
 .category-tab[data-category="triggering"] {
@@ -176,15 +176,15 @@ main {
     flex-grow: 1;
     height: 100%;
     border-right: 1px solid #e0e0e0;
-    margin-left: 0px; /* Remove margin-left to align with tabs */
-    background-color: #0D66CA; /* blue background behind programming blocks */
+    margin-left: 0px;
+    background-color: #0D66CA;
 }
 
 .block-category.active {
     display: flex;
     flex-wrap: wrap;
     padding: 10px;
-    background-color: #0D66CA; /* blue background behind programming blocks */
+    background-color: #0D66CA;
 }
 
 #programming-area {
@@ -193,8 +193,8 @@ main {
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    flex: 2; /* Increased to make programming area taller */
-    min-height: 200px; /* Set minimum height */
+    flex: 2;
+    min-height: 200px;
 }
 
 .program-header {
@@ -210,7 +210,7 @@ main {
 }
 
 #program-blocks {
-    min-height: 180px; /* Increased height */
+    min-height: 180px;
     border: 1px dashed #ccc;
     padding: 10px;
     position: relative;
@@ -252,7 +252,7 @@ main {
     position: relative;
     width: 87px;
     height: 80px;
-    background-color: #ffff00; /* צבע ברירת מחדל, ידרוס ע"י כללים ספציפיים */
+    background-color: #ffff00;
     border-radius: 10px;
     display: flex;
     justify-content: center;
@@ -277,13 +277,13 @@ main {
 #programming-area .scratch-block:not([data-type="repeat"]):not([data-category="end"])::after {
     content: '';
     position: absolute;
-    right: -9px; /* שינוי מ-14px ל-9px כדי ליצור חצי עיגול */
+    right: -9px;
     top: 50%;
     transform: translateY(-50%);
-    width: 9px; /* שינוי מ-18px ל-9px (חצי מהרוחב המקורי) */
-    height: 18px; /* נשאר הגובה המקורי */
+    width: 9px;
+    height: 18px;
     background-color: inherit;
-    border-radius: 0 9px 9px 0; /* שינוי מ-50% (עיגול מלא) לחצי עיגול בצד ימין */
+    border-radius: 0 9px 9px 0;
 }
 
 /* Change the full circle to half circle on the left side */
@@ -294,10 +294,10 @@ main {
     left: 0;
     top: 50%;
     transform: translateY(-50%);
-    width: 9px; /* Half the original width of 18px */
-    height: 18px; /* Keep the original height */
-    background-color: #f0f4ff; /* Keep the background color */
-    border-radius: 0 9px 9px 0; /* Make only the right side rounded */
+    width: 9px;
+    height: 18px;
+    background-color: #f0f4ff;
+    border-radius: 0 9px 9px 0;
 }
 
 .block-icon {
@@ -318,9 +318,8 @@ main {
     max-width: 60%;
     max-height: 60%;
     display: block;
-    margin: auto; /* Center the image */
+    margin: auto;
 }
-
 
 #triggering-blocks .block-container .scratch-block {
     background-color: var(--triggering-color);
@@ -346,8 +345,11 @@ main {
     background-color: var(--end-color);
 }
 
-/* סגנון לכפתור GRID */
-#grid-toggle {
+/* ========================================================================
+  כפתורים בHEADER (GRID + רקע)
+ ======================================================================== */
+
+.header-icons button {
     margin-left: 10px;
     font-size: 16px;
     color: #fff;
@@ -355,20 +357,52 @@ main {
     border: none;
     padding: 8px 16px;
     border-radius: 5px;
-    background-color: #4CAF50; /* צבע ירוק נעים */
     transition: background-color 0.3s ease;
 }
 
-#grid-toggle:hover {
-    background-color: #367C39; /* צבע ירוק כהה יותר במעבר עכבר */
+#grid-toggle {
+    background-color: #4CAF50; /* ירוק */
 }
 
-/* סגנון לכפתור שינוי רקע */
+#grid-toggle:hover {
+    background-color: #367C39;
+}
+
 #background-button {
-    margin-left: 10px;
-    font-size: 16px;
-    color: #fff;
-    cursor: pointer;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 
+    background-color: #2196F3; /* כחול */
+}
+
+#background-button:hover {
+    background-color: #0B7DDA;
+}
+
+/* תיקונים לצבעי הבלוקים בקטגוריה פעילה */
+.block-category.active .scratch-block {
+    background-color: inherit;
+}
+#triggering-blocks.active .block-container .scratch-block {
+    background-color: var(--triggering-color);
+}
+#motion-blocks.active .block-container .scratch-block {
+    background-color: var(--motion-color);
+}
+#looks-blocks.active .block-container .scratch-block {
+    background-color: var(--looks-color);
+}
+#sound-blocks.active .block-container .scratch-block {
+    background-color: var(--sound-color);
+}
+#control-blocks.active .block-container .scratch-block:not([data-type="repeat"]) {
+    background-color: var(--control-color);
+}
+#end-blocks.active .block-container .scratch-block {
+    background-color: var(--end-color);
+}
+
+/* --- סגנון מיוחד לבלוק Repeat --- */
+#control-blocks .block-container[data-type="repeat"] .scratch-block,
+#programming-area .block-container[data-type="repeat"] .scratch-block {
+  position: relative;
+  background:
+    radial-gradient(circle at 0% 50%, white 10px, transparent 10.5px) no-repeat center left 0px / 10px 20px,
+    radial-gradient(circle at 0% 50%, white 10px, transparent 10.5px) no-repeat calc(50% + 
