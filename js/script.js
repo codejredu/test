@@ -443,6 +443,10 @@ function startDrag(e) {
     dragOffsetX = e.clientX - rect.left;
     dragOffsetY = e.clientY - rect.top;
     
+    console.log('Start Drag - Offset:', dragOffsetX, dragOffsetY);
+    console.log('Start Drag - Client:', e.clientX, e.clientY);
+    console.log('Start Drag - Rect:', rect);
+    
     // מפעיל מצב גרירה
     isDragging = true;
     
@@ -468,6 +472,10 @@ function drag(e) {
     // חישוב המיקום החדש כך שהסמן יישאר במקום המדויק שבו התחיל את הגרירה
     let x = e.clientX - stageRect.left - dragOffsetX;
     let y = e.clientY - stageRect.top - dragOffsetY;
+    
+    console.log('Dragging - Client:', e.clientX, e.clientY);
+    console.log('Dragging - Stage Rect:', stageRect);
+    console.log('Dragging - Calculated:', x, y);
     
     // וידוא שהדמות נשארת בתוך גבולות הבמה
     x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
