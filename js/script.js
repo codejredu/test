@@ -5,13 +5,13 @@
 // משתנים חדשים לתיקון הגרירה
 let dragOffsetX = 0;
 let dragOffsetY = 0;
-let isDragging = false; // הגדרה אחת בלבד של המשתנה
+let isDragging = false;
 
 const blocks = {
     triggering: [
         {
             name: "Green Flag",
-            color: "var(--triggering-color)", // שימוש במשתנה CSS במקום ערך קבוע
+            color: "var(--triggering-color)",
             type: "startOnGreenFlag",
             icon: "assets/images/green-flag.svg",
         },
@@ -179,11 +179,11 @@ const blocks = {
             name: "Repeat Forever",
             type: "repeatForever",
             icon: "assets/images/blocks/repeat-forever.svg",
-            color: "var(--end-color)"  // שים לב שהצבע השתנה ל-end-color
+            color: "var(--end-color)"
         },
         {
             name: "Go To Page",
-            color: "var(--end-color)",  // שים לב שהצבע השתנה ל-end-color
+            color: "var(--end-color)",
             type: "goToPage",
             icon: "assets/images/blocks/go-to-page.svg",
         },
@@ -408,16 +408,15 @@ categoryTabs.forEach(tab => {
     });
 });
 
-// הוספת כפתור קווי GRID
+// ========================================================================
+//  טיפול בכפתורי HEADER (GRID ורקע)
+// ========================================================================
+
 const gridToggle = document.getElementById("grid-toggle");
+const backgroundButton = document.getElementById("background-button");
 const stage = document.getElementById("stage");
 
-gridToggle.addEventListener("click", () => {
-    stage.classList.toggle("show-grid");
-});
-
-// הוספת לחצן שינוי רקע
-const backgroundButton = document.getElementById("background-button");
+// רקעים לבמה
 const backgrounds = [
     "url('assets/images/backgrounds/background1.jpg')",
     "url('assets/images/backgrounds/background2.jpg')",
@@ -425,13 +424,22 @@ const backgrounds = [
 ];
 let currentBackgroundIndex = 0;
 
+// GRID
+gridToggle.addEventListener("click", () => {
+    stage.classList.toggle("show-grid");
+});
+
+// רקע
 backgroundButton.addEventListener("click", () => {
     currentBackgroundIndex = (currentBackgroundIndex + 1) % backgrounds.length;
     stage.style.backgroundImage = backgrounds[currentBackgroundIndex];
-    stage.style.backgroundSize = 'cover'; // מוודא שהתמונה מכסה את כל הבמה
+    stage.style.backgroundSize = 'cover';
 });
 
-// ניקוי כל הבלוקים מאזור התכנות
+// ========================================================================
+//  ניקוי כל הבלוקים מאזור התכנות
+// ========================================================================
+
 const clearAllButton = document.getElementById("clear-all");
 clearAllButton.addEventListener("click", () => {
     programmingArea.innerHTML = "";
@@ -456,10 +464,6 @@ function startDrag(e) {
     const rect = character.getBoundingClientRect();
     dragOffsetX = e.clientX - (rect.left + rect.width / 2);
     dragOffsetY = e.clientY - (rect.top + rect.height / 2);
-
-    console.log('Start Drag - Offset:', dragOffsetX, dragOffsetY);
-    console.log('Start Drag - Client:', e.clientX, e.clientY);
-    console.log('Start Drag - Rect:', rect);
 
     // מפעיל מצב גרירה
     isDragging = true;
@@ -486,10 +490,6 @@ function drag(e) {
     // חישוב המיקום החדש כך שהסמן יישאר במקום המדויק שבו התחיל את הגרירה
     let x = e.clientX - stageRect.left - dragOffsetX;
     let y = e.clientY - stageRect.top - dragOffsetY;
-
-    console.log('Dragging - Client:', e.clientX, e.clientY);
-    console.log('Dragging - Stage Rect:', stageRect);
-    console.log('Dragging - Calculated:', x, y);
 
     // וידוא שהדמות נשארת בתוך גבולות הבמה
     x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
