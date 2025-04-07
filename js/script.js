@@ -426,7 +426,7 @@ clearAllButton.addEventListener("click", () => {
 populateBlockPalette("triggering");
 
 // ========================================================================
-// קוד מתוקן לגרירה של הדמות
+// קוד מתוקן לגרירה של הדמות - הסמן במרכז הדמות
 // ========================================================================
 
 // מקבל הפניה לאלמנט הדמות
@@ -434,14 +434,9 @@ const character = document.getElementById('character');
 
 // פונקציה שמתחילה את הגרירה
 function startDrag(e) {
-    // מנע התנהגות ברירת מחדל וברירת טקסט
+    // מנע התנהגות ברירת מחדל
     e.preventDefault();
     e.stopPropagation();
-    
-    // חשוב מאוד - מחשב את הנקודה המדויקת שבה העכבר לחץ על הדמות
-    const rect = character.getBoundingClientRect();
-    dragOffsetX = e.clientX - rect.left;
-    dragOffsetY = e.clientY - rect.top;
     
     // מפעיל מצב גרירה
     isDragging = true;
@@ -455,6 +450,9 @@ function startDrag(e) {
     
     // משנה את סמן העכבר
     document.body.style.cursor = 'grabbing';
+    
+    // מתחיל את הגרירה מיד עם הלחיצה
+    drag(e);
 }
 
 // פונקציה שמבצעת את הגרירה
@@ -466,9 +464,9 @@ function drag(e) {
     
     const stageRect = stage.getBoundingClientRect();
     
-    // חישוב המיקום החדש תוך שמירה על ההיסט המקורי
-    let newX = e.clientX - stageRect.left - dragOffsetX;
-    let newY = e.clientY - stageRect.top - dragOffsetY;
+    // חישוב המיקום החדש כך שהסמן יהיה במרכז הדמות
+    let newX = e.clientX - stageRect.left - (character.offsetWidth / 2);
+    let newY = e.clientY - stageRect.top - (character.offsetHeight / 2);
     
     // וידוא שהדמות נשארת בתוך גבולות הבמה
     newX = Math.max(0, Math.min(newX, stageRect.width - character.offsetWidth));
@@ -483,7 +481,7 @@ function drag(e) {
 function endDrag(e) {
     if (!isDragging) return;
     
-    // חובה למנוע התנהגות ברירת מחדל גם בשחרור
+    // מניעת התנהגות ברירת מחדל
     e.preventDefault();
     e.stopPropagation();
     
