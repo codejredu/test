@@ -457,7 +457,7 @@ function startDrag(e) {
     document.addEventListener('mouseup', endDrag);
 }
 
-// פונקציה שמבצעת את הגרירה - עם תיקון לגבולות הבמה
+// פונקציה שמבצעת את הגרירה
 function drag(e) {
     if (!isDragging) return;
 
@@ -476,13 +476,11 @@ function drag(e) {
     console.log('Dragging - Stage Rect:', stageRect);
     console.log('Dragging - Calculated:', x, y);
 
-    // חישוב הגבולות המקסימליים עבור הדמות
-    const maxX = stageRect.width - characterWidth;
-    const maxY = stageRect.height - characterHeight;
-    
-    // וידוא שהדמות נשארת בתוך גבולות הבמה
-    x = Math.max(0, Math.min(x, maxX));
-    y = Math.max(0, Math.min(y, maxY));
+    // בדיקה האם הדמות מגיעה לגבולות הבמה
+    if (x < 0) x = 0;
+    if (y < 0) y = 0;
+    if (x > stageRect.width - characterWidth) x = stageRect.width - characterWidth;
+    if (y > stageRect.height - characterHeight) y = stageRect.height - characterHeight;
 
     // עדכון מיקום הדמות
     character.style.left = x + 'px';
