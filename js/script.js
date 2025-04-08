@@ -287,18 +287,9 @@ function handleDrop(event) {
 
             // מצא את מיקום השחרור ועדכן מיקום
             const rect = programmingArea.getBoundingClientRect();
-            
-            // חישוב המיקום החדש
-            let newLeft = event.clientX - rect.left - (draggedBlock.offsetWidth / 2);
-            let newTop = event.clientY - rect.top - (draggedBlock.offsetHeight / 2);
-            
-            // וידוא שהבלוק נשאר בתוך גבולות אזור התכנות
-            newLeft = Math.max(0, Math.min(newLeft, rect.width - draggedBlock.offsetWidth));
-            newTop = Math.max(0, Math.min(newTop, rect.height - draggedBlock.offsetHeight));
-            
             draggedBlock.style.position = "absolute";
-            draggedBlock.style.left = `${newLeft}px`;
-            draggedBlock.style.top = `${newTop}px`;
+            draggedBlock.style.left = `${event.clientX - rect.left - (draggedBlock.offsetWidth / 2)}px`;
+            draggedBlock.style.top = `${event.clientY - rect.top - (draggedBlock.offsetHeight / 2)}px`;
 
             programmingArea.appendChild(draggedBlock); // הוסף את הבלוק במיקום החדש (כרגע בסוף)
         }
@@ -360,18 +351,9 @@ function handleDrop(event) {
 
         // מיקום הבלוק החדש יחסי לאזור התכנות - מתחת לעכבר
         const rect = programmingArea.getBoundingClientRect();
-        
-        // חישוב המיקום החדש
-        let newLeft = event.clientX - rect.left - (newBlock.offsetWidth / 2);
-        let newTop = event.clientY - rect.top - (newBlock.offsetHeight / 2);
-        
-        // וידוא שהבלוק נשאר בתוך גבולות אזור התכנות
-        newLeft = Math.max(0, Math.min(newLeft, rect.width - newBlock.offsetWidth));
-        newTop = Math.max(0, Math.min(newTop, rect.height - newBlock.offsetHeight));
-        
         newBlock.style.position = "absolute"; // השתמש במיקום אבסולוטי
-        newBlock.style.left = `${newLeft}px`; // מרכז את הבלוק אופקית ומגביל לגבולות
-        newBlock.style.top = `${newTop}px`; // מרכז את הבלוק אנכית ומגביל לגבולות
+        newBlock.style.left = `${event.clientX - rect.left - (newBlock.offsetWidth / 2)}px`; // מרכז את הבלוק אופקית
+        newBlock.style.top = `${event.clientY - rect.top - (newBlock.offsetHeight / 2)}px`; // מרכז את הבלוק אנכית
     }
 }
 
@@ -457,9 +439,12 @@ function startDrag(e) {
     e.stopPropagation();
 
     const rect = character.getBoundingClientRect();
-    // חישוב המרחק בין נקודת הלחיצה למרכז האלמנט
-    dragOffsetX = e.clientX - rect.left;
-    dragOffsetY = e.clientY - rect.top;
+    dragOffsetX = e.clientX - (rect.left + rect.width / 2);
+    dragOffsetY = e.clientY - (rect.top + rect.height / 2);
+
+    console.log('Start Drag - Offset:', dragOffsetX, dragOffsetY);
+    console.log('Start Drag - Client:', e.clientX, e.clientY);
+    console.log('Start Drag - Rect:', rect);
 
     // מפעיל מצב גרירה
     isDragging = true;
@@ -472,7 +457,7 @@ function startDrag(e) {
     document.addEventListener('mouseup', endDrag);
 }
 
-// פונקציה שמבצעת את הגרירה
+// פונקציה שמבצעת את הגרירה - עם תיקון לגבולות הבמה
 function drag(e) {
     if (!isDragging) return;
 
@@ -480,18 +465,24 @@ function drag(e) {
     e.stopPropagation();
 
     const stageRect = stage.getBoundingClientRect();
-    const characterRect = character.getBoundingClientRect();
-    const characterWidth = characterRect.width;
-    const characterHeight = characterRect.height;
+    const characterWidth = character.offsetWidth;
+    const characterHeight = character.offsetHeight;
 
     // חישוב המיקום החדש כך שהסמן יישאר במקום המדויק שבו התחיל את הגרירה
     let x = e.clientX - stageRect.left - dragOffsetX;
     let y = e.clientY - stageRect.top - dragOffsetY;
 
+    console.log('Dragging - Client:', e.clientX, e.clientY);
+    console.log('Dragging - Stage Rect:', stageRect);
+    console.log('Dragging - Calculated:', x, y);
+
+    // חישוב הגבולות המקסימליים עבור הדמות
+    const maxX = stageRect.width - characterWidth;
+    const maxY = stageRect.height - characterHeight;
+    
     // וידוא שהדמות נשארת בתוך גבולות הבמה
-    // שים לב: הגבלת הגרירה כך שהדמות לא תחרוג מהגבולות
-    x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
-    y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
+    x = Math.max(0, Math.min(x, maxX));
+    y = Math.max(0, Math.min(y, maxY));
 
     // עדכון מיקום הדמות
     character.style.left = x + 'px';
