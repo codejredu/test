@@ -1,528 +1,439 @@
-/* style.css - עם צבעים מעודכנים לילדי גן */
-:root {
-    --motion-color: #66D2FF;    /* כחול-תכלת בהיר */
-    --triggering-color: #FFE866; /* צהוב בננה רך */
-    --looks-color: #D295F6;     /* סגול לבנדר רך */
-    --sound-color: #7ED957;     /* ירוק תפוח בהיר */
-    --control-color: #FFBD67;   /* כתום אפרסק */
-    --end-color: #FF6B6B;       /* אדום קורל רך */
-}
-
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f0f4ff;
-    direction: ltr; /* Make sure direction is LTR */
-}
-
-.container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-}
-
-header {
-    background-color: #fff;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #e0e0e0;
-}
-
-main {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-}
-
-.stage-container {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 10px;
-}
-
-#stage {
-    flex: 0 0 auto;
-    width: 560px;
-    height: 460px;
-    background-color: #f5f5f5;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    position: relative;
-    gap: 1px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-}
-
-#stage::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    background: none;
-}
-
-#stage.show-grid::before {
-    background: none;
-}
-
-#stage.show-grid {
-  background-image:
-    linear-gradient(to right, lightgrey 1px, transparent 1px),
-    linear-gradient(to bottom, lightgrey 1px, transparent 1px);
-  background-size: 56px 46px; /* Set the size of the grid lines */
-  background-position: top left; /* Align the grid to the top left */
-}
-
-#character {
-    width: 100px;
-    height: 100px;
-    position: absolute;
-    object-fit: contain;
-    cursor: grab;
-    transition: all 0.1s ease-out;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
-
-.palette-and-programming {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-}
-
-#block-palette {
-    background-color: #f0f0f0; /* Gray background as requested */
-    border: 1px solid #e0e0e0;
-    margin: 10px;
-    padding: 10px;
-    border-radius: 10px;
-    height: 105px; /* Fixed height of 114px as requested */
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    overflow: hidden; /* Prevent content from overflowing */
-}
-
-.category-tabs {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    margin-bottom: 0;
-    height: 100%;
-    align-content: flex-start;
-    background-color: #f0f0f0; /* Gray background behind tabs */
-}
-
-.category-tab {
-    border: none;
-    padding: 0;
-    margin-left: 5px;
-    margin-bottom: 5px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 16px;
-    color: #000000;
-    width: 80px;
-    height: 80px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
-}
-
-.category-tab img {
-    max-width: 60%;
-    max-height: 60%;
-    pointer-events: none;
-
-}
-
-.category-tab[data-category="triggering"] {
-    background-color: var(--triggering-color);
-}
-
-.category-tab[data-category="motion"] {
-    background-color: var(--motion-color);
-}
-
-.category-tab[data-category="looks"] {
-    background-color: var(--looks-color);
-}
-
-.category-tab[data-category="sound"] {
-    background-color: var(--sound-color);
-}
-
-.category-tab[data-category="control"] {
-    background-color: var(--control-color);
-}
-
-.category-tab[data-category="end"] {
-    background-color: var(--end-color);
-}
-
-.block-category {
-    display: none;
-    padding: 10px;
-    flex-grow: 1;
-    height: 100%;
-    border-right: 1px solid #e0e0e0;
-    margin-left: 0px; /* Remove margin-left to align with tabs */
-    background-color: #0D66CA; /* blue background behind programming blocks */
-}
-
-.block-category.active {
-    display: flex;
-    flex-wrap: wrap;
-    padding: 10px;
-    background-color: #0D66CA; /* blue background behind programming blocks */
-}
-
-#programming-area {
-    background-color: #fff;
-    border: 1px solid #e0e0e0;
-    margin: 10px;
-    padding: 10px;
-    border-radius: 10px;
-    flex: 2; /* Increased to make programming area taller */
-    min-height: 200px; /* Set minimum height */
-}
-
-.program-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-#clear-all {
-    color: #e74c3c;
-    cursor: pointer;
-}
-
-#program-blocks {
-    min-height: 180px; /* Increased height */
-    border: 1px dashed #ccc;
-    padding: 10px;
-    position: relative;
-}
-
-#program-blocks .block-container {
-    position: absolute;
-}
-
-.logo {
-    font-size: 20px;
-    font-weight: bold;
-    color: #4a90e2;
-}
-
-.header-icons {
-    display: flex;
-}
-
-.icon {
-    margin-left: 13px;
-    font-size: 24px;
-    color: #999;
-    cursor: pointer;
-}
-
-#block-palette .block-container,
-#programming-area .block-container {
-    position: relative;
-    width: 100px;
-    height: 100px;
-    margin: 8px;
-    cursor: pointer;
-    background-color: transparent;
-}
-
-#block-palette .scratch-block,
-#programming-area .scratch-block {
-    position: relative;
-    width: 87px;
-    height: 80px;
-    background-color: #ffff00; /* צבע ברירת מחדל, ידרוס ע"י כללים ספציפיים */
-    border-radius: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: black;
-    font-size: 24px;
-    font-weight: bold;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
-    transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
-}
-
-/* SVG Icon styling */
-.block-svg-icon {
-    width: 40px;
-    height: 40px;
-    display: block;
-    margin: 0 auto;
-}
-
-/* בליטות/שקעים סטנדרטיים (לא בבלוק repeat ולא בבלוקים מקטגורית end) */
-#block-palette .scratch-block:not([data-category="end"])::after,
-#programming-area .scratch-block:not([data-type="repeat"]):not([data-category="end"])::after {
-    content: '';
-    position: absolute;
-    right: -9px; /* שינוי מ-14px ל-9px כדי ליצור חצי עיגול */
-    top: 50%;
-    transform: translateY(-50%);
-    width: 9px; /* שינוי מ-18px ל-9px (חצי מהרוחב המקורי) */
-    height: 18px; /* נשאר הגובה המקורי */
-    background-color: inherit;
-    border-radius: 0 9px 9px 0; /* שינוי מ-50% (עיגול מלא) לחצי עיגול בצד ימין */
-}
-
-/* Change the full circle to half circle on the left side */
-#block-palette .scratch-block:not([data-category="end"])::before,
-#programming-area .scratch-block:not([data-type="repeat"]):not([data-category="end"])::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 9px; /* Half the original width of 18px */
-    height: 18px; /* Keep the original height */
-    background-color: #f0f4ff; /* Keep the background color */
-    border-radius: 0 9px 9px 0; /* Make only the right side rounded */
-}
-
-.block-icon {
-    width: 50px;
-    height: 50px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-right: 5px;
-}
-
-.block-icon svg {
-    width: 200%;
-    height: 200%;
-}
-
-.block-icon-img {
-    max-width: 60%;
-    max-height: 60%;
-    display: block;
-    margin: auto; /* Center the image */
-}
-
-
-#triggering-blocks .block-container .scratch-block {
-    background-color: var(--triggering-color);
-}
-
-#motion-blocks .block-container .scratch-block {
-    background-color: var(--motion-color);
-}
-
-#looks-blocks .block-container .scratch-block {
-    background-color: var(--looks-color);
-}
-
-#sound-blocks .block-container .scratch-block {
-    background-color: var(--sound-color);
-}
-
-#control-blocks .block-container .scratch-block {
-    background-color: var(--control-color);
-}
-
-#end-blocks .block-container .scratch-block {
-    background-color: var(--end-color);
-}
-
-#grid-toggle {
-    margin-left: 10px;
-    font-size: 16px;
-    color: #999;
-    cursor: pointer;
-    border: 1px solid #ccc;
-    padding: 5px 10px;
-    border-radius: 5px;
-}
-
-#grid-toggle:hover {
-    background-color: #f0f0f0;
-}
-
-/* תיקונים לצבעי הבלוקים בקטגוריה פעילה */
-.block-category.active .scratch-block {
-    background-color: inherit;
-}
-#triggering-blocks.active .block-container .scratch-block {
-    background-color: var(--triggering-color);
-}
-#motion-blocks.active .block-container .scratch-block {
-    background-color: var(--motion-color);
-}
-#looks-blocks.active .block-container .scratch-block {
-    background-color: var(--looks-color);
-}
-#sound-blocks.active .block-container .scratch-block {
-    background-color: var(--sound-color);
-}
-#control-blocks.active .block-container .scratch-block:not([data-type="repeat"]) { /* הוספנו :not */
-    background-color: var(--control-color);
-}
-#end-blocks.active .block-container .scratch-block {
-    background-color: var(--end-color);
-}
-
-/* --- סגנון מיוחד לבלוק Repeat --- */
-
-/* עיצוב הבלוק הכתום עם חצי לבן שמאלי + חצי לבן הפוך (פונה ימינה) צמוד לימין הלבן ומוזז */
-#control-blocks .block-container[data-type="repeat"] .scratch-block,
-#programming-area .block-container[data-type="repeat"] .scratch-block {
-  position: relative;
-
-  /* הגדרת הרקע המרובה החדשה */
-  background:
-    /* 1. שכבה עליונה: חצי עיגול לבן (בקצה השמאלי של הכתום) */
-    radial-gradient(circle at 0% 50%, white 10px, transparent 10.5px) no-repeat center left 0px / 10px 20px,
-
-    /* 2. שכבה שניה: חצי עיגול לבן (פונה ימינה, צמוד לימין הלבן ומוזז) */
-    /*    מיקום אזור הרקע: אופקי = calc(50% + 45px), אנכי = 40px */
-    radial-gradient(circle at 0% 50%, white 10px, transparent 10.5px) no-repeat calc(50% + 45px) 40px / 10px 20px, /* <-- שינוי: --looks-color ל-white */
-
-    /* 3. שכבה תחתונה: צבע הרקע הכתום המקורי */
-    var(--control-color);
-
-  /* שאר ההגדרות של הבלוק הכתום */
-  width: 140px;
-  border-radius: 10px 10px 10px 10px;
-  padding-right: 10px;
-  padding-left: 15px;
-  text-align: center;
-  font-size: 20px;
-  overflow: visible;
-  height: 80px;
-  color: black;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
-}
-
-/* הבליטה הימנית של בלוק repeat */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::after,
-#programming-area .block-container[data-type="repeat"] .scratch-block::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  right: -10px;
-  transform: translateY(-50%);
-  width: 10px; /* שינוי מ-20px ל-10px (חצי מהרוחב) */
-  height: 20px; /* נשאר הגובה המקורי */
-  background-color: inherit;
-  border-radius: 0 10px 10px 0; /* שינוי לחצי עיגול בצד ימין בלבד */
-  box-shadow: 3px 0 5px rgba(0, 0, 0, 0.1);
-  z-index: 2; /* מעל הרקע, מתחת למלבן הלבן (::before) */
-}
-
-/* מיקום איקון (אם יש) בבלוק repeat */
-#control-blocks .block-container[data-type="repeat"] .scratch-block .block-icon-img,
-#programming-area .block-container[data-type="repeat"] .scratch-block .block-icon-img {
-  position: absolute !important;
-  top: 5px !important;
-  right: 5px !important;
-  height: auto !important;
-  width: auto !important;
-  transform: scale(0.5) !important;
-  transform-origin: top right !important;
-  z-index: 3 !important; /* מעל הכל */
-  max-width: none !important;
-  max-height: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-/* הגדרת המלבן הלבן (::before) עם חצי עיגול כתום שמאלי */
-#control-blocks .block-container[data-type="repeat"] .scratch-block::before,
-#programming-area .block-container[data-type="repeat"] .scratch-block::before {
-  content: '' !important; /* דרוס את content:none המקורי */
-  position: absolute;
-  top: 20px; /* מרווח מהחלק העליון של הבלוק הכתום */
-  bottom: 0; /* צמוד לתחתית הבלוק הכתום */
-  left: 50%;
-  transform: translateX(-50%); /* מרכוז אופקי */
-  width: 80px;
-  height: auto; /* גובה דינמי */
-
-  /* רקע: חצי כתום שמאלי + לבן */
-  background:
-    /* 1. שכבה עליונה: חצי עיגול כתום (פונה ימינה) */
-    radial-gradient(circle at 0% 50%, var(--control-color) 10px, transparent 10.5px) no-repeat left center / 10px 20px,
-    /* 2. שכבה תחתונה: צבע הרקע הלבן */
-    white;
-
-  /* עיגול הפינות העליונות של המלבן הלבן עצמו */
-  border-radius: 10px 10px 0 0;
-
-  z-index: 10; /* מעל הבלוק הכתום והבליטה הימנית שלו */
-  box-shadow: none; /* הסר צל מיותר */
-}
-
-/* --- עיצוב מיוחד לבלוקי END --- */
-/* סגנון לרוחב מוקטן ופינות מעוגלות בבלוקי END */
-#end-blocks .block-container .scratch-block,
-#programming-area .block-container[data-category="end"] .scratch-block {
-     width: 67px !important;/* רוחב מוקטן מ-87px */
-    height: 80px;
-    border-radius: 10px 30px 30px 10px; /* פינות מעוגלות בהתאמה */
-    padding-right: 10px; /* מרווח מימין */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: var(--end-color);
-}
-
-/* החזרת השקע הסטנדרטי בצד שמאל */
-#end-blocks .block-container .scratch-block::before,
-#programming-area .block-container[data-category="end"] .scratch-block::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 9px; /* חצי מהרוחב המקורי של 18px */
-    height: 18px; /* הגובה המקורי */
-    background-color: #f0f4ff; /* צבע הרקע */
-    border-radius: 0 9px 9px 0; /* רק הצד הימני מעוגל */
-    z-index: 2;
-}
-
-/* הסרת הבליטה הסטנדרטית בצד ימין */
-#end-blocks .block-container .scratch-block::after,
-#programming-area .block-container[data-category="end"] .scratch-block::after {
-    content: none; /* הסרת הבליטה בצד ימין */
-}
-
-/* מרכוז האיקון בתוך הבלוק */
-#end-blocks .block-container .scratch-block .block-icon-img,
-#programming-area .block-container[data-category="end"] .scratch-block .block-icon-img {
-    margin: 0 auto;
-    display: block;
-    position: relative;
-}
-
-/* התאמת מיכל הבלוק לרוחב המוקטן */
-#end-blocks .block-container,
-#programming-area .block-container[data-category="end"] {
-    width: 80px; /* התאמת רוחב המיכל לבלוק המוקטן */
-}
+// script.js - Full JavaScript implementation for Scratch-like interface
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Global variables
+    let isDragging = false;
+    let dragStartX, dragStartY;
+    let initialCharacterX, initialCharacterY;
+    let currentCategory = 'triggering'; // Default active category
+    
+    // DOM elements
+    const character = document.getElementById('character');
+    const stage = document.getElementById('stage');
+    const gridToggle = document.getElementById('grid-toggle');
+    const categoryTabs = document.querySelectorAll('.category-tab');
+    const blockCategories = document.querySelectorAll('.block-category');
+    const clearAllButton = document.getElementById('clear-all');
+    const programBlocks = document.getElementById('program-blocks');
+    
+    // Initialize the interface
+    initializeInterface();
+    
+    // Initialize the character
+    initializeCharacter();
+    
+    // Initialize grid toggle
+    initializeGridToggle();
+    
+    // Initialize drag-and-drop functionality
+    initializeDragAndDrop();
+    
+    // Initialize block palette
+    initializeBlockPalette();
+    
+    // Initialize programming area
+    initializeProgrammingArea();
+    
+    // Functions
+    
+    function initializeInterface() {
+        // Show default category
+        showCategory(currentCategory);
+        
+        // Set up category tab click handlers
+        categoryTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const category = this.getAttribute('data-category');
+                showCategory(category);
+            });
+        });
+        
+        // Set up clear all button
+        if (clearAllButton) {
+            clearAllButton.addEventListener('click', clearAllBlocks);
+        }
+    }
+    
+    function initializeCharacter() {
+        // Set initial character position (center of stage)
+        character.style.left = '50%';
+        character.style.top = '50%';
+        
+        // Make character draggable
+        character.addEventListener('mousedown', characterDragStart);
+    }
+    
+    function initializeGridToggle() {
+        if (gridToggle) {
+            gridToggle.addEventListener('click', function() {
+                stage.classList.toggle('show-grid');
+                this.textContent = stage.classList.contains('show-grid') ? 'Hide Grid' : 'Show Grid';
+            });
+        }
+    }
+    
+    function initializeDragAndDrop() {
+        // Add block drag start handlers to all blocks in palette
+        const paletteBlocks = document.querySelectorAll('#block-palette .scratch-block');
+        paletteBlocks.forEach(block => {
+            block.addEventListener('mousedown', blockDragStart);
+        });
+    }
+    
+    function initializeBlockPalette() {
+        // Create blocks for each category
+        createBlocksForCategory('triggering', [
+            { type: 'when-clicked', icon: 'click.svg', text: '' },
+            { type: 'when-key-pressed', icon: 'key.svg', text: '' }
+        ]);
+        
+        createBlocksForCategory('motion', [
+            { type: 'move-forward', icon: 'forward.svg', text: '' },
+            { type: 'turn-right', icon: 'right.svg', text: '' },
+            { type: 'turn-left', icon: 'left.svg', text: '' }
+        ]);
+        
+        createBlocksForCategory('looks', [
+            { type: 'say-hello', icon: 'speech.svg', text: '' },
+            { type: 'grow', icon: 'grow.svg', text: '' },
+            { type: 'shrink', icon: 'shrink.svg', text: '' }
+        ]);
+        
+        createBlocksForCategory('sound', [
+            { type: 'play-sound', icon: 'sound.svg', text: '' },
+            { type: 'stop-sound', icon: 'mute.svg', text: '' }
+        ]);
+        
+        createBlocksForCategory('control', [
+            { type: 'wait', icon: 'clock.svg', text: '' },
+            { type: 'repeat', icon: 'loop.svg', text: '3' }
+        ]);
+        
+        createBlocksForCategory('end', [
+            { type: 'end-block', icon: 'stop.svg', text: '' }
+        ]);
+    }
+    
+    function initializeProgrammingArea() {
+        // Set up drop zone
+        programBlocks.addEventListener('dragover', function(e) {
+            e.preventDefault();
+        });
+        
+        programBlocks.addEventListener('drop', function(e) {
+            e.preventDefault();
+            const blockData = e.dataTransfer.getData('text/plain');
+            const blockInfo = JSON.parse(blockData);
+            addBlockToProgrammingArea(blockInfo);
+        });
+    }
+    
+    function showCategory(category) {
+        // Update active category
+        currentCategory = category;
+        
+        // Hide all categories
+        blockCategories.forEach(cat => {
+            cat.classList.remove('active');
+        });
+        
+        // Show selected category
+        const selectedCategory = document.getElementById(`${category}-blocks`);
+        if (selectedCategory) {
+            selectedCategory.classList.add('active');
+        }
+        
+        // Update active tab
+        categoryTabs.forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        const selectedTab = document.querySelector(`.category-tab[data-category="${category}"]`);
+        if (selectedTab) {
+            selectedTab.classList.add('active');
+        }
+    }
+    
+    function createBlocksForCategory(category, blocks) {
+        const categoryElement = document.getElementById(`${category}-blocks`);
+        if (!categoryElement) return;
+        
+        blocks.forEach(block => {
+            const blockContainer = document.createElement('div');
+            blockContainer.className = 'block-container';
+            blockContainer.setAttribute('data-type', block.type);
+            blockContainer.setAttribute('data-category', category);
+            blockContainer.draggable = true;
+            
+            const scratchBlock = document.createElement('div');
+            scratchBlock.className = 'scratch-block';
+            scratchBlock.setAttribute('data-type', block.type);
+            scratchBlock.setAttribute('data-category', category);
+            
+            if (block.icon) {
+                const blockIcon = document.createElement('img');
+                blockIcon.className = 'block-icon-img';
+                blockIcon.src = `images/${block.icon}`;
+                blockIcon.alt = block.type;
+                scratchBlock.appendChild(blockIcon);
+            }
+            
+            if (block.text) {
+                const textNode = document.createTextNode(block.text);
+                scratchBlock.appendChild(textNode);
+            }
+            
+            blockContainer.appendChild(scratchBlock);
+            categoryElement.appendChild(blockContainer);
+            
+            // Add drag start event
+            blockContainer.addEventListener('dragstart', function(e) {
+                const blockData = {
+                    type: block.type,
+                    category: category,
+                    icon: block.icon,
+                    text: block.text
+                };
+                e.dataTransfer.setData('text/plain', JSON.stringify(blockData));
+            });
+        });
+    }
+    
+    function addBlockToProgrammingArea(blockInfo) {
+        const blockContainer = document.createElement('div');
+        blockContainer.className = 'block-container';
+        blockContainer.setAttribute('data-type', blockInfo.type);
+        blockContainer.setAttribute('data-category', blockInfo.category);
+        
+        const scratchBlock = document.createElement('div');
+        scratchBlock.className = 'scratch-block';
+        scratchBlock.setAttribute('data-type', blockInfo.type);
+        scratchBlock.setAttribute('data-category', blockInfo.category);
+        
+        if (blockInfo.icon) {
+            const blockIcon = document.createElement('img');
+            blockIcon.className = 'block-icon-img';
+            blockIcon.src = `images/${blockInfo.icon}`;
+            blockIcon.alt = blockInfo.type;
+            scratchBlock.appendChild(blockIcon);
+        }
+        
+        if (blockInfo.text) {
+            const textNode = document.createTextNode(blockInfo.text);
+            scratchBlock.appendChild(textNode);
+        }
+        
+        blockContainer.appendChild(scratchBlock);
+        programBlocks.appendChild(blockContainer);
+        
+        // Make the block in program area draggable for repositioning
+        blockContainer.draggable = true;
+        blockContainer.addEventListener('dragstart', function(e) {
+            e.dataTransfer.setData('text/plain', JSON.stringify(blockInfo));
+            // Mark for removal after dropping elsewhere
+            this.classList.add('being-dragged');
+        });
+        
+        blockContainer.addEventListener('dragend', function(e) {
+            if (this.classList.contains('being-dragged')) {
+                this.classList.remove('being-dragged');
+            }
+        });
+    }
+    
+    function clearAllBlocks() {
+        while (programBlocks.firstChild) {
+            programBlocks.removeChild(programBlocks.firstChild);
+        }
+    }
+    
+    // Character Dragging Functions
+    
+    function characterDragStart(e) {
+        e.preventDefault();
+        isDragging = true;
+        
+        // Get initial mouse position
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        
+        // Get initial character position
+        const characterStyle = window.getComputedStyle(character);
+        initialCharacterX = parseFloat(characterStyle.left) || 50;
+        initialCharacterY = parseFloat(characterStyle.top) || 50;
+        
+        // Add event listeners for drag
+        document.addEventListener('mousemove', characterDragMove);
+        document.addEventListener('mouseup', characterDragEnd);
+    }
+    
+    function characterDragMove(e) {
+        if (!isDragging) return;
+        
+        // Calculate movement
+        const deltaX = e.clientX - dragStartX;
+        const deltaY = e.clientY - dragStartY;
+        
+        // Get stage dimensions
+        const stageRect = stage.getBoundingClientRect();
+        
+        // Calculate new position as percentage of stage
+        let newX = initialCharacterX + (deltaX / stageRect.width * 100);
+        let newY = initialCharacterY + (deltaY / stageRect.height * 100);
+        
+        // Update character position
+        character.style.left = newX + '%';
+        character.style.top = newY + '%';
+        
+        // Check boundaries
+        keepCharacterInBounds();
+    }
+    
+    function characterDragEnd() {
+        isDragging = false;
+        document.removeEventListener('mousemove', characterDragMove);
+        document.removeEventListener('mouseup', characterDragEnd);
+        
+        // Final boundary check
+        keepCharacterInBounds();
+    }
+    
+    // Block Dragging Functions
+    
+    function blockDragStart(e) {
+        const blockContainer = this.closest('.block-container');
+        if (blockContainer) {
+            blockContainer.draggable = true;
+            
+            const blockType = blockContainer.getAttribute('data-type');
+            const blockCategory = blockContainer.getAttribute('data-category');
+            
+            const blockData = {
+                type: blockType,
+                category: blockCategory,
+                icon: this.querySelector('.block-icon-img')?.src?.split('/').pop() || null,
+                text: this.textContent.trim()
+            };
+            
+            e.dataTransfer.setData('text/plain', JSON.stringify(blockData));
+        }
+    }
+    
+    // Character Movement Functions
+    
+    function moveCharacter(direction, steps) {
+        // Get current position
+        const characterStyle = window.getComputedStyle(character);
+        let posX = parseFloat(characterStyle.left) || 50;
+        let posY = parseFloat(characterStyle.top) || 50;
+        
+        // Calculate movement based on direction
+        switch (direction) {
+            case 'up':
+                posY -= steps;
+                break;
+            case 'down':
+                posY += steps;
+                break;
+            case 'left':
+                posX -= steps;
+                break;
+            case 'right':
+                posX += steps;
+                break;
+        }
+        
+        // Update character position
+        character.style.left = posX + '%';
+        character.style.top = posY + '%';
+        
+        // Check boundaries
+        keepCharacterInBounds();
+    }
+    
+    // Character Boundary Functions
+    
+    function keepCharacterInBounds() {
+        // Get character dimensions
+        const characterRect = character.getBoundingClientRect();
+        const characterWidth = characterRect.width;
+        const characterHeight = characterRect.height;
+        
+        // Get stage dimensions
+        const stageRect = stage.getBoundingClientRect();
+        const stageWidth = stageRect.width;
+        const stageHeight = stageRect.height;
+        
+        // Get current position (as percentage of stage)
+        let position = {
+            x: parseFloat(character.style.left) || 50,
+            y: parseFloat(character.style.top) || 50
+        };
+        
+        // Calculate actual pixel positions
+        const characterX = (position.x / 100) * stageWidth;
+        const characterY = (position.y / 100) * stageHeight;
+        
+        // Boundary checks according to requirements
+        
+        // Left boundary check (x = 0)
+        if (characterX - (characterWidth / 2) < 0) {
+            // Stop exactly at left boundary
+            position.x = (characterWidth / 2 / stageWidth) * 100;
+        }
+        
+        // Top boundary check (y = 0)
+        if (characterY - (characterHeight / 2) < 0) {
+            // Stop exactly at top boundary
+            position.y = (characterHeight / 2 / stageHeight) * 100;
+        }
+        
+        // Right boundary check (right edge at stage boundary)
+        if (characterX + (characterWidth / 2) > stageWidth) {
+            // Stop with right edge exactly at boundary
+            position.x = ((stageWidth - characterWidth / 2) / stageWidth) * 100;
+        }
+        
+        // Bottom boundary check (bottom edge at stage boundary)
+        if (characterY + (characterHeight / 2) > stageHeight) {
+            // Stop with bottom edge exactly at boundary
+            position.y = ((stageHeight - characterHeight / 2) / stageHeight) * 100;
+        }
+        
+        // Update character position
+        character.style.left = position.x + '%';
+        character.style.top = position.y + '%';
+    }
+    
+    // Run program functions
+    
+    function runProgram() {
+        const blocks = programBlocks.querySelectorAll('.block-container');
+        
+        // Logic to run the program based on blocks
+        // This is a placeholder for actual execution logic
+        blocks.forEach(block => {
+            const blockType = block.getAttribute('data-type');
+            const blockCategory = block.getAttribute('data-category');
+            
+            // Execute block based on type
+            executeBlock(blockType, blockCategory);
+        });
+    }
+    
+    function executeBlock(type, category) {
+        // Implementation would depend on the actual blocks and their functionality
+        switch (type) {
+            case 'move-forward':
+                moveCharacter('right', 5);
+                break;
+            case 'turn-right':
+                // Implement turning right
+                break;
+            case 'turn-left':
+                // Implement turning left
+                break;
+            // Add cases for other block types
+        }
+    }
+});
