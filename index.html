@@ -5,30 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ScratchJr Web</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* סגנון ללחצן רקע ממורכז מעל הבמה */
+        .stage-container {
+            position: relative; /* כדי שנוכל למקם את הלחצן באופן אבסולוטי ביחס לבמה */
+        }
+        
+        #background-button {
+            position: absolute;
+            top: -30px; /* מיקום אנכי מעל הבמה */
+            left: 50%; /* מתחיל במרכז אופקי */
+            transform: translateX(-50%); /* מרכוז מדויק */
+            z-index: 10; /* להציג מעל הבמה */
+            padding: 5px 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background-color: #f5f5f5;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-
 <div class="container">
     <header>
         <div class="logo">ScratchJr</div>
-          <!-- לחצן רקע מעל הבמה במרכז -->
-        <div class="background-button-container">
-            <button id="background-button">רקע</button>
-        </div>
         <div class="header-icons">
             <div class="icon"><img src="assets/images/save.svg" alt="שמור" class="header-icon-img"></div>
             <div class="icon"><img src="assets/images/new.svg" alt="חדש" class="header-icon-img"></div>
-             <div class="icon"><img src="assets/images/add.svg" alt="הוסף" class="header-icon-img"></div>
+            <div class="icon"><img src="assets/images/add.svg" alt="הוסף" class="header-icon-img"></div>
             <div class="icon"><img src="assets/images/info.svg" alt="מידע" class="header-icon-img"></div>
             <div class="icon" id="grid-toggle"><img src="assets/images/grid.svg" alt="רשת" class="header-icon-img"></div>
         </div>
     </header>
-
     <main>
-      
-        
-        <!-- שאר התוכן כפי שהיה -->
+        <!-- הבמה עם לחצן הרקע ממורכז מעליה -->
         <div class="stage-container">
+            <!-- לחצן רקע ממורכז מעל הבמה -->
+            <button id="background-button">רקע</button>
+            
             <div id="stage">
                 <img id="character" src="assets/images/CAT.svg" alt="Cat" draggable="true">
             </div>
@@ -62,7 +76,6 @@
                 <div id="motion-blocks" class="block-category" data-category="motion"></div>
                 <div id="triggering-blocks" class="block-category active" data-category="triggering"></div>
             </div>
-
             <div id="programming-area">
                 <div class="program-header">Program <span id="clear-all">Clear All</span></div>
                 <div id="program-blocks"></div>
@@ -70,7 +83,6 @@
         </div>
     </main>
 </div>
-
 <script src="js/script.js"></script>
 </body>
 </html>
