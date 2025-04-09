@@ -37,6 +37,41 @@ main {
     flex-grow: 1;
 }
 
+/* מיכל ללחצן הרקע */
+.background-button-container {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+    width: 100%;
+    background-color: #f0f4ff;
+}
+
+/* עיצוב לחצן הרקע */
+#background-button {
+    padding: 8px 20px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    background-color: #FAFAFA;
+    border: 2px solid #4a90e2;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease-in-out;
+}
+
+#background-button:hover {
+    background-color: #4a90e2;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#background-button:active {
+    transform: translateY(0px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
 .stage-container {
     flex: 1;
     display: flex;
