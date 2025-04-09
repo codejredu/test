@@ -143,6 +143,13 @@ const blocks = {
     ],
     control: [
         // --- START OF CONTROL BLOCKS ---
+        // --- MOVED THE STOP BLOCK TO BE FIRST ---
+        {
+            name: "Stop",
+            color: "var(--control-color)",
+            type: "stop",
+            icon: "assets/images/blocks/stop.svg",
+        },
         {
             name: "Wait",
             color: "var(--control-color)",
@@ -161,18 +168,10 @@ const blocks = {
             icon: "assets/images/blocks/repeat.svg",
             color: "var(--control-color)"
         },
-        // --- THIS IS THE MOVED BLOCK ---
-        {
-            name: "Stop",
-            color: "var(--control-color)", // Color updated to control
-            type: "stop",
-            icon: "assets/images/blocks/stop.svg",
-        },
         // --- END OF CONTROL BLOCKS ---
     ],
     end: [
         // --- START OF END BLOCKS ---
-        // --- Stop block is NO LONGER HERE ---
         {
             name: "End",
             color: "var(--end-color)",
