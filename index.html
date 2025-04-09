@@ -3,22 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScratchJr Web</title>
+    <title>סקראצ' לילדי גן</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
-        /* סגנון ללחצן רקע SVG ממורכז מעל הבמה */
-        .stage-container {
-            position: relative; /* כדי שנוכל למקם את הלחצן באופן אבסולוטי ביחס לבמה */
+        /* סגנון ללחצן רקע בתוך כותרת */
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
         
         #background-button {
-            position: absolute;
-            top: -35px; /* מיקום אנכי מעל הבמה */
-            left: 50%; /* מתחיל במרכז אופקי */
-            transform: translateX(-50%); /* מרכוז מדויק */
-            z-index: 10; /* להציג מעל הבמה */
-            width: 70px;
-            height: 70px;
             border: none;
             background: transparent;
             cursor: pointer;
@@ -26,6 +21,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            width: 70px;
+            height: 70px;
         }
         
         #background-button img {
@@ -38,7 +35,13 @@
 <body>
 <div class="container">
     <header>
-        <div class="logo">ScratchJr</div>
+        <div class="logo-area">
+            <div class="logo">סקראצ' לילדי גן</div>
+            <!-- לחצן הרקע עכשיו בתוך אזור הלוגו בכותרת -->
+            <button id="background-button" title="רקע">
+                <img src="assets/images/background.svg" alt="רקע">
+            </button>
+        </div>
         <div class="header-icons">
             <div class="icon"><img src="assets/images/save.svg" alt="שמור" class="header-icon-img"></div>
             <div class="icon"><img src="assets/images/new.svg" alt="חדש" class="header-icon-img"></div>
@@ -48,13 +51,7 @@
         </div>
     </header>
     <main>
-        <!-- הבמה עם לחצן הרקע ממורכז מעליה -->
         <div class="stage-container">
-            <!-- לחצן רקע SVG ממורכז מעל הבמה -->
-            <button id="background-button" title="רקע">
-                <img src="assets/images/background.svg" alt="רקע">
-            </button>
-            
             <div id="stage">
                 <img id="character" src="assets/images/CAT.svg" alt="Cat" draggable="true">
             </div>
@@ -89,7 +86,10 @@
                 <div id="triggering-blocks" class="block-category active" data-category="triggering"></div>
             </div>
             <div id="programming-area">
-                <div class="program-header">Program <span id="clear-all">Clear All</span></div>
+                <div class="program-header">
+                    <h3>תכנית</h3>
+                    <span id="clear-all">נקה הכל</span>
+                </div>
                 <div id="program-blocks"></div>
             </div>
         </div>
