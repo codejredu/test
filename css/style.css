@@ -558,3 +558,97 @@ main {
 #programming-area .block-container[data-category="end"] {
     width: 80px; /* התאמת רוחב המיכל לבלוק המוקטן */
 }
+
+/* Background button styling */
+#background-button {
+    position: relative;
+}
+
+/* Modal styling */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 700px;
+    direction: rtl;
+}
+
+.close-modal {
+    color: #aaa;
+    float: left;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-modal:hover {
+    color: #000;
+}
+
+.background-options {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.gallery-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.bg-item {
+    width: 100px;
+    height: 80px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.bg-item:hover {
+    border-color: #4a90e2;
+}
+
+.bg-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.background-upload {
+    margin-top: 20px;
+}
+
+.upload-btn {
+    display: inline-block;
+    background-color: #4a90e2;
+    color: #fff;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.upload-btn:hover {
+    background-color: #3a80d2;
+}
+
+#bg-upload {
+    display: none;
+}
