@@ -558,3 +558,14 @@ main {
 #programming-area .block-container[data-category="end"] {
     width: 80px; /* התאמת רוחב המיכל לבלוק המוקטן */
 }
+
+/* סגנון מיוחד ללחצן רקע */
+.header-icons .background-button {
+    width: 70px;
+    height: 70px;
+}
+
+.header-icons .background-button .header-icon-img {
+    width: 60px;
+    height: 60px;
+}
