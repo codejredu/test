@@ -264,8 +264,8 @@ main {
 
 /* עיצוב לתמונות בתוך האייקונים */
 .header-icon-img {
-    width: 30px;
-    height: 30px;
+    width: 45px;
+    height: 45px;
     object-fit: contain;
     border: none;
     outline: none;
