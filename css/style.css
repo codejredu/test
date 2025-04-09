@@ -1,4 +1,3 @@
---- START OF FILE style.css ---
 /* style.css - עם צבעים מעודכנים לילדי גן */
 :root {
     --motion-color: #66D2FF;    /* כחול-תכלת בהיר */
@@ -263,18 +262,6 @@ main {
     border-radius: 0;
 }
 
-/* עיצוב ספציפי לאייקון הרקע (background) */
-#background-button {
-    margin-left: 13px; /* שמור על המרווח כמו אייקונים אחרים */
-    width: 80px; /* הגדר רוחב ל-80px */
-    height: 80px; /* הגדר גובה ל-80px */
-    border: none;
-    outline: none;
-    padding: 0;
-    background-color: transparent;
-    border-radius: 0;
-}
-
 /* עיצוב לתמונות בתוך האייקונים */
 .header-icon-img {
     width: 45px;
@@ -285,11 +272,16 @@ main {
 }
 
 /* עיצוב כשהעכבר מרחף מעל האייקון */
-.icon:hover, #grid-toggle:hover, #background-button:hover {
+.icon:hover {
     background-color: #f0f0f0;
     border-radius: 8px;
 }
 
+/* הסרת מאפיינים מיותרים שהיו בכותרת */
+#grid-toggle:hover {
+    background-color: #f0f0f0;
+    border-radius: 8px;
+}
 
 #block-palette .block-container,
 #programming-area .block-container {
@@ -566,32 +558,3 @@ main {
 #programming-area .block-container[data-category="end"] {
     width: 80px; /* התאמת רוחב המיכל לבלוק המוקטן */
 }
-
-/* --- סגנון לרשימת הרקעים --- */
-#background-list-container {
-    position: absolute;
-    top: 70px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: white;
-    border: 1px solid #ccc;
-    padding: 10px;
-    border-radius: 5px;
-    z-index: 1000;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-}
-
-#background-list-container div {
-    padding: 10px 15px;
-    border-bottom: 1px solid #eee;
-    cursor: pointer;
-}
-
-#background-list-container div:last-child {
-    border-bottom: none;
-}
-
-#background-list-container div:hover {
-    background-color: #f0f0f0;
-}
---- END OF FILE style.css ---
