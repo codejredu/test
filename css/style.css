@@ -58,17 +58,22 @@ main {
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     transition: all 0.2s ease-in-out;
+    position: absolute; /* הוספת מיקום מוחלט */
+    top: -55px; /* עדכון: עלייה של 20 פיקסלים מעלה (מ-35 ל-55) */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
 }
 
 #background-button:hover {
     background-color: #4a90e2;
     color: white;
-    transform: translateY(-2px);
+    transform: translateY(-2px) translateX(-50%); /* שמירה על מרכוז אופקי גם בעת ריחוף */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 #background-button:active {
-    transform: translateY(0px);
+    transform: translateY(0px) translateX(-50%); /* שמירה על מרכוז אופקי גם בעת לחיצה */
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
@@ -78,6 +83,7 @@ main {
     justify-content: center;
     align-items: center;
     padding: 10px;
+    position: relative; /* הוספת מיקום יחסי כדי שהלחצן יוכל להתמקם נכון */
 }
 
 #stage {
