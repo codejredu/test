@@ -5,41 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ScratchJr Web</title>
     <link rel="stylesheet" href="css/style.css">
-    <style>
-        /* סגנונות נוספים ללחצני SVG */
-        .header-icons .icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 32px;
-            height: 32px;
-            margin: 0 5px;
-            cursor: pointer;
-        }
-        
-        .header-icons .icon svg {
-            width: 24px;
-            height: 24px;
-            transition: fill 0.2s;
-        }
-        
-        .header-icons .icon:hover svg {
-            fill: #3a81ff;
-        }
-        
-        /* סגנון ספציפי ללחצן רשת */
-        .header-icons #grid-toggle {
-            padding: 5px 10px;
-            border-radius: 4px;
-            background-color: #f0f0f0;
-            border: 1px solid #ccc;
-            font-size: 14px;
-        }
-        
-        .header-icons #grid-toggle:hover {
-            background-color: #e0e0e0;
-        }
-    </style>
 </head>
 <body>
 
@@ -47,41 +12,11 @@
     <header>
         <div class="logo">ScratchJr</div>
         <div class="header-icons">
-            <span class="icon" title="שמירה">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
-                    <path d="M17 21v-8H7v8"/>
-                    <path d="M7 3v5h8"/>
-                </svg>
-            </span>
-            <span class="icon" title="מסמך חדש">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                    <path d="M14 2v6h6"/>
-                    <path d="M16 13H8"/>
-                    <path d="M16 17H8"/>
-                    <path d="M10 9H8"/>
-                </svg>
-            </span>
-            <span class="icon" title="הפעלה">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 3l14 9-14 9V3z"/>
-                </svg>
-            </span>
-            <span class="icon" title="הוספה">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 8v8"/>
-                    <path d="M8 12h8"/>
-                </svg>
-            </span>
-            <span class="icon" title="מידע">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 16v-4"/>
-                    <path d="M12 8h.01"/>
-                </svg>
-            </span>
+            <span class="icon">💾</span>
+            <span class="icon">📄</span>
+            <span class="icon">▶️</span>
+            <span class="icon">➕</span>
+            <span class="icon">ℹ️</span>
             <span class="icon" id="grid-toggle">GRID</span>
         </div>
     </header>
