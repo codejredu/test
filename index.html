@@ -3,54 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>סקראצ' לילדי גן</title>
+    <title>ScratchJr Web</title>
     <link rel="stylesheet" href="css/style.css">
-    <style>
-        /* סגנון ללחצן רקע בתוך כותרת */
-        .logo-area {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        #background-button {
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 70px;
-            height: 70px;
-        }
-        
-        #background-button img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-    </style>
 </head>
 <body>
+
 <div class="container">
     <header>
-        <div class="logo-area">
-            <div class="logo">סקראצ' לילדי גן</div>
-            <!-- לחצן הרקע עכשיו בתוך אזור הלוגו בכותרת -->
-            <button id="background-button" title="רקע">
-                <img src="assets/images/background.svg" alt="רקע">
-            </button>
-        </div>
+        <div class="logo">ScratchJr</div>
         <div class="header-icons">
             <div class="icon"><img src="assets/images/save.svg" alt="שמור" class="header-icon-img"></div>
             <div class="icon"><img src="assets/images/new.svg" alt="חדש" class="header-icon-img"></div>
-            <div class="icon"><img src="assets/images/add.svg" alt="הוסף" class="header-icon-img"></div>
+             <div class="icon"><img src="assets/images/add.svg" alt="הוסף" class="header-icon-img"></div>
             <div class="icon"><img src="assets/images/info.svg" alt="מידע" class="header-icon-img"></div>
             <div class="icon" id="grid-toggle"><img src="assets/images/grid.svg" alt="רשת" class="header-icon-img"></div>
         </div>
     </header>
+
     <main>
+        <!-- שאר התוכן כפי שהיה -->
         <div class="stage-container">
             <div id="stage">
                 <img id="character" src="assets/images/CAT.svg" alt="Cat" draggable="true">
@@ -85,16 +56,15 @@
                 <div id="motion-blocks" class="block-category" data-category="motion"></div>
                 <div id="triggering-blocks" class="block-category active" data-category="triggering"></div>
             </div>
+
             <div id="programming-area">
-                <div class="program-header">
-                    <h3>תכנית</h3>
-                    <span id="clear-all">נקה הכל</span>
-                </div>
+                <div class="program-header">Program <span id="clear-all">Clear All</span></div>
                 <div id="program-blocks"></div>
             </div>
         </div>
     </main>
 </div>
+
 <script src="js/script.js"></script>
 </body>
 </html>
