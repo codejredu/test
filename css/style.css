@@ -31,22 +31,19 @@ header {
     border-bottom: 1px solid #e0e0e0;
 }
 
+/* אזור לוגו שיכיל גם את הלחצן */
+.logo-area {
+    display: flex;
+    align-items: center;
+}
+
 main {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
 }
 
-/* מיכל ללחצן הרקע */
-.background-button-container {
-    display: flex;
-    justify-content: center;
-    padding: 10px 0;
-    width: 100%;
-    background-color: #f0f4ff;
-}
-
-/* עיצוב לחצן הרקע */
+/* עיצוב לחצן הרקע - שינוי למיקום בתוך header */
 #background-button {
     padding: 8px 20px;
     font-size: 18px;
@@ -58,22 +55,20 @@ main {
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     transition: all 0.2s ease-in-out;
-    position: absolute; /* הוספת מיקום מוחלט */
-    top: -55px; /* עדכון: עלייה של 20 פיקסלים מעלה (מ-35 ל-55) */
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 10;
+    /* מיקום רגיל - לא מוחלט */
+    position: static;
+    margin-right: 15px; /* מרווח מימין ללחצן */
 }
 
 #background-button:hover {
     background-color: #4a90e2;
     color: white;
-    transform: translateY(-2px) translateX(-50%); /* שמירה על מרכוז אופקי גם בעת ריחוף */
+    transform: translateY(-2px); /* רק תזוזה אנכית */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 #background-button:active {
-    transform: translateY(0px) translateX(-50%); /* שמירה על מרכוז אופקי גם בעת לחיצה */
+    transform: translateY(0px); /* חזרה למקום */
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
@@ -83,7 +78,7 @@ main {
     justify-content: center;
     align-items: center;
     padding: 10px;
-    position: relative; /* הוספת מיקום יחסי כדי שהלחצן יוכל להתמקם נכון */
+    position: relative;
 }
 
 #stage {
