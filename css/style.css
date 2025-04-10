@@ -26,8 +26,9 @@ header {
     background-color: #fff;
     padding: 10px 20px;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column; /* Changed to column */
+    /* justify-content: space-between; Removed justify-content */
+    align-items: center; /* Added align-items: center */
     border-bottom: 1px solid #e0e0e0;
 }
 
@@ -224,6 +225,7 @@ main {
     font-size: 20px;
     font-weight: bold;
     color: #4a90e2;
+    margin-bottom: 5px; /* Add some margin between logo and icons */
 }
 
 /* עיצוב לאזור האייקונים בכותרת */
