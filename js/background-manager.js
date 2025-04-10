@@ -1,4 +1,3 @@
---- START OF FILE background-manager.js ---
 document.addEventListener('DOMContentLoaded', () => {
   // 1. בוחרים את לחצן "רקע" באמצעות ה-ID שלו
   const backgroundButton = document.getElementById('background-button');
@@ -17,4 +16,3 @@ document.addEventListener('DOMContentLoaded', () => {
     console.error("לחצן 'רקע' לא נמצא!"); // הודעת שגיאה אם הלחצן לא נמצא
   }
 });
---- END OF FILE background-manager.js ---
