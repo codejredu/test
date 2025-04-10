@@ -29,7 +29,6 @@ header {
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid #e0e0e0;
-    position: relative; /* כדי למקם את לחצן הרקע באופן אבסולוטי בתוכו */
 }
 
 main {
@@ -558,23 +557,4 @@ main {
 #end-blocks .block-container,
 #programming-area .block-container[data-category="end"] {
     width: 80px; /* התאמת רוחב המיכל לבלוק המוקטן */
-}
-
-/* סגנון מיוחד ללחצן רקע - מיקום מרכזי מעל הבמה */
-.header-background-button-container {
-    position: absolute;
-    left: 50%; /* מרכז אופקי */
-    transform: translateX(-50%); /* מרכוז מושלם */
-    bottom: 100%; /* מיקום מעל ה header */
-    margin-bottom: 10px; /* מרווח קטן מה header */
-}
-
-.header-background-button-container .icon.background-button {
-    width: 70px;
-    height: 70px;
-}
-
-.header-background-button-container .icon.background-button .header-icon-img {
-    width: 60px;
-    height: 60px;
 }
