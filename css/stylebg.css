@@ -1,0 +1,79 @@
+#stage {
+  width: 80%;
+  height: 400px; /* התאם לגובה הרצוי לבמה שלך */
+  margin: 20px auto;
+  border: 1px solid #ccc;
+  background-color: #f0f0f0;
+  background-size: cover; /* כדי שהרקע יכסה את כל הבמה */
+  background-position: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+#header {
+  display: flex;
+  justify-content: flex-end; /* ליישור הלחצנים לימין */
+  padding: 10px;
+}
+
+.icon {
+  cursor: pointer;
+  padding: 5px;
+}
+
+.header-icon-img {
+  width: 24px; /* התאם גודל אייקון */
+  height: 24px;
+}
+
+#background-options-panel {
+  position: fixed; /* או absolute, תלוי בפריסה שלך */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  border: 1px solid #ccc;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  z-index: 1000; /* כדי לוודא שהפאנל מעל התוכן */
+  display: none; /* מוסתר כברירת מחדל */
+}
+
+#background-options-panel.active {
+  display: block; /* מוצג כאשר המחלקה active קיימת */
+}
+
+#background-options-panel .panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+#background-options-panel .panel-header button {
+  cursor: pointer;
+  font-size: 16px;
+  border: none;
+  background: none;
+}
+
+#background-options-panel .gallery-section {
+  margin-top: 15px;
+}
+
+#gallery-backgrounds {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); /* רשת גמישה */
+  gap: 10px;
+}
+
+.gallery-background-image {
+  width: 100%;
+  height: auto;
+  cursor: pointer;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  object-fit: cover; /* כדי שהתמונות ימלאו את הריבוע בלי עיוות */
+}
