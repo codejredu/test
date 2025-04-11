@@ -56,6 +56,8 @@ main {
     position: relative;
     gap: 1px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    background-position: center center;
+    background-size: cover;
 }
 
 #stage::before {
@@ -69,16 +71,30 @@ main {
     background: none;
 }
 
-#stage.show-grid::before {
-    background: none;
+/* הגדרה משופרת לרשת */
+#stage.show-grid {
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+    background-size: 56px 46px; /* נשמר הגודל המקורי של הרשת */
+    background-position: 0 0;
+    background-repeat: repeat;
+    position: relative;
 }
 
-#stage.show-grid {
-  background-image:
-    linear-gradient(to right, lightgrey 1px, transparent 1px),
-    linear-gradient(to bottom, lightgrey 1px, transparent 1px);
-  background-size: 56px 46px; /* Set the size of the grid lines */
-  background-position: top left; /* Align the grid to the top left */
+/* הוסף שכבה מעל תמונת הרקע עבור הרשת */
+#stage.show-grid::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1; /* מיקום מעל תמונת הרקע */
+    pointer-events: none; /* מאפשר גרירה וקליקים דרך השכבה */
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+    background-size: 56px 46px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1) inset; /* צל לשיפור הנראות */
 }
 
 #character {
@@ -91,6 +107,7 @@ main {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    z-index: 2; /* וודא שהדמות נמצאת מעל הרשת */
 }
 
 .palette-and-programming {
