@@ -422,7 +422,7 @@ if (clearAllButton && programmingArea) { // Check if programmingArea exists
 }
 
 // ========================================================================
-// Character Dragging (COMPLETELY REWORKED VERSION)
+// Character Dragging (SUPER SIMPLE VERSION)
 // ========================================================================
 const character = document.getElementById('character');
 // Stage already defined above
@@ -431,90 +431,62 @@ if (character && stage) {
     // Make character focusable for keyboard navigation
     character.tabIndex = 0;
     
-    // Initial cursor style
+    // Set initial cursor style
     character.style.cursor = 'grab';
     
-    // Track if we're currently dragging
+    // Variables for drag tracking
     let isDragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
     
-    // Store the initial click position relative to character
-    let initialClickOffsetX = 0;
-    let initialClickOffsetY = 0;
-    
-    // Store the character's original position before any dragging
-    let originalLeft = 0;
-    let originalTop = 0;
-    
-    // Track if this is the first move in a drag operation
-    let isFirstMove = false;
-    
-    // Capture the mousedown event to start dragging
-    character.addEventListener('mousedown', function(e) {
+    // Mouse down - start potential drag
+    character.onmousedown = function(e) {
         e.preventDefault();
         
-        // Get character's current position
+        // Calculate offset from mouse to character top-left
         const rect = character.getBoundingClientRect();
-        const stageRect = stage.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
         
-        // Calculate the precise click position relative to character
-        initialClickOffsetX = e.clientX - rect.left;
-        initialClickOffsetY = e.clientY - rect.top;
-        
-        // Store original character position (relative to stage)
-        originalLeft = rect.left - stageRect.left;
-        originalTop = rect.top - stageRect.top;
-        
-        // Set flag for first movement detection
-        isFirstMove = true;
-        
-        // Change cursor and set dragging flag
-        character.style.cursor = 'grabbing';
+        // Start dragging
         isDragging = true;
         
-        // Add mouse events to document to track movement everywhere
-        document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
-    });
+        // Change cursor
+        character.style.cursor = 'grabbing';
+    };
     
-    // Function to handle mouse movement during drag
-    function onMouseMove(e) {
-        if (!isDragging) return;
-        
-        // Get stage position
-        const stageRect = stage.getBoundingClientRect();
-        
-        // Calculate new position (cursor exactly where user clicked on character)
-        let newX = e.clientX - stageRect.left - initialClickOffsetX;
-        let newY = e.clientY - stageRect.top - initialClickOffsetY;
-        
-        // Keep character within stage boundaries
-        newX = Math.max(0, Math.min(newX, stageRect.width - character.offsetWidth));
-        newY = Math.max(0, Math.min(newY, stageRect.height - character.offsetHeight));
-        
-        // Move character to new position
-        character.style.left = newX + 'px';
-        character.style.top = newY + 'px';
-        
-        // First move has completed
-        isFirstMove = false;
-    }
-    
-    // Function to handle mouse release
-    function onMouseUp(e) {
-        // Clean up
-        character.style.cursor = 'grab';
-        isDragging = false;
-        
-        // Remove temporary event listeners
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-    }
-    
-    // Prevent default drag behavior
-    character.addEventListener('dragstart', function(e) {
+    // Mouse move - continue drag if active
+    document.onmousemove = function(e) {
         e.preventDefault();
-        return false;
-    });
+        
+        if (isDragging) {
+            // Get stage bounds
+            const stageRect = stage.getBoundingClientRect();
+            
+            // Calculate new position
+            let left = e.clientX - stageRect.left - offsetX;
+            let top = e.clientY - stageRect.top - offsetY;
+            
+            // Keep within stage boundaries
+            left = Math.max(0, Math.min(left, stageRect.width - character.offsetWidth));
+            top = Math.max(0, Math.min(top, stageRect.height - character.offsetHeight));
+            
+            // Set position (direct update)
+            character.style.left = left + 'px';
+            character.style.top = top + 'px';
+        }
+    };
+    
+    // Mouse up - end drag
+    document.onmouseup = function(e) {
+        if (isDragging) {
+            isDragging = false;
+            character.style.cursor = 'grab';
+        }
+    };
+    
+    // Disable all default drag behavior entirely
+    character.ondragstart = function() { return false; };
 }
     
     // Optional enhancement: Allow the character to be moved with arrow keys
@@ -569,8 +541,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ensure the DOM is ready before trying to manipulate it
     handleCategoryChange(initialCategory);
     
-    // Set initial cursor style for character
+    // Ensure character has position: absolute style
     if (character) {
-        character.style.cursor = 'grab';
+        if (!character.style.position || character.style.position !== 'absolute') {
+            character.style.position = 'absolute';
+        }
     }
 });
