@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
   thumbnailContainer.appendChild(gridHeader);
 
   // נתיב לתיקיית הרקעים - תיקון הנתיב
-  const bgPath = '/assets/bg/';
+  const bgPath = 'assets/bg/';
   
   // רשימת קבצי SVG לטעינה
   const bgFiles = [
