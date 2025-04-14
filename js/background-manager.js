@@ -3,10 +3,31 @@ document.addEventListener('DOMContentLoaded', () => {
   const backgroundButton = document.getElementById('background-button');
   // בוחרים את אזור הבמה
   const stage = document.getElementById('stage');
+  
+  // פונקציה ליצירת אירוע שינוי רקע
+  function dispatchBackgroundChangeEvent() {
+    try {
+      const event = new CustomEvent('backgroundChanged', {
+        detail: { time: new Date().getTime() }
+      });
+      document.dispatchEvent(event);
+      
+      // ניסיון לאלץ את הדפדפן לצייר מחדש את הממשק
+      window.requestAnimationFrame(() => {
+        const temp = document.body.style.opacity;
+        document.body.style.opacity = '0.99';
+        setTimeout(() => {
+          document.body.style.opacity = temp;
+        }, 1);
+      });
+    } catch (e) {
+      console.error('Failed to dispatch event', e);
+    }
+  }
 
   const svgBackgrounds = [
     'assets/bg/canyon1.svg',
-    'assets/bg/castel.svg',
+     'assets/bg/castel.svg',
     'assets/bg/castel1.svg',
     'assets/bg/citynight.svg',
     'assets/bg/citynight2.svg',
@@ -58,6 +79,11 @@ document.addEventListener('DOMContentLoaded', () => {
       justify-content: space-between;
       align-items: center;
       margin-bottom: 15px;
+      position: sticky;
+      top: 0;
+      background-color: white;
+      padding: 5px 0;
+      z-index: 1;
     `;
 
     const modalTitle = document.createElement('h3');
@@ -65,6 +91,33 @@ document.addEventListener('DOMContentLoaded', () => {
     modalTitle.style.margin = '0';
     modalTitle.style.direction = 'rtl';
 
+    // שיטה לניקוי זיכרון ושחרור משאבים
+    function cleanupResources() {
+      // אם יש URLs של תמונות שנוצרו, משחררים אותם
+      if (window._tempImageUrls && window._tempImageUrls.length > 0) {
+        window._tempImageUrls.forEach(url => {
+          try {
+            URL.revokeObjectURL(url);
+          } catch (e) {
+            console.error('Failed to revoke URL', e);
+          }
+        });
+        window._tempImageUrls = [];
+      }
+    }
+    
+    // פונקציה שמנקה את הכל ומחזירה את הממשק לתפקוד
+    function closeModalAndCleanup() {
+      try {
+        if (modal.parentNode) modal.parentNode.removeChild(modal);
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        cleanupResources();
+      } catch (error) {
+        console.error('Error in cleanup', error);
+      }
+    }
+
+    // מוסיפים לחצן ניקוי מידי  
     const closeButton = document.createElement('button');
     closeButton.textContent = '✕';
     closeButton.style.cssText = `
@@ -73,10 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
       font-size: 1.5rem;
       cursor: pointer;
     `;
-    closeButton.onclick = () => {
-      if (modal.parentNode) modal.parentNode.removeChild(modal);
-      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-    };
+    closeButton.onclick = closeModalAndCleanup;
 
     modalHeader.appendChild(modalTitle);
     modalHeader.appendChild(closeButton);
@@ -117,16 +167,22 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
 
       imgContainer.onclick = () => {
-        if (stage) {
-          stage.style.backgroundImage = `url(${svg})`;
-          stage.style.backgroundSize = 'cover';
-          stage.style.backgroundPosition = 'center';
-        }
         try {
-          if (modal.parentNode) modal.parentNode.removeChild(modal);
-          if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+          // נסגור את המודל ראשון
+          closeModalAndCleanup();
+          
+          // עדכון הרקע באיחור קל אחרי סגירת המודל
+          setTimeout(() => {
+            if (stage) {
+              stage.style.backgroundImage = `url(${svg})`;
+              stage.style.backgroundSize = 'cover';
+              stage.style.backgroundPosition = 'center';
+            }
+            // הפעלת האירוע המציין שהרקע שונה
+            dispatchBackgroundChangeEvent();
+          }, 10);
         } catch (error) {
-          console.error('Error closing modal:', error);
+          console.error('Error handling background selection:', error);
         }
       };
 
@@ -189,27 +245,32 @@ document.addEventListener('DOMContentLoaded', () => {
       if (file) {
         if (file.type.startsWith('image/')) {
           try {
-            const imageUrl = URL.createObjectURL(file);
+            // סגירת המודל מיד
+            closeModalAndCleanup();
             
-            // שינוי הרקע רק אחרי שה-URL נוצר בהצלחה
-            if (stage) {
-              stage.style.backgroundImage = `url(${imageUrl})`;
-              stage.style.backgroundSize = 'cover';
-              stage.style.backgroundPosition = 'center';
-            }
-            
-            // סגירת המודל עם השהייה קצרה למניעת תקיעות
+            // יצירת URL לתמונה ועדכון הרקע אחרי סגירת המודל
             setTimeout(() => {
               try {
-                if (modal.parentNode) modal.parentNode.removeChild(modal);
-                if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+                const imageUrl = URL.createObjectURL(file);
+                // שמירת ה-URL כדי לשחרר את הזיכרון מאוחר יותר
+                if (!window._tempImageUrls) window._tempImageUrls = [];
+                window._tempImageUrls.push(imageUrl);
+                
+                if (stage) {
+                  stage.style.backgroundImage = `url(${imageUrl})`;
+                  stage.style.backgroundSize = 'cover';
+                  stage.style.backgroundPosition = 'center';
+                }
+                
+                // הפעלת האירוע המציין שהרקע שונה
+                dispatchBackgroundChangeEvent();
               } catch (error) {
-                console.error('Error closing modal after upload:', error);
+                console.error('Error processing uploaded file:', error);
+                alert('אירעה שגיאה בעת עיבוד הקובץ. אנא נסה שוב.');
               }
-            }, 100);
+            }, 10);
           } catch (error) {
-            console.error('Error processing uploaded file:', error);
-            alert('אירעה שגיאה בעת עיבוד הקובץ. אנא נסה שוב.');
+            console.error('Error handling file upload:', error);
           }
         } else {
           alert('אנא בחר קובץ תמונה (jpg, png, gif וכו׳)');
@@ -238,13 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // הוספת מאזין לחיצה לסגירת המודל בלחיצה על הרקע
     overlay.addEventListener('click', (event) => {
       if (event.target === overlay) {
-        try {
-          const modal = document.querySelector('.background-modal');
-          if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
-          if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-        } catch (error) {
-          console.error('Error closing modal from overlay:', error);
-        }
+        closeModalAndCleanup();
       }
     });
     return overlay;
