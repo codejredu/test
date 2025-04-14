@@ -422,7 +422,7 @@ if (clearAllButton && programmingArea) { // Check if programmingArea exists
 }
 
 // ========================================================================
-// Character Dragging (IMPROVED VERSION)
+// Character Dragging (COMPLETELY REWORKED VERSION)
 // ========================================================================
 const character = document.getElementById('character');
 // Stage already defined above
@@ -431,61 +431,91 @@ if (character && stage) {
     // Make character focusable for keyboard navigation
     character.tabIndex = 0;
     
-    // Variables to track mouse position relative to character
-    let grabX, grabY;
+    // Initial cursor style
+    character.style.cursor = 'grab';
     
-    character.addEventListener('mousedown', (event) => {
-        // Prevent any default behavior
-        event.preventDefault();
-        
-        // Calculate where on the character the user clicked (relative to character's top-left)
-        const characterRect = character.getBoundingClientRect();
-        grabX = event.clientX - characterRect.left;
-        grabY = event.clientY - characterRect.top;
-        
-        // Change cursor to grabbing
-        character.style.cursor = 'grabbing';
-        
-        // Start tracking mouse movement for dragging
-        document.addEventListener('mousemove', handleDrag);
-        document.addEventListener('mouseup', handleRelease);
-    });
+    // Track if we're currently dragging
+    let isDragging = false;
     
-    function handleDrag(event) {
-        // Get stage position for boundaries
+    // Store the initial click position relative to character
+    let initialClickOffsetX = 0;
+    let initialClickOffsetY = 0;
+    
+    // Store the character's original position before any dragging
+    let originalLeft = 0;
+    let originalTop = 0;
+    
+    // Track if this is the first move in a drag operation
+    let isFirstMove = false;
+    
+    // Capture the mousedown event to start dragging
+    character.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        
+        // Get character's current position
+        const rect = character.getBoundingClientRect();
         const stageRect = stage.getBoundingClientRect();
         
-        // Calculate new position, keeping cursor exactly where user initially grabbed
-        let newX = event.clientX - stageRect.left - grabX;
-        let newY = event.clientY - stageRect.top - grabY;
+        // Calculate the precise click position relative to character
+        initialClickOffsetX = e.clientX - rect.left;
+        initialClickOffsetY = e.clientY - rect.top;
         
-        // Keep within stage boundaries
-        const characterWidth = character.offsetWidth;
-        const characterHeight = character.offsetHeight;
-        newX = Math.max(0, Math.min(newX, stageRect.width - characterWidth));
-        newY = Math.max(0, Math.min(newY, stageRect.height - characterHeight));
+        // Store original character position (relative to stage)
+        originalLeft = rect.left - stageRect.left;
+        originalTop = rect.top - stageRect.top;
         
-        // Update character position directly
-        character.style.left = `${newX}px`;
-        character.style.top = `${newY}px`;
-    }
-    
-    function handleRelease() {
-        // Reset cursor
-        character.style.cursor = 'grab';
+        // Set flag for first movement detection
+        isFirstMove = true;
         
-        // Remove event listeners
-        document.removeEventListener('mousemove', handleDrag);
-        document.removeEventListener('mouseup', handleRelease);
-    }
-    
-    // Disable HTML5 native drag to prevent conflicts
-    character.addEventListener('dragstart', (event) => {
-        event.preventDefault();
+        // Change cursor and set dragging flag
+        character.style.cursor = 'grabbing';
+        isDragging = true;
+        
+        // Add mouse events to document to track movement everywhere
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
     });
     
-    // Set initial cursor style
-    character.style.cursor = 'grab';
+    // Function to handle mouse movement during drag
+    function onMouseMove(e) {
+        if (!isDragging) return;
+        
+        // Get stage position
+        const stageRect = stage.getBoundingClientRect();
+        
+        // Calculate new position (cursor exactly where user clicked on character)
+        let newX = e.clientX - stageRect.left - initialClickOffsetX;
+        let newY = e.clientY - stageRect.top - initialClickOffsetY;
+        
+        // Keep character within stage boundaries
+        newX = Math.max(0, Math.min(newX, stageRect.width - character.offsetWidth));
+        newY = Math.max(0, Math.min(newY, stageRect.height - character.offsetHeight));
+        
+        // Move character to new position
+        character.style.left = newX + 'px';
+        character.style.top = newY + 'px';
+        
+        // First move has completed
+        isFirstMove = false;
+    }
+    
+    // Function to handle mouse release
+    function onMouseUp(e) {
+        // Clean up
+        character.style.cursor = 'grab';
+        isDragging = false;
+        
+        // Remove temporary event listeners
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+    }
+    
+    // Prevent default drag behavior
+    character.addEventListener('dragstart', function(e) {
+        e.preventDefault();
+        return false;
+    });
+}
     
     // Optional enhancement: Allow the character to be moved with arrow keys
     document.addEventListener('keydown', (event) => {
