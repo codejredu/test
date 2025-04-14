@@ -433,6 +433,7 @@ if (character && stage) {
     
     // Set a flag to identify our custom drag operation
     let isDraggingCharacter = false;
+    let offsetX, offsetY;
     
     // Instead of using the HTML5 drag API, we'll implement a custom drag
     // that gives us more direct control
@@ -446,23 +447,27 @@ if (character && stage) {
         // Get stage boundaries
         const stageRect = stage.getBoundingClientRect();
         
-        // Get character dimensions for centering
-        const characterWidth = character.offsetWidth;
-        const characterHeight = character.offsetHeight;
+        // Calculate the offset between mouse position and character's top-left corner
+        const characterRect = character.getBoundingClientRect();
+        offsetX = event.clientX - characterRect.left;
+        offsetY = event.clientY - characterRect.top;
         
         // Move function that will be called during drag
         const moveCharacter = (moveEvent) => {
             if (!isDraggingCharacter) return;
             
-            // Calculate new position with cursor at the center of the character
+            // Calculate new position, maintaining the exact offset from the initial click
             const newMouseX = moveEvent.clientX - stageRect.left;
             const newMouseY = moveEvent.clientY - stageRect.top;
             
-            // Position calculation - cursor will be at the center
-            let newLeft = newMouseX - (characterWidth / 2);
-            let newTop = newMouseY - (characterHeight / 2);
+            // Use the stored offset to maintain cursor position relative to character
+            let newLeft = newMouseX - offsetX;
+            let newTop = newMouseY - offsetY;
             
             // Keep character within stage boundaries
+            const characterWidth = character.offsetWidth;
+            const characterHeight = character.offsetHeight;
+            
             newLeft = Math.max(0, Math.min(newLeft, stageRect.width - characterWidth));
             newTop = Math.max(0, Math.min(newTop, stageRect.height - characterHeight));
             
@@ -484,9 +489,6 @@ if (character && stage) {
         // Add event listeners for mouse movement and release
         document.addEventListener('mousemove', moveCharacter);
         document.addEventListener('mouseup', stopDragging);
-        
-        // Trigger initial positioning to center the character on the cursor immediately
-        moveCharacter(event);
     });
     
     // Disable the default HTML5 drag
