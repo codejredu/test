@@ -1,299 +1,236 @@
-document.addEventListener('DOMContentLoaded', function() {
-  console.log("הדף נטען, מתחיל אתחול מנהל הרקע");
-
-  // בדיקת קיום אלמנטים חיוניים
+document.addEventListener('DOMContentLoaded', () => {
+  // בוחרים את לחצן "רקע" באמצעות ה-ID שלו
   const backgroundButton = document.getElementById('background-button');
+  // בוחרים את אזור הבמה
   const stage = document.getElementById('stage');
 
-  // בדיקת קיום לחצן הרקע
-  if (!backgroundButton) {
-    console.error("שגיאה: לא נמצא אלמנט עם ID 'background-button'");
-    return;
-  }
-
-  // בדיקת קיום אזור הבמה
-  if (!stage) {
-    console.error("שגיאה: לא נמצא אלמנט עם ID 'stage'");
-    return;
-  }
-
-  console.log("נמצאו אלמנטים נדרשים: לחצן רקע ובמה");
-
-  // יצירת מיכל למטריצת התמונות
-  const thumbnailContainer = document.createElement('div');
-  thumbnailContainer.id = 'background-thumbnails-container';
-  thumbnailContainer.className = 'background-grid';
-  
-  // עיצוב בסיסי למיכל התמונות
-  Object.assign(thumbnailContainer.style, {
-    position: 'absolute',
-    display: 'none',
-    flexWrap: 'wrap',
-    gap: '10px',
-    padding: '10px',
-    backgroundColor: 'white',
-    border: '1px solid #ccc',
-    borderRadius: '5px',
-    zIndex: '10000',
-    width: '300px',
-    boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-  });
-
-  // הוספת כותרת
-  const gridHeader = document.createElement('div');
-  gridHeader.textContent = 'בחר רקע';
-  gridHeader.style.width = '100%';
-  gridHeader.style.textAlign = 'center';
-  gridHeader.style.marginBottom = '10px';
-  gridHeader.style.fontWeight = 'bold';
-  thumbnailContainer.appendChild(gridHeader);
-
-  // נתיב לתיקיית הרקעים - תיקון הנתיב
-  const bgPath = '/assets/bg/';
-  
-  // רשימת קבצי SVG לטעינה
-  const bgFiles = [
-'castel.svg',
-'citynight.svg',
-'castel1.svg',
-'citynight.svg',
-'citynight2.svg',
-'colorfulcity.svg'
-'colorfulcity1'
-'colorfulcity1.svg '
-'desert.svg '
-'desert1.svg'
-'farm.svg'
-'kidbadroom.svg'
-'kidbadroom1.svg'
-'moon.svg'
-'room1.svg'
-'room2.svg'
-        
+  // רשימת קבצי תמונות לטעינה מהספרייה
+  const svgBackgrounds = [
+    'assets/images/canyon1.svg',
+    'assets/images/castel.jpg',
+    'assets/images/castel.svg',
+    'assets/images/castel1.svg',
+    'assets/images/citynight.svg',
+    'assets/images/citynight2.svg',
+    'assets/images/colorfulcity.svg',
+    'assets/images/colorfulcity1.svg',
+    'assets/images/desert.svg',
+    'assets/images/desert1.svg',
+    'assets/images/farm.svg',
+    'assets/images/kidbadroom.svg',
+    'assets/images/kidbadroom1.svg',
+    'assets/images/moon.svg',
+    'assets/images/room1.svg',
+    'assets/images/room2.svg',
+    'assets/images/savanna1.svg',
+    'assets/images/savanna2.svg',
+    'assets/images/school1.svg',
+    'assets/images/slopes1.svg',
+    'assets/images/slopes2.svg',
+    'assets/images/soccer1.svg',
+    'assets/images/soccer2.svg'
   ];
- 
- 
 
- 
-  console.log(`מנסה לטעון ${bgFiles.length} תמונות מהנתיב ${bgPath}`);
+  // יצירת המודל של בחירת רקע
+  function createBackgroundModal() {
+    // יצירת מודל
+    const modal = document.createElement('div');
+    modal.className = 'background-modal';
+    modal.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      max-width: 90%;
+      max-height: 90%;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    `;
 
-  // יצירת פונקציה לטעינת תמונה עם ניסיונות חוזרים
-  function loadImageWithRetry(src, maxRetries = 2) {
-    return new Promise((resolve, reject) => {
-      let retries = 0;
-      
-      function attemptLoad() {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = () => {
-          console.warn(`ניסיון ${retries + 1} נכשל לטעינת ${src}`);
-          if (retries < maxRetries) {
-            retries++;
-            setTimeout(attemptLoad, 500); // ניסיון חוזר אחרי חצי שנייה
-          } else {
-            reject(new Error(`נכשל בטעינת התמונה אחרי ${maxRetries + 1} ניסיונות: ${src}`));
-          }
-        };
-        img.src = src;
-      }
-      
-      attemptLoad();
+    // כותרת המודל
+    const modalHeader = document.createElement('div');
+    modalHeader.style.cssText = `
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    `;
+
+    const modalTitle = document.createElement('h3');
+    modalTitle.textContent = 'בחר רקע';
+    modalTitle.style.margin = '0';
+    modalTitle.style.direction = 'rtl';
+
+    const closeButton = document.createElement('button');
+    closeButton.textContent = '✕';
+    closeButton.style.cssText = `
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+    `;
+    closeButton.onclick = () => {
+      document.body.removeChild(modal);
+      document.body.removeChild(overlay);
+    };
+
+    modalHeader.appendChild(modalTitle);
+    modalHeader.appendChild(closeButton);
+    modal.appendChild(modalHeader);
+
+    // מטריצת התמונות
+    const imageGrid = document.createElement('div');
+    imageGrid.style.cssText = `
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      justify-content: center;
+      direction: rtl;
+    `;
+
+    // הוספת תמונות SVG מהרשימה
+    svgBackgrounds.forEach(svg => {
+      const imgContainer = document.createElement('div');
+      imgContainer.style.cssText = `
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        padding: 10px;
+        cursor: pointer;
+        text-align: center;
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f9f9f9;
+      `;
+
+      const img = document.createElement('img');
+      img.src = svg;
+      img.style.cssText = `
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      `;
+
+      imgContainer.onclick = () => {
+        if (stage) {
+          stage.style.backgroundImage = `url(${svg})`;
+          stage.style.backgroundSize = 'cover';
+          stage.style.backgroundPosition = 'center';
+        }
+        document.body.removeChild(modal);
+        document.body.removeChild(overlay);
+      };
+
+      imgContainer.appendChild(img);
+      imageGrid.appendChild(imgContainer);
     });
-  }
 
-  // יצירת תמונות ממוזערות
-  bgFiles.forEach(function(fileName, index) {
-    const fullPath = bgPath + fileName;
-    
-    // יצירת מיכל לתמונה ממוזערת
-    const thumbnail = document.createElement('div');
-    Object.assign(thumbnail.style, {
-      width: '80px',
-      height: '60px',
-      border: '1px solid #ddd',
-      borderRadius: '4px',
-      overflow: 'hidden',
-      cursor: 'pointer',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      backgroundColor: '#f8f8f8',
-      position: 'relative'
-    });
+    modal.appendChild(imageGrid);
 
-    // הוספת טקסט טעינה
-    const loadingText = document.createElement('div');
-    loadingText.textContent = 'טוען...';
-    loadingText.style.fontSize = '12px';
-    loadingText.style.color = '#666';
-    thumbnail.appendChild(loadingText);
+    // לחצן העלאת תמונה
+    const uploadContainer = document.createElement('div');
+    uploadContainer.style.cssText = `
+      margin-top: 20px;
+      text-align: center;
+      padding: 15px 0;
+      border-top: 1px solid #eee;
+    `;
 
-    // יצירת תמונה
-    const img = document.createElement('img');
-    img.alt = `רקע ${index + 1}`;
-    Object.assign(img.style, {
-      maxWidth: '100%',
-      maxHeight: '100%',
-      objectFit: 'contain',
-      display: 'none' // מוסתר עד שהטעינה תושלם
-    });
+    const uploadButton = document.createElement('div');
+    uploadButton.style.cssText = `
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+      padding: 10px 15px;
+      background-color: #f0f0f0;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+    `;
 
-    // טעינת התמונה עם ניסיונות חוזרים
-    loadImageWithRetry(fullPath)
-      .then(() => {
-        img.src = fullPath; // הגדרת מקור התמונה רק אחרי שוידאנו שהיא זמינה
-        img.style.display = 'block'; // הצגת התמונה
-        loadingText.remove(); // הסרת טקסט הטעינה
-        console.log(`תמונה נטענה בהצלחה: ${fullPath}`);
-      })
-      .catch(error => {
-        console.error(`שגיאה בטעינת תמונה: ${fullPath}`, error);
-        loadingText.textContent = '!';
-        loadingText.style.color = 'red';
-        
-        // הוספת הודעת שגיאה מפורטת בהצבעה
-        thumbnail.title = `שגיאה בטעינת ${fileName}`;
-      });
+    const uploadIcon = document.createElement('img');
+    uploadIcon.src = 'assets/images/uploadimage.svg';
+    uploadIcon.style.cssText = `
+      width: 24px;
+      height: 24px;
+      margin-left: 8px;
+    `;
 
-    // הוספת מאזין לחיצה
-    thumbnail.addEventListener('click', function() {
-      if (img.complete && img.naturalWidth > 0) {
-        console.log(`נבחר רקע: ${fullPath}`);
-        stage.style.backgroundImage = `url(${fullPath})`;
-        stage.style.backgroundSize = 'cover';
-        stage.style.backgroundPosition = 'center';
-        thumbnailContainer.style.display = 'none';
-      } else {
-        console.warn(`ניסיון לבחור תמונה שלא נטענה: ${fullPath}`);
-        alert('התמונה עדיין לא נטענה או שיש בעיה בטעינתה');
-      }
-    });
+    const uploadText = document.createElement('span');
+    uploadText.textContent = 'העלאת תמונה';
+    uploadText.style.direction = 'rtl';
 
-    // הוספת התמונה למיכל
-    thumbnail.appendChild(img);
-    thumbnailContainer.appendChild(thumbnail);
-  });
+    uploadButton.appendChild(uploadIcon);
+    uploadButton.appendChild(uploadText);
+    uploadContainer.appendChild(uploadButton);
+    modal.appendChild(uploadContainer);
 
-  // יצירת כפתור לבדיקת נתיב (דיבוג)
-  const debugButton = document.createElement('div');
-  Object.assign(debugButton.style, {
-    width: '100%',
-    padding: '8px',
-    marginTop: '10px',
-    textAlign: 'center',
-    backgroundColor: '#f0f0f0',
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    fontSize: '12px'
-  });
-  debugButton.textContent = 'בדוק נתיבי תמונות';
-  debugButton.addEventListener('click', function() {
-    console.group('בדיקת נתיבי תמונות');
-    bgFiles.forEach(file => {
-      const fullPath = bgPath + file;
-      console.log(`מנסה לגשת ל: ${fullPath}`);
-      
-      // יצירת בקשת fetch לבדיקת קיום הקובץ
-      fetch(fullPath)
-        .then(response => {
-          if (response.ok) {
-            console.log(`✓ הקובץ ${file} נמצא ונגיש`);
-          } else {
-            console.error(`✗ הקובץ ${file} לא נמצא (קוד: ${response.status})`);
-          }
-        })
-        .catch(error => {
-          console.error(`✗ שגיאה בגישה לקובץ ${file}:`, error);
-        });
-    });
-    console.groupEnd();
-    
-    alert(`פרטי בדיקת הנתיבים מוצגים בקונסול.\nמחפש תמונות בנתיב: ${bgPath}`);
-  });
-  thumbnailContainer.appendChild(debugButton);
+    // יצירת input מסוג file נסתר
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.style.display = 'none';
 
-  // יצירת לחצן העלאת תמונה
-  const uploadButton = document.createElement('div');
-  Object.assign(uploadButton.style, {
-    width: '80px',
-    height: '60px',
-    border: '1px solid #ddd',
-    borderRadius: '4px',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    cursor: 'pointer',
-    backgroundColor: '#f0f0f0'
-  });
-  
-  // יצירת אייקון העלאה או טקסט חלופי
-  uploadButton.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>';
-  uploadButton.title = 'העלאת תמונה';
-  thumbnailContainer.appendChild(uploadButton);
+    uploadButton.onclick = () => {
+      fileInput.click();
+    };
 
-  // יצירת אלמנט input לבחירת קובץ
-  const fileInput = document.createElement('input');
-  fileInput.type = 'file';
-  fileInput.accept = 'image/*';
-  fileInput.style.display = 'none';
-  document.body.appendChild(fileInput);
-
-  // מאזין לחיצה על לחצן העלאה
-  uploadButton.addEventListener('click', function() {
-    fileInput.click();
-  });
-
-  // מאזין לבחירת קובץ
-  fileInput.addEventListener('change', function(event) {
-    if (event.target.files && event.target.files[0]) {
+    fileInput.addEventListener('change', (event) => {
       const file = event.target.files[0];
       
-      if (file.type.startsWith('image/')) {
-        const imageUrl = URL.createObjectURL(file);
-        stage.style.backgroundImage = `url(${imageUrl})`;
-        stage.style.backgroundSize = 'cover';
-        stage.style.backgroundPosition = 'center';
-        thumbnailContainer.style.display = 'none';
-        console.log(`תמונה הועלתה בהצלחה: ${file.name} (${file.type})`);
-      } else {
-        alert('אנא בחר קובץ תמונה');
+      if (file) {
+        if (file.type.startsWith('image/')) {
+          const imageUrl = URL.createObjectURL(file);
+          
+          if (stage) {
+            stage.style.backgroundImage = `url(${imageUrl})`;
+            stage.style.backgroundSize = 'cover';
+            stage.style.backgroundPosition = 'center';
+          }
+          document.body.removeChild(modal);
+          document.body.removeChild(overlay);
+        } else {
+          alert('אנא בחר קובץ תמונה (jpg, png, gif וכו׳)');
+        }
       }
-    }
-  });
+    });
 
-  // הוספת מיכל התמונות לעמוד
-  document.body.appendChild(thumbnailContainer);
+    modal.appendChild(fileInput);
 
-  // מאזין לחיצה על לחצן הרקע
-  backgroundButton.addEventListener('click', function(event) {
-    event.stopPropagation();
-    
-    console.log("לחצן רקע נלחץ");
-    
-    // מיקום המטריצה יחסית ללחצן
-    const buttonRect = backgroundButton.getBoundingClientRect();
-    thumbnailContainer.style.top = buttonRect.bottom + 5 + 'px';
-    thumbnailContainer.style.left = buttonRect.left + 'px';
-    
-    // החלפת מצב תצוגה
-    if (thumbnailContainer.style.display === 'none' || thumbnailContainer.style.display === '') {
-      thumbnailContainer.style.display = 'flex';
-      console.log("מציג מטריצת רקעים");
-    } else {
-      thumbnailContainer.style.display = 'none';
-      console.log("מסתיר מטריצת רקעים");
-    }
-  });
+    return modal;
+  }
 
-  // סגירת המטריצה בלחיצה מחוץ לה
-  document.addEventListener('click', function(event) {
-    if (thumbnailContainer.style.display !== 'none' && 
-        !thumbnailContainer.contains(event.target) &&
-        event.target !== backgroundButton) {
-      thumbnailContainer.style.display = 'none';
-    }
-  });
+  // יצירת שכבת הרקע האפורה
+  function createOverlay() {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+    `;
+    return overlay;
+  }
 
-  console.log("אתחול מנהל הרקע הושלם");
+  // מוסיפים מאזין לאירוע 'click' ללחצן הרקע
+  if (backgroundButton) {
+    backgroundButton.addEventListener('click', () => {
+      const overlay = createOverlay();
+      const modal = createBackgroundModal();
+      
+      document.body.appendChild(overlay);
+      document.body.appendChild(modal);
+    });
+  } else {
+    console.error("לחצן 'רקע' לא נמצא!");
+  }
 });
