@@ -4,31 +4,30 @@ document.addEventListener('DOMContentLoaded', () => {
   // בוחרים את אזור הבמה
   const stage = document.getElementById('stage');
 
-  // רשימת קבצי תמונות לטעינה מהספרייה
   const svgBackgrounds = [
-    'assets/bg/canyon1.svg',
-    'assets/bg/castel.jpg',
-    'assets/bg/castel.svg',
-    'assets/bg/castel1.svg',
-    'assets/bg/citynight.svg',
-    'assets/bg/citynight2.svg',
-    'assets/bg/colorfulcity.svg',
-    'assets/bg/colorfulcity1.svg',
-    'assets/bg/desert.svg',
-    'assets/bg/desert1.svg',
-    'assets/bg/farm.svg',
-    'assets/bg/kidbadroom.svg',
-    'assets/bg/kidbadroom1.svg',
-    'assets/bg/moon.svg',
-    'assets/bg/room1.svg',
-    'assets/bg/room2.svg',
-    'assets/bg/savanna1.svg',
-    'assets/bg/savanna2.svg',
-    'assets/bg/school1.svg',
-    'assets/bg/slopes1.svg',
-    'assets/bg/slopes2.svg',
-    'assets/bg/soccer1.svg',
-    'assets/bg/soccer2.svg'
+    'assets/BG/canyon1.svg',
+    'assets/BG/castel.jpg',
+    'assets/BG/castel.svg',
+    'assets/BG/castel1.svg',
+    'assets/BG/citynight.svg',
+    'assets/BG/citynight2.svg',
+    'assets/BG/colorfulcity.svg',
+    'assets/BG/colorfulcity1.svg',
+    'assets/BG/desert.svg',
+    'assets/BG/desert1.svg',
+    'assets/BG/farm.svg',
+    'assets/BG/kidbadroom.svg',
+    'assets/BG/kidbadroom1.svg',
+    'assets/BG/moon.svg',
+    'assets/BG/room1.svg',
+    'assets/BG/room2.svg',
+    'assets/BG/savanna1.svg',
+    'assets/BG/savanna2.svg',
+    'assets/BG/school1.svg',
+    'assets/BG/slopes1.svg',
+    'assets/BG/slopes2.svg',
+    'assets/BG/soccer1.svg',
+    'assets/BG/soccer2.svg'
   ];
 
   // יצירת המודל של בחירת רקע
@@ -76,8 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
       cursor: pointer;
     `;
     closeButton.onclick = () => {
-      document.body.removeChild(modal);
-      document.body.removeChild(overlay);
+      if (modal.parentNode) modal.parentNode.removeChild(modal);
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
     };
 
     modalHeader.appendChild(modalTitle);
@@ -124,8 +123,12 @@ document.addEventListener('DOMContentLoaded', () => {
           stage.style.backgroundSize = 'cover';
           stage.style.backgroundPosition = 'center';
         }
-        document.body.removeChild(modal);
-        document.body.removeChild(overlay);
+        try {
+          if (modal.parentNode) modal.parentNode.removeChild(modal);
+          if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        } catch (error) {
+          console.error('Error closing modal:', error);
+        }
       };
 
       imgContainer.appendChild(img);
@@ -186,15 +189,29 @@ document.addEventListener('DOMContentLoaded', () => {
       
       if (file) {
         if (file.type.startsWith('image/')) {
-          const imageUrl = URL.createObjectURL(file);
-          
-          if (stage) {
-            stage.style.backgroundImage = `url(${imageUrl})`;
-            stage.style.backgroundSize = 'cover';
-            stage.style.backgroundPosition = 'center';
+          try {
+            const imageUrl = URL.createObjectURL(file);
+            
+            // שינוי הרקע רק אחרי שה-URL נוצר בהצלחה
+            if (stage) {
+              stage.style.backgroundImage = `url(${imageUrl})`;
+              stage.style.backgroundSize = 'cover';
+              stage.style.backgroundPosition = 'center';
+            }
+            
+            // סגירת המודל עם השהייה קצרה למניעת תקיעות
+            setTimeout(() => {
+              try {
+                if (modal.parentNode) modal.parentNode.removeChild(modal);
+                if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+              } catch (error) {
+                console.error('Error closing modal after upload:', error);
+              }
+            }, 100);
+          } catch (error) {
+            console.error('Error processing uploaded file:', error);
+            alert('אירעה שגיאה בעת עיבוד הקובץ. אנא נסה שוב.');
           }
-          document.body.removeChild(modal);
-          document.body.removeChild(overlay);
         } else {
           alert('אנא בחר קובץ תמונה (jpg, png, gif וכו׳)');
         }
@@ -218,13 +235,39 @@ document.addEventListener('DOMContentLoaded', () => {
       background-color: rgba(0, 0, 0, 0.5);
       z-index: 999;
     `;
+    
+    // הוספת מאזין לחיצה לסגירת המודל בלחיצה על הרקע
+    overlay.addEventListener('click', (event) => {
+      if (event.target === overlay) {
+        try {
+          const modal = document.querySelector('.background-modal');
+          if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
+          if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        } catch (error) {
+          console.error('Error closing modal from overlay:', error);
+        }
+      }
+    });
     return overlay;
   }
 
   // מוסיפים מאזין לאירוע 'click' ללחצן הרקע
   if (backgroundButton) {
     backgroundButton.addEventListener('click', () => {
+      // בדיקה אם המודל כבר פתוח
+      const existingModal = document.querySelector('.background-modal');
+      if (existingModal) {
+        try {
+          const existingOverlay = document.querySelector('.overlay');
+          if (existingModal.parentNode) existingModal.parentNode.removeChild(existingModal);
+          if (existingOverlay && existingOverlay.parentNode) existingOverlay.parentNode.removeChild(existingOverlay);
+        } catch (error) {
+          console.error('Error removing existing modal:', error);
+        }
+      }
+      
       const overlay = createOverlay();
+      overlay.className = 'overlay';
       const modal = createBackgroundModal();
       
       document.body.appendChild(overlay);
