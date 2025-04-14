@@ -49,28 +49,27 @@ document.addEventListener('DOMContentLoaded', function() {
   thumbnailContainer.appendChild(gridHeader);
 
   // נתיב לתיקיית הרקעים - תיקון הנתיב
-  const bgPath = 'assets/bg/';
+  const bgPath = '/assets/bg/';
   
   // רשימת קבצי SVG לטעינה
   const bgFiles = [
-    'castel.svg',
-    'citynight.svg',
-    'castel1.svg',
-    'citynight.svg',
-    'citynight2.svg',
-    'colorfulcity.svg'
-    'colorfulcity1'
-   'colorfulcity1.svg '
-   'desert.svg '
-   'desert1.svg'
-   'farm.svg'
-  'kidbadroom.svg'
-  'kidbadroom1.svg'
-  'moon.svg'
-  'room1.svg'
-  'room2.svg'
-  
-      
+'castel.svg',
+'citynight.svg',
+'castel1.svg',
+'citynight.svg',
+'citynight2.svg',
+'colorfulcity.svg'
+'colorfulcity1'
+'colorfulcity1.svg '
+'desert.svg '
+'desert1.svg'
+'farm.svg'
+'kidbadroom.svg'
+'kidbadroom1.svg'
+'moon.svg'
+'room1.svg'
+'room2.svg'
+        
   ];
  
  
