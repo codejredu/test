@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // List of background file names only (without the base path)
     backgrounds: [
       'canyon1.svg',
-      'castel.jpg',
       'castel.svg',
       'castel1.svg',
       'citynight.svg',
