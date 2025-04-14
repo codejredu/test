@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // יוצרים אלמנט שיכיל את מטריצת התמונות
   const thumbnailGrid = document.createElement('div');
   thumbnailGrid.className = 'thumbnail-grid';
-  thumbnailGrid.style.display = 'none';
   thumbnailGrid.style.position = 'absolute';
   thumbnailGrid.style.zIndex = '100';
   thumbnailGrid.style.backgroundColor = 'white';
@@ -22,39 +21,66 @@ document.addEventListener('DOMContentLoaded', () => {
   // הוספת האלמנט לעמוד
   document.body.appendChild(thumbnailGrid);
   
-  // רשימת התמונות בספרייה (צריך להתאים לתמונות שקיימות בפועל)
+  // רשימת התמונות SVG בספרייה
   const bgImages = [
-    'background1.jpg',
-    'background2.jpg',
-    'background3.jpg',
-    'background4.jpg',
-    'background5.jpg',
-    'background6.jpg'
+    'background1.svg',
+    'background2.svg',
+    'background3.svg',
+    'background4.svg',
+    'background5.svg',
+    'background6.svg'
   ];
   
   // יצירת האלמנטים עבור כל תמונה ממוזערת
   bgImages.forEach(imgName => {
     const imgPath = `test/assets/bg/${imgName}`;
     
-    // יצירת אלמנט div שיכיל את התמונה הממוזערת
+    // יצירת אלמנט img במקום div עם background-image
     const thumbnail = document.createElement('div');
     thumbnail.className = 'bg-thumbnail';
     thumbnail.style.width = '80px';
     thumbnail.style.height = '60px';
-    thumbnail.style.backgroundImage = `url(${imgPath})`;
-    thumbnail.style.backgroundSize = 'cover';
-    thumbnail.style.backgroundPosition = 'center';
     thumbnail.style.cursor = 'pointer';
     thumbnail.style.border = '2px solid #ddd';
     thumbnail.style.borderRadius = '4px';
+    thumbnail.style.display = 'flex';
+    thumbnail.style.justifyContent = 'center';
+    thumbnail.style.alignItems = 'center';
+    thumbnail.style.overflow = 'hidden';
+    
+    // יצירת אלמנט img עבור ה-SVG
+    const img = document.createElement('img');
+    img.src = imgPath;
+    img.style.maxWidth = '100%';
+    img.style.maxHeight = '100%';
+    img.style.objectFit = 'contain';
+    
+    // טיפול בשגיאת טעינת תמונה
+    img.onerror = function() {
+      console.error(`שגיאה בטעינת התמונה: ${imgPath}`);
+      thumbnail.style.backgroundColor = '#f0f0f0';
+      
+      const errorText = document.createElement('span');
+      errorText.textContent = 'שגיאה';
+      errorText.style.color = 'red';
+      errorText.style.fontSize = '10px';
+      
+      thumbnail.innerHTML = '';
+      thumbnail.appendChild(errorText);
+    };
+    
+    // הוספת התמונה לתוך ה-div
+    thumbnail.appendChild(img);
     
     // מאזין לאירוע לחיצה על תמונה ממוזערת
     thumbnail.addEventListener('click', () => {
       // החלת התמונה כרקע הבמה
       if (stage) {
+        // שימוש ב-SVG כרקע
         stage.style.backgroundImage = `url(${imgPath})`;
         stage.style.backgroundSize = 'cover';
         stage.style.backgroundPosition = 'center';
+        stage.style.backgroundRepeat = 'no-repeat';
         
         // הסתרת מטריצת התמונות אחרי הבחירה
         thumbnailGrid.style.display = 'none';
@@ -70,85 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
   uploadButton.className = 'upload-button';
   uploadButton.style.width = '80px';
   uploadButton.style.height = '60px';
-  uploadButton.style.backgroundImage = 'url(/assets/images/uploadimage.svg)';
-  uploadButton.style.backgroundSize = 'contain';
-  uploadButton.style.backgroundPosition = 'center';
-  uploadButton.style.backgroundRepeat = 'no-repeat';
   uploadButton.style.cursor = 'pointer';
   uploadButton.style.border = '2px solid #ddd';
   uploadButton.style.borderRadius = '4px';
-  
-  // הוספת לחצן ההעלאה לרשת התמונות
-  thumbnailGrid.appendChild(uploadButton);
-  
-  // יוצרים אלמנט input מסוג file שיהיה נסתר
-  const fileInput = document.createElement('input');
-  fileInput.type = 'file';
-  fileInput.accept = 'image/*'; // מקבל רק קבצי תמונה
-  fileInput.style.display = 'none'; // הסתרת האלמנט
-  document.body.appendChild(fileInput); // הוספת האלמנט לעמוד
-  
-  // מאזין לאירוע לחיצה על לחצן ההעלאה
-  uploadButton.addEventListener('click', () => {
-    fileInput.click();
-  });
-  
-  // מוסיפים מאזין לאירוע 'click' ללחצן הרקע
-  if (backgroundButton) {
-    backgroundButton.addEventListener('click', (event) => {
-      // ממקמים את רשת התמונות ליד הלחצן
-      const buttonRect = backgroundButton.getBoundingClientRect();
-      thumbnailGrid.style.top = `${buttonRect.bottom + 5}px`;
-      thumbnailGrid.style.left = `${buttonRect.left}px`;
-      
-      // החלפת מצב התצוגה של רשת התמונות
-      if (thumbnailGrid.style.display === 'none' || thumbnailGrid.style.display === '') {
-        thumbnailGrid.style.display = 'flex';
-      } else {
-        thumbnailGrid.style.display = 'none';
-      }
-      
-      // מניעת התפשטות האירוע לחלונית המסמך
-      event.stopPropagation();
-    });
-  } else {
-    console.error("לחצן 'רקע' לא נמצא!");
-  }
-  
-  // מאזין לאירוע שינוי בבחירת קובץ
-  fileInput.addEventListener('change', (event) => {
-    const file = event.target.files[0]; // מקבלים את הקובץ שנבחר
-    
-    if (file) {
-      // בודקים אם הקובץ הוא תמונה
-      if (file.type.startsWith('image/')) {
-        // יוצרים URL זמני לתמונה שנבחרה
-        const imageUrl = URL.createObjectURL(file);
-        
-        // מגדירים את התמונה כרקע לבמה
-        if (stage) {
-          stage.style.backgroundImage = `url(${imageUrl})`;
-          stage.style.backgroundSize = 'cover'; // התאמת גודל התמונה לבמה
-          stage.style.backgroundPosition = 'center'; // מיקום התמונה במרכז
-          
-          // הסתרת מטריצת התמונות אחרי הבחירה
-          thumbnailGrid.style.display = 'none';
-        } else {
-          console.error("אזור הבמה לא נמצא!");
-        }
-      } else {
-        // אם הקובץ אינו תמונה, מציגים הודעת שגיאה
-        alert('אנא בחר קובץ תמונה (jpg, png, gif וכו׳)');
-      }
-    }
-  });
-  
-  // סגירת תפריט התמונות הממוזערות בלחיצה בכל מקום אחר במסמך
-  document.addEventListener('click', (event) => {
-    if (thumbnailGrid.style.display === 'flex' && 
-        !thumbnailGrid.contains(event.target) && 
-        event.target !== backgroundButton) {
-      thumbnailGrid.style.display = 'none';
-    }
-  });
-});
+  uploadButton.style.display = 'flex';
+  uploadButton.style.justifyContent =
