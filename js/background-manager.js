@@ -115,13 +115,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalHeader = createModalHeader();
     modal.appendChild(modalHeader);
 
-    // Create image grid
-    const imageGrid = createImageGrid();
-    modal.appendChild(imageGrid);
-
-    // Create upload section
+    // Create upload section - MOVED ABOVE the image grid
     const uploadContainer = createUploadSection();
     modal.appendChild(uploadContainer);
+
+    // Create image grid - NOW AFTER the upload section
+    const imageGrid = createImageGrid();
+    modal.appendChild(imageGrid);
 
     return modal;
   }
@@ -171,6 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
       gap: 15px;
       justify-content: center;
       direction: rtl;
+      margin-top: 15px; /* Added margin to create space after the upload section */
     `;
 
     // Add each background to the grid
@@ -241,10 +242,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function createUploadSection() {
     const uploadContainer = document.createElement('div');
     uploadContainer.style.cssText = `
-      margin-top: 20px;
       text-align: center;
-      padding: 15px 0;
-      border-top: 1px solid #eee;
+      padding: 10px 0;
+      border-bottom: 1px solid #eee; /* Changed to bottom border instead of top */
     `;
 
     const uploadButton = document.createElement('div');
