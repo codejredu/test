@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const svgBackgrounds = [
     'assets/BG/canyon1.svg',
-    'assets/BG/castel.jpg',
     'assets/BG/castel.svg',
     'assets/BG/castel1.svg',
     'assets/BG/citynight.svg',
