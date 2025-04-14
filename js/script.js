@@ -443,35 +443,26 @@ if (character && stage) {
         isDraggingCharacter = true;
         character.style.cursor = 'grabbing';
         
-        // Get initial mouse position relative to the stage
+        // Get stage boundaries
         const stageRect = stage.getBoundingClientRect();
-        const initialMouseX = event.clientX - stageRect.left;
-        const initialMouseY = event.clientY - stageRect.top;
         
-        // Get initial character position (top-left corner)
-        const characterRect = character.getBoundingClientRect();
-        const initialCharacterLeft = characterRect.left - stageRect.left;
-        const initialCharacterTop = characterRect.top - stageRect.top;
-        
-        // Calculate offset from mouse position to character top-left
-        const offsetX = initialMouseX - initialCharacterLeft;
-        const offsetY = initialMouseY - initialCharacterTop;
+        // Get character dimensions for centering
+        const characterWidth = character.offsetWidth;
+        const characterHeight = character.offsetHeight;
         
         // Move function that will be called during drag
         const moveCharacter = (moveEvent) => {
             if (!isDraggingCharacter) return;
             
-            // Calculate new position, keeping the same offset from mouse to character
+            // Calculate new position with cursor at the center of the character
             const newMouseX = moveEvent.clientX - stageRect.left;
             const newMouseY = moveEvent.clientY - stageRect.top;
             
-            let newLeft = newMouseX - offsetX;
-            let newTop = newMouseY - offsetY;
+            // Position calculation - cursor will be at the center
+            let newLeft = newMouseX - (characterWidth / 2);
+            let newTop = newMouseY - (characterHeight / 2);
             
             // Keep character within stage boundaries
-            const characterWidth = character.offsetWidth;
-            const characterHeight = character.offsetHeight;
-            
             newLeft = Math.max(0, Math.min(newLeft, stageRect.width - characterWidth));
             newTop = Math.max(0, Math.min(newTop, stageRect.height - characterHeight));
             
@@ -493,6 +484,9 @@ if (character && stage) {
         // Add event listeners for mouse movement and release
         document.addEventListener('mousemove', moveCharacter);
         document.addEventListener('mouseup', stopDragging);
+        
+        // Trigger initial positioning to center the character on the cursor immediately
+        moveCharacter(event);
     });
     
     // Disable the default HTML5 drag
