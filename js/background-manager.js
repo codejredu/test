@@ -55,12 +55,27 @@ document.addEventListener('DOMContentLoaded', () => {
   // Event dispatcher function - notifies the application when background changes
   function dispatchBackgroundChangeEvent() {
     try {
+      // Create the event with more descriptive details
       const event = new CustomEvent('backgroundChanged', {
-        detail: { time: new Date().getTime() }
+        detail: { 
+          time: new Date().getTime(),
+          background: stage ? stage.style.backgroundImage : null
+        }
       });
+      
+      // Log before dispatching for debugging
+      console.log('Dispatching background change event with details:', event.detail);
+      
+      // Dispatch the event
       document.dispatchEvent(event);
+      
+      // Additional event for compatibility with other potential listeners
+      const simpleEvent = new Event('backgroundChange');
+      document.dispatchEvent(simpleEvent);
+      
+      console.log('Background change events dispatched successfully');
     } catch (e) {
-      console.error('Failed to dispatch background change event', e);
+      console.error('Failed to dispatch background change event:', e);
     }
   }
 
@@ -70,18 +85,28 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Add a URL to be tracked
     trackUrl(url) {
-      this.tempImageUrls.push(url);
+      if (url && typeof url === 'string' && url.startsWith('blob:')) {
+        console.log('Tracking URL for cleanup:', url);
+        this.tempImageUrls.push(url);
+      } else {
+        console.warn('Attempted to track invalid URL:', url);
+      }
       return url;
     },
     
     // Cleanup all tracked resources
     cleanup() {
+      console.log(`Cleaning up ${this.tempImageUrls.length} tracked URLs`);
+      
       if (this.tempImageUrls.length > 0) {
         this.tempImageUrls.forEach(url => {
           try {
-            URL.revokeObjectURL(url);
+            if (url && typeof url === 'string' && url.startsWith('blob:')) {
+              console.log('Revoking object URL:', url);
+              URL.revokeObjectURL(url);
+            }
           } catch (e) {
-            console.error('Failed to revoke URL', e);
+            console.error('Failed to revoke URL:', url, e);
           }
         });
         this.tempImageUrls = [];
@@ -303,20 +328,41 @@ document.addEventListener('DOMContentLoaded', () => {
     
     try {
       // Create URL for the image
-      const imageUrl = resourceManager.trackUrl(URL.createObjectURL(file));
+      const imageUrl = URL.createObjectURL(file);
       
-      // Update background first
+      // Add to resource manager for proper cleanup
+      resourceManager.tempImageUrls.push(imageUrl);
+      
+      console.log("Image URL created:", imageUrl);
+      
+      // Update background - make sure the stage element is available
+      console.log("Stage element before update:", stage ? "Found" : "Not found");
+      
       if (stage) {
-        stage.style.backgroundImage = `url(${imageUrl})`;
+        // Set background directly
+        stage.style.backgroundImage = `url("${imageUrl}")`;
         stage.style.backgroundSize = 'cover';
         stage.style.backgroundPosition = 'center';
+        console.log("Background image updated to:", imageUrl);
+      } else {
+        console.error("Stage element not found when trying to set background");
+        alert('אירעה שגיאה: אלמנט הרקע לא נמצא.');
+        return;
       }
       
-      // Dispatch event indicating background changed
-      dispatchBackgroundChangeEvent();
-      
-      // Then close modal
-      closeModalAndCleanup();
+      // Wait a moment to ensure the background is updated
+      setTimeout(() => {
+        // Dispatch event indicating background changed
+        try {
+          dispatchBackgroundChangeEvent();
+          console.log("Background change event dispatched");
+        } catch (e) {
+          console.error("Error dispatching event:", e);
+        }
+        
+        // Close modal after the background is updated
+        closeModalAndCleanup();
+      }, 100);
     } catch (error) {
       console.error('Error handling file upload:', error);
       alert('אירעה שגיאה בעת עיבוד הקובץ. אנא נסה שוב.');
