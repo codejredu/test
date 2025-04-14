@@ -428,73 +428,77 @@ const character = document.getElementById('character');
 // Stage already defined above
 
 if (character && stage) {
-    let offsetX, offsetY;
-    
     // Make character focusable for keyboard navigation
     character.tabIndex = 0;
     
+    // Set a flag to identify our custom drag operation
+    let isDraggingCharacter = false;
+    
+    // Instead of using the HTML5 drag API, we'll implement a custom drag
+    // that gives us more direct control
     character.addEventListener('mousedown', (event) => {
-        // Make the character draggable
-        character.draggable = true;
+        // Prevent default browser drag behavior
+        event.preventDefault();
         
-        // Calculate the offset between mouse position and character's top-left corner
-        const characterRect = character.getBoundingClientRect();
-        offsetX = event.clientX - characterRect.left;
-        offsetY = event.clientY - characterRect.top;
-        
+        isDraggingCharacter = true;
         character.style.cursor = 'grabbing';
+        
+        // Get initial mouse position relative to the stage
+        const stageRect = stage.getBoundingClientRect();
+        const initialMouseX = event.clientX - stageRect.left;
+        const initialMouseY = event.clientY - stageRect.top;
+        
+        // Get initial character position (top-left corner)
+        const characterRect = character.getBoundingClientRect();
+        const initialCharacterLeft = characterRect.left - stageRect.left;
+        const initialCharacterTop = characterRect.top - stageRect.top;
+        
+        // Calculate offset from mouse position to character top-left
+        const offsetX = initialMouseX - initialCharacterLeft;
+        const offsetY = initialMouseY - initialCharacterTop;
+        
+        // Move function that will be called during drag
+        const moveCharacter = (moveEvent) => {
+            if (!isDraggingCharacter) return;
+            
+            // Calculate new position, keeping the same offset from mouse to character
+            const newMouseX = moveEvent.clientX - stageRect.left;
+            const newMouseY = moveEvent.clientY - stageRect.top;
+            
+            let newLeft = newMouseX - offsetX;
+            let newTop = newMouseY - offsetY;
+            
+            // Keep character within stage boundaries
+            const characterWidth = character.offsetWidth;
+            const characterHeight = character.offsetHeight;
+            
+            newLeft = Math.max(0, Math.min(newLeft, stageRect.width - characterWidth));
+            newTop = Math.max(0, Math.min(newTop, stageRect.height - characterHeight));
+            
+            // Position the character directly - no jumps
+            character.style.left = `${newLeft}px`;
+            character.style.top = `${newTop}px`;
+        };
+        
+        // Function to handle the end of dragging
+        const stopDragging = () => {
+            isDraggingCharacter = false;
+            character.style.cursor = 'grab';
+            
+            // Remove the event listeners when done
+            document.removeEventListener('mousemove', moveCharacter);
+            document.removeEventListener('mouseup', stopDragging);
+        };
+        
+        // Add event listeners for mouse movement and release
+        document.addEventListener('mousemove', moveCharacter);
+        document.addEventListener('mouseup', stopDragging);
     });
     
+    // Disable the default HTML5 drag
     character.addEventListener('dragstart', (event) => {
-        // Store the offset in the dataTransfer
-        const offset = {
-            x: offsetX,
-            y: offsetY
-        };
-        event.dataTransfer.setData('text/plain', JSON.stringify(offset));
-        event.dataTransfer.effectAllowed = "move";
-    });
-
-    character.addEventListener('dragend', () => {
-        character.style.cursor = 'grab';
-        // Reset draggable state
-        character.draggable = false;
-    });
-
-    stage.addEventListener('dragover', (event) => {
         event.preventDefault();
-        event.dataTransfer.dropEffect = "move";
-    });
-
-    stage.addEventListener('drop', (event) => {
-        event.preventDefault();
-        
-        try {
-            // Get the stored offset
-            const offsetData = JSON.parse(event.dataTransfer.getData('text/plain'));
-            
-            // If it's the character being dragged (has offset data)
-            if (offsetData && offsetData.x !== undefined && offsetData.y !== undefined) {
-                const stageRect = stage.getBoundingClientRect();
-                
-                // Calculate position considering the original mouse offset
-                let x = event.clientX - stageRect.left - offsetData.x;
-                let y = event.clientY - stageRect.top - offsetData.y;
-                
-                // Keep character within stage boundaries
-                const characterWidth = character.offsetWidth;
-                const characterHeight = character.offsetHeight;
-                
-                x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
-                y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
-                
-                // Position the character
-                character.style.left = x + 'px';
-                character.style.top = y + 'px';
-            }
-        } catch (error) {
-            console.error("Error handling character drop:", error);
-        }
+        return false;
     });
     
     // Optional enhancement: Allow the character to be moved with arrow keys
@@ -525,6 +529,9 @@ if (character && stage) {
             event.preventDefault(); // Prevent scrolling
         }
     });
+    
+    // Set initial cursor style
+    character.style.cursor = 'grab';
 }
 
 // ========================================================================
