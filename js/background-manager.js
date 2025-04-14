@@ -31,6 +31,9 @@ document.addEventListener('DOMContentLoaded', () => {
       'soccer1.svg',
       'road2.svg',
       'road1.svg',
+      'winter1.svg',
+       'winter2.svg',
+      
     ],
     // Upload icon path
     uploadIconPath: 'assets/images/uploadimage.svg',
