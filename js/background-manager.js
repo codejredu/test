@@ -30,10 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
   thumbnailGrid.style.borderRadius = '5px';
   thumbnailGrid.style.display = 'none'; // מוסתר בהתחלה
   thumbnailGrid.style.width = '280px';
-  thumbnailGrid.style.display = 'none';
   
   // עיצוב נוסף למטריצה
-  thumbnailGrid.style.display = 'none';
   thumbnailGrid.style.flexDirection = 'row';
   thumbnailGrid.style.flexWrap = 'wrap';
   thumbnailGrid.style.gap = '10px';
@@ -48,29 +46,30 @@ document.addEventListener('DOMContentLoaded', () => {
   gridTitle.style.fontWeight = 'bold';
   thumbnailGrid.appendChild(gridTitle);
   
-  // הוספת המטריצה לעמוד (חשוב שתהיה במיקום קבוע)
+  // הוספת המטריצה לעמוד
   document.body.appendChild(thumbnailGrid);
   
+  // פונקציה לשליפת רשימת הקבצים מהספרייה
+  // מכיוון שבדפדפן לא ניתן לגשת ישירות לספרייה, ניצור רשימה ידנית של תמונות
+  
+  // ניסיון לטעון את כל התמונות מהספרייה
+  const basePath = '/test/assets/bg/';
+  
   // רשימת התמונות SVG בספרייה
-  const bgImages = [
-    'background1.svg',
-    'background2.svg',
-    'background3.svg',
-    'background4.svg',
-    'background5.svg',
-    'background6.svg'
+  // נשתמש בשמות קבצים כלליים ונבדוק אילו מהם קיימים
+  const potentialImages = [
+    'bg1.svg', 'bg2.svg', 'bg3.svg', 'bg4.svg', 'bg5.svg', 'bg6.svg',
+    'background1.svg', 'background2.svg', 'background3.svg', 'background4.svg', 'background5.svg', 'background6.svg',
+    'רקע1.svg', 'רקע2.svg', 'רקע3.svg', 'רקע4.svg', 'רקע5.svg', 'רקע6.svg'
   ];
   
-  console.log(`טוען ${bgImages.length} תמונות רקע`);
+  console.log(`מנסה לטעון תמונות מהנתיב: ${basePath}`);
   
-  // יצירת האלמנטים עבור כל תמונה ממוזערת
-  bgImages.forEach((imgName, index) => {
-    const imgPath = `test/assets/bg/${imgName}`;
-    
+  // פונקציה ליצירת תמונה ממוזערת
+  function createThumbnail(imgPath) {
     // יצירת אלמנט div לתמונה ממוזערת
     const thumbnail = document.createElement('div');
     thumbnail.className = 'bg-thumbnail';
-    thumbnail.dataset.index = index;
     thumbnail.style.width = '80px';
     thumbnail.style.height = '60px';
     thumbnail.style.cursor = 'pointer';
@@ -80,11 +79,12 @@ document.addEventListener('DOMContentLoaded', () => {
     thumbnail.style.justifyContent = 'center';
     thumbnail.style.alignItems = 'center';
     thumbnail.style.overflow = 'hidden';
+    thumbnail.style.background = '#f9f9f9';
     
-    // יצירת אלמנט img עבור ה-SVG
+    // יצירת אלמנט img עבור התמונה
     const img = document.createElement('img');
     img.src = imgPath;
-    img.alt = `רקע ${index + 1}`;
+    img.alt = 'תמונת רקע';
     img.style.maxWidth = '100%';
     img.style.maxHeight = '100%';
     img.style.objectFit = 'contain';
@@ -92,42 +92,62 @@ document.addEventListener('DOMContentLoaded', () => {
     // טיפול בשגיאת טעינת תמונה
     img.onerror = function() {
       console.error(`שגיאה בטעינת התמונה: ${imgPath}`);
-      thumbnail.style.backgroundColor = '#f0f0f0';
-      
-      const errorText = document.createElement('span');
-      errorText.textContent = 'שגיאה';
-      errorText.style.color = 'red';
-      errorText.style.fontSize = '10px';
-      
-      thumbnail.innerHTML = '';
-      thumbnail.appendChild(errorText);
+      thumbnail.remove(); // הסרת התמונה הממוזערת אם הקובץ לא קיים
     };
     
     // התראה על טעינת תמונה מוצלחת
     img.onload = function() {
       console.log(`תמונה נטענה בהצלחה: ${imgPath}`);
+      // הוספת התמונה לתוך ה-div רק אם היא טעונה בהצלחה
+      thumbnail.appendChild(img);
+      
+      // מאזין לאירוע לחיצה על תמונה ממוזערת
+      thumbnail.addEventListener('click', () => {
+        console.log(`נבחרה תמונת רקע: ${imgPath}`);
+        
+        // החלת התמונה כרקע הבמה
+        stage.style.backgroundImage = `url(${imgPath})`;
+        stage.style.backgroundSize = 'cover';
+        stage.style.backgroundPosition = 'center';
+        stage.style.backgroundRepeat = 'no-repeat';
+        
+        // הסתרת מטריצת התמונות אחרי הבחירה
+        thumbnailGrid.style.display = 'none';
+      });
+      
+      // הוספת התמונה הממוזערת לרשת
+      thumbnailGrid.appendChild(thumbnail);
     };
-    
-    // הוספת התמונה לתוך ה-div
-    thumbnail.appendChild(img);
-    
-    // מאזין לאירוע לחיצה על תמונה ממוזערת
-    thumbnail.addEventListener('click', () => {
-      console.log(`נבחרה תמונת רקע: ${imgPath}`);
-      
-      // החלת התמונה כרקע הבמה
-      stage.style.backgroundImage = `url(${imgPath})`;
-      stage.style.backgroundSize = 'cover';
-      stage.style.backgroundPosition = 'center';
-      stage.style.backgroundRepeat = 'no-repeat';
-      
-      // הסתרת מטריצת התמונות אחרי הבחירה
-      thumbnailGrid.style.display = 'none';
-    });
-    
-    // הוספת התמונה הממוזערת לרשת
-    thumbnailGrid.appendChild(thumbnail);
+  }
+  
+  // יצירת תמונות ממוזערות עבור תמונות SVG שקיימות
+  potentialImages.forEach(imgName => {
+    createThumbnail(basePath + imgName);
   });
+  
+  // בדיקה אם יש צורך להוסיף תמונות מתיקיות שונות
+  const alternativePaths = [
+    '/',
+    '/assets/bg/',
+    '/bg/',
+    '/images/bg/',
+    '/assets/images/bg/'
+  ];
+  
+  // ניסיון לטעון מנתיבים אלטרנטיביים אם לא נמצאו תמונות
+  setTimeout(() => {
+    // בדיקה אם נוספו תמונות לרשת
+    const thumbnails = thumbnailGrid.querySelectorAll('.bg-thumbnail');
+    if (thumbnails.length <= 1) { // רק כותרת או לא נוספו תמונות
+      console.log('לא נמצאו תמונות בנתיב המקורי, מנסה נתיבים חלופיים');
+      
+      alternativePaths.forEach(path => {
+        potentialImages.forEach(imgName => {
+          createThumbnail(path + imgName);
+        });
+      });
+    }
+  }, 500);
   
   // יצירת לחצן להעלאת תמונה
   const uploadButton = document.createElement('div');
@@ -140,6 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
   uploadButton.style.display = 'flex';
   uploadButton.style.justifyContent = 'center';
   uploadButton.style.alignItems = 'center';
+  uploadButton.style.background = '#f0f0f0';
   
   // הוספת אייקון העלאת תמונה
   const uploadIcon = document.createElement('img');
@@ -147,15 +168,41 @@ document.addEventListener('DOMContentLoaded', () => {
   uploadIcon.alt = 'העלאת תמונה';
   uploadIcon.style.maxWidth = '80%';
   uploadIcon.style.maxHeight = '80%';
-  uploadButton.appendChild(uploadIcon);
   
   // טיפול בשגיאת טעינת אייקון העלאה
   uploadIcon.onerror = function() {
-    console.error('שגיאה בטעינת אייקון העלאה');
-    uploadButton.textContent = 'העלאת תמונה';
-    uploadButton.style.textAlign = 'center';
-    uploadButton.style.fontSize = '12px';
+    console.error('שגיאה בטעינת אייקון העלאה, מנסה נתיב חלופי');
+    // ניסיון להשתמש בנתיבים חלופיים לאייקון
+    const alternativeIconPaths = [
+      '/uploadimage.svg',
+      '/images/uploadimage.svg',
+      '/icons/uploadimage.svg',
+      '/assets/uploadimage.svg'
+    ];
+    
+    let iconLoaded = false;
+    for (let i = 0; i < alternativeIconPaths.length; i++) {
+      const testImg = new Image();
+      testImg.src = alternativeIconPaths[i];
+      testImg.onload = function() {
+        if (!iconLoaded) {
+          uploadIcon.src = alternativeIconPaths[i];
+          iconLoaded = true;
+        }
+      };
+    }
+    
+    // אם לא נמצא, נשתמש בטקסט
+    setTimeout(() => {
+      if (!iconLoaded) {
+        uploadButton.textContent = 'העלאת תמונה';
+        uploadButton.style.textAlign = 'center';
+        uploadButton.style.fontSize = '12px';
+      }
+    }, 300);
   };
+  
+  uploadButton.appendChild(uploadIcon);
   
   // הוספת לחצן ההעלאה לרשת התמונות
   thumbnailGrid.appendChild(uploadButton);
