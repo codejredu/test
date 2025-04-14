@@ -197,6 +197,7 @@ const blocks = {
 // ========================================================================
 // פונקציות ליצירת אלמנטים (no changes needed here from previous version)
 // ========================================================================
+// ... (rest of the create functions: createRightConnector, createLeftConnector, createScratchBlock, createBlockElement) ...
 function createRightConnector(color) {
     const rightConnector = document.createElement("div");
     rightConnector.classList.add("right-connector");
@@ -243,6 +244,7 @@ function createBlockElement(block, category) {
 // ========================================================================
 // פונקציות טיפול באירועים (no changes needed here from previous version)
 // ========================================================================
+// ... (rest of the event handlers: handleDragStart, handleDrop) ...
 function handleDragStart(event, block, category) {
     const data = {
         type: block.type,
@@ -324,6 +326,7 @@ function handleDrop(event) {
 // ========================================================================
 // פונקציות אתחול (no changes needed here from previous version)
 // ========================================================================
+// ... (populateBlockPalette, handleCategoryChange) ...
 function populateBlockPalette(category) {
     const categoryDiv = document.getElementById(`${category}-blocks`);
     if (!categoryDiv) {
@@ -376,7 +379,7 @@ function handleCategoryChange(category) {
 
 
 // ========================================================================
-//  לוגיקת גרירה ושחרור (Drag and Drop) Setup
+//  לוגיקת גרירה ושחרור (Drag and Drop) Setup (no changes needed here from previous version)
 // ========================================================================
 const programmingArea = document.getElementById("program-blocks");
 const categoryTabs = document.querySelectorAll(".category-tab");
@@ -401,7 +404,7 @@ categoryTabs.forEach(tab => {
 });
 
 // ========================================================================
-// Grid Toggle Setup
+// Grid Toggle Setup (no changes needed here from previous version)
 // ========================================================================
 const gridToggle = document.getElementById("grid-toggle");
 const stage = document.getElementById("stage");
@@ -412,7 +415,7 @@ if (gridToggle && stage) {
 }
 
 // ========================================================================
-// Clear All Button Setup
+// Clear All Button Setup (no changes needed here from previous version)
 // ========================================================================
 const clearAllButton = document.getElementById("clear-all");
 if (clearAllButton && programmingArea) { // Check if programmingArea exists
@@ -422,108 +425,51 @@ if (clearAllButton && programmingArea) { // Check if programmingArea exists
 }
 
 // ========================================================================
-// Character Dragging (SUPER SIMPLE VERSION)
+// Character Dragging (no changes needed here from previous version)
 // ========================================================================
 const character = document.getElementById('character');
-// Stage already defined above
+// const stage = document.getElementById("stage"); // Already defined
 
 if (character && stage) {
-    // Make character focusable for keyboard navigation
-    character.tabIndex = 0;
-    
-    // Set initial cursor style
-    character.style.cursor = 'grab';
-    
-    // Variables for drag tracking
-    let isDragging = false;
-    let offsetX = 0;
-    let offsetY = 0;
-    
-    // Mouse down - start potential drag
-    character.onmousedown = function(e) {
-        e.preventDefault();
-        
-        // Calculate offset from mouse to character top-left
-        const rect = character.getBoundingClientRect();
-        offsetX = e.clientX - rect.left;
-        offsetY = e.clientY - rect.top;
-        
-        // Start dragging
-        isDragging = true;
-        
-        // Change cursor
+    character.addEventListener('dragstart', (event) => {
+        event.dataTransfer.setData('text/plain', 'character');
+        event.dataTransfer.effectAllowed = "move";
         character.style.cursor = 'grabbing';
-    };
-    
-    // Mouse move - continue drag if active
-    document.onmousemove = function(e) {
-        e.preventDefault();
-        
-        if (isDragging) {
-            // Get stage bounds
-            const stageRect = stage.getBoundingClientRect();
-            
-            // Calculate new position
-            let left = e.clientX - stageRect.left - offsetX;
-            let top = e.clientY - stageRect.top - offsetY;
-            
-            // Keep within stage boundaries
-            left = Math.max(0, Math.min(left, stageRect.width - character.offsetWidth));
-            top = Math.max(0, Math.min(top, stageRect.height - character.offsetHeight));
-            
-            // Set position (direct update)
-            character.style.left = left + 'px';
-            character.style.top = top + 'px';
-        }
-    };
-    
-    // Mouse up - end drag
-    document.onmouseup = function(e) {
-        if (isDragging) {
-            isDragging = false;
-            character.style.cursor = 'grab';
-        }
-    };
-    
-    // Disable all default drag behavior entirely
-    character.ondragstart = function() { return false; };
-}
-    
-    // Optional enhancement: Allow the character to be moved with arrow keys
-    document.addEventListener('keydown', (event) => {
-        // Only if the character is selected/focused
-        if (document.activeElement === character) {
-            const step = 10; // pixels per key press
-            let x = parseInt(character.style.left) || 0;
-            let y = parseInt(character.style.top) || 0;
-            
-            switch (event.key) {
-                case 'ArrowLeft':
-                    x = Math.max(0, x - step);
-                    break;
-                case 'ArrowRight':
-                    x = Math.min(stage.offsetWidth - character.offsetWidth, x + step);
-                    break;
-                case 'ArrowUp':
-                    y = Math.max(0, y - step);
-                    break;
-                case 'ArrowDown':
-                    y = Math.min(stage.offsetHeight - character.offsetHeight, y + step);
-                    break;
-            }
-            
-            character.style.left = x + 'px';
-            character.style.top = y + 'px';
-            event.preventDefault(); // Prevent scrolling
+    });
+
+    character.addEventListener('dragend', () => {
+        character.style.cursor = 'grab';
+    });
+
+    stage.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
+    });
+
+    stage.addEventListener('drop', (event) => {
+        event.preventDefault();
+        // Simple check: if data is 'character', move it. Could be more robust.
+        if (event.dataTransfer.getData('text/plain') === 'character') {
+             const stageRect = stage.getBoundingClientRect();
+             const characterWidth = character.offsetWidth;
+             const characterHeight = character.offsetHeight;
+
+             let x = event.clientX - stageRect.left - characterWidth / 2;
+             let y = event.clientY - stageRect.top - characterHeight / 2;
+
+             x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
+             y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
+
+             character.style.left = x + 'px';
+             character.style.top = y + 'px';
+             character.style.cursor = 'grab';
         }
     });
-    
-    // Set initial cursor style
-    character.style.cursor = 'grab';
 }
 
+
 // ========================================================================
-// Initial Setup
+// Initial Setup (no changes needed here from previous version)
 // ========================================================================
 document.addEventListener('DOMContentLoaded', () => {
     // Find the initially active tab or default to 'triggering'
@@ -540,11 +486,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     // Ensure the DOM is ready before trying to manipulate it
     handleCategoryChange(initialCategory);
-    
-    // Ensure character has position: absolute style
-    if (character) {
-        if (!character.style.position || character.style.position !== 'absolute') {
-            character.style.position = 'absolute';
-        }
-    }
 });
