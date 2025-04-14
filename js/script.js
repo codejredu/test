@@ -20,63 +20,34 @@ if (character && stage) {
         character.style.cursor = 'grab';
     });
 
+        // נבטל את ברירת המחדל של גרירה מובנית, נשתמש רק בגרירת עכבר רגילה
     character.addEventListener('dragstart', (event) => {
-        event.dataTransfer.setData('text/plain', 'character');
-        event.dataTransfer.effectAllowed = "move";
-        
-        // ביטול תמונת הרפאים - הגדרת תמונה שקופה
-        const img = new Image();
-        img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; // תמונה שקופה של 1x1 פיקסלים
-        event.dataTransfer.setDragImage(img, 0, 0);
-        
-        character.style.cursor = 'grabbing';
-        character.classList.add('dragging');
-    });
-
-    character.addEventListener('dragend', (event) => {
-        character.style.cursor = 'grab';
-        character.classList.remove('dragging');
-    });
-
-    stage.addEventListener('dragover', (event) => {
+        // מניעת ברירת המחדל של גרירה מובנית בדפדפן
         event.preventDefault();
-        event.dataTransfer.dropEffect = "move";
-        
-        // עדכון מיקום הדמות בזמן הגרירה לפי המיקום הנוכחי של העכבר
-        if (character.classList.contains('dragging')) {
-            const stageRect = stage.getBoundingClientRect();
-            const characterWidth = character.offsetWidth;
-            const characterHeight = character.offsetHeight;
-
-            let x = event.clientX - stageRect.left - characterWidth / 2;
-            let y = event.clientY - stageRect.top - characterHeight / 2;
-
-            // וידוא שהדמות נשארת בתוך הבמה
-            x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
-            y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
-
-            character.style.left = x + 'px';
-            character.style.top = y + 'px';
-        }
-    });
-
-    stage.addEventListener('drop', (event) => {
-        event.preventDefault();
-        // אין צורך לעשות כלום כאן, כי כבר עדכנו את המיקום ב-dragover
-        character.classList.remove('dragging');
+        return false;
     });
     
-    // נוסיף גם אפשרות לגרירה רגילה עם mouse (ללא שימוש ב-HTML5 Drag & Drop API)
+    // נגדיר את האלמנט כלא ניתן לגרירה באמצעות המערכת המובנית של הדפדפן
+    character.setAttribute('draggable', 'false');
+    
+    // נשתמש רק בגרירה עם mouse (ללא שימוש ב-HTML5 Drag & Drop API)
+    // כדי לשמור על הסמן מעל הדמות
     let isDragging = false;
-    let offsetX, offsetY;
+    let dragStartX, dragStartY; // נקודת התחלה של הגרירה
+    let initialLeft, initialTop; // מיקום התחלתי של הדמות
     
     character.addEventListener('mousedown', (event) => {
+        event.preventDefault(); // מניעת ברירת מחדל של הדפדפן
+        
         isDragging = true;
         
-        // חישוב ההיסט בין מיקום העכבר למיקום הדמות
-        const characterRect = character.getBoundingClientRect();
-        offsetX = event.clientX - characterRect.left;
-        offsetY = event.clientY - characterRect.top;
+        // נשמור את המיקום ההתחלתי של העכבר
+        dragStartX = event.clientX;
+        dragStartY = event.clientY;
+        
+        // נשמור את המיקום ההתחלתי של הדמות
+        initialLeft = parseInt(character.style.left) || 0;
+        initialTop = parseInt(character.style.top) || 0;
         
         character.style.cursor = 'grabbing';
     });
@@ -84,20 +55,24 @@ if (character && stage) {
     document.addEventListener('mousemove', (event) => {
         if (!isDragging) return;
         
+        // חישוב ההפרש בין המיקום הנוכחי למיקום ההתחלתי של העכבר
+        const deltaX = event.clientX - dragStartX;
+        const deltaY = event.clientY - dragStartY;
+        
         const stageRect = stage.getBoundingClientRect();
         const characterWidth = character.offsetWidth;
         const characterHeight = character.offsetHeight;
         
-        // חישוב המיקום החדש עם התחשבות בהיסט
-        let x = event.clientX - stageRect.left - offsetX;
-        let y = event.clientY - stageRect.top - offsetY;
+        // חישוב המיקום החדש על פי ההפרש + המיקום ההתחלתי של הדמות
+        let newLeft = initialLeft + deltaX;
+        let newTop = initialTop + deltaY;
         
         // וידוא שהדמות נשארת בתוך הבמה
-        x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
-        y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
+        newLeft = Math.max(0, Math.min(newLeft, stageRect.width - characterWidth));
+        newTop = Math.max(0, Math.min(newTop, stageRect.height - characterHeight));
         
-        character.style.left = x + 'px';
-        character.style.top = y + 'px';
+        character.style.left = newLeft + 'px';
+        character.style.top = newTop + 'px';
     });
     
     document.addEventListener('mouseup', () => {
@@ -106,6 +81,11 @@ if (character && stage) {
             character.style.cursor = 'grab';
         }
     });
+    
+    // מניעת התנהגות גרירה מובנית של הדפדפן
+    character.ondragstart = function() { 
+        return false; 
+    };
 }
 
 // נוסיף גם סגנון CSS להסתרת תמונת הרפאים
@@ -113,13 +93,15 @@ if (character && stage) {
 
 const styleElement = document.createElement('style');
 styleElement.textContent = `
-    .dragging {
-        opacity: 1;
-    }
-    
-    [draggable=true] {
+    #character {
+        cursor: grab;
         user-select: none;
         -webkit-user-drag: none;
+        touch-action: none;
+    }
+    
+    #character:active {
+        cursor: grabbing;
     }
 `;
 document.head.appendChild(styleElement);
