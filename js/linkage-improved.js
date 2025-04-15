@@ -211,11 +211,18 @@ document.addEventListener('DOMContentLoaded', function() {
       console.log('אירוע drop נתפס באזור התכנות');
       e.preventDefault();
       
+      // בדיקה אם יש בלוק קרוב ואם ההילה מופיעה
+      if (currentDraggedBlock && nearbyBlock) {
+        console.log('נמצא בלוק קרוב בעת שחרור - מבצע התממשקות');
+        // ביצוע התממשקות
+        connectBlocks(currentDraggedBlock, nearbyBlock);
+      }
+      
       // נקה הילות לאחר השחרור
       setTimeout(clearAllHighlights, 100);
     });
     
-    // הוספת סגנונות CSS להילה
+    // הוספת סגנונות CSS להילה ולהתממשקות
     function addHighlightStyles() {
       // יצירת אלמנט style
       const style = document.createElement('style');
@@ -265,6 +272,44 @@ document.addEventListener('DOMContentLoaded', function() {
           from { opacity: 0.7; }
           to { opacity: 1; }
         }
+        
+        /* סגנונות לבלוקים מחוברים */
+        .connected-block, .has-connected-block {
+          position: relative;
+        }
+        
+        /* קו חיבור בין בלוקים מחוברים */
+        .connected-block::after {
+          content: '';
+          position: absolute;
+          width: 10px;
+          height: 5px;
+          background-color: #0066cc;
+          right: -10px;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 80;
+        }
+        
+        /* אנימציית התממשקות */
+        @keyframes connectAnimation {
+          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 0, 0.7); }
+          50% { transform: scale(1.03); box-shadow: 0 0 0 10px rgba(255, 255, 0, 0); }
+          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 0, 0); }
+        }
+        
+        .connection-animation {
+          animation: connectAnimation 1s ease-out;
+        }
+        
+        /* סימון ויזואלי לבלוקים מחוברים */
+        .connected-block .scratch-block {
+          box-shadow: 0 0 5px rgba(0, 102, 204, 0.5);
+        }
+        
+        .has-connected-block .scratch-block {
+          box-shadow: 0 0 5px rgba(0, 102, 204, 0.5);
+        }
       `;
       
       // הוספה לראש המסמך
@@ -312,6 +357,79 @@ document.addEventListener('DOMContentLoaded', function() {
       document.body.appendChild(controlContainer);
     }
     
+    // פונקציה לחיבור בלוקים (התממשקות)
+    function connectBlocks(sourceBlock, targetBlock) {
+      if (!sourceBlock || !targetBlock) return;
+      
+      try {
+        const sourceRect = sourceBlock.getBoundingClientRect();
+        const targetRect = targetBlock.getBoundingClientRect();
+        const programRect = programmingArea.getBoundingClientRect();
+        
+        // בדיקה אם הבלוק המקור נמצא משמאל או מימין לבלוק היעד
+        let direction;
+        let newLeft, newTop;
+        
+        // חישוב מרכזי הבלוקים
+        const sourceCenterX = sourceRect.left + sourceRect.width / 2;
+        const targetCenterX = targetRect.left + targetRect.width / 2;
+        
+        if (sourceCenterX < targetCenterX) {
+          // המקור משמאל ליעד - חבר את המקור מימין ליעד
+          direction = 'left-to-right';
+          newLeft = targetRect.left - programRect.left - sourceRect.width;
+          newTop = targetRect.top - programRect.top;
+        } else {
+          // המקור מימין ליעד - חבר את המקור משמאל ליעד
+          direction = 'right-to-left';
+          newLeft = targetRect.right - programRect.left;
+          newTop = targetRect.top - programRect.top;
+        }
+        
+        // עדכון מיקום הבלוק המקור
+        sourceBlock.style.position = 'absolute';
+        sourceBlock.style.left = newLeft + 'px';
+        sourceBlock.style.top = newTop + 'px';
+        
+        // הוספת סימון לבלוקים המחוברים
+        sourceBlock.classList.add('connected-block');
+        targetBlock.classList.add('has-connected-block');
+        
+        // שמירת יחס החיבור לשימוש עתידי
+        sourceBlock.setAttribute('data-connected-to', targetBlock.id || generateUniqueId(targetBlock));
+        sourceBlock.setAttribute('data-connection-direction', direction);
+        
+        // אפקט ויזואלי של התממשקות
+        addConnectionAnimation(sourceBlock, targetBlock);
+        
+        console.log('בוצעה התממשקות בכיוון:', direction);
+      } catch (err) {
+        console.error('שגיאה בהתממשקות בלוקים:', err);
+      }
+    }
+    
+    // פונקציה ליצירת מזהה ייחודי לבלוק
+    function generateUniqueId(block) {
+      if (!block.id) {
+        const uniqueId = 'block-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+        block.id = uniqueId;
+      }
+      return block.id;
+    }
+    
+    // פונקציה להוספת אנימציית התממשקות
+    function addConnectionAnimation(sourceBlock, targetBlock) {
+      // הוספת אפקט הבהוב לשני הבלוקים
+      sourceBlock.classList.add('connection-animation');
+      targetBlock.classList.add('connection-animation');
+      
+      // הסרת האפקט אחרי שניה
+      setTimeout(() => {
+        sourceBlock.classList.remove('connection-animation');
+        targetBlock.classList.remove('connection-animation');
+      }, 1000);
+    }
+    
     // מאזין לכפתור "נקה הכל"
     const clearAllButton = document.getElementById('clear-all');
     if (clearAllButton) {
@@ -320,6 +438,14 @@ document.addEventListener('DOMContentLoaded', function() {
         currentDraggedBlock = null;
         nearbyBlock = null;
         clearAllHighlights();
+        
+        // הסרת סימוני חיבור מכל הבלוקים
+        const connectedBlocks = programmingArea.querySelectorAll('.connected-block, .has-connected-block');
+        connectedBlocks.forEach(block => {
+          block.classList.remove('connected-block', 'has-connected-block');
+          block.removeAttribute('data-connected-to');
+          block.removeAttribute('data-connection-direction');
+        });
       });
     }
   }
