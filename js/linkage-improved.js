@@ -128,6 +128,21 @@ document.addEventListener('DOMContentLoaded', function() {
       let closestBlock = null;
       let minDistance = Infinity;
       
+      // ניתוח חלקי התצוגה של הבלוק - פין בימין ושקע בשמאל
+      const PIN_WIDTH = 10; // רוחב משוער של הפין
+      const SOCKET_WIDTH = 10; // רוחב משוער של השקע
+      
+      // חישוב מיקומי פין ושקע של הבלוק הנגרר
+      const rightPin = {
+        x: draggedRect.right,
+        y: draggedRect.top + draggedRect.height / 2
+      };
+      
+      const leftSocket = {
+        x: draggedRect.left,
+        y: draggedRect.top + draggedRect.height / 2
+      };
+      
       // בדיקת כל בלוק
       blocks.forEach(block => {
         // דלג על הבלוק הנגרר עצמו
@@ -135,43 +150,31 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const blockRect = block.getBoundingClientRect();
         
-        // חישוב המרחק המינימלי בין הבלוקים (בדיקת מרחק אופקי ואנכי)
-        // הערה: אנחנו בודקים קצוות לקצוות, לא מרכז למרכז
+        // חישוב מיקומי פין ושקע של הבלוק הנבדק
+        const targetRightPin = {
+          x: blockRect.right,
+          y: blockRect.top + blockRect.height / 2
+        };
         
-        // חישוב מרחק אופקי - בודק אם יש חפיפה אנכית
-        let horizontalDistance = Infinity;
-        if (draggedRect.bottom >= blockRect.top && draggedRect.top <= blockRect.bottom) {
-          // יש חפיפה אנכית, בדוק את המרחק האופקי הקצר ביותר
-          if (draggedRect.right < blockRect.left) {
-            // הבלוק הנגרר משמאל לבלוק הנבדק
-            horizontalDistance = blockRect.left - draggedRect.right;
-          } else if (draggedRect.left > blockRect.right) {
-            // הבלוק הנגרר מימין לבלוק הנבדק
-            horizontalDistance = draggedRect.left - blockRect.right;
-          } else {
-            // יש חפיפה אופקית
-            horizontalDistance = 0;
-          }
-        }
+        const targetLeftSocket = {
+          x: blockRect.left,
+          y: blockRect.top + blockRect.height / 2
+        };
         
-        // חישוב מרחק אנכי - בודק אם יש חפיפה אופקית
-        let verticalDistance = Infinity;
-        if (draggedRect.right >= blockRect.left && draggedRect.left <= blockRect.right) {
-          // יש חפיפה אופקית, בדוק את המרחק האנכי הקצר ביותר
-          if (draggedRect.bottom < blockRect.top) {
-            // הבלוק הנגרר מעל הבלוק הנבדק
-            verticalDistance = blockRect.top - draggedRect.bottom;
-          } else if (draggedRect.top > blockRect.bottom) {
-            // הבלוק הנגרר מתחת לבלוק הנבדק
-            verticalDistance = draggedRect.top - blockRect.bottom;
-          } else {
-            // יש חפיפה אנכית
-            verticalDistance = 0;
-          }
-        }
+        // מדידת מרחק בין פין ימני של המקור לשקע שמאלי של היעד
+        const pinToSocketDistance = Math.sqrt(
+          Math.pow(rightPin.x - targetLeftSocket.x, 2) +
+          Math.pow(rightPin.y - targetLeftSocket.y, 2)
+        );
         
-        // לקיחת המרחק הקטן יותר מבין האופקי והאנכי
-        const distance = Math.min(horizontalDistance, verticalDistance);
+        // מדידת מרחק בין שקע שמאלי של המקור לפין ימני של היעד
+        const socketToPinDistance = Math.sqrt(
+          Math.pow(leftSocket.x - targetRightPin.x, 2) +
+          Math.pow(leftSocket.y - targetRightPin.y, 2)
+        );
+        
+        // בחירת המרחק הקטן יותר
+        let distance = Math.min(pinToSocketDistance, socketToPinDistance);
         
         // אם מצאנו בלוק קרוב יותר מהקודם
         if (distance < minDistance) {
@@ -278,16 +281,35 @@ document.addEventListener('DOMContentLoaded', function() {
           position: relative;
         }
         
-        /* קו חיבור בין בלוקים מחוברים */
-        .connected-block::after {
+        /* הדגשת חלק החיבור בין בלוקים */
+        
+        /* סמן פין בצד ימין של בלוק */
+        .connected-block[data-connection-direction="left-to-right"]::after {
           content: '';
           position: absolute;
           width: 10px;
-          height: 5px;
-          background-color: #0066cc;
-          right: -10px;
+          height: 10px;
+          background-color: transparent;
+          border-radius: 5px;
+          right: 0;
           top: 50%;
-          transform: translateY(-50%);
+          transform: translateY(-50%) translateX(50%);
+          border: 2px solid #0066cc;
+          z-index: 80;
+        }
+        
+        /* סמן שקע בצד שמאל של בלוק */
+        .connected-block[data-connection-direction="right-to-left"]::before {
+          content: '';
+          position: absolute;
+          width: 10px;
+          height: 10px;
+          background-color: transparent;
+          border-radius: 5px;
+          left: 0;
+          top: 50%;
+          transform: translateY(-50%) translateX(-50%);
+          border: 2px solid #0066cc;
           z-index: 80;
         }
         
@@ -311,6 +333,10 @@ document.addEventListener('DOMContentLoaded', function() {
           box-shadow: 0 0 5px rgba(0, 102, 204, 0.5);
         }
       `;
+      
+      // הוספה לראש המסמך
+      document.head.appendChild(style);
+    }
       
       // הוספה לראש המסמך
       document.head.appendChild(style);
@@ -374,16 +400,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const sourceCenterX = sourceRect.left + sourceRect.width / 2;
         const targetCenterX = targetRect.left + targetRect.width / 2;
         
+        // מרווח החיבור - אפס כי אנחנו רוצים חיבור מושלם
+        const connectionGap = 0;
+        
         if (sourceCenterX < targetCenterX) {
-          // המקור משמאל ליעד - חבר את המקור מימין ליעד
+          // המקור משמאל ליעד - החלק הימני של המקור (הפין) מתחבר לחלק השמאלי של היעד (השקע)
           direction = 'left-to-right';
-          newLeft = targetRect.left - programRect.left - sourceRect.width;
-          newTop = targetRect.top - programRect.top;
+          
+          // בחיבור מדויק, הקצה הימני של המקור (בלי הפין) מתחבר לקצה השמאלי של היעד (בלי השקע)
+          // במקרה הזה, נניח שהפין והשקע הם 10 פיקסלים זה מזה
+          // לכן נחבר את הבלוק המקור כך שהפין שלו יהיה בתוך השקע של היעד
+          newLeft = targetRect.left - sourceRect.width + connectionGap - programRect.left;
+          newTop = targetRect.top - programRect.top; // שמירה על אותו גובה
         } else {
-          // המקור מימין ליעד - חבר את המקור משמאל ליעד
+          // המקור מימין ליעד - החלק השמאלי של המקור (השקע) מתחבר לחלק הימני של היעד (הפין)
           direction = 'right-to-left';
-          newLeft = targetRect.right - programRect.left;
-          newTop = targetRect.top - programRect.top;
+          
+          // נחבר את הבלוק המקור כך שהשקע שלו יהיה סביב הפין של היעד
+          newLeft = targetRect.right - connectionGap - programRect.left;
+          newTop = targetRect.top - programRect.top; // שמירה על אותו גובה
         }
         
         // עדכון מיקום הבלוק המקור
@@ -402,7 +437,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // אפקט ויזואלי של התממשקות
         addConnectionAnimation(sourceBlock, targetBlock);
         
-        console.log('בוצעה התממשקות בכיוון:', direction);
+        console.log('בוצעה התממשקות מדויקת בכיוון:', direction);
       } catch (err) {
         console.error('שגיאה בהתממשקות בלוקים:', err);
       }
