@@ -150,21 +150,33 @@ document.addEventListener('DOMContentLoaded', function() {
         const isLeftToRight = sourceRect.right < targetRect.left;
         
         let newLeft, newTop;
+        let pinBlock, socketBlock;
         
         if (isLeftToRight) {
           // המקור משמאל ליעד - צמד את הצד הימני של המקור לצד השמאלי של היעד
           newLeft = targetRect.left - sourceRect.width - areaRect.left;
           
-          // הגדרת z-index גבוה למקור (שבו הפין הימני) כדי שיסתיר את השקע
-          sourceBlock.style.zIndex = "150";
-          targetBlock.style.zIndex = "100";
+          // בחיבור משמאל לימין: המקור הוא הפין והיעד הוא השקע
+          pinBlock = sourceBlock;
+          socketBlock = targetBlock;
         } else {
           // המקור מימין ליעד - צמד את הצד השמאלי של המקור לצד הימני של היעד
           newLeft = targetRect.right - areaRect.left;
           
-          // הגדרת z-index גבוה ליעד (שבו הפין הימני) כדי שיסתיר את השקע
-          sourceBlock.style.zIndex = "100";
-          targetBlock.style.zIndex = "150";
+          // בחיבור מימין לשמאל: היעד הוא הפין והמקור הוא השקע
+          pinBlock = targetBlock;
+          socketBlock = sourceBlock;
+        }
+        
+        // הפין חייב להיות בשכבה העליונה - ערך גבוה מאוד
+        pinBlock.style.zIndex = "9999999"; // ערך עצום שיהיה מעל הכל
+        socketBlock.style.zIndex = "100";   // השקע בשכבה תחתונה
+        
+        // בנוסף - איתור האיקון בתוך הפין והעלאת ה-z-index שלו עוד יותר
+        const pinIcon = pinBlock.querySelector('img, svg, .scratch-block, .icon');
+        if (pinIcon) {
+          pinIcon.style.position = 'relative';
+          pinIcon.style.zIndex = "9999999";
         }
         
         // שמירה על אותו גובה
@@ -177,103 +189,102 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // בדיקה אם ההצמדה עובדת
         console.log('מיקום חדש:', newLeft, newTop);
+        console.log('הפין קיבל z-index:', pinBlock.style.zIndex);
         
         // סימון הבלוקים כמחוברים
         sourceBlock.classList.add('snapped-block');
         targetBlock.classList.add('snapped-block');
         
-        // הוספת העיגול הלבן לחיווי החיבור עם השהיה קטנה
+        // שמירה של מזהה הבלוק השני לשימוש עתידי
+        sourceBlock.dataset.connectedTo = targetBlock.id || generateId(targetBlock);
+        targetBlock.dataset.connectedTo = sourceBlock.id || generateId(sourceBlock);
+        
+        // הוספת נקודה אדומה לחיווי החיבור על הפין
         setTimeout(() => {
-          // זיהוי הבלוק עם הפין (בשכבה העליונה) והוספת הנקודה עליו
-          if (isLeftToRight) {
-            // המקור משמאל ליעד - הפין בצד ימין של המקור
-            createWhiteDot(sourceBlock, targetBlock, isLeftToRight);
-          } else {
-            // המקור מימין ליעד - הפין בצד ימין של היעד
-            createWhiteDot(targetBlock, sourceBlock, !isLeftToRight);
-          }
+          createWhiteDot(pinBlock);
         }, 50);
         
-        console.log('הצמדה בוצעה בהצלחה! כיוון:', isLeftToRight ? 'משמאל לימין' : 'מימין לשמאל');
+        console.log('הצמדה בוצעה! כיוון:', isLeftToRight ? 'משמאל לימין' : 'מימין לשמאל');
       } catch (err) {
         console.error('שגיאה בהצמדה:', err);
       }
     }
     
-    // פונקציה ליצירת נקודה לבנה בנקודת החיבור
-    function createWhiteDot(sourceBlock, targetBlock, isLeftToRight) {
+    // יצירת מזהה ייחודי לבלוק אם אין לו כזה
+    function generateId(block) {
+      if (!block.id) {
+        block.id = 'block-' + Date.now() + '-' + Math.floor(Math.random() * 10000);
+      }
+      return block.id;
+    }
+    
+    // פונקציה ליצירת נקודה אדומה בנקודת החיבור
+    function createWhiteDot(blockWithPin) {
       try {
         // הסרת נקודות קודמות
-        const oldDots = document.querySelectorAll('.connection-dot');
+        const oldDots = document.querySelectorAll('.connection-dot, .emergency-dot');
         oldDots.forEach(dot => dot.remove());
         
-        // איתור האיקון בתוך הבלוק
-        let blockWithDot;
-        
-        if (isLeftToRight) {
-          // הבלוק משמאל (עם הפין) מקבל את הנקודה
-          blockWithDot = sourceBlock;
-        } else {
-          // הבלוק מימין (עם הפין) מקבל את הנקודה
-          blockWithDot = targetBlock;
-        }
-        
-        // חיפוש האיקון בתוך הבלוק
-        const icon = blockWithDot.querySelector('img, svg, .icon');
-        
-        // יצירת נקודה חדשה
+        // יצירת אלמנט נקודה חדש
         const dot = document.createElement('div');
         dot.className = 'connection-dot';
+        document.body.appendChild(dot); // הוספת הנקודה ישירות לגוף המסמך לוודא שהיא מעל הכל
         
-        // בדיקה אם מצאנו איקון
-        if (icon) {
-          // מיקום הנקודה על האיקון
-          icon.parentNode.style.position = 'relative';
-          icon.parentNode.appendChild(dot);
-          
-          // סגנון הנקודה כשהיא בתוך האיקון
-          dot.style.position = 'absolute';
-          dot.style.width = '8px';
-          dot.style.height = '8px';
-          dot.style.backgroundColor = '#ffffff';
-          dot.style.border = '1px solid #aaaaaa';
-          dot.style.borderRadius = '50%';
-          dot.style.zIndex = '200'; // מעל הכל
-          
-          // מיקום במרכז האיקון
-          dot.style.left = '50%';
-          dot.style.top = '50%';
-          dot.style.transform = 'translate(-50%, -50%)';
-          
-          console.log('נוצרה נקודה לבנה על האיקון');
-        } else {
-          // לא מצאנו איקון, נשים את הנקודה בקצה הבלוק במקום
-          blockWithDot.appendChild(dot);
-          
-          // סגנון הנקודה
-          dot.style.position = 'absolute';
-          dot.style.width = '8px';
-          dot.style.height = '8px';
-          dot.style.backgroundColor = '#ffffff';
-          dot.style.border = '1px solid #aaaaaa';
-          dot.style.borderRadius = '50%';
-          dot.style.zIndex = '200'; // מעל הכל
-          
-          // מיקום בהתאם לכיוון החיבור
-          if (isLeftToRight) {
-            dot.style.right = '5px';
-            dot.style.top = '50%';
-            dot.style.transform = 'translateY(-50%)';
-          } else {
-            dot.style.left = '5px';
-            dot.style.top = '50%';
-            dot.style.transform = 'translateY(-50%)';
+        // קבלת מיקום הבלוק עם הפין
+        const blockRect = blockWithPin.getBoundingClientRect();
+        
+        // סגנון הנקודה - אדומה גדולה ובולטת
+        dot.style.position = 'fixed'; // שימוש ב-fixed במקום absolute
+        dot.style.width = '15px';
+        dot.style.height = '15px';
+        dot.style.backgroundColor = '#FF0000'; // אדום בולט
+        dot.style.border = '3px solid white'; // גבול לבן עבה
+        dot.style.borderRadius = '50%';
+        dot.style.zIndex = '9999999'; // ערך גבוה מאוד
+        dot.style.boxShadow = '0 0 10px rgba(0,0,0,0.8)'; // צל כהה ובולט
+        dot.style.pointerEvents = 'none'; // מאפשר ללחוץ "דרך" הנקודה
+        
+        // מיקום במרכז הבלוק עם הפין
+        dot.style.left = (blockRect.left + blockRect.width / 2) + 'px';
+        dot.style.top = (blockRect.top + blockRect.height / 2) + 'px';
+        dot.style.transform = 'translate(-50%, -50%)';
+        
+        // הוספת הבהוב לנקודה להדגשה
+        dot.style.animation = 'pulse 1.5s infinite';
+        
+        // הוספת סגנון האנימציה
+        const styleSheet = document.createElement('style');
+        styleSheet.textContent = `
+          @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
           }
-          
-          console.log('נוצרה נקודה לבנה בקצה הבלוק (לא נמצא איקון)');
-        }
+        `;
+        document.head.appendChild(styleSheet);
+        
+        console.log('נוצרה נקודה אדומה בולטת על הבלוק עם הפין');
       } catch (err) {
         console.error('שגיאה ביצירת נקודה:', err);
+        
+        // ניסיון יצירת נקודה חירום פשוטה יותר
+        try {
+          const emergencyDot = document.createElement('div');
+          emergencyDot.className = 'emergency-dot';
+          document.body.appendChild(emergencyDot);
+          
+          emergencyDot.style.position = 'fixed';
+          emergencyDot.style.width = '30px';
+          emergencyDot.style.height = '30px';
+          emergencyDot.style.backgroundColor = '#FF0000';
+          emergencyDot.style.top = '50px';
+          emergencyDot.style.left = '50px';
+          emergencyDot.style.zIndex = '9999999';
+          
+          console.log('נוצרה נקודת חירום');
+        } catch (e) {
+          console.error('כישלון גם בנקודת חירום:', e);
+        }
       }
     }
     
@@ -296,17 +307,32 @@ document.addEventListener('DOMContentLoaded', function() {
         targetBlock = null;
         
         // הסרת נקודות חיבור
-        const dots = document.querySelectorAll('.connection-dot');
-        dots.forEach(dot => dot.remove());
+        const dots = document.querySelectorAll('.connection-dot, .emergency-dot');
+        dots.forEach(dot => {
+          dot.remove();
+        });
+        
+        // הסרת סגנונות אנימציה
+        const animStyles = document.querySelectorAll('style[data-for="dot-animation"]');
+        animStyles.forEach(style => style.remove());
         
         // איפוס z-index וסימוני חיבור
         const blocks = programmingArea.querySelectorAll('.block-container');
         blocks.forEach(block => {
           block.style.zIndex = '';
           block.classList.remove('snapped-block');
+          
+          // איפוס z-index של רכיבים פנימיים
+          const innerElements = block.querySelectorAll('*');
+          innerElements.forEach(el => {
+            el.style.zIndex = '';
+          });
+          
+          // ניקוי מידע על חיבורים
+          block.removeAttribute('data-connected-to');
         });
         
-        console.log('ניקוי בוצע');
+        console.log('ניקוי מלא בוצע');
       });
     }
   }
