@@ -45,6 +45,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // מסמנים את הבלוק כנגרר (בלי אפקטים ויזואליים)
         e.target.classList.add('dragging');
         
+        // וודא הסרת כל מחלקות ההילה מהעבר
+        e.target.classList.remove('snap-source', 'snap-target', 'snap-left', 'snap-right', 'almost-snapping');
+        
         // מיקום מקורי של הבלוק למקרה שנצטרך לשחזר אותו
         e.target.dataset.originalLeft = e.target.style.left || '';
         e.target.dataset.originalTop = e.target.style.top || '';
@@ -193,13 +196,16 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // הוסף מחלקת הילה רק אם המרחק קטן מאוד (כמעט התממשקות)
         if (distance < SNAP_THRESHOLD / 2) {
+          // וודא שיש רק dragging ו-almost-snapping (מסיר כל קלאס אחר שעלול לגרום להילה)
+          draggedBlock.classList.remove('snap-source', 'snap-target', 'snap-left', 'snap-right');
           draggedBlock.classList.add('almost-snapping');
+          console.log('מוסיף הילה במרחק:', distance, 'פיקסלים');
         } else {
           draggedBlock.classList.remove('almost-snapping');
         }
         
-        // הדגש את שני הבלוקים
-        highlightBlockForSnapping(draggedBlock, potentialSnapTarget, snapDirection);
+        // הדגש את שני הבלוקים (בלי להוסיף snap-source לבלוק הנגרר)
+        highlightBlockForSnapping(draggedBlock, potentialSnapTarget, snapDirection, true);
       } else {
         potentialSnapTarget = null;
         snapDirection = null;
@@ -271,9 +277,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // הדגשת בלוקים לקראת הצמדה
-    function highlightBlockForSnapping(draggedBlock, targetBlock, direction) {
-      // הדגשת הבלוק הנגרר
-      if (draggedBlock) {
+    function highlightBlockForSnapping(draggedBlock, targetBlock, direction, skipSourceHighlight = false) {
+      // הדגשת הבלוק הנגרר (אלא אם ביקשנו לדלג על כך)
+      if (draggedBlock && !skipSourceHighlight) {
         draggedBlock.classList.add('snap-source');
       }
       
