@@ -488,6 +488,10 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Visual feedback
             draggedBlock.style.opacity = isOverProgrammingArea ? '1.0' : '0.7';
+            
+            // Prevent any default browser drag behavior
+            moveEvent.preventDefault();
+            return false;
         };
         
         // Handle the mouse up event
@@ -622,6 +626,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Prevent default drag behavior
         block.addEventListener('dragstart', function(e) {
             e.preventDefault();
+            return false;
         });
         
         // Handle mouse down to start dragging
@@ -665,8 +670,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let newTop = e.clientY - areaRect.top - dragOffsetY;
         
         // Ensure the block stays within the programming area
-        newLeft = Math.max(0, Math.min(newLeft, areaRect.width - draggedBlock.offsetWidth));
-        newTop = Math.max(0, Math.min(newTop, areaRect.height - draggedBlock.offsetHeight));
+        const blockWidth = draggedBlock.offsetWidth || 100;
+        const blockHeight = draggedBlock.offsetHeight || 100;
+        newLeft = Math.max(0, Math.min(newLeft, areaRect.width - blockWidth));
+        newTop = Math.max(0, Math.min(newTop, areaRect.height - blockHeight));
         
         // Update position
         draggedBlock.style.left = newLeft + 'px';
