@@ -240,42 +240,31 @@ document.addEventListener('DOMContentLoaded', function() {
         const sourceCenterX = sourceRect.left + sourceRect.width / 2;
         const targetCenterX = targetRect.left + targetRect.width / 2;
         
-        // החיבור בתמונה הוא ממש צמוד, כמעט ללא מרווח
-        const CONNECTION_GAP = 0; // מרווח אפס - צמידות מלאה
+        // *** הבלוקים בתמונה צמודים לחלוטין - ללא חפיפה ולא רווח ***
+        const OFFSET = 0; // אפס רווח או חפיפה
         
         if (sourceCenterX < targetCenterX) {
-          // המקור משמאל ליעד - החלק הימני (פין) מתחבר לחלק השמאלי (שקע)
+          // המקור משמאל ליעד - הצד הימני של המקור צמוד לצד השמאלי של היעד
           direction = 'left-to-right';
           
-          // מיקום מדויק לפי התמונה - הפאות צמודות לגמרי
-          newLeft = targetRect.left - sourceRect.width + CONNECTION_GAP - programRect.left;
+          // מיקום מדויק - צמוד לחלוטין
+          newLeft = targetRect.left - sourceRect.width - programRect.left;
           newTop = targetRect.top - programRect.top;
           
-          // הגדרת z-index גבוה למקור כדי שיהיה מעל
-          sourceBlock.style.zIndex = "110";
-          targetBlock.style.zIndex = "100";
+          console.log('מחבר משמאל לימין, מיקום חדש:', newLeft, newTop);
           
-          // הוספת קלאס ספציפי לזיהוי כיוון החיבור
-          sourceBlock.classList.add('connected-right');
-          targetBlock.classList.add('connected-left');
         } else {
-          // המקור מימין ליעד - החלק השמאלי (שקע) מתחבר לחלק הימני (פין)
+          // המקור מימין ליעד - הצד השמאלי של המקור צמוד לצד הימני של היעד
           direction = 'right-to-left';
           
-          // מיקום מדויק לפי התמונה - הפאות צמודות לגמרי
-          newLeft = targetRect.right - CONNECTION_GAP - programRect.left;
+          // מיקום מדויק - צמוד לחלוטין
+          newLeft = targetRect.right - programRect.left;
           newTop = targetRect.top - programRect.top;
           
-          // הגדרת z-index גבוה ליעד כדי שיהיה מעל
-          sourceBlock.style.zIndex = "100";
-          targetBlock.style.zIndex = "110";
-          
-          // הוספת קלאס ספציפי לזיהוי כיוון החיבור
-          sourceBlock.classList.add('connected-left');
-          targetBlock.classList.add('connected-right');
+          console.log('מחבר מימין לשמאל, מיקום חדש:', newLeft, newTop);
         }
         
-        // עדכון מיקום הבלוק המקור
+        // עדכון מיקום הבלוק המקור - חשוב מאוד
         sourceBlock.style.position = 'absolute';
         sourceBlock.style.left = newLeft + 'px';
         sourceBlock.style.top = newTop + 'px';
@@ -288,13 +277,16 @@ document.addEventListener('DOMContentLoaded', function() {
         sourceBlock.setAttribute('data-connected-to', targetBlock.id || generateUniqueId(targetBlock));
         sourceBlock.setAttribute('data-connection-direction', direction);
         
-        // אפקט ויזואלי של התממשקות
-        addConnectionAnimation(sourceBlock, targetBlock);
+        // רישום של מיקומי הבלוקים לאחר החיבור
+        setTimeout(() => {
+          const newSourceRect = sourceBlock.getBoundingClientRect();
+          const newTargetRect = targetBlock.getBoundingClientRect();
+          console.log('מיקום סופי של מקור:', newSourceRect.left, newSourceRect.top);
+          console.log('מיקום סופי של יעד:', newTargetRect.left, newTargetRect.top);
+          console.log('הפרש אופקי:', Math.abs(newSourceRect.right - newTargetRect.left));
+        }, 100);
         
         console.log('בוצעה התממשקות מדויקת בכיוון:', direction);
-        
-        // הוספת קו מחבר ויזואלי
-        addVisualConnector(sourceBlock, targetBlock, direction);
       } catch (err) {
         console.error('שגיאה בהתממשקות בלוקים:', err);
       }
@@ -526,13 +518,16 @@ document.addEventListener('DOMContentLoaded', function() {
         clearAllHighlights();
         
         // הסרת סימוני חיבור מכל הבלוקים
-        const connectedBlocks = programmingArea.querySelectorAll('.connected-block, .has-connected-block');
+        const connectedBlocks = programmingArea.querySelectorAll('.connected-block, .has-connected-block, .connected-left, .connected-right');
         connectedBlocks.forEach(block => {
-          block.classList.remove('connected-block', 'has-connected-block');
+          block.classList.remove('connected-block', 'has-connected-block', 'connected-left', 'connected-right');
           block.removeAttribute('data-connected-to');
           block.removeAttribute('data-connection-direction');
           block.style.zIndex = '';
         });
+        
+        // הסרת מחברים ויזואליים
+        removeVisualConnectors();
       });
     }
   }
