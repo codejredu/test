@@ -1,7 +1,6 @@
 // קבועים
-const SNAP_THRESHOLD = 15; // מרחק מקסימלי בפיקסלים להצמדה (הוקטן)
-const HIGHLIGHT_THRESHOLD = 40; // מרחק להתחלת הדגשה ויזואלית (הוקטן)
-const HALO_THRESHOLD = 10; // מרחק ליצירת אפקט הילה (חדש)
+const SNAP_THRESHOLD = 10; // מרחק מקסימלי בפיקסלים להצמדה (השתנה ל-10)
+const HIGHLIGHT_THRESHOLD = 50; // מרחק להתחלת הדגשה ויזואלית
 
 // איתור אזור התכנות
 const programmingArea = document.getElementById('program-blocks');
@@ -167,18 +166,15 @@ function checkForSnapTarget(draggedBlock, mouseX, mouseY) {
     potentialSnapTarget = result.block;
     snapDirection = result.direction;
 
-    const distance = result.distance;
-    if (distance <= HALO_THRESHOLD) {
-      // הפעלת אפקט הילה
-      applyHaloEffect(potentialSnapTarget);
-    } else if (distance <= HIGHLIGHT_THRESHOLD) {
-      // הדגש את שני הבלוקים
-      highlightBlockForSnapping(draggedBlock, potentialSnapTarget, snapDirection);
-    }
+    // הדגש את שני הבלוקים
+    highlightBlockForSnapping(draggedBlock, potentialSnapTarget, snapDirection);
   } else {
     potentialSnapTarget = null;
     snapDirection = null;
-    removeHaloEffectFromAll();
+    // אם אין מטרה, הסר את ההילה מהבלוק הנגרר
+    if (draggedBlock) {
+      draggedBlock.classList.remove('snap-proximity');
+    }
   }
 }
 
@@ -186,8 +182,8 @@ function checkForSnapTarget(draggedBlock, mouseX, mouseY) {
 function findClosestBlockForSnap(draggedBlock, clientX, clientY) {
   if (!draggedBlock) return null;
 
-  const blocks = programmingArea.querySelectorAll('.block-container');
-  if (blocks.length < 2) return null; // צריך לפחות 2 בלוקים
+  const blocks = programmingArea.querySelectorAll('.block-container:not(.dragging)'); // אל תבדוק את הבלוק הנגרר
+  if (blocks.length < 1) return null; // צריך לפחות בלוק אחד אחר
 
   // קבלת המיקום של הבלוק הנגרר
   const draggedRect = draggedBlock.getBoundingClientRect();
@@ -199,15 +195,12 @@ function findClosestBlockForSnap(draggedBlock, clientX, clientY) {
   const leftSocketY = draggedRect.top + draggedRect.height / 2;
 
   let closestBlock = null;
-  let minDistance = Infinity;
+  let minDistance = SNAP_THRESHOLD; // השתמש בסף ההצמדה לבדיקת הילה
   let bestDirection = null;
-  let finalDistance = Infinity;
+  let foundClose = false;
 
   // בדיקת כל בלוק
   blocks.forEach(block => {
-    // דלג על הבלוק הנגרר עצמו
-    if (block === draggedBlock) return;
-
     const blockRect = block.getBoundingClientRect();
 
     // בדיקת הצמדה משמאל לבלוק המטרה: הפין הימני שלנו לשקע השמאלי שלו
@@ -223,35 +216,35 @@ function findClosestBlockForSnap(draggedBlock, clientX, clientY) {
     );
 
     // בחירת הכיוון הטוב יותר
-    let distance = Infinity;
-    let direction = null;
+    let distance = Math.min(leftDistance, rightDistance);
+    let direction = leftDistance < rightDistance ? 'left' : 'right';
 
-    if (leftDistance < rightDistance) {
-      distance = leftDistance;
-      direction = 'left';
-    } else {
-      distance = rightDistance;
-      direction = 'right';
-    }
-
-    // אם קרוב יותר מהמרחק המינימלי הקודם
-    if (distance < minDistance) {
-      minDistance = distance;
-      closestBlock = block;
-      bestDirection = direction;
-      finalDistance = distance;
+    // אם קרוב יותר מסף ההילה
+    if (distance < SNAP_THRESHOLD) {
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestBlock = block;
+        bestDirection = direction;
+      }
+      foundClose = true;
     }
   });
 
-  return closestBlock ? { block: closestBlock, direction: bestDirection, distance: finalDistance } : null;
+  // הוספת או הסרת הילה מהבלוק הנגרר בהתאם לקרבה
+  if (draggedBlock) {
+    if (foundClose) {
+      draggedBlock.classList.add('snap-proximity');
+    } else {
+      draggedBlock.classList.remove('snap-proximity');
+    }
+  }
+
+  return closestBlock ? { block: closestBlock, direction: bestDirection } : null;
 }
 
 // הדגשת בלוקים לקראת הצמדה
 function highlightBlockForSnapping(draggedBlock, targetBlock, direction) {
-  // הדגשת הבלוק הנגרר
-  if (draggedBlock) {
-    draggedBlock.classList.add('snap-source');
-  }
+  // הדגשת הבלוק הנגרר (ההילה מטופלת ב findClosestBlockForSnap)
 
   // הדגשת בלוק המטרה
   if (targetBlock) {
@@ -266,36 +259,22 @@ function highlightBlockForSnapping(draggedBlock, targetBlock, direction) {
   }
 }
 
-// החלת אפקט הילה על בלוק
-function applyHaloEffect(block) {
-  if (block) {
-    removeHaloEffectFromAll(); // הסרת הילה מבלוקים אחרים
-    block.classList.add('snap-halo');
-  }
-}
-
-// הסרת אפקט ההילה מכל הבלוקים
-function removeHaloEffectFromAll() {
-  const haloedBlocks = programmingArea.querySelectorAll('.snap-halo');
-  haloedBlocks.forEach(block => {
-    block.classList.remove('snap-halo');
-  });
-}
-
-// ניקוי כל ההדגשות (ללא הילה - היא מנוהלת בנפרד)
+// ניקוי כל ההדגשות (מלבד ההילה של הבלוק הנגרר)
 function clearAllHighlights() {
-  const highlightedBlocks = programmingArea.querySelectorAll('.snap-source, .snap-target, .snap-left, .snap-right');
+  const highlightedBlocks = programmingArea.querySelectorAll('.snap-target, .snap-left, .snap-right');
   highlightedBlocks.forEach(block => {
-    block.classList.remove('snap-source', 'snap-target', 'snap-left', 'snap-right');
+    block.classList.remove('snap-target', 'snap-left', 'snap-right');
   });
 }
 
 // איפוס מצב ההדגשה והמשתנים הגלובליים
 function resetHighlighting() {
   clearAllHighlights();
-  removeHaloEffectFromAll();
   potentialSnapTarget = null;
   snapDirection = null;
+  if (currentDraggedBlock) {
+    currentDraggedBlock.classList.remove('snap-proximity');
+  }
 }
 
 // ביצוע הצמדה בין שני בלוקים בכיוון מסוים
@@ -340,6 +319,11 @@ function snapBlocks(sourceBlock, targetBlock, direction) {
     console.log('הצמדה בוצעה בכיוון:', direction);
   } catch (err) {
     console.error('שגיאה בהצמדת בלוקים:', err);
+  } finally {
+    // הסרת ההילה לאחר ההצמדה
+    if (sourceBlock) {
+      sourceBlock.classList.remove('snap-proximity');
+    }
   }
 }
 
@@ -363,14 +347,19 @@ function addSnapEffectAnimation(block) {
   }, 300); // 300ms - משך האנימציה
 }
 
-// הוספת סגנונות CSS להדגשה, הילה ואנימציה
+// הוספת סגנונות CSS להדגשה ואנימציה
 function addHighlightStyles() {
   // יצירת אלמנט style
   const style = document.createElement('style');
   style.textContent = `
-    /* הדגשת בלוק מקור (הנגרר) כשקרוב להצמדה */
+    /* הוספת הילה לבלוק הנגרר כשקרוב להצמדה */
+    .block-container.dragging.snap-proximity .scratch-block {
+      box-shadow: 0 0 15px 5px rgba(0, 150, 255, 0.7) !important;
+      transition: box-shadow 0.2s ease-in-out;
+    }
+
+    /* הדגשת בלוק מקור (הנגרר) כשקרוב להצמדה - ללא הילה כפולה */
     .snap-source .scratch-block {
-      box-shadow: 0 0 8px 2px rgba(0, 180, 255, 0.6) !important;
       filter: brightness(1.05);
       transition: all 0.15s ease-out;
     }
@@ -393,12 +382,6 @@ function addHighlightStyles() {
     .snap-right .scratch-block::after {
       box-shadow: 0 0 4px 1px rgba(255, 255, 0, 0.6) !important;
       transition: all 0.15s ease-out;
-    }
-
-    /* אפקט הילה */
-    .snap-halo .scratch-block {
-      box-shadow: 0 0 15px 5px rgba(102, 255, 102, 0.7) !important; /* ירוק בהיר */
-      transition: box-shadow 0.1s ease-in-out;
     }
 
     /* בלוק בזמן גרירה - ללא אפקטים מיוחדים */
@@ -438,6 +421,8 @@ if (clearAllButton) {
     potentialSnapTarget = null;
     snapDirection = null;
     clearAllHighlights();
-    removeHaloEffectFromAll();
+    // הסרת ההילה מכל הבלוקים
+    const allBlocks = programmingArea.querySelectorAll('.block-container');
+    allBlocks.forEach(block => block.classList.remove('snap-proximity'));
   });
 }
