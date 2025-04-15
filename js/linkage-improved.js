@@ -240,32 +240,39 @@ document.addEventListener('DOMContentLoaded', function() {
         const sourceCenterX = sourceRect.left + sourceRect.width / 2;
         const targetCenterX = targetRect.left + targetRect.width / 2;
         
-        // גודל הפין והשקע - מרווח להצמדה מדויקת
-        const PIN_SIZE = 2; // הפין בולט 2 פיקסלים - מרווח קטן יותר בדיוק כמו בתמונה
+        // החיבור בתמונה הוא ממש צמוד, כמעט ללא מרווח
+        const CONNECTION_GAP = 0; // מרווח אפס - צמידות מלאה
         
         if (sourceCenterX < targetCenterX) {
           // המקור משמאל ליעד - החלק הימני (פין) מתחבר לחלק השמאלי (שקע)
           direction = 'left-to-right';
           
-          // הפאות כמעט צמודות - הפין (צד ימין של המקור) נכנס לשקע (צד שמאל של היעד)
-          // בתמונה שהראית - הפאות ממש צמודות עם חפיפה מינימלית
-          newLeft = targetRect.left - sourceRect.width + PIN_SIZE - programRect.left;
+          // מיקום מדויק לפי התמונה - הפאות צמודות לגמרי
+          newLeft = targetRect.left - sourceRect.width + CONNECTION_GAP - programRect.left;
           newTop = targetRect.top - programRect.top;
           
-          // הפין בשכבה עליונה
+          // הגדרת z-index גבוה למקור כדי שיהיה מעל
           sourceBlock.style.zIndex = "110";
           targetBlock.style.zIndex = "100";
+          
+          // הוספת קלאס ספציפי לזיהוי כיוון החיבור
+          sourceBlock.classList.add('connected-right');
+          targetBlock.classList.add('connected-left');
         } else {
           // המקור מימין ליעד - החלק השמאלי (שקע) מתחבר לחלק הימני (פין)
           direction = 'right-to-left';
           
-          // הפאות כמעט צמודות - השקע (צד שמאל של המקור) מקבל את הפין (צד ימין של היעד)
-          newLeft = targetRect.right - PIN_SIZE - programRect.left;
+          // מיקום מדויק לפי התמונה - הפאות צמודות לגמרי
+          newLeft = targetRect.right - CONNECTION_GAP - programRect.left;
           newTop = targetRect.top - programRect.top;
           
-          // הפין בשכבה עליונה
+          // הגדרת z-index גבוה ליעד כדי שיהיה מעל
           sourceBlock.style.zIndex = "100";
           targetBlock.style.zIndex = "110";
+          
+          // הוספת קלאס ספציפי לזיהוי כיוון החיבור
+          sourceBlock.classList.add('connected-left');
+          targetBlock.classList.add('connected-right');
         }
         
         // עדכון מיקום הבלוק המקור
@@ -284,10 +291,69 @@ document.addEventListener('DOMContentLoaded', function() {
         // אפקט ויזואלי של התממשקות
         addConnectionAnimation(sourceBlock, targetBlock);
         
-        console.log('בוצעה התממשקות בכיוון:', direction);
+        console.log('בוצעה התממשקות מדויקת בכיוון:', direction);
+        
+        // הוספת קו מחבר ויזואלי
+        addVisualConnector(sourceBlock, targetBlock, direction);
       } catch (err) {
         console.error('שגיאה בהתממשקות בלוקים:', err);
       }
+    }
+    
+    // פונקציה להוספת מחבר ויזואלי בין הבלוקים
+    function addVisualConnector(sourceBlock, targetBlock, direction) {
+      // הסרת מחברים קודמים אם קיימים
+      removeVisualConnectors();
+      
+      // יצירת אלמנט המחבר
+      const connector = document.createElement('div');
+      connector.className = 'blocks-connector';
+      
+      // מיקום המחבר בהתאם לכיוון החיבור
+      if (direction === 'left-to-right') {
+        // המקור משמאל ליעד
+        const sourceRect = sourceBlock.getBoundingClientRect();
+        const targetRect = targetBlock.getBoundingClientRect();
+        
+        // קביעת מיקום וגודל המחבר
+        connector.style.position = 'absolute';
+        connector.style.right = '0';
+        connector.style.top = '50%';
+        connector.style.width = '4px';
+        connector.style.height = '4px';
+        connector.style.backgroundColor = '#0066cc';
+        connector.style.borderRadius = '2px';
+        connector.style.transform = 'translateY(-50%)';
+        connector.style.zIndex = '120';
+        
+        // הוספת המחבר לבלוק המקור
+        sourceBlock.appendChild(connector);
+      } else {
+        // המקור מימין ליעד
+        const connector2 = document.createElement('div');
+        connector2.className = 'blocks-connector';
+        
+        // קביעת מיקום וגודל המחבר
+        connector2.style.position = 'absolute';
+        connector2.style.left = '0';
+        connector2.style.top = '50%';
+        connector2.style.width = '4px';
+        connector2.style.height = '4px';
+        connector2.style.backgroundColor = '#ffffff';
+        connector2.style.border = '1px solid #cccccc';
+        connector2.style.borderRadius = '2px';
+        connector2.style.transform = 'translateY(-50%)';
+        connector2.style.zIndex = '110';
+        
+        // הוספת המחבר לבלוק המקור
+        sourceBlock.appendChild(connector2);
+      }
+    }
+    
+    // פונקציה להסרת מחברים ויזואליים
+    function removeVisualConnectors() {
+      const connectors = document.querySelectorAll('.blocks-connector');
+      connectors.forEach(connector => connector.remove());
     }
     
     // פונקציה ליצירת מזהה ייחודי לבלוק
@@ -350,11 +416,11 @@ document.addEventListener('DOMContentLoaded', function() {
         .connected-block[data-connection-direction="left-to-right"]::after {
           content: '';
           position: absolute;
-          width: 8px;
-          height: 8px;
+          width: 4px;
+          height: 4px;
           background-color: #0066cc;
           border-radius: 4px;
-          right: -4px;
+          right: -2px;
           top: 50%;
           transform: translateY(-50%);
           z-index: 120;
@@ -368,12 +434,12 @@ document.addEventListener('DOMContentLoaded', function() {
         .connected-block[data-connection-direction="right-to-left"]::before {
           content: '';
           position: absolute;
-          width: 8px;
-          height: 8px;
+          width: 4px;
+          height: 4px;
           background-color: #f5f5f5;
           border: 1px solid #cccccc;
           border-radius: 4px;
-          left: -4px;
+          left: -2px;
           top: 50%;
           transform: translateY(-50%);
           z-index: 110;
@@ -395,13 +461,13 @@ document.addEventListener('DOMContentLoaded', function() {
           animation: connectAnimation 0.5s ease-out;
         }
         
-        /* סימון ויזואלי לבלוקים מחוברים */
+        /* סימון ויזואלי עדין לבלוקים מחוברים */
         .connected-block .scratch-block {
-          box-shadow: 0 0 5px rgba(0, 102, 204, 0.5);
+          box-shadow: 0 0 2px rgba(0, 102, 204, 0.3);
         }
         
         .has-connected-block .scratch-block {
-          box-shadow: 0 0 5px rgba(0, 102, 204, 0.5);
+          box-shadow: 0 0 2px rgba(0, 102, 204, 0.3);
         }
       `;
       
