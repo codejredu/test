@@ -37,14 +37,19 @@ document.addEventListener('DOMContentLoaded', function() {
         // שמירת הבלוק הנגרר וסימון שלו
         currentDraggedBlock = e.target;
         
-        // מניעת יצירת רוח רפאים - הגדרת התמונה שתיווצר בזמן גרירה
-        // הגדרת תמונה ריקה של פיקסל אחד שקוף
-        const img = new Image();
-        img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-        e.dataTransfer.setDragImage(img, 0, 0);
+        // לא נשתמש ב-setDragImage כדי לאפשר לראות את הלבנה בזמן הגרירה
+        // במקום זאת נסמן את האלמנט ונטפל בו בעזרת CSS ו-JS
+        
+        // קביעת שקיפות חלקית במהלך הגרירה לאפשר ראיית האזור שמתחת
+        e.target.style.opacity = '0.8';
         
         // סימון הבלוק הנגרר בצורה ויזואלית
         e.target.classList.add('dragging');
+        
+        // הוספת עיכוב קטן להבטיח שהסגנון יחול לפני הגרירה
+        setTimeout(() => {
+          console.log('הבלוק סומן כנגרר ומוכן לגרירה ויזואלית');
+        }, 10);
       }
     });
     
@@ -53,6 +58,9 @@ document.addEventListener('DOMContentLoaded', function() {
       // טיפול בסיום גרירה רק של בלוקים קיימים באזור התכנות
       if (e.target.classList.contains('block-container')) {
         console.log('סיום גרירה נתפס באזור התכנות');
+        
+        // החזרת השקיפות למצב נורמלי
+        e.target.style.opacity = '1';
         
         // הסרת סימון הגרירה
         e.target.classList.remove('dragging');
@@ -69,8 +77,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // צעד 3: עדכון המיקום תוך כדי גרירה
     programmingArea.addEventListener('drag', function(e) {
       if (e.target.classList.contains('block-container') && currentDraggedBlock) {
-        // אין צורך לעשות פעולות נוספות כאן - הדפדפן מטפל בתצוגת האלמנט
-        // אנחנו רק וידאנו שהרוח רפאים לא תוצג
+        // הדפדפן מטפל בהזזת האלמנט, אנחנו רק מוודאים שהוא גלוי ולא יוצר רוח רפאים
+        if (e.clientX > 0 && e.clientY > 0) {  // וידוא שמיקום העכבר תקין
+          // אפשר גם להוסיף אפקטים ויזואליים בזמן גרירה, כמו צל מוגדל
+          currentDraggedBlock.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
+        }
       }
     });
     
@@ -344,10 +355,20 @@ document.addEventListener('DOMContentLoaded', function() {
           transition: all 0.15s ease-out;
         }
         
-        /* סגנון לבלוק בזמן גרירה - מניעת רוח רפאים */
+        /* סגנון לבלוק בזמן גרירה - עיצוב ויזואלי */
         .block-container.dragging {
-          /* אין צורך בשינוי מיוחד, מספיק הסימון כדי לזהות את הבלוק */
-          /* הדפדפן מטפל בגרירה, אנחנו מונעים את רוח הרפאים בקוד JavaScript */
+          z-index: 1000 !important; /* הבאת הבלוק הנגרר קדימה */
+          transform-origin: center center;
+          transform: scale(1.02); /* הגדלה קלה של הבלוק בזמן גרירה */
+          cursor: grabbing !important;
+          opacity: 0.8; /* שקיפות קלה כדי לראות גם מה שמתחת */
+          transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
+          box-shadow: 0 6px 10px rgba(0, 0, 0, 0.25) !important; /* צל גדול יותר בזמן גרירה */
+        }
+        
+        .block-container.dragging .scratch-block {
+          outline: 2px dashed rgba(0, 180, 255, 0.6); /* קו מקווקו מסביב לבלוק */
+          outline-offset: 2px;
         }
         
         /* אנימציית הצמדה */
