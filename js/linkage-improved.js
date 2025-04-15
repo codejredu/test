@@ -140,88 +140,95 @@ document.addEventListener('DOMContentLoaded', function() {
     function snapToBlock(sourceBlock, targetBlock) {
       if (!sourceBlock || !targetBlock) return;
       
-      // קבלת מיקום
-      const sourceRect = sourceBlock.getBoundingClientRect();
-      const targetRect = targetBlock.getBoundingClientRect();
-      const areaRect = programmingArea.getBoundingClientRect();
-      
-      // קביעת כיוון ההצמדה
-      const isLeftToRight = sourceRect.right < targetRect.left;
-      
-      let newLeft, newTop;
-      
-      if (isLeftToRight) {
-        // המקור משמאל ליעד - צמד את הצד הימני של המקור לצד השמאלי של היעד
-        newLeft = targetRect.left - sourceRect.width - areaRect.left;
+      try {
+        // קבלת מיקום
+        const sourceRect = sourceBlock.getBoundingClientRect();
+        const targetRect = targetBlock.getBoundingClientRect();
+        const areaRect = programmingArea.getBoundingClientRect();
         
-        // הגדרת z-index כך שהפין (הימני) יהיה בשכבה העליונה
-        sourceBlock.style.zIndex = "110";
-        targetBlock.style.zIndex = "100";
-      } else {
-        // המקור מימין ליעד - צמד את הצד השמאלי של המקור לצד הימני של היעד
-        newLeft = targetRect.right - areaRect.left;
+        // קביעת כיוון ההצמדה
+        const isLeftToRight = sourceRect.right < targetRect.left;
         
-        // הגדרת z-index כך שהפין (הימני של היעד) יהיה בשכבה העליונה
-        sourceBlock.style.zIndex = "100";
-        targetBlock.style.zIndex = "110";
-      }
-      
-      // שמירה על אותו גובה
-      newTop = targetRect.top - areaRect.top;
-      
-      // עדכון מיקום
-      sourceBlock.style.position = 'absolute';
-      sourceBlock.style.left = newLeft + 'px';
-      sourceBlock.style.top = newTop + 'px';
-      
-      // הוספת העיגול הלבן המחווה חיבור
-      addConnectionIndicator(sourceBlock, targetBlock, isLeftToRight);
-      
-      // סימון שהבלוקים מחוברים
-      sourceBlock.classList.add('connected-block');
-      targetBlock.classList.add('connected-block');
-      
-      console.log('הצמדה בוצעה בהצלחה! כיוון:', isLeftToRight ? 'משמאל לימין' : 'מימין לשמאל');
-    }
-    
-    // פונקציה להוספת עיגול לבן המחווה את החיבור
-    function addConnectionIndicator(sourceBlock, targetBlock, isLeftToRight) {
-      // הסרת מחוונים קודמים אם קיימים
-      removeConnectionIndicators();
-      
-      // יצירת העיגול הלבן
-      const indicator = document.createElement('div');
-      indicator.className = 'connection-indicator';
-      
-      // קביעת סגנון העיגול
-      indicator.style.position = 'absolute';
-      indicator.style.width = '6px';
-      indicator.style.height = '6px';
-      indicator.style.backgroundColor = '#ffffff';
-      indicator.style.border = '1px solid #cccccc';
-      indicator.style.borderRadius = '50%';
-      indicator.style.zIndex = '105';
-      
-      // קביעת מיקום העיגול בהתאם לכיוון ההצמדה
-      if (isLeftToRight) {
-        // המקור משמאל ליעד - העיגול יהיה בקצה הימני של המקור
-        sourceBlock.appendChild(indicator);
-        indicator.style.right = '-3px';
-        indicator.style.top = '50%';
-        indicator.style.transform = 'translateY(-50%)';
-      } else {
-        // המקור מימין ליעד - העיגול יהיה בקצה השמאלי של המקור
-        sourceBlock.appendChild(indicator);
-        indicator.style.left = '-3px';
-        indicator.style.top = '50%';
-        indicator.style.transform = 'translateY(-50%)';
+        let newLeft, newTop;
+        
+        if (isLeftToRight) {
+          // המקור משמאל ליעד - צמד את הצד הימני של המקור לצד השמאלי של היעד
+          newLeft = targetRect.left - sourceRect.width - areaRect.left;
+          
+          // הגדרת z-index גבוה למקור (שבו הפין הימני)
+          sourceBlock.style.zIndex = "110";
+          targetBlock.style.zIndex = "100";
+        } else {
+          // המקור מימין ליעד - צמד את הצד השמאלי של המקור לצד הימני של היעד
+          newLeft = targetRect.right - areaRect.left;
+          
+          // הגדרת z-index גבוה ליעד (שבו הפין הימני)
+          sourceBlock.style.zIndex = "100";
+          targetBlock.style.zIndex = "110";
+        }
+        
+        // שמירה על אותו גובה
+        newTop = targetRect.top - areaRect.top;
+        
+        // עדכון מיקום
+        sourceBlock.style.position = 'absolute';
+        sourceBlock.style.left = newLeft + 'px';
+        sourceBlock.style.top = newTop + 'px';
+        
+        // בדיקה אם ההצמדה עובדת
+        console.log('מיקום חדש:', newLeft, newTop);
+        
+        // הוספת העיגול הלבן לחיווי החיבור
+        setTimeout(() => {
+          // הוספת העיגול אחרי שהעדכון התרחש
+          createWhiteDot(sourceBlock, targetBlock, isLeftToRight);
+        }, 50);
+        
+        console.log('הצמדה בוצעה בהצלחה! כיוון:', isLeftToRight ? 'משמאל לימין' : 'מימין לשמאל');
+      } catch (err) {
+        console.error('שגיאה בהצמדה:', err);
       }
     }
     
-    // פונקציה להסרת מחווני חיבור קיימים
-    function removeConnectionIndicators() {
-      const indicators = document.querySelectorAll('.connection-indicator');
-      indicators.forEach(indicator => indicator.remove());
+    // פונקציה ליצירת נקודה לבנה בנקודת החיבור
+    function createWhiteDot(sourceBlock, targetBlock, isLeftToRight) {
+      try {
+        // הסרת נקודות קודמות
+        const oldDots = document.querySelectorAll('.connection-dot');
+        oldDots.forEach(dot => dot.remove());
+        
+        // יצירת נקודה חדשה
+        const dot = document.createElement('div');
+        dot.className = 'connection-dot';
+        document.body.appendChild(dot);
+        
+        // סגנון הנקודה
+        dot.style.position = 'absolute';
+        dot.style.width = '6px';
+        dot.style.height = '6px';
+        dot.style.backgroundColor = '#ffffff';
+        dot.style.border = '1px solid #aaaaaa';
+        dot.style.borderRadius = '50%';
+        dot.style.zIndex = '120'; // מעל הכל
+        
+        // מיקום הנקודה בהתאם לכיוון החיבור
+        const sourceRect = sourceBlock.getBoundingClientRect();
+        const targetRect = targetBlock.getBoundingClientRect();
+        
+        if (isLeftToRight) {
+          // הנקודה תהיה בדיוק באמצע בין הקצה הימני של המקור לקצה השמאלי של היעד
+          dot.style.left = (sourceRect.right - 3) + 'px';
+          dot.style.top = (sourceRect.top + sourceRect.height / 2 - 3) + 'px';
+        } else {
+          // הנקודה תהיה בדיוק באמצע בין הקצה השמאלי של המקור לקצה הימני של היעד
+          dot.style.left = (sourceRect.left - 3) + 'px';
+          dot.style.top = (sourceRect.top + sourceRect.height / 2 - 3) + 'px';
+        }
+        
+        console.log('נוצרה נקודה לבנה בנקודת החיבור');
+      } catch (err) {
+        console.error('שגיאה ביצירת נקודה:', err);
+      }
     }
     
     // פונקציה לניקוי הילות
@@ -242,15 +249,17 @@ document.addEventListener('DOMContentLoaded', function() {
         currentDraggedBlock = null;
         targetBlock = null;
         
-        // הסרת מחווני חיבור
-        removeConnectionIndicators();
+        // הסרת נקודות חיבור
+        const dots = document.querySelectorAll('.connection-dot');
+        dots.forEach(dot => dot.remove());
         
-        // הסרת סימון בלוקים מחוברים
-        const connectedBlocks = document.querySelectorAll('.connected-block');
-        connectedBlocks.forEach(block => {
-          block.classList.remove('connected-block');
+        // איפוס z-index
+        const blocks = programmingArea.querySelectorAll('.block-container');
+        blocks.forEach(block => {
           block.style.zIndex = '';
         });
+        
+        console.log('ניקוי בוצע');
       });
     }
   }
