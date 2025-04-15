@@ -428,12 +428,27 @@ if (character && stage) {
     // הוספת סגנונות מיוחדים לדמות
     character.style.cursor = 'grab';
     
-    // וידוא שיש לדמות מיקום התחלתי ברור (אם לא מוגדר ב-CSS)
-    if (!character.style.left) {
-        character.style.left = '0px';
+    // וידוא שיש לדמות מיקום התחלתי במרכז הבמה
+    // יתבצע רק פעם אחת בטעינה הראשונית, לא בכל גרירה
+    function centerCharacter() {
+        // חישוב מיקום המרכז
+        const stageWidth = stage.clientWidth || stage.offsetWidth;
+        const stageHeight = stage.clientHeight || stage.offsetHeight;
+        const charWidth = character.offsetWidth;
+        const charHeight = character.offsetHeight;
+        
+        // מיקום במרכז
+        const centerX = (stageWidth - charWidth) / 2;
+        const centerY = (stageHeight - charHeight) / 2;
+        
+        // הגדרת המיקום
+        character.style.left = `${centerX}px`;
+        character.style.top = `${centerY}px`;
     }
-    if (!character.style.top) {
-        character.style.top = '0px';
+    
+    // אתחול הדמות במרכז אם לא הוגדר לה מיקום
+    if (!character.style.left || !character.style.top) {
+        centerCharacter();
     }
     
     // מניעת ברירת המחדל של גרירה מובנית בדפדפן עבור הדמות בלבד
@@ -475,7 +490,6 @@ if (character && stage) {
         const deltaY = event.clientY - dragStartY;
         
         // קבלת המידות האמיתיות של הבמה והדמות
-        const stageRect = stage.getBoundingClientRect();
         const characterWidth = character.offsetWidth;
         const characterHeight = character.offsetHeight;
         
@@ -483,11 +497,13 @@ if (character && stage) {
         let newLeft = initialLeft + deltaX;
         let newTop = initialTop + deltaY;
 
-        // וידוא שהדמות נשארת בתוך הבמה - עם התחשבות בפיקסל גבול
-        // שינוי - משתמשים בגודל של clientWidth/clientHeight במקום width/height של ה-getBoundingClientRect
-        // כדי להתחשב בגבולות הפנימיים של הבמה
-        newLeft = Math.max(0, Math.min(newLeft, stage.clientWidth - characterWidth));
-        newTop = Math.max(0, Math.min(newTop, stage.clientHeight - characterHeight));
+        // וידוא שהדמות נשארת בתוך הבמה - עם חישוב מדויק של גבולות
+        const maxLeft = stage.offsetWidth - characterWidth;
+        const maxTop = stage.offsetHeight - characterHeight;
+        
+        // הגבלת המיקום לגבולות הבמה
+        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+        newTop = Math.max(0, Math.min(newTop, maxTop));
         
         character.style.left = newLeft + 'px';
         character.style.top = newTop + 'px';
@@ -538,6 +554,33 @@ document.addEventListener('DOMContentLoaded', () => {
             triggeringTab.classList.add('active');
         }
     }
+    
+    // מרכוז הדמות כשהדף נטען
+    const character = document.getElementById('character');
+    const stage = document.getElementById("stage");
+    
+    if (character && stage) {
+        // חישוב מיקום המרכז
+        setTimeout(() => {
+            const stageWidth = stage.offsetWidth;
+            const stageHeight = stage.offsetHeight;
+            const charWidth = character.offsetWidth;
+            const charHeight = character.offsetHeight;
+            
+            // מיקום במרכז
+            const centerX = (stageWidth - charWidth) / 2;
+            const centerY = (stageHeight - charHeight) / 2;
+            
+            // הגדרת המיקום
+            character.style.position = 'absolute';
+            character.style.left = `${centerX}px`;
+            character.style.top = `${centerY}px`;
+            
+            console.log('Character centered at', centerX, centerY);
+            console.log('Stage dimensions:', stageWidth, stageHeight);
+        }, 100); // השהייה קטנה כדי לוודא שכל האלמנטים נטענו
+    }
+    
     // Ensure the DOM is ready before trying to manipulate it
     handleCategoryChange(initialCategory);
 });
