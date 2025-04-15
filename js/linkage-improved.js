@@ -61,9 +61,14 @@ document.addEventListener('DOMContentLoaded', function() {
         // הסרת הסימון
         e.target.classList.remove('dragging');
         
-        // בדיקה אם יש בלוק קרוב ואם כן, ביצוע חיבור
-        if (nearbyBlock) {
+        // בדיקה אם יש בלוק קרוב וההילה מופיעה
+        if (nearbyBlock && 
+            (e.target.classList.contains('proximity-source') || 
+             nearbyBlock.classList.contains('proximity-target'))) {
+          console.log('יש הילה - מבצע חיבור');
           connectBlocks(e.target, nearbyBlock);
+        } else {
+          console.log('אין הילה - לא מבצע חיבור');
         }
         
         // נקה את המצב והילות
@@ -179,8 +184,11 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // אם נמצא בלוק קרוב מספיק, הדגש אותו
       if (closestBlock) {
+        console.log('נמצא בלוק קרוב במרחק:', minDistance, 'פיקסלים. מציג הילה.');
         nearbyBlock = closestBlock;
         highlightBlocks(currentDraggedBlock, nearbyBlock);
+      } else {
+        console.log('לא נמצא בלוק קרוב מספיק.');
       }
     }
     
@@ -188,11 +196,23 @@ document.addEventListener('DOMContentLoaded', function() {
     function highlightBlocks(draggedBlock, targetBlock) {
       if (!draggedBlock || !targetBlock) return;
       
+      console.log('מוסיף הילה לבלוקים');
+      
       // הוספת קלאס להילה לבלוק הנגרר
       draggedBlock.classList.add('proximity-source');
       
       // הוספת קלאס להילה לבלוק המטרה
       targetBlock.classList.add('proximity-target');
+      
+      // בדיקת החלה מוצלחת של ההילה
+      setTimeout(() => {
+        if (draggedBlock.classList.contains('proximity-source') && 
+            targetBlock.classList.contains('proximity-target')) {
+          console.log('ההילה הופעלה בהצלחה');
+        } else {
+          console.log('בעיה בהפעלת ההילה');
+        }
+      }, 50);
     }
     
     // פונקציה לניקוי כל ההילות
@@ -305,39 +325,19 @@ document.addEventListener('DOMContentLoaded', function() {
         /* הילה צהובה למקור (הבלוק הנגרר) */
         .proximity-source {
           position: relative;
-        }
-        
-        .proximity-source::before {
-          content: '';
-          position: absolute;
-          top: -5px;
-          left: -5px;
-          right: -5px;
-          bottom: -5px;
-          background-color: rgba(255, 255, 0, 0.3);
-          border: 2px dashed #0066cc;
+          outline: 2px dashed #0066cc;
+          background-color: rgba(255, 255, 0, 0.3) !important;
           border-radius: 5px;
-          z-index: -1;
-          pointer-events: none;
+          box-shadow: 0 0 10px rgba(255, 255, 0, 0.5);
         }
         
         /* הילה צהובה למטרה (הבלוק הקרוב) */
         .proximity-target {
           position: relative;
-        }
-        
-        .proximity-target::before {
-          content: '';
-          position: absolute;
-          top: -5px;
-          left: -5px;
-          right: -5px;
-          bottom: -5px;
-          background-color: rgba(255, 255, 0, 0.3);
-          border: 2px dashed #0066cc;
+          outline: 2px dashed #0066cc;
+          background-color: rgba(255, 255, 0, 0.3) !important;
           border-radius: 5px;
-          z-index: -1;
-          pointer-events: none;
+          box-shadow: 0 0 10px rgba(255, 255, 0, 0.5);
         }
         
         /* סגנונות לבלוקים מחוברים - פין ושקע */
