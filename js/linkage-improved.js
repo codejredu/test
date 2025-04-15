@@ -241,13 +241,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const targetCenterX = targetRect.left + targetRect.width / 2;
         
         // גודל הפין והשקע - מרווח להצמדה מדויקת
-        const PIN_SIZE = 5; // הפין בולט 5 פיקסלים
+        const PIN_SIZE = 2; // הפין בולט 2 פיקסלים - מרווח קטן יותר בדיוק כמו בתמונה
         
         if (sourceCenterX < targetCenterX) {
           // המקור משמאל ליעד - החלק הימני (פין) מתחבר לחלק השמאלי (שקע)
           direction = 'left-to-right';
           
           // הפאות כמעט צמודות - הפין (צד ימין של המקור) נכנס לשקע (צד שמאל של היעד)
+          // בתמונה שהראית - הפאות ממש צמודות עם חפיפה מינימלית
           newLeft = targetRect.left - sourceRect.width + PIN_SIZE - programRect.left;
           newTop = targetRect.top - programRect.top;
           
