@@ -297,6 +297,9 @@ function handleDrop(event) {
                   const index = Array.from(programmingArea.children).indexOf(newBlock);
                   e.dataTransfer.setData('block-index', index.toString());
                   e.dataTransfer.effectAllowed = "move";
+                  
+                  // סימון שזה בלוק ולא דמות (למניעת התנגשויות)
+                  e.dataTransfer.setData('element-type', 'block');
              });
 
             // Position the new block
@@ -425,6 +428,14 @@ if (character && stage) {
     // הוספת סגנונות מיוחדים לדמות
     character.style.cursor = 'grab';
     
+    // וידוא שיש לדמות מיקום התחלתי ברור (אם לא מוגדר ב-CSS)
+    if (!character.style.left) {
+        character.style.left = '0px';
+    }
+    if (!character.style.top) {
+        character.style.top = '0px';
+    }
+    
     // מניעת ברירת המחדל של גרירה מובנית בדפדפן עבור הדמות בלבד
     character.ondragstart = function(event) {
         // בדיקה אם האירוע הוא על הדמות עצמה ולא על אלמנט אחר
@@ -448,8 +459,10 @@ if (character && stage) {
         dragStartY = event.clientY;
         
         // נשמור את המיקום ההתחלתי של הדמות
-        initialLeft = parseInt(character.style.left) || 0;
-        initialTop = parseInt(character.style.top) || 0;
+        // טיפול במקרה שאין ערכים מוגדרים לסגנון
+        const computedStyle = window.getComputedStyle(character);
+        initialLeft = parseInt(character.style.left) || parseInt(computedStyle.left) || 0;
+        initialTop = parseInt(character.style.top) || parseInt(computedStyle.top) || 0;
         
         character.style.cursor = 'grabbing';
     });
@@ -461,6 +474,7 @@ if (character && stage) {
         const deltaX = event.clientX - dragStartX;
         const deltaY = event.clientY - dragStartY;
         
+        // קבלת המידות האמיתיות של הבמה והדמות
         const stageRect = stage.getBoundingClientRect();
         const characterWidth = character.offsetWidth;
         const characterHeight = character.offsetHeight;
@@ -468,10 +482,12 @@ if (character && stage) {
         // חישוב המיקום החדש על פי ההפרש + המיקום ההתחלתי של הדמות
         let newLeft = initialLeft + deltaX;
         let newTop = initialTop + deltaY;
-        
-        // וידוא שהדמות נשארת בתוך הבמה
-        newLeft = Math.max(0, Math.min(newLeft, stageRect.width - characterWidth));
-        newTop = Math.max(0, Math.min(newTop, stageRect.height - characterHeight));
+
+        // וידוא שהדמות נשארת בתוך הבמה - עם התחשבות בפיקסל גבול
+        // שינוי - משתמשים בגודל של clientWidth/clientHeight במקום width/height של ה-getBoundingClientRect
+        // כדי להתחשב בגבולות הפנימיים של הבמה
+        newLeft = Math.max(0, Math.min(newLeft, stage.clientWidth - characterWidth));
+        newTop = Math.max(0, Math.min(newTop, stage.clientHeight - characterHeight));
         
         character.style.left = newLeft + 'px';
         character.style.top = newTop + 'px';
@@ -490,10 +506,17 @@ if (character && stage) {
         #character {
             user-select: none;
             touch-action: none;
+            position: absolute; /* וידוא שהדמות תמוקם בצורה אבסולוטית */
         }
         
         #character:active {
             cursor: grabbing;
+        }
+        
+        /* הבטחה שהמיכל הוא relative */
+        #stage {
+            position: relative;
+            overflow: hidden; /* למניעת גלישה */
         }
     `;
     document.head.appendChild(styleElement);
