@@ -232,11 +232,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (direction === 'left') {
           // הצמדה משמאל לטרגט: הפין הימני של המקור לשקע השמאלי של היעד
-          newLeft = targetRect.left - programRect.left - sourceRect.width + 9; // 9 פיקסלים לחפיפה מדויקת
+          // מצמיד את הבלוק כך שקצהו הימני נמצא בדיוק על קצהו השמאלי של הבלוק היעד
+          newLeft = targetRect.left - programRect.left - sourceRect.width;
           newTop = targetRect.top - programRect.top;
         } else {
           // הצמדה מימין לטרגט: השקע השמאלי של המקור לפין הימני של היעד
-          newLeft = targetRect.right - programRect.left - 9; // 9 פיקסלים לחפיפה מדויקת
+          // מצמיד את הבלוק כך שקצהו השמאלי נמצא בדיוק על קצהו הימני של הבלוק היעד
+          newLeft = targetRect.right - programRect.left;
           newTop = targetRect.top - programRect.top;
         }
         
