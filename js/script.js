@@ -4,6 +4,7 @@
 
 const blocks = {
     triggering: [
+        // ... (triggering blocks remain the same)
         {
             name: "Green Flag",
             color: "var(--triggering-color)",
@@ -36,6 +37,7 @@ const blocks = {
         },
     ],
     motion: [
+        // ... (motion blocks remain the same)
         {
             name: "Move Right",
             color: "var(--motion-color)",
@@ -86,7 +88,8 @@ const blocks = {
         },
     ],
     looks: [
-        {
+        // ... (looks blocks remain the same)
+         {
             name: "Say",
             color: "var(--looks-color)",
             type: "say",
@@ -124,6 +127,7 @@ const blocks = {
         },
     ],
     sound: [
+        // ... (sound blocks remain the same)
         {
             name: "Play Sound",
             color: "var(--sound-color)",
@@ -138,6 +142,8 @@ const blocks = {
         },
     ],
     control: [
+        // --- START OF CONTROL BLOCKS ---
+        // --- MOVED THE STOP BLOCK TO BE FIRST ---
         {
             name: "Stop",
             color: "var(--control-color)",
@@ -162,8 +168,10 @@ const blocks = {
             icon: "assets/images/blocks/repeat.svg",
             color: "var(--control-color)"
         },
+        // --- END OF CONTROL BLOCKS ---
     ],
     end: [
+        // --- START OF END BLOCKS ---
         {
             name: "End",
             color: "var(--end-color)",
@@ -182,19 +190,20 @@ const blocks = {
             type: "goToPage",
             icon: "assets/images/blocks/go-to-page.svg",
         },
+        // --- END OF END BLOCKS ---
     ],
 };
 
 // ========================================================================
-// פונקציות ליצירת אלמנטים
+// פונקציות ליצירת אלמנטים (no changes needed here from previous version)
 // ========================================================================
+// ... (rest of the create functions: createRightConnector, createLeftConnector, createScratchBlock, createBlockElement) ...
 function createRightConnector(color) {
     const rightConnector = document.createElement("div");
     rightConnector.classList.add("right-connector");
     rightConnector.style.backgroundColor = color;
     return rightConnector;
 }
-
 function createLeftConnector() {
     const leftConnectorWrapper = document.createElement("div");
     leftConnectorWrapper.classList.add("left-connector-wrapper");
@@ -203,7 +212,6 @@ function createLeftConnector() {
     leftConnectorWrapper.appendChild(leftConnector);
     return leftConnectorWrapper;
 }
-
 function createScratchBlock(block) {
     const scratchBlock = document.createElement("div");
     scratchBlock.classList.add("scratch-block");
@@ -216,7 +224,6 @@ function createScratchBlock(block) {
     scratchBlock.appendChild(iconImg);
     return scratchBlock;
 }
-
 function createBlockElement(block, category) {
     const blockContainer = document.createElement("div");
     blockContainer.classList.add("block-container");
@@ -233,9 +240,11 @@ function createBlockElement(block, category) {
     return blockContainer;
 }
 
+
 // ========================================================================
-// פונקציות טיפול באירועים
+// פונקציות טיפול באירועים (no changes needed here from previous version)
 // ========================================================================
+// ... (rest of the event handlers: handleDragStart, handleDrop) ...
 function handleDragStart(event, block, category) {
     const data = {
         type: block.type,
@@ -313,9 +322,11 @@ function handleDrop(event) {
     }
 }
 
+
 // ========================================================================
-// פונקציות אתחול
+// פונקציות אתחול (no changes needed here from previous version)
 // ========================================================================
+// ... (populateBlockPalette, handleCategoryChange) ...
 function populateBlockPalette(category) {
     const categoryDiv = document.getElementById(`${category}-blocks`);
     if (!categoryDiv) {
@@ -366,13 +377,13 @@ function handleCategoryChange(category) {
     }
 }
 
+
 // ========================================================================
-//  לוגיקת גרירה ושחרור (Drag and Drop) Setup
+//  לוגיקת גרירה ושחרור (Drag and Drop) Setup (no changes needed here from previous version)
 // ========================================================================
 const programmingArea = document.getElementById("program-blocks");
 const categoryTabs = document.querySelectorAll(".category-tab");
-const blockCategories = document.querySelectorAll(".block-category");
-const stage = document.getElementById("stage");
+const blockCategories = document.querySelectorAll(".block-category"); // Define these earlier if needed
 
 // Ensure programmingArea exists before adding listeners
 if (programmingArea) {
@@ -393,9 +404,10 @@ categoryTabs.forEach(tab => {
 });
 
 // ========================================================================
-// Grid Toggle Setup
+// Grid Toggle Setup (no changes needed here from previous version)
 // ========================================================================
 const gridToggle = document.getElementById("grid-toggle");
+const stage = document.getElementById("stage");
 if (gridToggle && stage) {
     gridToggle.addEventListener("click", () => {
         stage.classList.toggle("show-grid");
@@ -403,122 +415,114 @@ if (gridToggle && stage) {
 }
 
 // ========================================================================
-// Clear All Button Setup
+// Clear All Button Setup (no changes needed here from previous version)
 // ========================================================================
 const clearAllButton = document.getElementById("clear-all");
-if (clearAllButton && programmingArea) {
+if (clearAllButton && programmingArea) { // Check if programmingArea exists
     clearAllButton.addEventListener("click", () => {
         programmingArea.innerHTML = "";
     });
 }
 
 // ========================================================================
-// Character Dragging - קוד גרירת דמות משופר
+// Character Dragging - קוד גרירת דמות מתוקן
 // ========================================================================
-const character = document.getElementById('character');
-
-if (character && stage) {
-    let isDragging = false;
-    let dragStartX, dragStartY;
-    let initialLeft, initialTop;
+document.addEventListener('DOMContentLoaded', function() {
+  const character = document.getElementById('character');
+  const stage = document.getElementById('stage');
+  
+  if (!character || !stage) return;
+  
+  // 1. מרכוז הדמות במרכז הבמה
+  function centerCharacterExactly() {
+    // מאפס את כל המאפיינים שיכולים להפריע
+    character.style.transform = 'none';
+    character.style.transition = 'none';
     
-    // מיקום הדמות במרכז הבמה באופן מדויק
-    function centerCharacter() {
-        const stageWidth = stage.offsetWidth;
-        const stageHeight = stage.offsetHeight;
-        const characterWidth = character.offsetWidth;
-        const characterHeight = character.offsetHeight;
-        
-        // ניקוי מאפיינים שעלולים להפריע
-        character.style.transform = '';
-        
-        // חישוב מיקום מרכז מדויק
-        const centerX = (stageWidth - characterWidth) / 2;
-        const centerY = (stageHeight - characterHeight) / 2;
-        
-        // הגדרת מיקום מוחלט
-        character.style.position = 'absolute';
-        character.style.left = `${centerX}px`;
-        character.style.top = `${centerY}px`;
-        
-        console.log('Character centered at', centerX, centerY);
+    // מדידת הגדלים האמיתיים
+    const stageRect = stage.getBoundingClientRect();
+    const charRect = character.getBoundingClientRect();
+    
+    // חישוב המרכז
+    const centerX = (stageRect.width - charRect.width) / 2;
+    const centerY = (stageRect.height - charRect.height) / 2;
+    
+    // מיקום מדויק
+    character.style.position = 'absolute';
+    character.style.left = centerX + 'px';
+    character.style.top = centerY + 'px';
+    
+    console.log('Character centered at:', centerX, centerY);
+  }
+  
+  // קריאה למרכוז אחרי השהייה קטנה
+  setTimeout(centerCharacterExactly, 500);
+  
+  // 2. תיקון גרירת דמות
+  let isDragging = false;
+  let offsetX, offsetY; // המרחק בין נקודת הלחיצה לפינה העליונה-שמאלית של הדמות
+  
+  // מניעת גרירה מובנית של HTML5
+  character.addEventListener('dragstart', function(e) {
+    if (e.target === character) {
+      e.preventDefault();
+      return false;
     }
+  });
+  
+  // אירוע לחיצה
+  character.addEventListener('mousedown', function(e) {
+    if (e.target !== character) return;
+    e.preventDefault();
     
-    // מניעת גרירה מובנית של הדפדפן רק עבור הדמות
-    character.addEventListener('dragstart', (event) => {
-        // אם האירוע הוא על הדמות עצמה, מנע את ברירת המחדל
-        if (event.target === character) {
-            event.preventDefault();
-            return false;
-        }
-    });
+    // גילוי המיקום המדויק של הלחיצה יחסית לפינת הדמות
+    const charRect = character.getBoundingClientRect();
+    offsetX = e.clientX - charRect.left;
+    offsetY = e.clientY - charRect.top;
     
-    // הגדר את הדמות כלא ניתנת לגרירה באמצעות המערכת המובנית
-    character.setAttribute('draggable', 'false');
+    isDragging = true;
+    character.style.cursor = 'grabbing';
+  });
+  
+  // אירוע תנועה
+  document.addEventListener('mousemove', function(e) {
+    if (!isDragging) return;
     
-    // אירוע לחיצה על הדמות
-    character.addEventListener('mousedown', (event) => {
-        // בדוק שהלחיצה היא על הדמות עצמה ולא על אלמנט אחר
-        if (event.target !== character) return;
-        
-        event.preventDefault();
-        
-        isDragging = true;
-        
-        // שמירת מיקום העכבר ההתחלתי
-        dragStartX = event.clientX;
-        dragStartY = event.clientY;
-        
-        // שמירת מיקום הדמות ההתחלתי
-        const computedStyle = window.getComputedStyle(character);
-        initialLeft = parseInt(character.style.left) || parseInt(computedStyle.left) || 0;
-        initialTop = parseInt(character.style.top) || parseInt(computedStyle.top) || 0;
-        
-        character.style.cursor = 'grabbing';
-    });
+    // מניעת ברירות מחדל שמפריעות לנו
+    character.style.transform = 'none';
+    character.style.transition = 'none';
     
-    // אירוע תנועת עכבר
-    document.addEventListener('mousemove', (event) => {
-        if (!isDragging) return;
-        
-        // חישוב ההפרש בין המיקום הנוכחי למיקום ההתחלתי של העכבר
-        const deltaX = event.clientX - dragStartX;
-        const deltaY = event.clientY - dragStartY;
-        
-        // חישוב המיקום החדש של הדמות
-        let newLeft = initialLeft + deltaX;
-        let newTop = initialTop + deltaY;
-        
-        // קבלת המידות של הבמה והדמות
-        const stageWidth = stage.offsetWidth;
-        const stageHeight = stage.offsetHeight;
-        const characterWidth = character.offsetWidth;
-        const characterHeight = character.offsetHeight;
-        
-        // וידוא שהדמות נשארת בתוך גבולות הבמה
-        const maxLeft = stageWidth - characterWidth;
-        const maxTop = stageHeight - characterHeight;
-        
-        // הגבלת המיקום לגבולות הבמה
-        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
-        newTop = Math.max(0, Math.min(newTop, maxTop));
-        
-        // עדכון מיקום הדמות
-        character.style.left = `${newLeft}px`;
-        character.style.top = `${newTop}px`;
-    });
+    // חישוב מיקום חדש - המיקום של העכבר פחות ההיסט ופחות המיקום של הבמה
+    const stageRect = stage.getBoundingClientRect();
+    let newLeft = e.clientX - stageRect.left - offsetX;
+    let newTop = e.clientY - stageRect.top - offsetY;
     
-    // אירוע עזיבת לחצן העכבר
-    document.addEventListener('mouseup', () => {
-        if (isDragging) {
-            isDragging = false;
-            character.style.cursor = 'grab';
-        }
-    });
+    // הגבלת גבולות פנימיים של הבמה
+    const charRect = character.getBoundingClientRect();
+    const maxLeft = stageRect.width - charRect.width;
+    const maxTop = stageRect.height - charRect.height;
     
-    // מרכוז הדמות בטעינת הדף
-    setTimeout(centerCharacter, 300);
-}
+    // וידוא שלא חורגים מהגבולות
+    newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+    newTop = Math.max(0, Math.min(newTop, maxTop));
+    
+    // עדכון מיקום
+    character.style.left = newLeft + 'px';
+    character.style.top = newTop + 'px';
+    
+    // דיבוג
+    console.log('Position:', newLeft, newTop, 'Max:', maxLeft, maxTop);
+  });
+  
+  // אירוע עזיבת לחצן
+  document.addEventListener('mouseup', function() {
+    if (isDragging) {
+      isDragging = false;
+      character.style.cursor = 'grab';
+    }
+  });
+});
+
 
 // ========================================================================
 // Initial Setup
@@ -536,7 +540,6 @@ document.addEventListener('DOMContentLoaded', () => {
             triggeringTab.classList.add('active');
         }
     }
-    
     // Ensure the DOM is ready before trying to manipulate it
     handleCategoryChange(initialCategory);
 });
