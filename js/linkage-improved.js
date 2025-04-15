@@ -337,10 +337,16 @@ document.addEventListener('DOMContentLoaded', function() {
       document.head.appendChild(style);
     }
     
-    // מאזין לכפתור "נקה הכל"
+            // מאזין לכפתור "נקה הכל"
     const clearAllButton = document.getElementById('clear-all');
     if (clearAllButton) {
       clearAllButton.addEventListener('click', function() {
         // ניקוי משתנים גלובליים
         draggedBlock = null;
-        potentialSnap
+        potentialSnapTarget = null;
+        snapDirection = null;
+        clearSnapHighlights();
+      });
+    }
+  }
+});
