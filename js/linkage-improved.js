@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('סיום גרירה נתפס באזור התכנות');
         
         // הסרת הסימון
-        e.target.classList.remove('dragging');
+        e.target.classList.remove('dragging', 'potential-snap');
         
         // בדוק אם יש הצמדה אפשרית בין בלוקים
         checkForPossibleSnapAfterDrag(e.target);
@@ -179,7 +179,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // הדגש את שני הבלוקים
         highlightBlockForSnapping(draggedBlock, potentialSnapTarget, snapDirection);
+        
+        // הוסף אפקט מסגרת כחולה וזוהרת לבלוק הנגרר כשהוא מתקרב להצמדה
+        draggedBlock.classList.add('potential-snap');
       } else {
+        // הסר את אפקט ההצמדה כשאין בלוק קרוב
+        draggedBlock.classList.remove('potential-snap');
         potentialSnapTarget = null;
         snapDirection = null;
       }
@@ -269,9 +274,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // ניקוי כל ההדגשות
     function clearAllHighlights() {
-      const highlightedBlocks = programmingArea.querySelectorAll('.snap-source, .snap-target, .snap-left, .snap-right');
+      const highlightedBlocks = programmingArea.querySelectorAll('.snap-source, .snap-target, .snap-left, .snap-right, .potential-snap');
       highlightedBlocks.forEach(block => {
-        block.classList.remove('snap-source', 'snap-target', 'snap-left', 'snap-right');
+        block.classList.remove('snap-source', 'snap-target', 'snap-left', 'snap-right', 'potential-snap');
       });
     }
     
@@ -383,6 +388,16 @@ document.addEventListener('DOMContentLoaded', function() {
         .block-container.dragging {
           /* אין אפקטים ויזואליים בזמן גרירה רגילה */
           /* כל האפקטים יופיעו רק בזמן התקרבות להצמדה */
+        }
+        
+        /* אפקט הילה ומסגרת כחולה כשבלוק קרוב להצמדה */
+        .potential-snap .scratch-block {
+          box-shadow: 0 0 12px 3px rgba(64, 153, 255, 0.7) !important;
+          outline: 2px solid rgba(64, 153, 255, 0.8) !important;
+          outline-offset: 2px;
+          z-index: 1000 !important;
+          transform: scale(1.02);
+          transition: all 0.2s ease-out;
         }
         
         /* אנימציית הצמדה */
