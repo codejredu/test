@@ -153,9 +153,17 @@ document.addEventListener('DOMContentLoaded', function() {
       if (isLeftToRight) {
         // המקור משמאל ליעד - צמד את הצד הימני של המקור לצד השמאלי של היעד
         newLeft = targetRect.left - sourceRect.width - areaRect.left;
+        
+        // הגדרת z-index כך שהפין (הימני) יהיה בשכבה העליונה
+        sourceBlock.style.zIndex = "110";
+        targetBlock.style.zIndex = "100";
       } else {
         // המקור מימין ליעד - צמד את הצד השמאלי של המקור לצד הימני של היעד
         newLeft = targetRect.right - areaRect.left;
+        
+        // הגדרת z-index כך שהפין (הימני של היעד) יהיה בשכבה העליונה
+        sourceBlock.style.zIndex = "100";
+        targetBlock.style.zIndex = "110";
       }
       
       // שמירה על אותו גובה
@@ -166,7 +174,54 @@ document.addEventListener('DOMContentLoaded', function() {
       sourceBlock.style.left = newLeft + 'px';
       sourceBlock.style.top = newTop + 'px';
       
+      // הוספת העיגול הלבן המחווה חיבור
+      addConnectionIndicator(sourceBlock, targetBlock, isLeftToRight);
+      
+      // סימון שהבלוקים מחוברים
+      sourceBlock.classList.add('connected-block');
+      targetBlock.classList.add('connected-block');
+      
       console.log('הצמדה בוצעה בהצלחה! כיוון:', isLeftToRight ? 'משמאל לימין' : 'מימין לשמאל');
+    }
+    
+    // פונקציה להוספת עיגול לבן המחווה את החיבור
+    function addConnectionIndicator(sourceBlock, targetBlock, isLeftToRight) {
+      // הסרת מחוונים קודמים אם קיימים
+      removeConnectionIndicators();
+      
+      // יצירת העיגול הלבן
+      const indicator = document.createElement('div');
+      indicator.className = 'connection-indicator';
+      
+      // קביעת סגנון העיגול
+      indicator.style.position = 'absolute';
+      indicator.style.width = '6px';
+      indicator.style.height = '6px';
+      indicator.style.backgroundColor = '#ffffff';
+      indicator.style.border = '1px solid #cccccc';
+      indicator.style.borderRadius = '50%';
+      indicator.style.zIndex = '105';
+      
+      // קביעת מיקום העיגול בהתאם לכיוון ההצמדה
+      if (isLeftToRight) {
+        // המקור משמאל ליעד - העיגול יהיה בקצה הימני של המקור
+        sourceBlock.appendChild(indicator);
+        indicator.style.right = '-3px';
+        indicator.style.top = '50%';
+        indicator.style.transform = 'translateY(-50%)';
+      } else {
+        // המקור מימין ליעד - העיגול יהיה בקצה השמאלי של המקור
+        sourceBlock.appendChild(indicator);
+        indicator.style.left = '-3px';
+        indicator.style.top = '50%';
+        indicator.style.transform = 'translateY(-50%)';
+      }
+    }
+    
+    // פונקציה להסרת מחווני חיבור קיימים
+    function removeConnectionIndicators() {
+      const indicators = document.querySelectorAll('.connection-indicator');
+      indicators.forEach(indicator => indicator.remove());
     }
     
     // פונקציה לניקוי הילות
@@ -179,13 +234,23 @@ document.addEventListener('DOMContentLoaded', function() {
       e.preventDefault(); // חשוב למניעת התנהגות ברירת מחדל של הדפדפן
     });
     
-    // כפתור ניקוי
+    // מאזין לכפתור ניקוי
     const clearAllButton = document.getElementById('clear-all');
     if (clearAllButton) {
       clearAllButton.addEventListener('click', function() {
         // איפוס משתנים
         currentDraggedBlock = null;
         targetBlock = null;
+        
+        // הסרת מחווני חיבור
+        removeConnectionIndicators();
+        
+        // הסרת סימון בלוקים מחוברים
+        const connectedBlocks = document.querySelectorAll('.connected-block');
+        connectedBlocks.forEach(block => {
+          block.classList.remove('connected-block');
+          block.style.zIndex = '';
+        });
       });
     }
   }
