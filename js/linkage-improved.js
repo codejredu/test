@@ -186,13 +186,29 @@ document.addEventListener('DOMContentLoaded', function() {
       // אם נמצא בלוק קרוב מספיק, הדגש אותו
       if (closestBlock && minDistance <= PROXIMITY_THRESHOLD) {
         nearbyBlock = closestBlock;
+        
+        // הדפסת לוג של מצב ההילה
+        console.log('הוספת הילה לבלוקים. מרחק:', minDistance, 'סף:', PROXIMITY_THRESHOLD);
+        
+        // הוספת הילה
         highlightBlocks(currentDraggedBlock, nearbyBlock);
+        
+        // בדיקה אם ההילה הוספה בהצלחה
+        setTimeout(() => {
+          console.log('האם יש הילה למקור:', currentDraggedBlock.classList.contains('proximity-source'));
+          console.log('האם יש הילה ליעד:', nearbyBlock.classList.contains('proximity-target'));
+        }, 50);
       }
     }
     
     // פונקציה להדגשת בלוקים קרובים
     function highlightBlocks(draggedBlock, targetBlock) {
       if (!draggedBlock || !targetBlock) return;
+      
+      // וידוא שאין קלאסים קודמים - למקרה שהיו בעיות
+      clearAllHighlights();
+      
+      console.log('מוסיף הילה לבלוקים', draggedBlock.id, targetBlock.id);
       
       // הוספת קלאס להילה לבלוק הנגרר
       draggedBlock.classList.add('proximity-source');
@@ -233,7 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
         /* הילה צהובה למקור (הבלוק הנגרר) */
         .proximity-source {
           position: relative;
-          z-index: 100;
+          z-index: 100 !important;
         }
         
         .proximity-source::before {
@@ -247,13 +263,14 @@ document.addEventListener('DOMContentLoaded', function() {
           border: 2px dashed #0066cc;
           border-radius: 5px;
           z-index: -1;
+          pointer-events: none;
           animation: pulsate 1.5s infinite alternate;
         }
         
         /* הילה צהובה למטרה (הבלוק הקרוב) */
         .proximity-target {
           position: relative;
-          z-index: 90;
+          z-index: 90 !important;
         }
         
         .proximity-target::before {
@@ -267,6 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
           border: 2px dashed #0066cc;
           border-radius: 5px;
           z-index: -1;
+          pointer-events: none;
           animation: pulsate 1.5s infinite alternate;
         }
         
@@ -281,36 +299,35 @@ document.addEventListener('DOMContentLoaded', function() {
           position: relative;
         }
         
-        /* הדגשת חלק החיבור בין בלוקים */
-        
-        /* סמן פין בצד ימין של בלוק */
+        /* סימון ויזואלי לפין בצד ימין של בלוק - שכבה עליונה */
         .connected-block[data-connection-direction="left-to-right"]::after {
           content: '';
           position: absolute;
           width: 10px;
           height: 10px;
-          background-color: transparent;
+          background-color: rgba(0, 102, 204, 0.3);
           border-radius: 5px;
-          right: 0;
+          right: -5px; /* חלק מהפין בולט החוצה */
           top: 50%;
-          transform: translateY(-50%) translateX(50%);
+          transform: translateY(-50%);
           border: 2px solid #0066cc;
-          z-index: 80;
+          z-index: 110 !important; /* שכבה עליונה */
         }
         
-        /* סמן שקע בצד שמאל של בלוק */
-        .connected-block[data-connection-direction="right-to-left"]::before {
+        /* סימון ויזואלי לשקע בצד שמאל של בלוק */
+        .connected-block[data-connection-direction="right-to-left"]::before,
+        .has-connected-block::before {
           content: '';
           position: absolute;
           width: 10px;
           height: 10px;
-          background-color: transparent;
+          background-color: rgba(255, 255, 255, 0.3);
           border-radius: 5px;
-          left: 0;
+          left: -5px; /* חלק מהשקע מחוץ לבלוק */
           top: 50%;
-          transform: translateY(-50%) translateX(-50%);
-          border: 2px solid #0066cc;
-          z-index: 80;
+          transform: translateY(-50%);
+          border: 2px solid #cccccc;
+          z-index: 105; /* מתחת לפין */
         }
         
         /* אנימציית התממשקות */
@@ -392,33 +409,42 @@ document.addEventListener('DOMContentLoaded', function() {
         const targetRect = targetBlock.getBoundingClientRect();
         const programRect = programmingArea.getBoundingClientRect();
         
-        // בדיקה אם הבלוק המקור נמצא משמאל או מימין לבלוק היעד
-        let direction;
-        let newLeft, newTop;
-        
-        // חישוב מרכזי הבלוקים
+        // חישוב מרכזי הבלוקים לקביעת כיוון החיבור
         const sourceCenterX = sourceRect.left + sourceRect.width / 2;
         const targetCenterX = targetRect.left + targetRect.width / 2;
         
-        // מרווח החיבור - אפס כי אנחנו רוצים חיבור מושלם
-        const connectionGap = 0;
+        let direction;
+        let newLeft, newTop;
+        
+        // משתנה המציין את הסטייה המדויקת של הפין והשקע
+        // סטייה חיובית = הפין בולט החוצה, סטייה שלילית = השקע שקוע פנימה
+        const PIN_OFFSET = 5; // הפין בולט 5 פיקסלים
+        const SOCKET_OFFSET = 5; // השקע שקוע 5 פיקסלים
         
         if (sourceCenterX < targetCenterX) {
-          // המקור משמאל ליעד - החלק הימני של המקור (הפין) מתחבר לחלק השמאלי של היעד (השקע)
+          // המקור משמאל ליעד - פין ימני של המקור לשקע שמאלי של היעד
           direction = 'left-to-right';
           
-          // בחיבור מדויק, הקצה הימני של המקור (בלי הפין) מתחבר לקצה השמאלי של היעד (בלי השקע)
-          // במקרה הזה, נניח שהפין והשקע הם 10 פיקסלים זה מזה
-          // לכן נחבר את הבלוק המקור כך שהפין שלו יהיה בתוך השקע של היעד
-          newLeft = targetRect.left - sourceRect.width + connectionGap - programRect.left;
+          // מיקום החיבור: הפין והשקע מחוברים במדויק
+          // הפין הימני של המקור בולט ונכנס לשקע השמאלי של היעד
+          newLeft = targetRect.left - sourceRect.width + (PIN_OFFSET - SOCKET_OFFSET) - programRect.left;
           newTop = targetRect.top - programRect.top; // שמירה על אותו גובה
+          
+          // הגדרת סדר השכבות
+          sourceBlock.style.zIndex = "105"; // הבלוק עם הפין בשכבה עליונה
+          targetBlock.style.zIndex = "100"; // הבלוק עם השקע בשכבה תחתונה
         } else {
-          // המקור מימין ליעד - החלק השמאלי של המקור (השקע) מתחבר לחלק הימני של היעד (הפין)
+          // המקור מימין ליעד - שקע שמאלי של המקור לפין ימני של היעד
           direction = 'right-to-left';
           
-          // נחבר את הבלוק המקור כך שהשקע שלו יהיה סביב הפין של היעד
-          newLeft = targetRect.right - connectionGap - programRect.left;
+          // מיקום החיבור: הפין והשקע מחוברים במדויק
+          // השקע השמאלי של המקור מקבל את הפין הימני של היעד
+          newLeft = targetRect.right - (PIN_OFFSET - SOCKET_OFFSET) - programRect.left;
           newTop = targetRect.top - programRect.top; // שמירה על אותו גובה
+          
+          // הגדרת סדר השכבות
+          sourceBlock.style.zIndex = "100"; // הבלוק עם השקע בשכבה תחתונה
+          targetBlock.style.zIndex = "105"; // הבלוק עם הפין בשכבה עליונה
         }
         
         // עדכון מיקום הבלוק המקור
