@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // קבועים
     const SNAP_THRESHOLD = 25; // מרחק מקסימלי בפיקסלים להצמדה
     const HIGHLIGHT_THRESHOLD = 50; // מרחק להתחלת הדגשה ויזואלית
-    const GLOW_THRESHOLD = 30; // מרחק להוספת הילה
+    const GLOW_THRESHOLD = 50; // מרחק להוספת הילה
     
     // איתור אזור התכנות
     const programmingArea = document.getElementById('program-blocks');
