@@ -31,21 +31,50 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // ---- התאמת מערכת הגרירה הקיימת ----
     
-    // צעד 1: מאזין לאירועי dragend רק באזור התכנות 
+    // צעד 1: הוספת מאזינים לאירועי גרירה כדי לנהל את הבלוק הנגרר
+    programmingArea.addEventListener('dragstart', function(e) {
+      if (e.target.classList.contains('block-container')) {
+        // שמירת הבלוק הנגרר וסימון שלו
+        currentDraggedBlock = e.target;
+        
+        // מניעת יצירת רוח רפאים - הגדרת התמונה שתיווצר בזמן גרירה
+        // הגדרת תמונה ריקה של פיקסל אחד שקוף
+        const img = new Image();
+        img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+        e.dataTransfer.setDragImage(img, 0, 0);
+        
+        // סימון הבלוק הנגרר בצורה ויזואלית
+        e.target.classList.add('dragging');
+      }
+    });
+    
+    // צעד 2: ניקוי הסימון בסיום הגרירה
     programmingArea.addEventListener('dragend', function(e) {
       // טיפול בסיום גרירה רק של בלוקים קיימים באזור התכנות
       if (e.target.classList.contains('block-container')) {
         console.log('סיום גרירה נתפס באזור התכנות');
+        
+        // הסרת סימון הגרירה
+        e.target.classList.remove('dragging');
         
         // בדוק אם יש הצמדה אפשרית בין בלוקים
         checkForPossibleSnapAfterDrag(e.target);
         
         // נקה את המצב
         resetHighlighting();
+        currentDraggedBlock = null;
       }
     });
     
-    // צעד 2: מאזין לאירוע 'drop' הנוצר כשמשחררים בלוק מהפלטה לאזור התכנות
+    // צעד 3: עדכון המיקום תוך כדי גרירה
+    programmingArea.addEventListener('drag', function(e) {
+      if (e.target.classList.contains('block-container') && currentDraggedBlock) {
+        // אין צורך לעשות פעולות נוספות כאן - הדפדפן מטפל בתצוגת האלמנט
+        // אנחנו רק וידאנו שהרוח רפאים לא תוצג
+      }
+    });
+    
+    // צעד 4: מאזין לאירוע 'drop' הנוצר כשמשחררים בלוק מהפלטה לאזור התכנות
     programmingArea.addEventListener('drop', function(e) {
       console.log('אירוע drop נתפס באזור התכנות');
       
@@ -65,42 +94,19 @@ document.addEventListener('DOMContentLoaded', function() {
       }, 100);
     });
     
-    // צעד 3: מאזין לתזוזת העכבר לזיהוי קרבה בין בלוקים (לא מטפל בגרירה עצמה)
+    // צעד 5: מאזין לתזוזת העכבר לזיהוי קרבה בין בלוקים
     programmingArea.addEventListener('mousemove', function(e) {
       // בדיקה אם יש בלוק בגרירה פעילה
-      if (!isDraggingBlock()) return;
+      if (!currentDraggedBlock) return;
+      
+      // עדכון מיקום הבלוק הנגרר אם אנחנו צריכים לעשות זאת ידנית
+      // זה לרוב לא נדרש כי הדפדפן מטפל בזה, אבל אם יש צורך אפשר להוסיף כאן
       
       // בדיקה אם יש בלוק פוטנציאלי להצמדה בקרבת מקום
-      const currentBlock = getCurrentDraggedBlock();
-      if (currentBlock) {
-        checkForSnapTarget(currentBlock, e.clientX, e.clientY);
-      }
+      checkForSnapTarget(currentDraggedBlock, e.clientX, e.clientY);
     });
     
     // ---- פונקציות עזר ----
-    
-    // בדיקה אם יש בלוק בגרירה פעילה כרגע
-    function isDraggingBlock() {
-      const draggingElements = programmingArea.querySelectorAll('.block-container[draggable="true"]:active');
-      return draggingElements.length > 0;
-    }
-    
-    // מציאת הבלוק הנגרר כרגע
-    function getCurrentDraggedBlock() {
-      // ראשית, נסה למצוא בלוק שסומן במפורש כנגרר
-      const markedDragging = programmingArea.querySelector('.block-container.dragging');
-      if (markedDragging) return markedDragging;
-      
-      // שנית, נסה למצוא בלוק בגרירה פעילה
-      const activeDragging = programmingArea.querySelector('.block-container[draggable="true"]:active');
-      if (activeDragging) return activeDragging;
-      
-      // לבסוף, נסה למצוא בלוק שעליו הועכבר פועל
-      const hoveredBlock = programmingArea.querySelector('.block-container:hover');
-      if (hoveredBlock) return hoveredBlock;
-      
-      return null;
-    }
     
     // בדיקה אם יש בלוק פוטנציאלי להצמדה אחרי גרירה
     function checkForPossibleSnapAfterDrag(draggedBlock) {
@@ -237,7 +243,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // איפוס מצב ההדגשה והמשתנים הגלובליים
     function resetHighlighting() {
       clearAllHighlights();
-      currentDraggedBlock = null;
       potentialSnapTarget = null;
       snapDirection = null;
     }
@@ -339,6 +344,12 @@ document.addEventListener('DOMContentLoaded', function() {
           transition: all 0.15s ease-out;
         }
         
+        /* סגנון לבלוק בזמן גרירה - מניעת רוח רפאים */
+        .block-container.dragging {
+          /* אין צורך בשינוי מיוחד, מספיק הסימון כדי לזהות את הבלוק */
+          /* הדפדפן מטפל בגרירה, אנחנו מונעים את רוח הרפאים בקוד JavaScript */
+        }
+        
         /* אנימציית הצמדה */
         @keyframes snapEffect {
           0% { transform: scale(1.02); }
@@ -370,131 +381,6 @@ document.addEventListener('DOMContentLoaded', function() {
         potentialSnapTarget = null;
         snapDirection = null;
         clearAllHighlights();
-      });
-    }
-  }
-});ClientRect();
-        
-        let newLeft, newTop;
-        
-        if (direction === 'left') {
-          // הצמדה משמאל לטרגט: הפין הימני של המקור לשקע השמאלי של היעד
-          // מצמיד את הבלוק כך שקצהו הימני נמצא בדיוק על קצהו השמאלי של הבלוק היעד
-          newLeft = targetRect.left - programRect.left - sourceRect.width;
-          newTop = targetRect.top - programRect.top;
-        } else {
-          // הצמדה מימין לטרגט: השקע השמאלי של המקור לפין הימני של היעד
-          // מצמיד את הבלוק כך שקצהו השמאלי נמצא בדיוק על קצהו הימני של הבלוק היעד
-          newLeft = targetRect.right - programRect.left;
-          newTop = targetRect.top - programRect.top;
-        }
-        
-        // עדכון מיקום הבלוק
-        sourceBlock.style.position = 'absolute';
-        sourceBlock.style.left = newLeft + 'px';
-        sourceBlock.style.top = newTop + 'px';
-        
-        // הוספת סימון חיבור
-        sourceBlock.classList.add('connected-block');
-        targetBlock.classList.add('has-connected-block');
-        
-        // סימון כיוון החיבור
-        if (direction === 'left') {
-          sourceBlock.setAttribute('data-connected-direction', 'left-to-target');
-          targetBlock.setAttribute('data-connected-direction', 'source-to-left');
-        } else {
-          sourceBlock.setAttribute('data-connected-direction', 'right-to-target');
-          targetBlock.setAttribute('data-connected-direction', 'source-to-right');
-        }
-        
-        // אפקט ויזואלי קטן בזמן ההצמדה
-        addSnapEffectAnimation(sourceBlock);
-        
-        console.log('הצמדה בוצעה! כיוון:', direction);
-      } catch (err) {
-        console.error('שגיאה בהצמדת בלוקים:', err);
-      }
-    }
-    
-    // הוספת אנימציית הצמדה
-    function addSnapEffectAnimation(block) {
-      // הוספת קלאס אנימציה
-      block.classList.add('snap-animation');
-      
-      // הסרת הקלאס אחרי סיום האנימציה
-      setTimeout(() => {
-        block.classList.remove('snap-animation');
-      }, 300); // 300ms - משך האנימציה
-    }
-    
-    // הוספת סגנונות CSS להדגשה ואנימציה
-    function addHighlightStyles() {
-      // יצירת אלמנט style
-      const style = document.createElement('style');
-      style.textContent = `
-        /* הדגשת בלוק פוטנציאלי להצמדה */
-        .snap-highlight .scratch-block {
-          box-shadow: 0 0 10px 2px rgba(255, 255, 0, 0.7) !important;
-          filter: brightness(1.1);
-          transition: all 0.15s ease-out;
-        }
-        
-        /* הדגשת הבלוק הנגרר כשקרוב להצמדה */
-        .dragging-highlight .scratch-block {
-          box-shadow: 0 0 10px 3px rgba(0, 180, 255, 0.7) !important;
-          filter: brightness(1.15);
-          transition: all 0.15s ease-out;
-        }
-        
-        /* מסגרת רמז קלה לבלוק נגרר */
-        .block-container.dragging .scratch-block {
-          outline: 2px dashed rgba(0, 180, 255, 0.5);
-          transform: scale(1.01);
-        }
-        
-        /* הדגשה ספציפית לשקע השמאלי */
-        .highlight-left-connector .scratch-block::before {
-          box-shadow: inset 0 0 5px 2px rgba(255, 255, 255, 0.9) !important;
-          background-color: rgba(255, 255, 255, 0.9) !important;
-        }
-        
-        /* הדגשה ספציפית לפין הימני */
-        .highlight-right-connector .scratch-block::after {
-          box-shadow: 0 0 5px 2px rgba(255, 255, 0, 0.7) !important;
-        }
-        
-        /* אנימציית הצמדה */
-        @keyframes snapEffect {
-          0% { transform: scale(1.03); }
-          40% { transform: scale(0.97); }
-          70% { transform: scale(1.01); }
-          100% { transform: scale(1); }
-        }
-        
-        .snap-animation {
-          animation: snapEffect 0.3s ease-out;
-        }
-        
-        /* סימון בלוקים מחוברים */
-        .connected-block, .has-connected-block {
-          /* הבלטה קלה מאוד של בלוקים מחוברים */
-          filter: brightness(1.02);
-        }
-      `;
-      
-      // הוספה לראש המסמך
-      document.head.appendChild(style);
-    }
-    
-            // מאזין לכפתור "נקה הכל"
-    const clearAllButton = document.getElementById('clear-all');
-    if (clearAllButton) {
-      clearAllButton.addEventListener('click', function() {
-        // ניקוי משתנים גלובליים
-        draggedBlock = null;
-        potentialSnapTarget = null;
-        snapDirection = null;
-        clearSnapHighlights();
       });
     }
   }
