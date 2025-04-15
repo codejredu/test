@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // קבועים
     const SNAP_THRESHOLD = 25; // מרחק מקסימלי בפיקסלים להצמדה
     const HIGHLIGHT_THRESHOLD = 50; // מרחק להתחלת הדגשה ויזואלית
-    const GLOW_THRESHOLD = 50; // מרחק להוספת הילה
+    const GLOW_THRESHOLD = 50; // מרחק להוספת הילה - הוגדל ל-50 פיקסלים
     
     // איתור אזור התכנות
     const programmingArea = document.getElementById('program-blocks');
@@ -93,7 +93,10 @@ document.addEventListener('DOMContentLoaded', function() {
         checkForSnapTarget(currentDraggedBlock, e.clientX, e.clientY);
         
         // בדיקה אם צריך להוסיף הילה (מבוצע בנפרד מבדיקת הצמדה)
-        checkForBlockHighlight(currentDraggedBlock);
+        // כדי להבטיח שהפונקציה תיקרא, אנחנו קוראים לה עם setTimeout
+        setTimeout(function() {
+          checkForBlockHighlight(currentDraggedBlock);
+        }, 0);
       }
     });
     
@@ -155,6 +158,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function checkForBlockHighlight(draggedBlock) {
       if (!draggedBlock) return;
       
+      console.log('בודק אם צריך להוסיף הילה לבלוק נגרר');
+      
       // קבלת המיקום של הבלוק הנגרר
       const draggedRect = draggedBlock.getBoundingClientRect();
       
@@ -169,16 +174,22 @@ document.addEventListener('DOMContentLoaded', function() {
       for (const block of blocks) {
         const blockRect = block.getBoundingClientRect();
         
-        // חישוב המרחק הקרוב ביותר בין הבלוקים
-        const closestDistance = Math.min(
-          // מרחק בין הצד הימני של הבלוק הנגרר לצד השמאלי של הבלוק האחר
-          Math.abs(draggedRect.right - blockRect.left),
-          // מרחק בין הצד השמאלי של הבלוק הנגרר לצד הימני של הבלוק האחר
-          Math.abs(draggedRect.left - blockRect.right)
+        // פישוט חישוב המרחק - בדיקת מרכז אל מרכז
+        const draggedCenterX = draggedRect.left + draggedRect.width / 2;
+        const draggedCenterY = draggedRect.top + draggedRect.height / 2;
+        const blockCenterX = blockRect.left + blockRect.width / 2;
+        const blockCenterY = blockRect.top + blockRect.height / 2;
+        
+        // חישוב מרחק אוקלידי בין מרכזי הבלוקים
+        const distance = Math.sqrt(
+          Math.pow(draggedCenterX - blockCenterX, 2) + 
+          Math.pow(draggedCenterY - blockCenterY, 2)
         );
         
+        console.log('מרחק לבלוק:', distance, 'סף הילה:', GLOW_THRESHOLD);
+        
         // אם המרחק מספיק קטן, סמן את הבלוק כקרוב
-        if (closestDistance < GLOW_THRESHOLD) {
+        if (distance < GLOW_THRESHOLD) {
           isCloseToAnyBlock = true;
           break;
         }
@@ -186,6 +197,9 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // הוסף או הסר את מחלקת ההילה בהתאם
       if (isCloseToAnyBlock) {
+        console.log('מוסיף הילה לבלוק נגרר');
+        // וודא שכל הקלאסים האחרים שעלולים להפריע מוסרים
+        draggedBlock.classList.remove('snap-source');
         draggedBlock.classList.add('block-highlight');
       } else {
         draggedBlock.classList.remove('block-highlight');
@@ -214,8 +228,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function checkForSnapTarget(draggedBlock, mouseX, mouseY) {
       if (!draggedBlock) return;
       
-      // נקה הדגשות קודמות
-      clearAllHighlights();
+      // נקה הדגשות קודמות - אבל לא את ה-block-highlight
+      const highlightedBlocks = programmingArea.querySelectorAll('.snap-source, .snap-target, .snap-left, .snap-right');
+      highlightedBlocks.forEach(block => {
+        block.classList.remove('snap-source', 'snap-target', 'snap-left', 'snap-right');
+      });
       
       // חפש בלוק קרוב להצמדה
       const result = findClosestBlockForSnap(draggedBlock, mouseX, mouseY);
@@ -226,8 +243,17 @@ document.addEventListener('DOMContentLoaded', function() {
         potentialSnapTarget = result.block;
         snapDirection = result.direction;
         
-        // הדגש את שני הבלוקים
-        highlightBlockForSnapping(draggedBlock, potentialSnapTarget, snapDirection);
+        // הדגש רק את בלוק המטרה, לא את הבלוק הנגרר
+        if (potentialSnapTarget) {
+          potentialSnapTarget.classList.add('snap-target');
+          
+          // הדגשת החלק הרלוונטי לפי כיוון ההצמדה
+          if (snapDirection === 'left') {
+            potentialSnapTarget.classList.add('snap-left');
+          } else if (snapDirection === 'right') {
+            potentialSnapTarget.classList.add('snap-right');
+          }
+        }
       } else {
         potentialSnapTarget = null;
         snapDirection = null;
@@ -316,19 +342,15 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
     
-    // ניקוי כל ההדגשות
-    function clearAllHighlights() {
+    // ניקוי כל ההדגשות - פונקציה מיותרת כעת, הוזזה לתוך checkForSnapTarget
+    
+    // איפוס מצב ההדגשה והמשתנים הגלובליים
+    function resetHighlighting() {
+      // נקה הדגשות ההצמדה אבל השאר את ההילה
       const highlightedBlocks = programmingArea.querySelectorAll('.snap-source, .snap-target, .snap-left, .snap-right');
       highlightedBlocks.forEach(block => {
         block.classList.remove('snap-source', 'snap-target', 'snap-left', 'snap-right');
       });
-      
-      // אין צורך לנקות את מחלקת block-highlight כאן, היא מנוהלת בנפרד
-    }
-    
-    // איפוס מצב ההדגשה והמשתנים הגלובליים
-    function resetHighlighting() {
-      clearAllHighlights();
       potentialSnapTarget = null;
       snapDirection = null;
     }
@@ -430,11 +452,12 @@ document.addEventListener('DOMContentLoaded', function() {
           transition: all 0.15s ease-out;
         }
         
-        /* הילה סביב בלוק שמתקרב לבלוק אחר */
-        .block-highlight .scratch-block {
-          box-shadow: 0 0 15px 5px rgba(100, 200, 255, 0.8) !important;
-          filter: brightness(1.15);
+        /* הילה סביב בלוק שמתקרב לבלוק אחר - חיזוק הספציפיות */
+        .block-container.block-highlight .scratch-block {
+          box-shadow: 0 0 15px 5px rgba(255, 0, 0, 0.8) !important; /* שינוי לאדום לבדיקה שזה עובד */
+          filter: brightness(1.15) !important;
           transition: all 0.1s ease-out;
+          z-index: 1000 !important; /* להעלות מעל שכבות אחרות */
         }
         
         /* אנימציית הצמדה */
