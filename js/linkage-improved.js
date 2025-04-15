@@ -34,35 +34,32 @@ document.addEventListener('DOMContentLoaded', function() {
     // צעד 1: הוספת מאזינים לאירועי גרירה כדי לנהל את הבלוק הנגרר
     programmingArea.addEventListener('dragstart', function(e) {
       if (e.target.classList.contains('block-container')) {
-        // שמירת הבלוק הנגרר וסימון שלו
+        // שמירת הבלוק הנגרר
         currentDraggedBlock = e.target;
         
-        // לא נשתמש ב-setDragImage כדי לאפשר לראות את הלבנה בזמן הגרירה
-        // במקום זאת נסמן את האלמנט ונטפל בו בעזרת CSS ו-JS
+        // מניעת יצירת רוח רפאים - הגדרת התמונה שתיווצר בזמן גרירה
+        const img = new Image();
+        img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+        e.dataTransfer.setDragImage(img, 0, 0);
         
-        // קביעת שקיפות חלקית במהלך הגרירה לאפשר ראיית האזור שמתחת
-        e.target.style.opacity = '0.8';
-        
-        // סימון הבלוק הנגרר בצורה ויזואלית
+        // מסמנים את הבלוק כנגרר (בלי אפקטים ויזואליים)
         e.target.classList.add('dragging');
         
-        // הוספת עיכוב קטן להבטיח שהסגנון יחול לפני הגרירה
-        setTimeout(() => {
-          console.log('הבלוק סומן כנגרר ומוכן לגרירה ויזואלית');
-        }, 10);
+        // מיקום מקורי של הבלוק למקרה שנצטרך לשחזר אותו
+        e.target.dataset.originalLeft = e.target.style.left || '';
+        e.target.dataset.originalTop = e.target.style.top || '';
+        
+        // עדכון תצוגת הבלוק בזמן אמת
+        updateDraggedBlockPosition(e);
       }
     });
     
     // צעד 2: ניקוי הסימון בסיום הגרירה
     programmingArea.addEventListener('dragend', function(e) {
-      // טיפול בסיום גרירה רק של בלוקים קיימים באזור התכנות
       if (e.target.classList.contains('block-container')) {
         console.log('סיום גרירה נתפס באזור התכנות');
         
-        // החזרת השקיפות למצב נורמלי
-        e.target.style.opacity = '1';
-        
-        // הסרת סימון הגרירה
+        // הסרת הסימון
         e.target.classList.remove('dragging');
         
         // בדוק אם יש הצמדה אפשרית בין בלוקים
@@ -74,16 +71,43 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
     
-    // צעד 3: עדכון המיקום תוך כדי גרירה
-    programmingArea.addEventListener('drag', function(e) {
-      if (e.target.classList.contains('block-container') && currentDraggedBlock) {
-        // הדפדפן מטפל בהזזת האלמנט, אנחנו רק מוודאים שהוא גלוי ולא יוצר רוח רפאים
-        if (e.clientX > 0 && e.clientY > 0) {  // וידוא שמיקום העכבר תקין
-          // אפשר גם להוסיף אפקטים ויזואליים בזמן גרירה, כמו צל מוגדל
-          currentDraggedBlock.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
-        }
+    // צעד 3: עדכון מיקום הבלוק בזמן גרירה
+    programmingArea.addEventListener('dragover', function(e) {
+      if (currentDraggedBlock) {
+        e.preventDefault(); // חייב למניעת התנהגות ברירת מחדל
+        updateDraggedBlockPosition(e);
       }
     });
+    
+    // צעד 4: במקום להאזין ל-drag, נתפוס mousemove לעדכון רציף
+    programmingArea.addEventListener('mousemove', function(e) {
+      if (currentDraggedBlock && currentDraggedBlock.classList.contains('dragging')) {
+        updateDraggedBlockPosition(e);
+        
+        // בדיקה אם יש בלוק פוטנציאלי להצמדה בקרבת מקום
+        checkForSnapTarget(currentDraggedBlock, e.clientX, e.clientY);
+      }
+    });
+    
+    // פונקציה לעדכון מיקום הבלוק הנגרר בזמן אמת
+    function updateDraggedBlockPosition(e) {
+      if (!currentDraggedBlock) return;
+      
+      const programRect = programmingArea.getBoundingClientRect();
+      
+      // חישוב מיקום חדש יחסית לאזור התכנות
+      // הפחתת מחצית מרוחב הבלוק כדי שהבלוק יהיה ממוקם במרכז הסמן
+      const blockRect = currentDraggedBlock.getBoundingClientRect();
+      const halfWidth = blockRect.width / 2;
+      const halfHeight = blockRect.height / 2;
+      
+      // עדכון המיקום רק אם העכבר נמצא בגבולות הגיוניים
+      if (e.clientX > 0 && e.clientY > 0) {
+        currentDraggedBlock.style.position = 'absolute';
+        currentDraggedBlock.style.left = (e.clientX - programRect.left - halfWidth) + 'px';
+        currentDraggedBlock.style.top = (e.clientY - programRect.top - halfHeight) + 'px';
+      }
+    }
     
     // צעד 4: מאזין לאירוע 'drop' הנוצר כשמשחררים בלוק מהפלטה לאזור התכנות
     programmingArea.addEventListener('drop', function(e) {
@@ -355,20 +379,10 @@ document.addEventListener('DOMContentLoaded', function() {
           transition: all 0.15s ease-out;
         }
         
-        /* סגנון לבלוק בזמן גרירה - עיצוב ויזואלי */
+        /* בלוק בזמן גרירה - ללא אפקטים מיוחדים */
         .block-container.dragging {
-          z-index: 1000 !important; /* הבאת הבלוק הנגרר קדימה */
-          transform-origin: center center;
-          transform: scale(1.02); /* הגדלה קלה של הבלוק בזמן גרירה */
-          cursor: grabbing !important;
-          opacity: 0.8; /* שקיפות קלה כדי לראות גם מה שמתחת */
-          transition: transform 0.1s ease-out, box-shadow 0.1s ease-out;
-          box-shadow: 0 6px 10px rgba(0, 0, 0, 0.25) !important; /* צל גדול יותר בזמן גרירה */
-        }
-        
-        .block-container.dragging .scratch-block {
-          outline: 2px dashed rgba(0, 180, 255, 0.6); /* קו מקווקו מסביב לבלוק */
-          outline-offset: 2px;
+          /* אין אפקטים ויזואליים בזמן גרירה רגילה */
+          /* כל האפקטים יופיעו רק בזמן התקרבות להצמדה */
         }
         
         /* אנימציית הצמדה */
