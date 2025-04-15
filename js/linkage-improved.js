@@ -177,11 +177,34 @@ document.addEventListener('DOMContentLoaded', function() {
         potentialSnapTarget = result.block;
         snapDirection = result.direction;
         
+        // קבל מרחק בין הבלוקים כדי לקבוע אם להוסיף הילה
+        const draggedRect = draggedBlock.getBoundingClientRect();
+        const targetRect = potentialSnapTarget.getBoundingClientRect();
+        
+        // חישוב מרחק בין הבלוקים
+        let distance;
+        if (snapDirection === 'left') {
+          // מרחק בין הצד הימני של הבלוק הנגרר לצד השמאלי של בלוק המטרה
+          distance = Math.abs(draggedRect.right - targetRect.left);
+        } else {
+          // מרחק בין הצד השמאלי של הבלוק הנגרר לצד הימני של בלוק המטרה
+          distance = Math.abs(draggedRect.left - targetRect.right);
+        }
+        
+        // הוסף מחלקת הילה רק אם המרחק קטן מאוד (כמעט התממשקות)
+        if (distance < SNAP_THRESHOLD / 2) {
+          draggedBlock.classList.add('almost-snapping');
+        } else {
+          draggedBlock.classList.remove('almost-snapping');
+        }
+        
         // הדגש את שני הבלוקים
         highlightBlockForSnapping(draggedBlock, potentialSnapTarget, snapDirection);
       } else {
         potentialSnapTarget = null;
         snapDirection = null;
+        // וודא שאין הילה כשאין בלוק קרוב
+        draggedBlock.classList.remove('almost-snapping');
       }
     }
     
@@ -269,9 +292,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // ניקוי כל ההדגשות
     function clearAllHighlights() {
-      const highlightedBlocks = programmingArea.querySelectorAll('.snap-source, .snap-target, .snap-left, .snap-right');
+      const highlightedBlocks = programmingArea.querySelectorAll('.snap-source, .snap-target, .snap-left, .snap-right, .almost-snapping');
       highlightedBlocks.forEach(block => {
-        block.classList.remove('snap-source', 'snap-target', 'snap-left', 'snap-right');
+        block.classList.remove('snap-source', 'snap-target', 'snap-left', 'snap-right', 'almost-snapping');
       });
     }
     
