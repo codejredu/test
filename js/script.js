@@ -421,12 +421,14 @@ if (clearAllButton && programmingArea) {
 const character = document.getElementById('character');
 
 if (character && stage) {
+    // הסרת מאפיינים שנמצאים ב-CSS
+    // חשוב מאוד לבטל את ה-transform כי זה משפיע על מיקום הדמות
+    character.style.transform = 'none';
+    character.style.transition = 'none';
+    
     let isDragging = false;
     let dragStartX, dragStartY;
     let initialLeft, initialTop;
-    
-    // הוספת סגנונות מיוחדים לדמות
-    character.style.cursor = 'grab';
     
     // וידוא שיש לדמות מיקום התחלתי במרכז הבמה
     // יתבצע רק פעם אחת בטעינה הראשונית, לא בכל גרירה
@@ -467,6 +469,10 @@ if (character && stage) {
         
         event.preventDefault();
         
+        // מניעת ברירת המחדל של הדפדפן
+        character.style.transform = 'none';
+        character.style.transition = 'none';
+        
         isDragging = true;
         
         // נשמור את המיקום ההתחלתי של העכבר
@@ -485,11 +491,17 @@ if (character && stage) {
     document.addEventListener('mousemove', (event) => {
         if (!isDragging) return;
         
+        // וידוא שאין transform או transition
+        character.style.transform = 'none';
+        character.style.transition = 'none';
+        
         // חישוב ההפרש בין המיקום הנוכחי למיקום ההתחלתי של העכבר
         const deltaX = event.clientX - dragStartX;
         const deltaY = event.clientY - dragStartY;
         
         // קבלת המידות האמיתיות של הבמה והדמות
+        const stageWidth = stage.offsetWidth;
+        const stageHeight = stage.offsetHeight;
         const characterWidth = character.offsetWidth;
         const characterHeight = character.offsetHeight;
         
@@ -498,8 +510,8 @@ if (character && stage) {
         let newTop = initialTop + deltaY;
 
         // וידוא שהדמות נשארת בתוך הבמה - עם חישוב מדויק של גבולות
-        const maxLeft = stage.offsetWidth - characterWidth;
-        const maxTop = stage.offsetHeight - characterHeight;
+        const maxLeft = stageWidth - characterWidth;
+        const maxTop = stageHeight - characterHeight;
         
         // הגבלת המיקום לגבולות הבמה
         newLeft = Math.max(0, Math.min(newLeft, maxLeft));
@@ -507,6 +519,12 @@ if (character && stage) {
         
         character.style.left = newLeft + 'px';
         character.style.top = newTop + 'px';
+        
+        // הדפסת מידע לדיבוג
+        console.log('Moving to:', newLeft, newTop);
+        console.log('Stage bounds:', stageWidth, stageHeight);
+        console.log('Character size:', characterWidth, characterHeight);
+        console.log('Max position:', maxLeft, maxTop);
     });
     
     document.addEventListener('mouseup', () => {
@@ -516,13 +534,18 @@ if (character && stage) {
         }
     });
     
-    // הוספת סגנונות CSS
+    // הוספת סגנונות CSS שמבטלים את ההגדרות בקובץ ה-CSS המקורי
     const styleElement = document.createElement('style');
     styleElement.textContent = `
         #character {
             user-select: none;
             touch-action: none;
-            position: absolute; /* וידוא שהדמות תמוקם בצורה אבסולוטית */
+            position: absolute !important;
+            transform: none !important; /* ביטול ה-transform שמזיז את הדמות */
+            transition: none !important; /* ביטול מעברים כדי שהגרירה תהיה חלקה */
+            top: auto !important; /* ביטול הגדרות מיקום מ-CSS */
+            left: auto !important; /* ביטול הגדרות מיקום מ-CSS */
+            cursor: grab;
         }
         
         #character:active {
@@ -531,8 +554,9 @@ if (character && stage) {
         
         /* הבטחה שהמיכל הוא relative */
         #stage {
-            position: relative;
+            position: relative !important;
             overflow: hidden; /* למניעת גלישה */
+            box-sizing: border-box;
         }
     `;
     document.head.appendChild(styleElement);
@@ -560,14 +584,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const stage = document.getElementById("stage");
     
     if (character && stage) {
-        // חישוב מיקום המרכז
+        // הסרת כל מאפייני CSS שעלולים להפריע
+        character.style.transform = 'none';
+        character.style.transition = 'none';
+        
+        // השהייה קטנה כדי לוודא שכל האלמנטים נטענו
         setTimeout(() => {
+            // חישוב מיקום המרכז בהתחשב בגודל האמיתי של הדמות
             const stageWidth = stage.offsetWidth;
             const stageHeight = stage.offsetHeight;
             const charWidth = character.offsetWidth;
             const charHeight = character.offsetHeight;
             
-            // מיקום במרכז
+            // מיקום במרכז - ללא השימוש ב-transform
             const centerX = (stageWidth - charWidth) / 2;
             const centerY = (stageHeight - charHeight) / 2;
             
@@ -578,7 +607,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             console.log('Character centered at', centerX, centerY);
             console.log('Stage dimensions:', stageWidth, stageHeight);
-        }, 100); // השהייה קטנה כדי לוודא שכל האלמנטים נטענו
+            console.log('Character dimensions:', charWidth, charHeight);
+        }, 100);
     }
     
     // Ensure the DOM is ready before trying to manipulate it
