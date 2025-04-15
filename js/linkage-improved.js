@@ -28,7 +28,7 @@ programmingArea.addEventListener('dragstart', function(e) {
     // מניעת יצירת רוח רפאים - הגדרת התמונה שתיווצר בזמן גרירה
     const img = new Image();
     img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-    e.dataTransfer.setDragImage(img, 0, 0);
+   //  e.dataTransfer.setDragImage(img, 0, 0);
 
     // מסמנים את הבלוק כנגרר (בלי אפקטים ויזואליים)
     e.target.classList.add('dragging');
