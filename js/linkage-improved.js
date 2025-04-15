@@ -13,6 +13,46 @@ document.addEventListener('DOMContentLoaded', () => {
     const HIGHLIGHT_COLOR = '#0D6EFD';
     const CONNECTION_THRESHOLD = 20; // Distance in pixels for potential connection detection
     const SNAP_THRESHOLD = 10; // Distance in pixels for automatic snapping
+    
+    // Add CSS rules for connected blocks to enhance visuals
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = `
+        .block-container.connected-block .scratch-block::before,
+        .block-container.connected-block .scratch-block::after {
+            /* Ensure connectors are visible for connected blocks */
+            content: '' !important;
+            display: block !important;
+        }
+        
+        /* Ensure sockets (left connectors) are visible */
+        .scratch-block[data-has-connectors]::before {
+            content: '' !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            width: 9px !important;
+            height: 18px !important;
+            background-color: #f0f4ff !important; /* Match the stage background */
+            border-radius: 0 9px 9px 0 !important;
+            z-index: 2 !important;
+        }
+        
+        /* Ensure pins (right connectors) are visible */
+        .scratch-block[data-has-connectors]::after {
+            content: '' !important;
+            position: absolute !important;
+            right: -9px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            width: 9px !important;
+            height: 18px !important;
+            background-color: inherit !important;
+            border-radius: 0 9px 9px 0 !important;
+            z-index: 2 !important;
+        }
+    `;
+    document.head.appendChild(styleSheet);
 
     // Track dragged elements and their states
     let draggedBlock = null;
@@ -193,7 +233,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add a glow effect by updating the box-shadow
         const scratchBlock = block.querySelector('.scratch-block');
         if (scratchBlock) {
+            // Save original box-shadow if not already saved
+            if (!scratchBlock.dataset.originalBoxShadow) {
+                scratchBlock.dataset.originalBoxShadow = scratchBlock.style.boxShadow || '';
+            }
             scratchBlock.style.boxShadow = `0 0 10px 3px ${HIGHLIGHT_COLOR}, inset 0 2px 4px rgba(0, 0, 0, 0.2)`;
+            
+            // Add a subtle border to emphasize the connection point
+            scratchBlock.style.border = `2px solid ${HIGHLIGHT_COLOR}`;
         }
     }
     
@@ -207,7 +254,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // Restore original box-shadow
         const scratchBlock = block.querySelector('.scratch-block');
         if (scratchBlock) {
-            scratchBlock.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2)';
+            // Restore from saved value if available
+            if (scratchBlock.dataset.originalBoxShadow) {
+                scratchBlock.style.boxShadow = scratchBlock.dataset.originalBoxShadow;
+            } else {
+                scratchBlock.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(0, 0, 0, 0.2)';
+            }
+            
+            // Remove the border
+            scratchBlock.style.border = '';
         }
     }
     
@@ -268,32 +323,56 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const { type, source, target } = connection;
         
+        // Get the scratch blocks for more accurate positioning
+        const sourceScratch = source.querySelector('.scratch-block');
+        const targetScratch = target.querySelector('.scratch-block');
+        
+        if (!sourceScratch || !targetScratch) return;
+        
         // Get the positions to align the blocks
-        const sourceRect = source.getBoundingClientRect();
-        const targetRect = target.getBoundingClientRect();
+        const sourceRect = sourceScratch.getBoundingClientRect();
+        const targetRect = targetScratch.getBoundingClientRect();
         const areaRect = programmingArea.getBoundingClientRect();
         
         let newLeft, newTop;
         
         if (type === 'output-to-input') {
             // Position the source block so its output connects to target's input
-            newLeft = (targetRect.left - sourceRect.width - areaRect.left) + 'px';
-            newTop = (targetRect.top - areaRect.top) + 'px';
+            // Calculate the offset from the scratch-block to the container
+            const sourceOffsetX = sourceRect.left - source.getBoundingClientRect().left;
+            const sourceOffsetY = sourceRect.top - source.getBoundingClientRect().top;
+            
+            // Position precisely so the right edge of source block aligns with left edge of target
+            newLeft = (targetRect.left - sourceRect.width - areaRect.left - sourceOffsetX) + 'px';
+            newTop = (targetRect.top - areaRect.top - sourceOffsetY) + 'px';
         } 
         else if (type === 'input-to-output') {
             // Position the source block so its input connects to target's output
-            newLeft = (targetRect.right - areaRect.left) + 'px';
-            newTop = (targetRect.top - areaRect.top) + 'px';
+            // Calculate the offset from the scratch-block to the container
+            const sourceOffsetX = sourceRect.left - source.getBoundingClientRect().left;
+            const sourceOffsetY = sourceRect.top - source.getBoundingClientRect().top;
+            
+            // Position precisely so the left edge of source block aligns with right edge of target
+            newLeft = (targetRect.right - areaRect.left - sourceOffsetX) + 'px';
+            newTop = (targetRect.top - areaRect.top - sourceOffsetY) + 'px';
         }
         else if (type === 'input-to-bottom') {
             // Special case for repeat blocks - position under the white area
-            newLeft = (targetRect.left - areaRect.left) + 'px';
-            newTop = (targetRect.bottom - areaRect.top) + 'px';
+            // Calculate the offset from the scratch-block to the container
+            const sourceOffsetX = sourceRect.left - source.getBoundingClientRect().left;
+            const sourceOffsetY = sourceRect.top - source.getBoundingClientRect().top;
+            
+            newLeft = (targetRect.left - areaRect.left - sourceOffsetX) + 'px';
+            newTop = (targetRect.bottom - areaRect.top - sourceOffsetY) + 'px';
         }
         
         // Apply the new position
         source.style.left = newLeft;
         source.style.top = newTop;
+        
+        // Add a visual connection between blocks
+        source.classList.add('connected-block');
+        target.classList.add('connected-block');
         
         // If this block has a chain of blocks connected to it,
         // we need to move those as well to maintain the chain
@@ -303,14 +382,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Skip the first element as it's the source block we already moved
                 chainBlocks.slice(1).forEach((block, index) => {
                     const prevBlock = chainBlocks[index]; // The previous block in the chain
-                    const prevRect = prevBlock.getBoundingClientRect();
+                    const prevScratch = prevBlock.querySelector('.scratch-block');
+                    const blockScratch = block.querySelector('.scratch-block');
                     
-                    block.style.left = (prevRect.right - areaRect.left) + 'px';
-                    block.style.top = (prevRect.top - areaRect.top) + 'px';
+                    if (prevScratch && blockScratch) {
+                        const prevRect = prevScratch.getBoundingClientRect();
+                        
+                        // Calculate the offset from the scratch-block to the container
+                        const blockOffsetX = blockScratch.getBoundingClientRect().left - block.getBoundingClientRect().left;
+                        const blockOffsetY = blockScratch.getBoundingClientRect().top - block.getBoundingClientRect().top;
+                        
+                        block.style.left = (prevRect.right - areaRect.left - blockOffsetX) + 'px';
+                        block.style.top = (prevRect.top - areaRect.top - blockOffsetY) + 'px';
+                        
+                        // Mark this block as connected too
+                        block.classList.add('connected-block');
+                    }
                 });
             }
         }
-    }
     
     // ========================================================================
     // Event Handlers for Blocks in the Palette
@@ -321,6 +411,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Find the closest block-container parent
         const blockContainer = e.target.closest('.block-container');
         if (!blockContainer) return;
+        
+        // Prevent normal drag behavior
+        e.preventDefault();
         
         // Prevent the default dragstart behavior
         blockContainer.addEventListener('dragstart', function(evt) {
@@ -415,99 +508,92 @@ document.addEventListener('DOMContentLoaded', () => {
             );
             
             if (isOverProgrammingArea) {
-                // Create a new block in the programming area (not the clone)
-                // First get the block data
+                // Get the block data
                 const type = blockContainer.dataset.type;
                 const category = blockContainer.dataset.category;
                 
-                // Find the block definition
-                const blockDefinition = window.blocks?.[category]?.find(b => b.type === type);
+                // Create a direct copy of the palette block but ensure it has proper structure
+                const newBlock = document.createElement('div');
+                newBlock.className = 'block-container';
+                newBlock.dataset.type = type;
+                newBlock.dataset.category = category;
                 
-                // If we can't find the block definition, try to create a clone
-                // of the original block as a fallback
-                if (!blockDefinition && blockContainer) {
-                    console.log('Block definition not found, creating a direct clone');
-                    const newBlock = blockContainer.cloneNode(true);
-                    programmingArea.appendChild(newBlock);
-                    
-                    // Position at the drop point
-                    newBlock.style.position = 'absolute';
-                    newBlock.style.left = (upEvent.clientX - areaRect.left - dragOffsetX) + 'px';
-                    newBlock.style.top = (upEvent.clientY - areaRect.top - dragOffsetY) + 'px';
-                    
-                    // Set up dragging for the new block within the programming area
-                    setupProgrammingAreaDragging(newBlock);
-                    return;
+                // Create the scratch block with proper styling
+                const newScratchBlock = document.createElement('div');
+                newScratchBlock.className = 'scratch-block';
+                
+                // Get the original scratch block
+                const originalScratchBlock = blockContainer.querySelector('.scratch-block');
+                const computedStyle = window.getComputedStyle(originalScratchBlock);
+                
+                // Apply styles
+                newScratchBlock.style.backgroundColor = computedStyle.backgroundColor;
+                
+                // Add proper pseudo-elements for pins and sockets based on category/type
+                if (category !== 'end' && type !== 'repeat') {
+                    // Standard blocks need before/after pseudo-elements for connecting
+                    newScratchBlock.dataset.hasConnectors = 'true';
+                
+                // Create and add the image icon
+                const originalImg = originalScratchBlock.querySelector('.block-icon-img');
+                if (originalImg) {
+                    const newImg = document.createElement('img');
+                    newImg.src = originalImg.src;
+                    newImg.alt = originalImg.alt || type;
+                    newImg.className = 'block-icon-img';
+                    newScratchBlock.appendChild(newImg);
                 }
                 
-                if (blockDefinition) {
-                    // Create new block element from window.blocks data
-                    const createBlockElement = window.createBlockElement || function(block, category) {
-                        // Fallback implementation if the external function isn't available
-                        const newContainer = document.createElement("div");
-                        newContainer.classList.add("block-container");
-                        newContainer.dataset.type = block.type;
-                        newContainer.dataset.category = category;
-
-                        const scratchBlock = document.createElement("div");
-                        scratchBlock.classList.add("scratch-block");
-                        scratchBlock.style.backgroundColor = block.color;
-                        
-                        // Add special handling for repeat blocks
-                        if (block.type === 'repeat') {
-                            scratchBlock.style.width = '140px';
-                            scratchBlock.style.borderRadius = '10px';
-                            // Add specific styling for repeat blocks based on CSS
-                            scratchBlock.style.position = 'relative';
-                            scratchBlock.style.height = '80px';
-                        }
-                        
-                        // Add special handling for end blocks
-                        if (category === 'end') {
-                            scratchBlock.style.width = '67px';
-                            scratchBlock.style.borderRadius = '10px 30px 30px 10px';
-                            scratchBlock.style.height = '80px';
-                        }
-                        
-                        const iconImg = document.createElement("img");
-                        iconImg.src = block.icon;
-                        iconImg.alt = block.name;
-                        iconImg.classList.add("block-icon-img");
-                        
-                        scratchBlock.appendChild(iconImg);
-                        newContainer.appendChild(scratchBlock);
-                        
-                        return newContainer;
-                    };
+                // Add the scratch block to the container
+                newBlock.appendChild(newScratchBlock);
+                
+                // Apply special styling based on category
+                if (type === 'repeat') {
+                    newScratchBlock.style.width = '140px';
+                    newScratchBlock.style.height = '80px';
+                    newScratchBlock.style.borderRadius = '10px';
+                    newScratchBlock.style.position = 'relative';
                     
-                    const newBlock = createBlockElement(blockDefinition, category);
-                    programmingArea.appendChild(newBlock);
-                    
-                    // Position at the drop point
-                    newBlock.style.position = 'absolute';
-                    newBlock.style.left = (upEvent.clientX - areaRect.left - dragOffsetX) + 'px';
-                    newBlock.style.top = (upEvent.clientY - areaRect.top - dragOffsetY) + 'px';
-                    
-                    // Set up dragging for the new block within the programming area
-                    setupProgrammingAreaDragging(newBlock);
-                    
-                    // Check for potential connections immediately
-                    setTimeout(() => {
-                        const connections = findPotentialConnections(newBlock);
-                        if (connections.length > 0) {
-                            // Sort by distance to get the closest connection
-                            connections.sort((a, b) => a.distance - b.distance);
-                            const closestConnection = connections[0];
-                            
-                            if (closestConnection.distance < SNAP_THRESHOLD) {
-                                connectBlocks(closestConnection);
-                            }
-                        }
-                    }, 10);
+                    // Create the special after/before elements for repeat blocks
+                    // This is handled by CSS, but we'll make sure the structure is correct
+                } else if (category === 'end') {
+                    newScratchBlock.style.width = '67px';
+                    newScratchBlock.style.height = '80px';
+                    newScratchBlock.style.borderRadius = '10px 30px 30px 10px';
+                } else {
+                    // Standard blocks
+                    newScratchBlock.style.width = '87px';
+                    newScratchBlock.style.height = '80px';
+                    newScratchBlock.style.borderRadius = '10px';
                 }
+                
+                // Position at the drop point
+                newBlock.style.position = 'absolute';
+                newBlock.style.left = (upEvent.clientX - areaRect.left - dragOffsetX) + 'px';
+                newBlock.style.top = (upEvent.clientY - areaRect.top - dragOffsetY) + 'px';
+                
+                // Add to programming area
+                programmingArea.appendChild(newBlock);
+                
+                // Set up dragging for the new block within the programming area
+                setupProgrammingAreaDragging(newBlock);
+                
+                // Check for potential connections immediately
+                setTimeout(() => {
+                    const connections = findPotentialConnections(newBlock);
+                    if (connections.length > 0) {
+                        // Sort by distance to get the closest connection
+                        connections.sort((a, b) => a.distance - b.distance);
+                        const closestConnection = connections[0];
+                        
+                        if (closestConnection.distance < SNAP_THRESHOLD) {
+                            connectBlocks(closestConnection);
+                        }
+                    }
+                }, 50);
             }
             
-            // Remove the clone
+            // Remove the clone from the body
             if (draggedBlock && draggedBlock.parentNode) {
                 draggedBlock.parentNode.removeChild(draggedBlock);
             }
@@ -625,7 +711,9 @@ document.addEventListener('DOMContentLoaded', () => {
         clearAllHighlights();
         
         // Reset state
-        draggedBlock.style.zIndex = '';
+        if (draggedBlock) {
+            draggedBlock.style.zIndex = '';
+        }
         draggedBlock = null;
         isDragging = false;
         potentialConnections = [];
