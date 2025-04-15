@@ -1,6 +1,6 @@
 // קוד גרירת בלוקים עם הילה בהתקרבות
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('טוען מערכת גרירת בלוקים עם הילה בהתקרבות...');
+  console.log('טוען מערכת גרירת בלוקים...');
   
   // מחכה שהדף יטען לגמרי כולל הסקריפטים האחרים
   setTimeout(function() {
@@ -8,10 +8,10 @@ document.addEventListener('DOMContentLoaded', function() {
   }, 1000);
   
   function setupDragging() {
-    console.log('מפעיל מערכת גרירה עם הילה בהתקרבות...');
+    console.log('מפעיל מערכת גרירה...');
     
     // קבועים שניתן לכוונן
-    let PROXIMITY_THRESHOLD = 5; // ברירת מחדל: 5 פיקסלים
+    let PROXIMITY_THRESHOLD = 5; // ברירת מחדל: 5 פיקסלים למרחק התקרבות
     
     // הוספת כפתור לשינוי סף הקרבה
     addProximityControl();
@@ -60,6 +60,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // הסרת הסימון
         e.target.classList.remove('dragging');
+        
+        // בדיקה אם יש בלוק קרוב ואם כן, ביצוע חיבור
+        if (nearbyBlock) {
+          connectBlocks(e.target, nearbyBlock);
+        }
         
         // נקה את המצב והילות
         clearAllHighlights();
@@ -128,20 +133,9 @@ document.addEventListener('DOMContentLoaded', function() {
       let closestBlock = null;
       let minDistance = Infinity;
       
-      // ניתוח חלקי התצוגה של הבלוק - פין בימין ושקע בשמאל
-      const PIN_WIDTH = 10; // רוחב משוער של הפין
-      const SOCKET_WIDTH = 10; // רוחב משוער של השקע
-      
-      // חישוב מיקומי פין ושקע של הבלוק הנגרר
-      const rightPin = {
-        x: draggedRect.right,
-        y: draggedRect.top + draggedRect.height / 2
-      };
-      
-      const leftSocket = {
-        x: draggedRect.left,
-        y: draggedRect.top + draggedRect.height / 2
-      };
+      // חישוב מרכז הבלוק הנגרר
+      const draggedCenterX = draggedRect.left + draggedRect.width / 2;
+      const draggedCenterY = draggedRect.top + draggedRect.height / 2;
       
       // בדיקת כל בלוק
       blocks.forEach(block => {
@@ -150,65 +144,49 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const blockRect = block.getBoundingClientRect();
         
-        // חישוב מיקומי פין ושקע של הבלוק הנבדק
-        const targetRightPin = {
-          x: blockRect.right,
-          y: blockRect.top + blockRect.height / 2
-        };
+        // חישוב מרכז הבלוק הנבדק
+        const blockCenterX = blockRect.left + blockRect.width / 2;
+        const blockCenterY = blockRect.top + blockRect.height / 2;
         
-        const targetLeftSocket = {
-          x: blockRect.left,
-          y: blockRect.top + blockRect.height / 2
-        };
-        
-        // מדידת מרחק בין פין ימני של המקור לשקע שמאלי של היעד
-        const pinToSocketDistance = Math.sqrt(
-          Math.pow(rightPin.x - targetLeftSocket.x, 2) +
-          Math.pow(rightPin.y - targetLeftSocket.y, 2)
+        // חישוב המרחק בין מרכזי הבלוקים
+        const distance = Math.sqrt(
+          Math.pow(draggedCenterX - blockCenterX, 2) +
+          Math.pow(draggedCenterY - blockCenterY, 2)
         );
         
-        // מדידת מרחק בין שקע שמאלי של המקור לפין ימני של היעד
-        const socketToPinDistance = Math.sqrt(
-          Math.pow(leftSocket.x - targetRightPin.x, 2) +
-          Math.pow(leftSocket.y - targetRightPin.y, 2)
-        );
+        // חישוב המרחק האופקי בין קצוות הבלוקים
+        let horizontalGap;
+        if (draggedRect.right < blockRect.left) {
+          // הבלוק הנגרר משמאל לבלוק הנבדק
+          horizontalGap = blockRect.left - draggedRect.right;
+        } else if (draggedRect.left > blockRect.right) {
+          // הבלוק הנגרר מימין לבלוק הנבדק
+          horizontalGap = draggedRect.left - blockRect.right;
+        } else {
+          // יש חפיפה אופקית
+          horizontalGap = 0;
+        }
         
-        // בחירת המרחק הקטן יותר
-        let distance = Math.min(pinToSocketDistance, socketToPinDistance);
+        // אם הבלוקים קרובים אופקית וגם באותו גובה בערך
+        const verticalMatch = Math.abs(draggedRect.top - blockRect.top) < 20;
         
-        // אם מצאנו בלוק קרוב יותר מהקודם
-        if (distance < minDistance) {
-          minDistance = distance;
+        // אם הבלוקים קרובים מספיק אופקית ובאותו גובה בערך
+        if (horizontalGap <= PROXIMITY_THRESHOLD && verticalMatch && horizontalGap < minDistance) {
+          minDistance = horizontalGap;
           closestBlock = block;
         }
       });
       
       // אם נמצא בלוק קרוב מספיק, הדגש אותו
-      if (closestBlock && minDistance <= PROXIMITY_THRESHOLD) {
+      if (closestBlock) {
         nearbyBlock = closestBlock;
-        
-        // הדפסת לוג של מצב ההילה
-        console.log('הוספת הילה לבלוקים. מרחק:', minDistance, 'סף:', PROXIMITY_THRESHOLD);
-        
-        // הוספת הילה
         highlightBlocks(currentDraggedBlock, nearbyBlock);
-        
-        // בדיקה אם ההילה הוספה בהצלחה
-        setTimeout(() => {
-          console.log('האם יש הילה למקור:', currentDraggedBlock.classList.contains('proximity-source'));
-          console.log('האם יש הילה ליעד:', nearbyBlock.classList.contains('proximity-target'));
-        }, 50);
       }
     }
     
     // פונקציה להדגשת בלוקים קרובים
     function highlightBlocks(draggedBlock, targetBlock) {
       if (!draggedBlock || !targetBlock) return;
-      
-      // וידוא שאין קלאסים קודמים - למקרה שהיו בעיות
-      clearAllHighlights();
-      
-      console.log('מוסיף הילה לבלוקים', draggedBlock.id, targetBlock.id);
       
       // הוספת קלאס להילה לבלוק הנגרר
       draggedBlock.classList.add('proximity-source');
@@ -225,20 +203,91 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
     
+    // פונקציה לחיבור בלוקים (התממשקות)
+    function connectBlocks(sourceBlock, targetBlock) {
+      if (!sourceBlock || !targetBlock) return;
+      
+      try {
+        const sourceRect = sourceBlock.getBoundingClientRect();
+        const targetRect = targetBlock.getBoundingClientRect();
+        const programRect = programmingArea.getBoundingClientRect();
+        
+        // קביעת כיוון החיבור
+        let direction;
+        let newLeft, newTop;
+        
+        // חישוב מרכזי הבלוקים
+        const sourceCenterX = sourceRect.left + sourceRect.width / 2;
+        const targetCenterX = targetRect.left + targetRect.width / 2;
+        
+        if (sourceCenterX < targetCenterX) {
+          // המקור משמאל ליעד - החלק הימני שלו יתחבר לחלק השמאלי של היעד
+          direction = 'left-to-right';
+          newLeft = targetRect.left - sourceRect.width - programRect.left;
+          newTop = targetRect.top - programRect.top;
+          
+          // הפין בשכבה עליונה
+          sourceBlock.style.zIndex = "110";
+          targetBlock.style.zIndex = "100";
+        } else {
+          // המקור מימין ליעד - החלק השמאלי שלו יתחבר לחלק הימני של היעד
+          direction = 'right-to-left';
+          newLeft = targetRect.right - programRect.left;
+          newTop = targetRect.top - programRect.top;
+          
+          // הפין בשכבה עליונה
+          sourceBlock.style.zIndex = "100";
+          targetBlock.style.zIndex = "110";
+        }
+        
+        // עדכון מיקום הבלוק המקור
+        sourceBlock.style.position = 'absolute';
+        sourceBlock.style.left = newLeft + 'px';
+        sourceBlock.style.top = newTop + 'px';
+        
+        // הוספת סימון לבלוקים המחוברים
+        sourceBlock.classList.add('connected-block');
+        targetBlock.classList.add('has-connected-block');
+        
+        // שמירת יחס החיבור לשימוש עתידי
+        sourceBlock.setAttribute('data-connected-to', targetBlock.id || generateUniqueId(targetBlock));
+        sourceBlock.setAttribute('data-connection-direction', direction);
+        
+        // אפקט ויזואלי של התממשקות
+        addConnectionAnimation(sourceBlock, targetBlock);
+        
+        console.log('בוצעה התממשקות בכיוון:', direction);
+      } catch (err) {
+        console.error('שגיאה בהתממשקות בלוקים:', err);
+      }
+    }
+    
+    // פונקציה ליצירת מזהה ייחודי לבלוק
+    function generateUniqueId(block) {
+      if (!block.id) {
+        const uniqueId = 'block-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+        block.id = uniqueId;
+      }
+      return block.id;
+    }
+    
+    // פונקציה להוספת אנימציית התממשקות
+    function addConnectionAnimation(sourceBlock, targetBlock) {
+      // הוספת אפקט הבהוב לשני הבלוקים
+      sourceBlock.classList.add('connection-animation');
+      targetBlock.classList.add('connection-animation');
+      
+      // הסרת האפקט אחרי שניה
+      setTimeout(() => {
+        sourceBlock.classList.remove('connection-animation');
+        targetBlock.classList.remove('connection-animation');
+      }, 1000);
+    }
+    
     // מאזין לאירוע drop - כאשר משחררים בלוק באזור התכנות
     programmingArea.addEventListener('drop', function(e) {
       console.log('אירוע drop נתפס באזור התכנות');
       e.preventDefault();
-      
-      // בדיקה אם יש בלוק קרוב ואם ההילה מופיעה
-      if (currentDraggedBlock && nearbyBlock) {
-        console.log('נמצא בלוק קרוב בעת שחרור - מבצע התממשקות');
-        // ביצוע התממשקות
-        connectBlocks(currentDraggedBlock, nearbyBlock);
-      }
-      
-      // נקה הילות לאחר השחרור
-      setTimeout(clearAllHighlights, 100);
     });
     
     // הוספת סגנונות CSS להילה ולהתממשקות
@@ -249,7 +298,6 @@ document.addEventListener('DOMContentLoaded', function() {
         /* הילה צהובה למקור (הבלוק הנגרר) */
         .proximity-source {
           position: relative;
-          z-index: 100 !important;
         }
         
         .proximity-source::before {
@@ -264,13 +312,11 @@ document.addEventListener('DOMContentLoaded', function() {
           border-radius: 5px;
           z-index: -1;
           pointer-events: none;
-          animation: pulsate 1.5s infinite alternate;
         }
         
         /* הילה צהובה למטרה (הבלוק הקרוב) */
         .proximity-target {
           position: relative;
-          z-index: 90 !important;
         }
         
         .proximity-target::before {
@@ -285,60 +331,28 @@ document.addEventListener('DOMContentLoaded', function() {
           border-radius: 5px;
           z-index: -1;
           pointer-events: none;
-          animation: pulsate 1.5s infinite alternate;
         }
         
-        /* אנימציית פעימה עדינה */
-        @keyframes pulsate {
-          from { opacity: 0.7; }
-          to { opacity: 1; }
+        /* סגנונות לבלוקים מחוברים - פין ושקע */
+        .connected-block[data-connection-direction="left-to-right"] {
+          /* בלוק שמתחבר משמאל לימין - הפין שלו בצד ימין */
+          margin-right: -5px; /* הפין בולט */
         }
         
-        /* סגנונות לבלוקים מחוברים */
-        .connected-block, .has-connected-block {
-          position: relative;
-        }
-        
-        /* סימון ויזואלי לפין בצד ימין של בלוק - שכבה עליונה */
-        .connected-block[data-connection-direction="left-to-right"]::after {
-          content: '';
-          position: absolute;
-          width: 10px;
-          height: 10px;
-          background-color: rgba(0, 102, 204, 0.3);
-          border-radius: 5px;
-          right: -5px; /* חלק מהפין בולט החוצה */
-          top: 50%;
-          transform: translateY(-50%);
-          border: 2px solid #0066cc;
-          z-index: 110 !important; /* שכבה עליונה */
-        }
-        
-        /* סימון ויזואלי לשקע בצד שמאל של בלוק */
-        .connected-block[data-connection-direction="right-to-left"]::before,
-        .has-connected-block::before {
-          content: '';
-          position: absolute;
-          width: 10px;
-          height: 10px;
-          background-color: rgba(255, 255, 255, 0.3);
-          border-radius: 5px;
-          left: -5px; /* חלק מהשקע מחוץ לבלוק */
-          top: 50%;
-          transform: translateY(-50%);
-          border: 2px solid #cccccc;
-          z-index: 105; /* מתחת לפין */
+        .connected-block[data-connection-direction="right-to-left"] {
+          /* בלוק שמתחבר מימין לשמאל - השקע שלו בצד שמאל */
+          margin-left: -5px; /* השקע שקוע */
         }
         
         /* אנימציית התממשקות */
         @keyframes connectAnimation {
-          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 0, 0.7); }
-          50% { transform: scale(1.03); box-shadow: 0 0 0 10px rgba(255, 255, 0, 0); }
-          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 255, 0, 0); }
+          0% { transform: scale(1); }
+          50% { transform: scale(1.03); }
+          100% { transform: scale(1); }
         }
         
         .connection-animation {
-          animation: connectAnimation 1s ease-out;
+          animation: connectAnimation 0.5s ease-out;
         }
         
         /* סימון ויזואלי לבלוקים מחוברים */
@@ -350,10 +364,6 @@ document.addEventListener('DOMContentLoaded', function() {
           box-shadow: 0 0 5px rgba(0, 102, 204, 0.5);
         }
       `;
-      
-      // הוספה לראש המסמך
-      document.head.appendChild(style);
-    }
       
       // הוספה לראש המסמך
       document.head.appendChild(style);
@@ -400,97 +410,6 @@ document.addEventListener('DOMContentLoaded', function() {
       document.body.appendChild(controlContainer);
     }
     
-    // פונקציה לחיבור בלוקים (התממשקות)
-    function connectBlocks(sourceBlock, targetBlock) {
-      if (!sourceBlock || !targetBlock) return;
-      
-      try {
-        const sourceRect = sourceBlock.getBoundingClientRect();
-        const targetRect = targetBlock.getBoundingClientRect();
-        const programRect = programmingArea.getBoundingClientRect();
-        
-        // חישוב מרכזי הבלוקים לקביעת כיוון החיבור
-        const sourceCenterX = sourceRect.left + sourceRect.width / 2;
-        const targetCenterX = targetRect.left + targetRect.width / 2;
-        
-        let direction;
-        let newLeft, newTop;
-        
-        // משתנה המציין את הסטייה המדויקת של הפין והשקע
-        // סטייה חיובית = הפין בולט החוצה, סטייה שלילית = השקע שקוע פנימה
-        const PIN_OFFSET = 5; // הפין בולט 5 פיקסלים
-        const SOCKET_OFFSET = 5; // השקע שקוע 5 פיקסלים
-        
-        if (sourceCenterX < targetCenterX) {
-          // המקור משמאל ליעד - פין ימני של המקור לשקע שמאלי של היעד
-          direction = 'left-to-right';
-          
-          // מיקום החיבור: הפין והשקע מחוברים במדויק
-          // הפין הימני של המקור בולט ונכנס לשקע השמאלי של היעד
-          newLeft = targetRect.left - sourceRect.width + (PIN_OFFSET - SOCKET_OFFSET) - programRect.left;
-          newTop = targetRect.top - programRect.top; // שמירה על אותו גובה
-          
-          // הגדרת סדר השכבות
-          sourceBlock.style.zIndex = "105"; // הבלוק עם הפין בשכבה עליונה
-          targetBlock.style.zIndex = "100"; // הבלוק עם השקע בשכבה תחתונה
-        } else {
-          // המקור מימין ליעד - שקע שמאלי של המקור לפין ימני של היעד
-          direction = 'right-to-left';
-          
-          // מיקום החיבור: הפין והשקע מחוברים במדויק
-          // השקע השמאלי של המקור מקבל את הפין הימני של היעד
-          newLeft = targetRect.right - (PIN_OFFSET - SOCKET_OFFSET) - programRect.left;
-          newTop = targetRect.top - programRect.top; // שמירה על אותו גובה
-          
-          // הגדרת סדר השכבות
-          sourceBlock.style.zIndex = "100"; // הבלוק עם השקע בשכבה תחתונה
-          targetBlock.style.zIndex = "105"; // הבלוק עם הפין בשכבה עליונה
-        }
-        
-        // עדכון מיקום הבלוק המקור
-        sourceBlock.style.position = 'absolute';
-        sourceBlock.style.left = newLeft + 'px';
-        sourceBlock.style.top = newTop + 'px';
-        
-        // הוספת סימון לבלוקים המחוברים
-        sourceBlock.classList.add('connected-block');
-        targetBlock.classList.add('has-connected-block');
-        
-        // שמירת יחס החיבור לשימוש עתידי
-        sourceBlock.setAttribute('data-connected-to', targetBlock.id || generateUniqueId(targetBlock));
-        sourceBlock.setAttribute('data-connection-direction', direction);
-        
-        // אפקט ויזואלי של התממשקות
-        addConnectionAnimation(sourceBlock, targetBlock);
-        
-        console.log('בוצעה התממשקות מדויקת בכיוון:', direction);
-      } catch (err) {
-        console.error('שגיאה בהתממשקות בלוקים:', err);
-      }
-    }
-    
-    // פונקציה ליצירת מזהה ייחודי לבלוק
-    function generateUniqueId(block) {
-      if (!block.id) {
-        const uniqueId = 'block-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-        block.id = uniqueId;
-      }
-      return block.id;
-    }
-    
-    // פונקציה להוספת אנימציית התממשקות
-    function addConnectionAnimation(sourceBlock, targetBlock) {
-      // הוספת אפקט הבהוב לשני הבלוקים
-      sourceBlock.classList.add('connection-animation');
-      targetBlock.classList.add('connection-animation');
-      
-      // הסרת האפקט אחרי שניה
-      setTimeout(() => {
-        sourceBlock.classList.remove('connection-animation');
-        targetBlock.classList.remove('connection-animation');
-      }, 1000);
-    }
-    
     // מאזין לכפתור "נקה הכל"
     const clearAllButton = document.getElementById('clear-all');
     if (clearAllButton) {
@@ -506,6 +425,7 @@ document.addEventListener('DOMContentLoaded', function() {
           block.classList.remove('connected-block', 'has-connected-block');
           block.removeAttribute('data-connected-to');
           block.removeAttribute('data-connection-direction');
+          block.style.zIndex = '';
         });
       });
     }
