@@ -173,16 +173,16 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // אם נמצא בלוק קרוב, הדגש אותו
       if (result && result.block) {
+        console.log('נמצא בלוק להצמדה!');
+        
         // שמור את הבלוק המטרה והכיוון
         potentialSnapTarget = result.block;
         snapDirection = result.direction;
         
         // הדגש את שני הבלוקים
         highlightBlockForSnapping(draggedBlock, potentialSnapTarget, snapDirection);
-        
-        // הוסף אפקט מסגרת כחולה וזוהרת לבלוק הנגרר כשהוא מתקרב להצמדה
-        draggedBlock.classList.add('potential-snap');
       } else {
+        console.log('לא נמצא בלוק להצמדה בקרבת מקום');
         // הסר את אפקט ההצמדה כשאין בלוק קרוב
         draggedBlock.classList.remove('potential-snap');
         potentialSnapTarget = null;
@@ -246,6 +246,9 @@ document.addEventListener('DOMContentLoaded', function() {
           minDistance = distance;
           closestBlock = block;
           bestDirection = direction;
+          
+          // רישום למטרות דיבוג
+          console.log('מצאנו בלוק קרוב במרחק:', distance, 'בכיוון:', direction);
         }
       });
       
@@ -257,6 +260,9 @@ document.addEventListener('DOMContentLoaded', function() {
       // הדגשת הבלוק הנגרר
       if (draggedBlock) {
         draggedBlock.classList.add('snap-source');
+        // הוספת קלאס ההילה בכל מקרה שיש אפשרות להצמדה
+        draggedBlock.classList.add('potential-snap');
+        console.log('הוספת potential-snap לבלוק הנגרר');
       }
       
       // הדגשת בלוק המטרה
@@ -390,14 +396,29 @@ document.addEventListener('DOMContentLoaded', function() {
           /* כל האפקטים יופיעו רק בזמן התקרבות להצמדה */
         }
         
-        /* אפקט הילה ומסגרת כחולה כשבלוק קרוב להצמדה */
+        /* אפקט הילה ומסגרת כחולה כשבלוק קרוב להצמדה - סגנון חזק יותר */
         .potential-snap .scratch-block {
-          box-shadow: 0 0 12px 3px rgba(64, 153, 255, 0.7) !important;
-          outline: 2px solid rgba(64, 153, 255, 0.8) !important;
+          box-shadow: 0 0 15px 5px rgba(64, 153, 255, 0.8) !important;
+          outline: 3px solid rgba(64, 153, 255, 0.9) !important;
           outline-offset: 2px;
-          z-index: 1000 !important;
-          transform: scale(1.02);
-          transition: all 0.2s ease-out;
+          z-index: 1050 !important;
+          transform: scale(1.03);
+          transition: all 0.15s ease-out;
+          position: relative;
+        }
+        
+        /* שכבה מעל לוודא שההילה מופיעה */
+        .potential-snap .scratch-block::after {
+          content: '';
+          position: absolute;
+          top: -3px;
+          left: -3px;
+          right: -3px; 
+          bottom: -3px;
+          border: 2px dashed rgba(64, 153, 255, 0.9);
+          border-radius: 5px;
+          pointer-events: none;
+          z-index: 1100;
         }
         
         /* אנימציית הצמדה */
