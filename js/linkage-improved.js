@@ -1,17 +1,14 @@
-// קוד גרירת בלוקים פשוט עם הצמדה
+// קוד גרירת בלוקים עם הצמדה פשוטה ומדוייקת
 document.addEventListener('DOMContentLoaded', function() {
   console.log('טוען מערכת גרירת בלוקים בסיסית...');
   
   // מחכה שהדף יטען לגמרי כולל הסקריפטים האחרים
   setTimeout(function() {
-    setupBlockSystem();
+    setupDragging();
   }, 1000);
   
-  function setupBlockSystem() {
-    console.log('מפעיל מערכת גרירה והצמדה...');
-    
-    // קבועים
-    const PROXIMITY_THRESHOLD = 20; // מרחק בפיקסלים להופעת ההילה וההצמדה
+  function setupDragging() {
+    console.log('מפעיל מערכת גרירה בסיסית...');
     
     // איתור אזור התכנות
     const programmingArea = document.getElementById('program-blocks');
@@ -22,251 +19,256 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // משתנים גלובליים
     let currentDraggedBlock = null;
-    let isNearOtherBlock = false;
-    let nearbyBlock = null;
+    let snapCandidate = null;
+    let showingHighlight = false;
+    
+    // הגדרת סף קרבה להצמדה (בפיקסלים)
+    const SNAP_THRESHOLD = 20;
     
     // הוספת סגנונות CSS
     addStyles();
     
-    // ----- מאזיני אירועים -----
-    
-    // 1. התחלת גרירה
+    // מאזין לתחילת גרירה
     programmingArea.addEventListener('dragstart', function(e) {
       if (e.target.classList.contains('block-container')) {
         // שמירת הבלוק הנגרר
         currentDraggedBlock = e.target;
         
-        // הסתרת רוח רפאים של גרירה
+        // ביטול רוח רפאים
         const img = new Image();
         img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
         e.dataTransfer.setDragImage(img, 0, 0);
         
-        // סימון בלוק בגרירה
+        // סימון הבלוק
         e.target.classList.add('dragging');
         
-        // מיקום מקורי
-        e.target.dataset.originalLeft = e.target.style.left || '';
-        e.target.dataset.originalTop = e.target.style.top || '';
-        
-        console.log('התחלת גרירה של בלוק:', e.target.id || 'בלי מזהה');
+        console.log('התחלת גרירה:', e.target.id || 'בלוק ללא מזהה');
       }
     });
     
-    // 2. סיום גרירה
+    // מאזין לסיום גרירה
     programmingArea.addEventListener('dragend', function(e) {
       if (e.target.classList.contains('block-container')) {
-        console.log('סיום גרירה', isNearOtherBlock ? 'ליד בלוק אחר' : 'לא ליד בלוק אחר');
-        
-        // הסרת סימון גרירה
+        // הסרת סימון
         e.target.classList.remove('dragging');
         
-        // ביצוע הצמדה אם יש בלוק קרוב
-        if (isNearOtherBlock && nearbyBlock) {
-          snapBlocks(e.target, nearbyBlock);
+        // אם יש מועמד להצמדה ומוצגת הילה
+        if (snapCandidate && showingHighlight) {
+          // בצע הצמדה
+          snapBlocks(e.target, snapCandidate);
+          console.log('ביצוע הצמדה לאחר זיהוי קירבה');
         }
         
         // ניקוי הילה
-        removeHighlight();
+        clearHighlights();
         
-        // איפוס משתנים
+        // ניקוי משתנים
         currentDraggedBlock = null;
-        isNearOtherBlock = false;
-        nearbyBlock = null;
+        snapCandidate = null;
+        showingHighlight = false;
       }
     });
     
-    // 3. גרירה מעל האזור
+    // מאזין לגרירה מעל האזור
     programmingArea.addEventListener('dragover', function(e) {
       if (currentDraggedBlock) {
-        e.preventDefault(); // חשוב!
-        
-        // עדכון מיקום הבלוק הנגרר
+        e.preventDefault();
+        // עדכון מיקום
         updateBlockPosition(e);
         
-        // בדיקה האם קרוב לבלוק אחר
-        checkNearbyBlocks();
+        // בדיקת קירבה לבלוקים אחרים
+        checkForProximity();
       }
     });
-    
-    // 4. מעבר עכבר
-    programmingArea.addEventListener('mousemove', function(e) {
-      if (currentDraggedBlock && currentDraggedBlock.classList.contains('dragging')) {
-        updateBlockPosition(e);
-      }
-    });
-    
-    // 5. שחרור בלוק
-    programmingArea.addEventListener('drop', function(e) {
-      e.preventDefault();
-      console.log('שחרור בלוק');
-    });
-    
-    // ----- פונקציות עזר -----
     
     // עדכון מיקום הבלוק בזמן גרירה
     function updateBlockPosition(e) {
       if (!currentDraggedBlock) return;
       
-      const programRect = programmingArea.getBoundingClientRect();
+      const rect = programmingArea.getBoundingClientRect();
       const blockRect = currentDraggedBlock.getBoundingClientRect();
       
-      // מיקום במרכז העכבר
-      const halfWidth = blockRect.width / 2;
-      const halfHeight = blockRect.height / 2;
+      // מיקום במרכז הסמן
+      let left = e.clientX - rect.left - (blockRect.width / 2);
+      let top = e.clientY - rect.top - (blockRect.height / 2);
       
-      if (e.clientX > 0 && e.clientY > 0) {
-        currentDraggedBlock.style.position = 'absolute';
-        currentDraggedBlock.style.left = (e.clientX - programRect.left - halfWidth) + 'px';
-        currentDraggedBlock.style.top = (e.clientY - programRect.top - halfHeight) + 'px';
-      }
+      // וידוא שהבלוק לא יוצא מגבולות האזור
+      left = Math.max(0, Math.min(left, rect.width - blockRect.width));
+      top = Math.max(0, Math.min(top, rect.height - blockRect.height));
+      
+      // עדכון מיקום
+      currentDraggedBlock.style.position = 'absolute';
+      currentDraggedBlock.style.left = left + 'px';
+      currentDraggedBlock.style.top = top + 'px';
     }
     
-    // בדיקה אם יש בלוק קרוב
-    function checkNearbyBlocks() {
+    // בדיקת קירבה לבלוקים אחרים
+    function checkForProximity() {
       if (!currentDraggedBlock) return;
       
-      // נקה הילה קודמת
-      removeHighlight();
-      isNearOtherBlock = false;
-      nearbyBlock = null;
+      // ניקוי הילה קודמת
+      clearHighlights();
+      snapCandidate = null;
+      showingHighlight = false;
       
-      // קבל כל הבלוקים
-      const blocks = programmingArea.querySelectorAll('.block-container');
-      if (blocks.length < 2) return;
-      
+      // מיקום הבלוק הנגרר
       const draggedRect = currentDraggedBlock.getBoundingClientRect();
       
-      // עבור כל בלוק
-      blocks.forEach(block => {
-        // דלג על הבלוק הנגרר
-        if (block === currentDraggedBlock) return;
+      // קבלת כל הבלוקים באזור
+      const blocks = programmingArea.querySelectorAll('.block-container');
+      
+      // מעבר על כל הבלוקים
+      for (let block of blocks) {
+        // דלג על הבלוק הנגרר עצמו
+        if (block === currentDraggedBlock) continue;
         
         const blockRect = block.getBoundingClientRect();
         
-        // בדיקת קרבה פשוטה - הפער בין הבלוקים
-        let horizontalGap = 999; // ערך גדול כברירת מחדל
+        // בדיקת מרחק אופקי
+        let horizontalDistance = 9999; // ערך גדול כברירת מחדל
+        let isLeftToRight = false;
         
-        // הבלוק הנגרר משמאל לבלוק האחר
+        // המקור משמאל ליעד
         if (draggedRect.right < blockRect.left) {
-          horizontalGap = blockRect.left - draggedRect.right;
-        } 
-        // הבלוק הנגרר מימין לבלוק האחר
+          horizontalDistance = blockRect.left - draggedRect.right;
+          isLeftToRight = true;
+        }
+        // המקור מימין ליעד
         else if (draggedRect.left > blockRect.right) {
-          horizontalGap = draggedRect.left - blockRect.right;
-        }
-        // חפיפה (לא צריך לבדוק)
-        else {
-          horizontalGap = 0;
+          horizontalDistance = draggedRect.left - blockRect.right;
+          isLeftToRight = false;
         }
         
-        // האם באותו גובה בערך
-        const verticalMatch = Math.abs(draggedRect.top - blockRect.top) < 30;
+        // בדיקת יישור אנכי - האם הבלוקים באותו גובה בערך
+        let verticalAlignment = Math.abs(draggedRect.top - blockRect.top) < 20;
         
-        // אם מספיק קרוב והגובה מתאים
-        if (horizontalGap <= PROXIMITY_THRESHOLD && verticalMatch) {
-          isNearOtherBlock = true;
-          nearbyBlock = block;
+        // אם המרחק קטן מסף ההצמדה והבלוקים מיושרים אנכית
+        if (horizontalDistance < SNAP_THRESHOLD && verticalAlignment) {
+          // שמירת המועמד להצמדה וכיוון ההצמדה
+          snapCandidate = block;
+          snapCandidate.dataset.snapDirection = isLeftToRight ? 'left-to-right' : 'right-to-left';
           
-          // הוסף הילה
-          addHighlight(currentDraggedBlock, block);
-          return; // נמצא בלוק קרוב, אפשר לצאת מהלולאה
+          // הצגת הילה
+          showHighlight(currentDraggedBlock, snapCandidate);
+          showingHighlight = true;
+          
+          // נמצא בלוק להצמדה, אין צורך להמשיך
+          console.log('נמצא בלוק להצמדה במרחק', horizontalDistance, 'פיקסלים, כיוון:', 
+                     isLeftToRight ? 'משמאל לימין' : 'מימין לשמאל');
+          break;
         }
-      });
+      }
     }
     
-    // פונקציה להוספת הילה לבלוקים קרובים
-    function addHighlight(draggedBlock, targetBlock) {
-      draggedBlock.classList.add('highlight-source');
-      targetBlock.classList.add('highlight-target');
+    // הצגת הילה
+    function showHighlight(sourceBlock, targetBlock) {
+      sourceBlock.classList.add('snap-highlight');
+      targetBlock.classList.add('snap-highlight');
     }
     
-    // הסרת הילה מכל הבלוקים
-    function removeHighlight() {
-      const highlighted = programmingArea.querySelectorAll('.highlight-source, .highlight-target');
-      highlighted.forEach(block => {
-        block.classList.remove('highlight-source', 'highlight-target');
-      });
+    // ניקוי הילות
+    function clearHighlights() {
+      const highlighted = document.querySelectorAll('.snap-highlight');
+      highlighted.forEach(el => el.classList.remove('snap-highlight'));
     }
     
-    // הצמדת בלוקים
+    // ביצוע הצמדה של בלוקים
     function snapBlocks(sourceBlock, targetBlock) {
+      // קבלת נתוני המיקום של הבלוקים
       const sourceRect = sourceBlock.getBoundingClientRect();
       const targetRect = targetBlock.getBoundingClientRect();
-      const programRect = programmingArea.getBoundingClientRect();
+      const areaRect = programmingArea.getBoundingClientRect();
       
+      // קבלת כיוון ההצמדה
+      const direction = targetBlock.dataset.snapDirection || 'left-to-right';
+      
+      // חישוב המיקום החדש
       let newLeft, newTop;
       
-      // קביעת כיוון הצמדה
-      const isSourceLeftOfTarget = sourceRect.left < targetRect.left;
-      
-      if (isSourceLeftOfTarget) {
-        // המקור משמאל ליעד - הצמד את המקור משמאל ליעד
-        newLeft = targetRect.left - sourceRect.width - programRect.left;
+      if (direction === 'left-to-right') {
+        // המקור משמאל ליעד - צד ימין של המקור צמוד לצד שמאל של היעד
+        newLeft = targetRect.left - sourceRect.width - areaRect.left;
       } else {
-        // המקור מימין ליעד - הצמד את המקור מימין ליעד
-        newLeft = targetRect.right - programRect.left;
+        // המקור מימין ליעד - צד שמאל של המקור צמוד לצד ימין של היעד
+        newLeft = targetRect.right - areaRect.left;
       }
       
-      // שמור על אותו גובה
-      newTop = targetRect.top - programRect.top;
+      // שמירה על אותו גובה
+      newTop = targetRect.top - areaRect.top;
       
-      // עדכן מיקום
+      // עדכון מיקום הבלוק
       sourceBlock.style.position = 'absolute';
       sourceBlock.style.left = newLeft + 'px';
       sourceBlock.style.top = newTop + 'px';
       
-      console.log('הצמדה בוצעה!', isSourceLeftOfTarget ? 'המקור משמאל ליעד' : 'המקור מימין ליעד');
+      // הוספת סימון לבלוקים המחוברים
+      sourceBlock.classList.add('snapped');
+      targetBlock.classList.add('snapped');
       
-      // הוסף סימון חיבור
-      sourceBlock.classList.add('connected');
-      targetBlock.classList.add('connected');
+      // שמירת מידע על החיבור
+      sourceBlock.dataset.snappedTo = targetBlock.id || generateId(targetBlock);
+      sourceBlock.dataset.snapDirection = direction;
+      
+      console.log('בוצעה הצמדה בכיוון:', direction);
+    }
+    
+    // יצירת מזהה ייחודי לבלוק אם אין לו
+    function generateId(block) {
+      if (!block.id) {
+        block.id = 'block-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+      }
+      return block.id;
     }
     
     // הוספת סגנונות CSS
     function addStyles() {
       const style = document.createElement('style');
       style.textContent = `
-        /* סגנון בלוק בגרירה */
-        .block-container.dragging {
-          opacity: 0.8;
+        /* סגנון בסיסי */
+        .block-container {
+          position: absolute;
+          cursor: pointer;
+          transition: box-shadow 0.2s;
         }
         
-        /* הילה לבלוק מקור */
-        .highlight-source {
-          outline: 2px dashed #0066cc;
+        /* הילת הצמדה */
+        .snap-highlight {
+          outline: 2px dashed #0066cc !important;
           background-color: rgba(255, 255, 0, 0.3) !important;
+          box-shadow: 0 0 10px rgba(255, 255, 0, 0.5) !important;
         }
         
-        /* הילה לבלוק יעד */
-        .highlight-target {
-          outline: 2px dashed #0066cc;
-          background-color: rgba(255, 255, 0, 0.3) !important;
-        }
-        
-        /* סגנון לבלוקים מחוברים */
-        .connected {
+        /* סגנון לבלוקים מוצמדים */
+        .snapped {
           box-shadow: 0 0 5px rgba(0, 102, 204, 0.3);
         }
       `;
       document.head.appendChild(style);
     }
     
-    // מאזין לכפתור "נקה הכל"
+    // מאזין לנפילת בלוק
+    programmingArea.addEventListener('drop', function(e) {
+      e.preventDefault();
+    });
+    
+    // מאזין לניקוי הכל
     const clearAllButton = document.getElementById('clear-all');
     if (clearAllButton) {
       clearAllButton.addEventListener('click', function() {
         // ניקוי משתנים
         currentDraggedBlock = null;
-        isNearOtherBlock = false;
-        nearbyBlock = null;
+        snapCandidate = null;
+        showingHighlight = false;
         
-        // הסרת הילות
-        removeHighlight();
+        // ניקוי הילות
+        clearHighlights();
         
-        // הסרת סימוני חיבור
-        const connectedBlocks = programmingArea.querySelectorAll('.connected');
-        connectedBlocks.forEach(block => {
-          block.classList.remove('connected');
+        // ניקוי סימוני הצמדה
+        const snapped = document.querySelectorAll('.snapped');
+        snapped.forEach(block => {
+          block.classList.remove('snapped');
+          block.removeAttribute('data-snapped-to');
+          block.removeAttribute('data-snap-direction');
         });
       });
     }
