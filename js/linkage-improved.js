@@ -339,6 +339,27 @@ document.addEventListener('DOMContentLoaded', () => {
         clone.style.opacity = '0.9';
         clone.style.pointerEvents = 'none'; // So it doesn't interfere with drop targets
         
+        // Make sure the scratch-block inside maintains its styling
+        const scratchBlock = clone.querySelector('.scratch-block');
+        if (scratchBlock) {
+            // Preserve the styles from the original block
+            const originalBlock = blockContainer.querySelector('.scratch-block');
+            if (originalBlock) {
+                // Copy computed styles to ensure visual consistency
+                const computedStyle = window.getComputedStyle(originalBlock);
+                scratchBlock.style.backgroundColor = computedStyle.backgroundColor;
+                scratchBlock.style.width = computedStyle.width;
+                scratchBlock.style.height = computedStyle.height;
+                scratchBlock.style.borderRadius = computedStyle.borderRadius;
+                scratchBlock.style.boxShadow = computedStyle.boxShadow;
+                
+                // Ensure the block maintains its visual structure
+                scratchBlock.style.display = 'flex';
+                scratchBlock.style.justifyContent = 'center';
+                scratchBlock.style.alignItems = 'center';
+            }
+        }
+        
         // Copy the original block's data attributes
         Object.keys(blockContainer.dataset).forEach(key => {
             clone.dataset[key] = blockContainer.dataset[key];
@@ -400,7 +421,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 const category = blockContainer.dataset.category;
                 
                 // Find the block definition
-                const blockDefinition = window.blocks[category]?.find(b => b.type === type);
+                const blockDefinition = window.blocks?.[category]?.find(b => b.type === type);
+                
+                // If we can't find the block definition, try to create a clone
+                // of the original block as a fallback
+                if (!blockDefinition && blockContainer) {
+                    console.log('Block definition not found, creating a direct clone');
+                    const newBlock = blockContainer.cloneNode(true);
+                    programmingArea.appendChild(newBlock);
+                    
+                    // Position at the drop point
+                    newBlock.style.position = 'absolute';
+                    newBlock.style.left = (upEvent.clientX - areaRect.left - dragOffsetX) + 'px';
+                    newBlock.style.top = (upEvent.clientY - areaRect.top - dragOffsetY) + 'px';
+                    
+                    // Set up dragging for the new block within the programming area
+                    setupProgrammingAreaDragging(newBlock);
+                    return;
+                }
                 
                 if (blockDefinition) {
                     // Create new block element from window.blocks data
@@ -414,6 +452,22 @@ document.addEventListener('DOMContentLoaded', () => {
                         const scratchBlock = document.createElement("div");
                         scratchBlock.classList.add("scratch-block");
                         scratchBlock.style.backgroundColor = block.color;
+                        
+                        // Add special handling for repeat blocks
+                        if (block.type === 'repeat') {
+                            scratchBlock.style.width = '140px';
+                            scratchBlock.style.borderRadius = '10px';
+                            // Add specific styling for repeat blocks based on CSS
+                            scratchBlock.style.position = 'relative';
+                            scratchBlock.style.height = '80px';
+                        }
+                        
+                        // Add special handling for end blocks
+                        if (category === 'end') {
+                            scratchBlock.style.width = '67px';
+                            scratchBlock.style.borderRadius = '10px 30px 30px 10px';
+                            scratchBlock.style.height = '80px';
+                        }
                         
                         const iconImg = document.createElement("img");
                         iconImg.src = block.icon;
