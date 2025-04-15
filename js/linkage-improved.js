@@ -220,19 +220,26 @@ document.addEventListener('DOMContentLoaded', function() {
         const sourceCenterX = sourceRect.left + sourceRect.width / 2;
         const targetCenterX = targetRect.left + targetRect.width / 2;
         
+        // גודל הפין והשקע - מרווח להצמדה מדויקת
+        const PIN_SIZE = 5; // הפין בולט 5 פיקסלים
+        
         if (sourceCenterX < targetCenterX) {
-          // המקור משמאל ליעד - החלק הימני שלו יתחבר לחלק השמאלי של היעד
+          // המקור משמאל ליעד - החלק הימני (פין) מתחבר לחלק השמאלי (שקע)
           direction = 'left-to-right';
-          newLeft = targetRect.left - sourceRect.width - programRect.left;
+          
+          // הפאות כמעט צמודות - הפין (צד ימין של המקור) נכנס לשקע (צד שמאל של היעד)
+          newLeft = targetRect.left - sourceRect.width + PIN_SIZE - programRect.left;
           newTop = targetRect.top - programRect.top;
           
           // הפין בשכבה עליונה
           sourceBlock.style.zIndex = "110";
           targetBlock.style.zIndex = "100";
         } else {
-          // המקור מימין ליעד - החלק השמאלי שלו יתחבר לחלק הימני של היעד
+          // המקור מימין ליעד - החלק השמאלי (שקע) מתחבר לחלק הימני (פין)
           direction = 'right-to-left';
-          newLeft = targetRect.right - programRect.left;
+          
+          // הפאות כמעט צמודות - השקע (צד שמאל של המקור) מקבל את הפין (צד ימין של היעד)
+          newLeft = targetRect.right - PIN_SIZE - programRect.left;
           newTop = targetRect.top - programRect.top;
           
           // הפין בשכבה עליונה
@@ -334,14 +341,46 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         /* סגנונות לבלוקים מחוברים - פין ושקע */
+        /* בלוק שמתחבר משמאל לימין (הפין בצד ימין) */
         .connected-block[data-connection-direction="left-to-right"] {
-          /* בלוק שמתחבר משמאל לימין - הפין שלו בצד ימין */
-          margin-right: -5px; /* הפין בולט */
+          position: relative;
         }
         
+        .connected-block[data-connection-direction="left-to-right"]::after {
+          content: '';
+          position: absolute;
+          width: 8px;
+          height: 8px;
+          background-color: #0066cc;
+          border-radius: 4px;
+          right: -4px;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 120;
+        }
+        
+        /* בלוק שמתחבר מימין לשמאל (השקע בצד שמאל) */
         .connected-block[data-connection-direction="right-to-left"] {
-          /* בלוק שמתחבר מימין לשמאל - השקע שלו בצד שמאל */
-          margin-left: -5px; /* השקע שקוע */
+          position: relative;
+        }
+        
+        .connected-block[data-connection-direction="right-to-left"]::before {
+          content: '';
+          position: absolute;
+          width: 8px;
+          height: 8px;
+          background-color: #f5f5f5;
+          border: 1px solid #cccccc;
+          border-radius: 4px;
+          left: -4px;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 110;
+        }
+        
+        /* וגם בלוק שיש לו חיבור */
+        .has-connected-block {
+          position: relative;
         }
         
         /* אנימציית התממשקות */
