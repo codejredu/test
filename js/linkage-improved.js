@@ -51,6 +51,32 @@ document.addEventListener('DOMContentLoaded', () => {
             border-radius: 0 9px 9px 0 !important;
             z-index: 2 !important;
         }
+        
+        /* Prevent all dragging artifacts */
+        * {
+            -webkit-user-drag: none !important;
+            user-drag: none !important;
+            -moz-user-drag: none !important;
+        }
+        
+        img {
+            pointer-events: none !important;
+        }
+        
+        .block-container,
+        .scratch-block {
+            -webkit-user-select: none !important;
+            user-select: none !important;
+        }
+        
+        /* Cursor styles */
+        .block-container {
+            cursor: grab !important;
+        }
+        
+        .block-container.dragging {
+            cursor: grabbing !important;
+        }
     `;
     document.head.appendChild(styleSheet);
 
@@ -71,6 +97,21 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Required elements not found. Linkage functionality disabled.');
         return;
     }
+    
+    // Disable ALL default drag and drop behavior globally
+    document.addEventListener('dragstart', (e) => {
+        e.preventDefault();
+        return false;
+    }, { capture: true });
+    
+    // Disable image dragging specifically
+    document.querySelectorAll('img').forEach(img => {
+        img.draggable = false;
+        img.addEventListener('dragstart', (e) => {
+            e.preventDefault();
+            return false;
+        });
+    });
     
     // ========================================================================
     // Helper Functions
@@ -412,13 +453,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const blockContainer = e.target.closest('.block-container');
         if (!blockContainer) return;
         
-        // Prevent normal drag behavior
+        // CRITICAL: Prevent default behaviors that might cause ghost images
         e.preventDefault();
         
-        // Prevent the default dragstart behavior
-        blockContainer.addEventListener('dragstart', function(evt) {
+        // Set draggable to false explicitly on the element
+        blockContainer.draggable = false;
+        
+        // Prevent all default dragstart behaviors
+        const preventDrag = function(evt) {
             evt.preventDefault();
-        }, { once: true });
+            return false;
+        };
+        
+        // Add listeners to prevent drag in different ways (for different browsers)
+        blockContainer.addEventListener('dragstart', preventDrag, { capture: true });
+        document.addEventListener('dragstart', preventDrag, { capture: true, once: true });
         
         // Track initial mouse position relative to the block
         const rect = blockContainer.getBoundingClientRect();
@@ -473,6 +522,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const handlePaletteMouseMove = function(moveEvent) {
             if (!isDragging) return;
             
+            // CRITICAL: Prevent default behaviors to avoid ghost images
+            moveEvent.preventDefault();
+            
             // Move the clone
             draggedBlock.style.left = (moveEvent.clientX - dragOffsetX) + 'px';
             draggedBlock.style.top = (moveEvent.clientY - dragOffsetY) + 'px';
@@ -488,10 +540,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Visual feedback
             draggedBlock.style.opacity = isOverProgrammingArea ? '1.0' : '0.7';
-            
-            // Prevent any default browser drag behavior
-            moveEvent.preventDefault();
-            return false;
         };
         
         // Handle the mouse up event
@@ -499,7 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!isDragging) return;
             
             // Clean up event listeners
-            document.removeEventListener('mousemove', handlePaletteMouseMove);
+            document.removeEventListener('mousemove', handlePaletteMouseMove, { passive: false });
             document.removeEventListener('mouseup', handlePaletteMouseUp);
             
             // Check if dropped over programming area
@@ -607,8 +655,8 @@ document.addEventListener('DOMContentLoaded', () => {
             isDragging = false;
         };
         
-        // Set up the event listeners
-        document.addEventListener('mousemove', handlePaletteMouseMove);
+        // Set up the event listeners with passive:false to ensure preventDefault works
+        document.addEventListener('mousemove', handlePaletteMouseMove, { passive: false });
         document.addEventListener('mouseup', handlePaletteMouseUp);
     });
     
@@ -623,19 +671,30 @@ document.addEventListener('DOMContentLoaded', () => {
     function setupProgrammingAreaDragging(block) {
         if (!block) return;
         
-        // Prevent default drag behavior
-        block.addEventListener('dragstart', function(e) {
+        // Explicitly set draggable to false to prevent browser's native drag behavior
+        block.draggable = false;
+        const img = block.querySelector('img');
+        if (img) img.draggable = false;
+        
+        // Completely disable the browser's built-in drag functionality
+        const preventDrag = function(e) {
             e.preventDefault();
             return false;
-        });
+        };
+        
+        block.addEventListener('dragstart', preventDrag, { capture: true });
         
         // Handle mouse down to start dragging
         block.addEventListener('mousedown', function(e) {
             // Skip if not clicking directly on the block
             if (!e.target.closest('.scratch-block')) return;
             
+            // IMPORTANT: Prevent default behaviors
             e.preventDefault();
             e.stopPropagation();
+            
+            // Add dragging class for visual feedback
+            block.classList.add('dragging');
             
             // Track which block is being dragged
             draggedBlock = block;
@@ -654,12 +713,19 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Bring the dragged block to front
             block.style.zIndex = '1000';
+            
+            // Add a one-time global dragstart preventer
+            document.addEventListener('dragstart', preventDrag, { capture: true, once: true });
         });
+    }
     }
     
     // Handle mouse move events for programming area blocks
     document.addEventListener('mousemove', function(e) {
         if (!isDragging || !draggedBlock) return;
+        
+        // CRITICAL: Prevent default behaviors
+        e.preventDefault();
         
         // Skip if the dragged block isn't in the programming area
         if (!programmingArea.contains(draggedBlock)) return;
@@ -694,7 +760,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Highlight the target block
             highlightBlock(closestConnection.target);
         }
-    });
+    }, { passive: false });
     
     // Handle mouse up events for programming area blocks
     document.addEventListener('mouseup', function(e) {
@@ -702,6 +768,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Skip if the dragged block isn't in the programming area
         if (!programmingArea.contains(draggedBlock)) return;
+        
+        // Remove dragging class
+        draggedBlock.classList.remove('dragging');
         
         // Check for connections and snap if close enough
         if (potentialConnections.length > 0) {
