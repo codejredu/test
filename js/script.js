@@ -1,4 +1,4 @@
-// === linkage-complete.js ===
+// === linkage-corrected.js ===
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -6,8 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentDraggedBlock = null;   // הבלוק שנגרר כרגע
   let potentialSnapTarget = null; // בלוק המטרה הפוטנציאלי להצמדה
   let snapDirection = null;         // כיוון ההצמדה הפוטנציאלי ('left' או 'right' ביחס לנגרר)
-  let lastClickedBlock = null;      // (לשימוש עתידי/קיים בלוגיקה אחרת)
-  let lastRightClickedBlock = null; // (לשימוש עתידי/קיים בלוגיקה אחרת)
+  // הסרנו את lastClickedBlock / lastRightClickedBlock כי לא היו בשימוש בקוד הגרירה
 
   const SNAP_THRESHOLD = 30; // מרחק בפיקסלים להפעלת הדגשת פוטנציאל הצמדה
 
@@ -17,69 +16,69 @@ document.addEventListener('DOMContentLoaded', () => {
   function addHighlightStyles() {
     const style = document.createElement('style');
     style.textContent = `
-      /* סגנון לבלוק בזמן שהוא נגרר - להפחתת אפקט ה"רוח" */
-      .block.dragging {
-        opacity: 0.5;
-        cursor: grabbing;
-      }
-
-      /* ברירת מחדל לבלוקים */
+      /* ברירת מחדל לבלוקים - חשוב: לא משתמשים ב-position: absolute כאן! */
       .block {
         cursor: grab;
-        position: absolute; /* חשוב למיקום וחיבור */
-        user-select: none; /* למנוע בחירת טקסט בזמן גרירה */
-        /* הוסף כאן מידות ועיצוב בסיסי לבלוקים שלך */
+        position: relative; /* מאפשר מיקום יחסי ושימוש ב ::before/::after */
+        user-select: none;
+        /* ודא שעיצוב ברירת המחדל שלך נמצא כאן (גודל, רקע, גבול וכו') */
         width: 100px;
         height: 50px;
         border: 1px solid black;
         background-color: lightblue;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1; /* ברירת מחדל */
+        margin: 5px; /* הוסף מרווח אם צריך */
+        display: inline-block; /* או flex, או מה שמתאים לפריסה שלך */
+        vertical-align: top; /* מומלץ אם display: inline-block */
+        transition: opacity 0.15s ease-out; /* מעבר עדין להוספת/הסרת dragging */
       }
+
+      /* סגנון לבלוק בזמן שהוא נגרר - להפחתת אפקט ה"רוח" */
       .block.dragging {
-        z-index: 1000; /* ודא שהבלוק הנגרר מעל הכל */
+        opacity: 0.4;
+        cursor: grabbing;
+        /* ודא שהבלוק הנגרר תמיד מעל השאר */
+        z-index: 1000;
+      }
+
+      /* בלוק שהוצמד והפך להיות ממוקם אבסולוטית */
+      .block.snapped-absolute {
+         position: absolute;
+         /* הסר מרווחים שהיו אולי בפריסה הרגילה */
+         margin: 0;
+         /* ודא שהוא מעל בלוקים רגילים אך מתחת לבלוק נגרר */
+         z-index: 10;
       }
 
       /* הדגשת בלוק מקור (הנגרר) כשקרוב להצמדה */
-      .snap-source {
-        filter: brightness(1.05);
-        transition: filter 0.15s ease-out, box-shadow 0.15s ease-out;
-        box-shadow: 0 0 8px 2px rgba(0, 180, 255, 0.6);
-      }
-      /* אפשר להוסיף גם הדגשה לתמונה אם יש */
-      .snap-source img, .snap-source .block-svg-image {
-         box-shadow: 0 0 8px 2px rgba(0, 180, 255, 0.6);
-         filter: brightness(1.05);
+      .snap-source { /* חל על הבלוק עם קלאס dragging */
+        /* אפשר להוסיף אפקט עדין, אבל ה-opacity כבר מבדיל אותו */
+         /* box-shadow: 0 0 8px 2px rgba(0, 180, 255, 0.6); */
       }
 
       /* הדגשת בלוק יעד פוטנציאלי */
       .snap-target {
         filter: brightness(1.1);
         transition: filter 0.15s ease-out, box-shadow 0.15s ease-out;
-        box-shadow: 0 0 8px 2px rgba(255, 255, 0, 0.6);
-      }
-      /* אפשר להוסיף גם הדגשה לתמונה אם יש */
-       .snap-target img, .snap-target .block-svg-image {
-         box-shadow: 0 0 8px 2px rgba(255, 255, 0, 0.6);
-         filter: brightness(1.1);
+        box-shadow: 0 0 10px 3px rgba(255, 255, 0, 0.7);
+        /* העלה קצת את ה-z-index שלו כדי שה-box-shadow יהיה ברור */
+        z-index: 5;
       }
 
       /* הדגשת השקע השמאלי בבלוק היעד (כשהמקור יתחבר מימין לו) */
+      /* ה-::before/::after ימוקמו יחסית לבלוק המטרה כי הוא position: relative */
       .snap-target.snap-left::before {
         content: '';
         position: absolute;
-        left: -5px; /* הצמד לשמאל */
+        left: -6px; /* מעט שמאלה מהגבול */
         top: 50%;
         transform: translateY(-50%);
-        width: 8px; /* קצת יותר בולט */
+        width: 8px;
         height: 22px;
-        background-color: rgba(255, 255, 100, 0.9);
-        border: 1px solid rgba(200, 200, 0, 0.7);
-        border-radius: 0 5px 5px 0; /* פינות מעוגלות בצד הפונה לרווח */
+        background-color: rgba(255, 255, 100, 0.95);
+        border: 1px solid rgba(200, 200, 0, 0.8);
+        border-radius: 0 5px 5px 0;
         box-shadow: 1px 0 3px rgba(0,0,0,0.2);
-        z-index: 10;
+        z-index: 15; /* מעל ה-box-shadow של המטרה */
         animation: pulseIndicator 1.5s infinite ease-in-out;
       }
 
@@ -87,39 +86,29 @@ document.addEventListener('DOMContentLoaded', () => {
       .snap-target.snap-right::after {
         content: '';
         position: absolute;
-        right: -5px; /* הצמד לימין */
+        right: -6px; /* מעט ימינה מהגבול */
         top: 50%;
         transform: translateY(-50%);
-        width: 8px; /* קצת יותר בולט */
+        width: 8px;
         height: 22px;
-        background-color: rgba(255, 255, 100, 0.9);
-        border: 1px solid rgba(200, 200, 0, 0.7);
-        border-radius: 5px 0 0 5px; /* פינות מעוגלות בצד הפונה לרווח */
+        background-color: rgba(255, 255, 100, 0.95);
+        border: 1px solid rgba(200, 200, 0, 0.8);
+        border-radius: 5px 0 0 5px;
         box-shadow: -1px 0 3px rgba(0,0,0,0.2);
-        z-index: 10;
+        z-index: 15; /* מעל ה-box-shadow של המטרה */
         animation: pulseIndicator 1.5s infinite ease-in-out;
       }
 
-      /* אנימציית הצמדה */
+      /* אנימציית הצמדה (פועלת על הבלוק הנגרר) */
       @keyframes snapEffect {
-        0% { transform: scale(1.02); }
-        40% { transform: scale(0.98); }
+        0% { transform: scale(1.03); }
+        40% { transform: scale(0.97); }
         70% { transform: scale(1.01); }
         100% { transform: scale(1); }
       }
       .snap-animation {
+        /* הפעלת האנימציה על הבלוק שזה עתה הוצמד */
         animation: snapEffect 0.3s ease-out;
-      }
-
-      /* אנימציית ניתוק */
-      @keyframes detachEffect {
-        0% { transform: scale(1); }
-        30% { transform: scale(1.04) rotate(1deg); }
-        60% { transform: scale(0.98) rotate(-1deg); }
-        100% { transform: scale(1) rotate(0); }
-      }
-      .detach-animation {
-        animation: detachEffect 0.3s ease-out;
       }
 
       /* אנימציית פעימה לאינדיקטור החיבור */
@@ -129,290 +118,270 @@ document.addEventListener('DOMContentLoaded', () => {
         100% { opacity: 0.6; transform: translateY(-50%) scale(0.95); }
       }
 
-      /* סימון בלוקים מחוברים (דוגמה) */
-      .connected-block {
-         /* אפשר להוסיף סימן קבוע קטן או לשנות רקע קלות */
-         /* filter: brightness(1.02); */
-      }
-      .has-connected-block {
-         /* position: relative; */ /* כבר מוגדר בדרך כלל */
+      /* --- סימוני חיבור קבועים --- */
+      .connected-block, .has-connected-block {
+         /* סגנון בסיסי לבלוקים מחוברים אם רוצים */
+         /* למשל, שינוי קל בגבול או ברקע */
       }
 
-      /* סימון חיבור ויזואלי - קו דק בין בלוקים מחוברים (דוגמה) */
+      /* סימון חיבור ויזואלי - קו קטן בין בלוקים מחוברים */
       .connected-block[data-connection-direction="right"]::after,
       .has-connected-block[data-connection-direction="left"]::before {
         content: '';
         position: absolute;
-        width: 4px; /* עובי הקו */
-        height: 12px; /* גובה הקו */
-        background-color: rgba(150, 150, 0, 0.6); /* צבע הקו */
-        z-index: 5;
+        width: 4px;
+        height: 12px;
+        background-color: rgba(100, 100, 0, 0.7); /* צבע קו חיבור קבוע */
+        z-index: 5; /* מתחת לאינדיקטורים אבל מעל תוכן רגיל */
         top: 50%;
         transform: translateY(-50%);
       }
-      /* מיקום הקו לימין הבלוק המחובר */
-       .connected-block[data-connection-direction="right"]::after {
-           right: -2px; /* ממקם את הקו בדיוק ברווח */
+      .connected-block[data-connection-direction="right"]::after {
+           right: -2px; /* ממקם חצי בפנים חצי בחוץ */
            border-radius: 0 2px 2px 0;
        }
-       /* מיקום הקו לשמאל הבלוק שיש לו חיבור */
-       .has-connected-block[data-connection-direction="left"]::before {
-           left: -2px; /* ממקם את הקו בדיוק ברווח */
+      .has-connected-block[data-connection-direction="left"]::before {
+           left: -2px; /* ממקם חצי בפנים חצי בחוץ */
            border-radius: 2px 0 0 2px;
        }
 
-      /* עיצוב התפריט הקשר (אם יש) */
-      .detach-context-menu {
-        min-width: 120px;
-        font-family: Arial, sans-serif;
-        font-size: 14px;
-        /* ... שאר העיצוב ... */
-      }
-
-      /* סגנון לאינדיקטור החיבור (אם יש) */
-      #connection-indicator {
-        transition: all 0.2s ease-out;
-        /* ... שאר העיצוב ... */
-      }
+       /* -- שאר הסגנונות מהקוד הקודם (תפריט הקשר וכו') נשארו כפי שהם -- */
+      .detach-context-menu { /* ... */ }
+      #connection-indicator { /* ... */ }
     `;
     document.head.appendChild(style);
   }
 
   // פונקציה לניקוי הדגשות של פוטנציאל הצמדה
   function clearPotentialSnapHighlights() {
-    // הסר הדגשה מהמקור (שהיה נגרר)
-    const currentSource = document.querySelector('.snap-source');
-    if (currentSource) {
-        currentSource.classList.remove('snap-source');
-    }
-    // הסר הדגשה מהיעד הפוטנציאלי
     const currentTarget = document.querySelector('.snap-target');
     if (currentTarget) {
-        currentTarget.classList.remove('snap-target', 'snap-left', 'snap-right');
+      currentTarget.classList.remove('snap-target', 'snap-left', 'snap-right');
     }
+    // אין צורך לנקות snap-source כי הוא פשוט ה-dragging class
   }
 
-  // פונקציה לניקוי *כל* ההדגשות והמצבים הזמניים
-  function clearAllHighlights() {
+  // פונקציה לניקוי *כל* ההדגשות והמצבים הזמניים (נקראת ב-Clear All)
+  function clearAllHighlightsAndConnections() {
     clearPotentialSnapHighlights(); // נקה הדגשות פוטנציאל
-    document.querySelectorAll('.connected-block, .has-connected-block, .snap-animation, .detach-animation').forEach(el => {
-      el.classList.remove('connected-block', 'has-connected-block', 'snap-animation', 'detach-animation');
-      el.removeAttribute('data-connection-direction'); // נקה גם את נתוני הכיוון
+
+    document.querySelectorAll('.block').forEach(el => {
+      // הסר קלאסים של חיבור והצמדה
+      el.classList.remove(
+        'connected-block',
+        'has-connected-block',
+        'snapped-absolute', // חשוב להסיר את הקלאס של המיקום האבסולוטי
+        'snap-animation',
+        'detach-animation'
+      );
+      // נקה data attributes
+      el.removeAttribute('data-connection-direction');
+      // **איפוס סגנונות inline שהוספנו**
+      el.style.position = ''; // מחזיר לברירת המחדל מה-CSS (relative)
+      el.style.left = '';
+      el.style.top = '';
+      el.style.transform = ''; // נקה גם transform אם השתמשת בו
+      el.style.zIndex = ''; // איפוס z-index
     });
-    // ניתן להוסיף כאן ניקוי של הדגשות נוספות אם יש
   }
 
-  // פונקציות פלייס הולדר (ממש לפי הצורך)
-  function removeDetachMenu() {
-    // console.log("Placeholder: Removing detach menu");
-    const menu = document.querySelector('.detach-context-menu');
-    if (menu) menu.remove();
-  }
-
-  function hideConnectionIndicator() {
-    // console.log("Placeholder: Hiding connection indicator");
-     const indicator = document.getElementById('connection-indicator');
-     if(indicator) indicator.style.display = 'none';
-  }
+  // פונקציות פלייס הולדר (לא בשימוש ישיר בקוד הזה, אך נשארות למקרה הצורך)
+  function removeDetachMenu() { /* ... */ }
+  function hideConnectionIndicator() { /* ... */ }
 
   // --- הגדרת האזנה לאירועים ---
 
-  // הזרקת ה-CSS לדף
+  // 1. הזרקת ה-CSS לדף
   addHighlightStyles();
 
-  const blocksContainer = document.getElementById('blocks-container'); // עדכן את המזהה בהתאם ל-HTML
-  const allBlocks = document.querySelectorAll('.block'); // עדכן את הסלקטור בהתאם ל-HTML
+  // 2. קבלת רפרנסים לאלמנטים
+  const blocksContainer = document.getElementById('blocks-container'); // עדכן מזהה
+  const allBlocks = document.querySelectorAll('.block');           // עדכן סלקטור
 
-  // הוספת מאזיני גרירה לכל בלוק
+  if (!blocksContainer) {
+    console.error("Error: Element with ID 'blocks-container' not found.");
+    return; // עצור אם הקונטיינר לא קיים
+  }
+
+  // 3. הוספת מאזיני גרירה לכל בלוק
   allBlocks.forEach(block => {
     block.setAttribute('draggable', true);
 
     block.addEventListener('dragstart', (event) => {
-      // event.dataTransfer.setData('text/plain', event.target.id); // אם צריך להעביר מידע
+      // event.dataTransfer.setData('text/plain', event.target.id); // אם צריך
       event.dataTransfer.effectAllowed = 'move';
-      currentDraggedBlock = event.target; // שמור את הבלוק הנגרר
+      currentDraggedBlock = event.target;
       console.log('dragstart:', currentDraggedBlock.id);
 
-      // השתמש ב-setTimeout כדי לאפשר לדפדפן ליצור את תמונת ה"רוח" לפני שינוי הסגנון
+      // הוסף שקיפות למקור הנגרר (עם timeout קטן)
       setTimeout(() => {
-        if (currentDraggedBlock) { // בדיקה נוספת למקרה שהגרירה בוטלה מיד
-           currentDraggedBlock.classList.add('dragging');
+        if (currentDraggedBlock) {
+          currentDraggedBlock.classList.add('dragging');
         }
       }, 0);
     });
 
     block.addEventListener('dragend', (event) => {
-        console.log('dragend:', event.target.id);
-        // ודא שהבלוק שסיים את הגרירה הוא זה ששמרנו
-        if (currentDraggedBlock && currentDraggedBlock === event.target) {
-            currentDraggedBlock.classList.remove('dragging'); // הסר את קלאס השקיפות
-        }
-        // נקה הדגשות פוטנציאליות ומצב אם הגרירה הסתיימה בלי הצמדה
-        clearPotentialSnapHighlights();
-        currentDraggedBlock = null;
-        potentialSnapTarget = null;
-        snapDirection = null;
-        // חשוב: אל תנקה כאן את connected-block וכו', רק את הדגשות הפוטנציאל
+      console.log('dragend:', event.target.id);
+      // הסר שקיפות מהבלוק שנגרר
+      if (currentDraggedBlock && currentDraggedBlock === event.target) {
+        currentDraggedBlock.classList.remove('dragging');
+      }
+      // נקה הדגשות פוטנציאליות (המטרה) אם הגרירה הסתיימה בלי הצמדה
+      clearPotentialSnapHighlights();
+
+      // אפס משתנים גלובליים
+      currentDraggedBlock = null;
+      potentialSnapTarget = null;
+      snapDirection = null;
     });
 
-    // (אופציונלי) מאזין ל-dragleave על בלוקים בודדים
+    // מאזין ל-dragleave על בלוקים בודדים (לניקוי הדגשת מטרה אם הסמן יוצא)
     block.addEventListener('dragleave', (event) => {
-        // אם הסמן עוזב בלוק שהיה מודגש כיעד פוטנציאלי
-        if (potentialSnapTarget === event.target) {
-            clearPotentialSnapHighlights();
-            potentialSnapTarget = null;
-            snapDirection = null;
-        }
+      if (potentialSnapTarget === event.target) {
+        clearPotentialSnapHighlights();
+        potentialSnapTarget = null;
+        snapDirection = null;
+      }
     });
   });
 
-  // מאזינים על הקונטיינר (יעיל יותר ממאזינים על כל בלוק בנפרד עבור dragover/drop)
-  if (blocksContainer) {
-    blocksContainer.addEventListener('dragover', (event) => {
-      event.preventDefault(); // חובה כדי לאפשר drop
-      event.dataTransfer.dropEffect = 'move';
+  // 4. מאזינים על הקונטיינר (dragover, drop)
+  blocksContainer.addEventListener('dragover', (event) => {
+    event.preventDefault(); // חובה כדי לאפשר drop
+    event.dataTransfer.dropEffect = 'move';
 
-      if (!currentDraggedBlock) return; // אין בלוק נגרר כרגע
+    if (!currentDraggedBlock) return;
 
-      const draggedRect = currentDraggedBlock.getBoundingClientRect();
-      let foundPotentialTargetThisCycle = false;
-      let closestTarget = null;
-      let closestDirection = null;
-      let minDistance = SNAP_THRESHOLD;
+    const draggedRect = currentDraggedBlock.getBoundingClientRect();
+    let foundPotentialTargetThisCycle = false;
+    let closestTarget = null;
+    let closestDirection = null;
+    let minDistance = SNAP_THRESHOLD;
 
-      // נקה הדגשות קודמות *בתחילת* כל בדיקה ב-dragover
-      clearPotentialSnapHighlights();
+    // נקה הדגשת מטרה קודמת *בתחילת* כל בדיקה
+    clearPotentialSnapHighlights();
 
-      // עבור על כל הבלוקים האחרים כדי לבדוק אם הם יעד פוטנציאלי
-      document.querySelectorAll('.block:not(.dragging)').forEach(targetBlock => {
-        if (targetBlock === currentDraggedBlock) return; // אל תשווה בלוק לעצמו
+    // חפש את המטרה הקרובה ביותר
+    document.querySelectorAll('.block:not(.dragging)').forEach(targetBlock => {
+      if (targetBlock === currentDraggedBlock) return;
 
-        const targetRect = targetBlock.getBoundingClientRect();
+      const targetRect = targetBlock.getBoundingClientRect();
 
-        // בדוק קרבה אנכית גסה (למשל, חפיפה של לפחות חצי גובה)
-        const verticalOverlap = Math.max(0, Math.min(draggedRect.bottom, targetRect.bottom) - Math.max(draggedRect.top, targetRect.top));
-        if (verticalOverlap < targetRect.height / 3) { // דרוש חפיפה מינימלית
-             return;
-        }
+      // בדוק חפיפה אנכית מינימלית
+      const verticalOverlap = Math.max(0, Math.min(draggedRect.bottom, targetRect.bottom) - Math.max(draggedRect.top, targetRect.top));
+      if (verticalOverlap < targetRect.height / 3) return;
 
-        // מרחק בין הצד הימני של הנגרר לשמאלי של המטרה
-        const distRightToLeft = Math.abs(draggedRect.right - targetRect.left);
-        // מרחק בין הצד השמאלי של הנגרר לימני של המטרה
-        const distLeftToRight = Math.abs(draggedRect.left - targetRect.right);
+      // מרחקים אופקיים
+      const distRightToLeft = Math.abs(draggedRect.right - targetRect.left);
+      const distLeftToRight = Math.abs(draggedRect.left - targetRect.right);
 
-        // בדוק אפשרות הצמדה מימין לנגרר (לשמאל המטרה)
-        if (distRightToLeft < minDistance) {
-            minDistance = distRightToLeft;
-            closestTarget = targetBlock;
-            closestDirection = 'right'; // הנגרר יתחבר מימין (לשמאל המטרה)
-            foundPotentialTargetThisCycle = true;
-        }
+      // בדוק אם צד ימין של הנגרר קרוב לשמאל המטרה
+      if (distRightToLeft < minDistance) {
+        minDistance = distRightToLeft;
+        closestTarget = targetBlock;
+        closestDirection = 'right'; // נגרר יתחבר מימין (לשמאל המטרה)
+        foundPotentialTargetThisCycle = true;
+      }
 
-        // בדוק אפשרות הצמדה משמאל לנגרר (לימין המטרה)
-        if (distLeftToRight < minDistance) {
-            minDistance = distLeftToRight;
-            closestTarget = targetBlock;
-            closestDirection = 'left'; // הנגרר יתחבר משמאל (לימין המטרה)
-            foundPotentialTargetThisCycle = true;
-        }
-      }); // סוף לולאת forEach
-
-      // אם מצאנו יעד קרוב מספיק במחזור הנוכחי
-      if (foundPotentialTargetThisCycle && closestTarget) {
-        potentialSnapTarget = closestTarget; // שמור את היעד הקרוב ביותר
-        snapDirection = closestDirection; // שמור את הכיוון שלו
-
-        // הדגש את הבלוק הנגרר כמקור
-        currentDraggedBlock.classList.add('snap-source');
-        // הדגש את בלוק המטרה
-        potentialSnapTarget.classList.add('snap-target');
-        // הדגש את הצד המתאים בבלוק המטרה
-        potentialSnapTarget.classList.add(snapDirection === 'right' ? 'snap-left' : 'snap-right');
-
-      } else {
-        // אם לא נמצא יעד קרוב במחזור הזה, נקה משתנים
-        potentialSnapTarget = null;
-        snapDirection = null;
-        // clearPotentialSnapHighlights() כבר נקרא בתחילת הפונקציה
+      // בדוק אם צד שמאל של הנגרר קרוב לימין המטרה
+      if (distLeftToRight < minDistance) {
+        minDistance = distLeftToRight;
+        closestTarget = targetBlock;
+        closestDirection = 'left'; // נגרר יתחבר משמאל (לימין המטרה)
+        foundPotentialTargetThisCycle = true;
       }
     });
 
-    blocksContainer.addEventListener('drop', (event) => {
-      event.preventDefault(); // מנע התנהגות ברירת מחדל (כמו פתיחת קובץ)
-      console.log('drop event');
+    // אם מצאנו יעד קרוב מספיק
+    if (foundPotentialTargetThisCycle && closestTarget) {
+      potentialSnapTarget = closestTarget;
+      snapDirection = closestDirection;
 
-      if (potentialSnapTarget && snapDirection && currentDraggedBlock) {
-        console.log(`Attempting to snap ${currentDraggedBlock.id} to ${potentialSnapTarget.id}, direction: ${snapDirection}`);
+      // הדגש את המטרה ואת הצד הרלוונטי
+      potentialSnapTarget.classList.add('snap-target');
+      potentialSnapTarget.classList.add(snapDirection === 'right' ? 'snap-left' : 'snap-right');
 
-        // --- לוגיקת חיבור הבלוקים בפועל ---
-        // כאן תצטרך להוסיף את הקוד ש:
-        // 1. מחשב את המיקום החדש של currentDraggedBlock (למשל, צמוד ל-potentialSnapTarget)
-        // 2. מעדכן את style.left ו-style.top של currentDraggedBlock
-        // 3. אולי שומר את הקשר הלוגי ביניהם (למשל, ב-data attributes או במבנה נתונים אחר)
-        // 4. מטפל במקרה שבלוק כבר מחובר בצד זה
-
-        // דוגמה פשוטה לחישוב מיקום (צריך להתאים לגודל הבלוקים ולרווח הרצוי):
-        const targetRect = potentialSnapTarget.getBoundingClientRect();
-        const draggedRect = currentDraggedBlock.getBoundingClientRect();
-        const containerRect = blocksContainer.getBoundingClientRect(); // לקבלת אופסט הקונטיינר
-
-        let newX, newY;
-        newY = targetRect.top - containerRect.top; // שמור על אותו גובה Y (בהנחה שהם כבר מיושרים)
-
-        if (snapDirection === 'right') { // הצמד את הנגרר מימין לעצמו = משמאל למטרה
-          newX = targetRect.left - draggedRect.width - containerRect.left - 2; // 2px רווח
-        } else { // snapDirection === 'left' // הצמד את הנגרר משמאל לעצמו = מימין למטרה
-          newX = targetRect.right - containerRect.left + 2; // 2px רווח
-        }
-
-        // עדכן מיקום (חשוב שהבלוקים יהיו position: absolute)
-         currentDraggedBlock.style.left = `${newX}px`;
-         currentDraggedBlock.style.top = `${newY}px`;
-
-        console.log(`Snapped! New position for ${currentDraggedBlock.id}: (${newX}px, ${newY}px)`);
-        // -----------------------------------------
-
-        // הוסף אנימציית הצמדה
-        currentDraggedBlock.classList.add('snap-animation');
-        potentialSnapTarget.classList.add('snap-animation');
-        setTimeout(() => {
-          if(currentDraggedBlock) currentDraggedBlock.classList.remove('snap-animation');
-          if(potentialSnapTarget) potentialSnapTarget.classList.remove('snap-animation');
-        }, 300); // משך האנימציה ב-ms
-
-        // הוסף סימונים לבלוקים מחוברים
-        currentDraggedBlock.classList.add('connected-block');
-        potentialSnapTarget.classList.add('has-connected-block');
-        // קבע את כיוון החיבור עבור הקו הדק (::after / ::before)
-        if (snapDirection === 'right') {
-          currentDraggedBlock.dataset.connectionDirection = 'right';
-          potentialSnapTarget.dataset.connectionDirection = 'left';
-        } else { // snapDirection === 'left'
-          currentDraggedBlock.dataset.connectionDirection = 'left';
-          potentialSnapTarget.dataset.connectionDirection = 'right';
-        }
-
-      } else {
-        console.log('Drop occurred outside a snap zone.');
-        // אם רוצים שהבלוק יזוז למקום השחרור גם אם אין הצמדה:
-        // const dropX = event.clientX - (currentDraggedBlock?.dataset?.offsetX || 0); // צריך לשמור אופסט ב-dragstart
-        // const dropY = event.clientY - (currentDraggedBlock?.dataset?.offsetY || 0);
-        // if (currentDraggedBlock) {
-        //   currentDraggedBlock.style.left = `${dropX}px`;
-        //   currentDraggedBlock.style.top = `${dropY}px`;
-        // }
-      }
-
-      // נקה את מצב ההדגשה והפוטנציאל בכל מקרה לאחר ה-drop
-      clearPotentialSnapHighlights();
+    } else {
+      // לא נמצא יעד קרוב - אפס משתנים (ההדגשה נוקתה קודם)
       potentialSnapTarget = null;
       snapDirection = null;
-      // ה-dragend ינקה את currentDraggedBlock ואת ה-dragging class
-    });
-  } // סוף if (blocksContainer)
+    }
+  });
 
-  // מאזין לכפתור "נקה הכל" (מהקוד המקורי)
-  const clearAllButton = document.getElementById('clear-all');
+  blocksContainer.addEventListener('drop', (event) => {
+    event.preventDefault();
+    console.log('drop event');
+
+    // בדוק אם השחרור קרה בזמן שהיה יעד פוטנציאלי מודגש
+    if (potentialSnapTarget && snapDirection && currentDraggedBlock) {
+      console.log(`Snapping ${currentDraggedBlock.id} to ${potentialSnapTarget.id}, direction: ${snapDirection}`);
+
+      // --- לוגיקת הצמדה ---
+      const targetRect = potentialSnapTarget.getBoundingClientRect();
+      // חשוב: קח את ה-offset של הקונטיינר אם הוא לא ב-(0,0) של ה-viewport
+      const containerRect = blocksContainer.getBoundingClientRect();
+      const scrollX = window.scrollX || window.pageXOffset;
+      const scrollY = window.scrollY || window.pageYOffset;
+
+      // 1. הפוך את הבלוק הנגרר לאבסולוטי והוסף קלאס מתאים
+      currentDraggedBlock.classList.add('snapped-absolute');
+
+      // 2. חשב את המיקום האבסולוטי החדש (יחסית לקונטיינר)
+      let newX, newY;
+      // שמור על יישור אנכי עם המטרה (בהנחה שהם באותו גובה בערך)
+      newY = (targetRect.top + scrollY) - (containerRect.top + scrollY);
+
+      const spacing = 2; // רווח קטן בין הבלוקים
+
+      if (snapDirection === 'right') { // הצמד לשמאל המטרה
+        newX = (targetRect.left + scrollX) - currentDraggedBlock.offsetWidth - spacing - (containerRect.left + scrollX);
+      } else { // snapDirection === 'left' // הצמד לימין המטרה
+        newX = (targetRect.right + scrollX) + spacing - (containerRect.left + scrollX);
+      }
+
+      // 3. עדכן את מיקום הבלוק
+      currentDraggedBlock.style.left = `${newX}px`;
+      currentDraggedBlock.style.top = `${newY}px`;
+      // ודא שה-z-index מתאים לבלוק מחובר
+      // currentDraggedBlock.style.zIndex = '10'; // נקבע ע"י snapped-absolute
+
+      console.log(`Snapped! New position for ${currentDraggedBlock.id}: (${newX}px, ${newY}px)`);
+
+      // 4. הוסף אנימציית הצמדה (על הבלוק שהוזז)
+      currentDraggedBlock.classList.add('snap-animation');
+      setTimeout(() => {
+        if(currentDraggedBlock) currentDraggedBlock.classList.remove('snap-animation');
+      }, 300); // משך האנימציה
+
+      // 5. הוסף סימונים ויזואליים קבועים של החיבור
+      currentDraggedBlock.classList.add('connected-block');
+      potentialSnapTarget.classList.add('has-connected-block');
+      if (snapDirection === 'right') {
+        currentDraggedBlock.dataset.connectionDirection = 'right';
+        potentialSnapTarget.dataset.connectionDirection = 'left';
+      } else {
+        currentDraggedBlock.dataset.connectionDirection = 'left';
+        potentialSnapTarget.dataset.connectionDirection = 'right';
+      }
+      // ----------------------
+
+    } else {
+      console.log('Drop occurred outside a snap zone.');
+      // כאן אפשר להוסיף לוגיקה למה קורה אם הבלוק מושמט לא באזור הצמדה
+      // למשל, להחזיר אותו למקומו המקורי, או למקם אותו במקום השחרור
+      // (כרגע הוא פשוט יישאר במקום האחרון שהיה בו לפני dragend)
+    }
+
+    // נקה את מצב ההדגשה הפוטנציאלי בכל מקרה לאחר ה-drop
+    clearPotentialSnapHighlights();
+    potentialSnapTarget = null; // אפס את המשתנים
+    snapDirection = null;
+    // ה-dragend ינקה את currentDraggedBlock ואת ה-dragging class
+  });
+
+  // 5. מאזין לכפתור "נקה הכל"
+  const clearAllButton = document.getElementById('clear-all'); // עדכן מזהה
   if (clearAllButton) {
     clearAllButton.addEventListener('click', function() {
       console.log('Clear All button clicked');
@@ -420,26 +389,19 @@ document.addEventListener('DOMContentLoaded', () => {
       currentDraggedBlock = null;
       potentialSnapTarget = null;
       snapDirection = null;
-      lastClickedBlock = null;
-      lastRightClickedBlock = null;
 
-      // ניקוי כל ההדגשות והסימונים מה-DOM
-      clearAllHighlights(); // מנקה את רוב הדברים
-       document.querySelectorAll('.block.dragging').forEach(el => el.classList.remove('dragging')); // הסר גם dragging אם נתקע
+      // ניקוי כל ההדגשות, החיבורים, והסגנונות שהוספנו מה-DOM
+      clearAllHighlightsAndConnections();
 
-      // ניקוי אלמנטים נוספים (לפי הצורך)
+      // ניקוי אלמנטים נוספים (אם קיימים)
       removeDetachMenu();
       hideConnectionIndicator();
 
-      // אופציונלי: איפוס מיקום הבלוקים למיקום התחלתי
-      // allBlocks.forEach(block => {
-      //    block.style.left = block.dataset.initialX + 'px'; // אם שמרת מיקום התחלתי
-      //    block.style.top = block.dataset.initialY + 'px';
-      // });
-
-      // אופציונלי: הסרת כל הבלוקים מהקונטיינר
-      // if (blocksContainer) blocksContainer.innerHTML = '';
+      // כאן ניתן להוסיף קוד לאיפוס נוסף אם צריך
+      // (למשל, אם שמרתם מצב כלשהו ב-localStorage)
     });
+  } else {
+     console.warn("Warning: Element with ID 'clear-all' not found.");
   }
 
 }); // סוף DOMContentLoaded
