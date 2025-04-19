@@ -100,7 +100,7 @@ main {
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    height: 105px; /* גובה קבוע */
+    height: 130px; /* גובה קבוע - מוגדל כדי להתאים לגובה הבלוק repeat */
     display: flex;
     flex-direction: row;
     align-items: stretch;
@@ -153,6 +153,7 @@ main {
     height: 100%;
     margin-left: 0px;
     background-color: #f0f0f0; /* רקע אפור בהיר */
+    overflow-x: auto; /* אפשר גלילה אופקית במקרה של בלוקים רחבים */
 }
 
 .block-category.active {
@@ -278,4 +279,25 @@ main {
 #block-palette .block-container:active,
 #programming-area .block-container:active {
     cursor: grabbing;
+}
+
+/* סגנון מיוחד לבלוק repeat - מידות ייחודיות */
+#block-palette .block-container[data-type="repeat"] .block-svg-image,
+#programming-area .block-container[data-type="repeat"] .block-svg-image {
+    width: 256px !important; /* רוחב מיוחד לבלוק repeat */
+    height: 118px !important; /* גובה מיוחד לבלוק repeat */
+    object-fit: contain; /* שמירה על יחס התמונה */
+}
+
+/* הגדלת רוחב וגובה מיכל הבלוק להתאים לתמונה המורחבת של repeat */
+#block-palette .block-container[data-type="repeat"],
+#programming-area .block-container[data-type="repeat"] {
+    width: 256px !important;
+    height: 118px !important;
+}
+
+/* כאשר בלוק repeat נמצא באזור הקטגוריה, כדי שלא יגלוש */
+#control-blocks .block-container[data-type="repeat"] {
+    margin-bottom: 0;
+    margin-top: 0;
 }
