@@ -1,5 +1,5 @@
 // ========================================================================
-// הגדרת בלוקים (Blocks)
+// הגדרת בלוקים (Blocks) - מעודכן לנתיבי קבצים חדשים
 // ========================================================================
 
 const blocks = {
@@ -8,31 +8,31 @@ const blocks = {
             name: "Green Flag",
             color: "var(--triggering-color)",
             type: "startOnGreenFlag",
-            icon: "assets/images/green-flag.svg",
+            svgFile: "Start on Green Flag.svg"
         },
         {
             name: "Tap",
             color: "var(--triggering-color)",
             type: "startOnTap",
-            icon: "assets/blocks/tap.svg",
+            svgFile: "Start on Tap.svg"
         },
         {
             name: "Bump",
             color: "var(--triggering-color)",
             type: "startOnBump",
-            icon: "assets/blocks/bump.svg",
+            svgFile: "Start on Bump.svg"
         },
         {
             name: "Send Message",
             color: "var(--triggering-color)",
             type: "sendMessage",
-            icon: "assets/blocks/send-message.svg",
+            svgFile: "Send Message blue.svg"
         },
         {
             name: "Receive Message",
             color: "var(--triggering-color)",
             type: "startOnMessage",
-            icon: "assets/blocks/receive-message.svg",
+            svgFile: "Send Message orange.svg" // משתמש בקובץ הכתום עבור קבלת הודעות
         },
     ],
     motion: [
@@ -40,49 +40,49 @@ const blocks = {
             name: "Move Right",
             color: "var(--motion-color)",
             type: "moveRight",
-            icon: "assets/blocks/move-right.svg",
+            svgFile: "Move Right.svg"
         },
         {
             name: "Move Left",
             color: "var(--motion-color)",
             type: "moveLeft",
-            icon: "assets/blocks/move-left.svg",
+            svgFile: "Move Left.svg"
         },
         {
             name: "Move Up",
             color: "var(--motion-color)",
             type: "moveUp",
-            icon: "assets/blocks/move-up.svg",
+            svgFile: "Move Up.svg"
         },
         {
             name: "Move Down",
             color: "var(--motion-color)",
             type: "moveDown",
-            icon: "assets/blocks/move-down.svg",
+            svgFile: "Move Down.svg"
         },
         {
             name: "Turn Right",
             color: "var(--motion-color)",
             type: "turnRight",
-            icon: "assets/blocks/turn-right.svg",
+            svgFile: "Turn Right.svg"
         },
         {
             name: "Turn Left",
             color: "var(--motion-color)",
             type: "turnLeft",
-            icon: "assets/blocks/turn-left.svg",
+            svgFile: "Turn Left.svg"
         },
         {
             name: "Hop",
             color: "var(--motion-color)",
             type: "hop",
-            icon: "assets/blocks/hop.svg",
+            svgFile: "Hop.svg"
         },
         {
             name: "Go Home",
             color: "var(--motion-color)",
             type: "goHome",
-            icon: "assets/blocks/reset.svg",
+            svgFile: "Go home.svg"
         },
     ],
     looks: [
@@ -90,37 +90,37 @@ const blocks = {
             name: "Say",
             color: "var(--looks-color)",
             type: "say",
-            icon: "assets/blocks/say.svg",
+            svgFile: "say.svg"
         },
         {
             name: "Grow",
             color: "var(--looks-color)",
             type: "grow",
-            icon: "assets/blocks/grow.svg",
+            svgFile: "reset-size.svg" // אם אין קובץ ספציפי לגדילה, משתמשים בזה
         },
         {
             name: "Shrink",
             color: "var(--looks-color)",
             type: "shrink",
-            icon: "assets/blocks/shrink.svg",
+            svgFile: "Shrink.svg"
         },
         {
             name: "Reset Size",
             color: "var(--looks-color)",
             type: "resetSize",
-            icon: "assets/blocks/reset-size.svg",
+            svgFile: "reset-size.svg"
         },
         {
             name: "Hide",
             color: "var(--looks-color)",
             type: "hide",
-            icon: "assets/blocks/hide.svg",
+            svgFile: "hide.svg"
         },
         {
             name: "Show",
             color: "var(--looks-color)",
             type: "show",
-            icon: "assets/blocks/show.svg",
+            svgFile: "show.svg"
         },
     ],
     sound: [
@@ -128,13 +128,13 @@ const blocks = {
             name: "Play Sound",
             color: "var(--sound-color)",
             type: "popSound",
-            icon: "assets/blocks/sound.svg",
+            svgFile: "pop.svg"
         },
         {
             name: "Play Recorded Sound",
             color: "var(--sound-color)",
             type: "playRecordedSound",
-            icon: "assets/blocks/record-sound.svg",
+            svgFile: "Play Recorded Sound.svg"
         },
     ],
     control: [
@@ -142,24 +142,24 @@ const blocks = {
             name: "Stop",
             color: "var(--control-color)",
             type: "stop",
-            icon: "assets/blocks/stop.svg",
+            svgFile: "Stop.svg"
         },
         {
             name: "Wait",
             color: "var(--control-color)",
             type: "wait",
-            icon: "assets/blocks/wait.svg",
+            svgFile: "Wait.svg"
         },
         {
             name: "Set Speed",
             color: "var(--control-color)",
             type: "setSpeed",
-            icon: "assets/blocks/speed.svg",
+            svgFile: "Set Speed.svg"
         },
         {
             name: "Repeat",
             type: "repeat",
-            icon: "assets/blocks/repeat.svg",
+            svgFile: "repeat.svg",
             color: "var(--control-color)"
         },
     ],
@@ -168,19 +168,19 @@ const blocks = {
             name: "End",
             color: "var(--end-color)",
             type: "end",
-            icon: "assets/blocks/end.svg",
+            svgFile: "end.svg"
         },
         {
             name: "Repeat Forever",
             type: "repeatForever",
-            icon: "assets/blocks/repeat-forever.svg",
+            svgFile: "repeat-forever.svg",
             color: "var(--end-color)"
         },
         {
             name: "Go To Page",
             color: "var(--end-color)",
             type: "goToPage",
-            icon: "assets/blocks/go-to-page.svg",
+            svgFile: "Go to page.svg"
         },
     ],
 };
@@ -194,20 +194,19 @@ function createBlockElement(block, category) {
     blockContainer.dataset.type = block.type;
     blockContainer.dataset.category = category;
 
-    // יצירת אלמנט תמונה במקום div מעוצב
+    // יצירת אלמנט תמונה SVG
     const blockImage = document.createElement("img");
-    blockImage.src = `assets/block/${block.type}.svg`; // שימוש בנתיב החדש לתמונות SVG
+    // שימוש בשם הקובץ המדויק שציינו
+    blockImage.src = `assets/block/${block.svgFile}`;
     blockImage.alt = block.name;
     blockImage.classList.add("block-svg-image");
     
     // הוספת טיפול בשגיאות לטעינת התמונה
     blockImage.onerror = function() {
-        console.warn(`SVG image for ${block.type} not found at assets/block/${block.type}.svg`);
-        // במקרה של שגיאה, ננסה להשתמש באייקון המקורי כגיבוי
-        if (block.icon) {
-            this.src = block.icon;
-            console.log(`Using fallback icon: ${block.icon}`);
-        }
+        console.warn(`SVG image not found: assets/block/${block.svgFile}`);
+        // אם יש שגיאה, הצג שגיאה בקונסול אבל אל תעשה כלום אחר
+        this.style.border = "2px dashed red"; // סימון ויזואלי לבעיה
+        this.style.background = "#ffeeee";
     };
     
     blockContainer.appendChild(blockImage);
@@ -226,7 +225,7 @@ function createBlockElement(block, category) {
 function handleDragStart(event, block, category) {
     const data = {
         type: block.type,
-        icon: `assets/block/${block.type}.svg`, // עדכון נתיב האייקון
+        svgFile: block.svgFile,
         color: block.color,
         category: category,
         name: block.name
@@ -319,7 +318,7 @@ function populateBlockPalette(category) {
 
     // צור את הבלוקים עבור הקטגוריה
     blocks[category].forEach(block => {
-        console.log(`Creating element for: ${block.name} (${block.type})`);
+        console.log(`Creating block: ${block.name} (${block.svgFile})`);
         const blockElement = createBlockElement(block, category);
         categoryDiv.appendChild(blockElement);
     });
@@ -365,7 +364,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const programmingArea = document.getElementById("program-blocks");
     const categoryTabs = document.querySelectorAll(".category-tab");
-    const blockCategories = document.querySelectorAll(".block-category");
 
     // וודא שאזור התכנות קיים לפני הוספת מאזינים
     if (programmingArea) {
