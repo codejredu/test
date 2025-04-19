@@ -57,23 +57,12 @@ main {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
-#stage::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    background: none;
-}
-
 #stage.show-grid {
   background-image:
     linear-gradient(to right, lightgrey 1px, transparent 1px),
     linear-gradient(to bottom, lightgrey 1px, transparent 1px);
   background-size: 56px 46px; /* גודל קווי הרשת */
-  background-position: top left; /* יישור הרשת לפינה השמאלית העליונה */
+  background-position: top left;
 }
 
 #character {
@@ -95,16 +84,16 @@ main {
 }
 
 #block-palette {
-    background-color: #f0f0f0; /* רקע אפור */
+    background-color: #f0f0f0;
     border: 1px solid #e0e0e0;
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    height: 130px; /* גובה קבוע - מוגדל כדי להתאים לגובה הבלוק repeat */
+    height: 130px;
     display: flex;
     flex-direction: row;
     align-items: stretch;
-    overflow: hidden; /* מניעת גלישת תוכן */
+    overflow: hidden;
 }
 
 .category-tabs {
@@ -114,10 +103,10 @@ main {
     margin-bottom: 0;
     height: 100%;
     align-content: flex-start;
-    background-color: #f0f0f0; /* רקע אפור מאחורי הכרטיסיות */
+    background-color: #f0f0f0;
 }
 
-/* סגנון לכפתורי הקטגוריות החדשים עם תמונות SVG */
+/* סגנון לכפתורי הקטגוריות */
 .category-tab {
     border: none;
     padding: 0;
@@ -130,7 +119,7 @@ main {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: transparent; /* רקע שקוף */
+    background-color: transparent;
 }
 
 .category-tab img {
@@ -141,7 +130,7 @@ main {
 
 /* סגנון לכפתור קטגוריה פעיל */
 .category-tab.active {
-    outline: 3px solid #4a90e2; /* מסגרת כחולה סביב הקטגוריה הפעילה */
+    outline: 3px solid #4a90e2;
     box-shadow: 0 0 10px rgba(74, 144, 226, 0.5);
 }
 
@@ -152,8 +141,8 @@ main {
     flex-grow: 1;
     height: 100%;
     margin-left: 0px;
-    background-color: #f0f0f0; /* רקע אפור בהיר */
-    overflow-x: auto; /* אפשר גלילה אופקית במקרה של בלוקים רחבים */
+    background-color: #f0f0f0;
+    overflow-x: auto;
 }
 
 .block-category.active {
@@ -168,8 +157,8 @@ main {
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    flex: 2; /* מוגדל כדי להגדיל את אזור התכנות */
-    min-height: 200px; /* גובה מינימלי */
+    flex: 2;
+    min-height: 200px;
 }
 
 .program-header {
@@ -185,7 +174,7 @@ main {
 }
 
 #program-blocks {
-    min-height: 180px; /* גובה מוגדל */
+    min-height: 180px;
     border: 1px dashed #ccc;
     padding: 10px;
     position: relative;
@@ -199,7 +188,7 @@ main {
     font-size: 20px;
     font-weight: bold;
     color: #4a90e2;
-    margin-bottom: 5px; /* מרווח בין הלוגו לאייקונים */
+    margin-bottom: 5px;
 }
 
 /* עיצוב לאזור האייקונים בכותרת */
@@ -258,14 +247,14 @@ main {
 
 /* סגנון לתמונות SVG של הבלוקים */
 .block-svg-image {
-    width: 100px; /* רוחב קבוע לכל תמונות הבלוקים */
-    height: 80px; /* גובה קבוע לכל תמונות הבלוקים */
+    width: 100px;
+    height: 80px;
     user-select: none;
-    pointer-events: none; /* האייקון לא יקבל אירועי עכבר */
+    pointer-events: none;
     -webkit-user-drag: none;
 }
 
-/* עדכון מיכל הבלוק כדי להתאים לתמונות SVG */
+/* עדכון מיכל הבלוק */
 #block-palette .block-container,
 #programming-area .block-container {
     position: relative;
@@ -281,84 +270,15 @@ main {
     cursor: grabbing;
 }
 
-/* ======== סגנון לבלוק repeat דינמי ======== */
-
-/* סגנון למיכל ה-repeat */
-.repeat-container {
-    position: relative;
-    width: 256px !important;
-    min-height: 118px; /* גובה מינימלי התחלתי */
-    display: flex;
-    flex-direction: column;
-    background: transparent;
-    margin: 8px;
-    cursor: grab;
-}
-
-.repeat-container:active {
-    cursor: grabbing;
-}
-
-/* החלק העליון של בלוק ה-repeat */
-.repeat-top {
-    width: 256px;
-    height: 118px;
-    position: relative;
-    z-index: 3;
-    pointer-events: none;
-}
-
-/* אזור הדרופ הפנימי של בלוק repeat */
-.repeat-drop-area {
-    width: 220px; /* מעט צר יותר מהבלוק עצמו */
-    min-height: 30px;
-    background-color: white;
-    border-left: 2px solid var(--control-color);
-    border-right: 2px solid var(--control-color);
-    margin-left: 18px; /* יישור לפתח בתמונה */
-    padding: 5px;
-    position: relative;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-/* החלק התחתון של בלוק ה-repeat */
-.repeat-bottom {
-    width: 256px;
-    height: 40px; /* גובה החלק התחתון */
-    position: relative;
-    z-index: 3;
-    pointer-events: none;
-}
-
-/* סימון ויזואלי כשגוררים בלוק מעל אזור הדרופ */
-.repeat-drop-area.drag-over {
-    background-color: #f0f8ff;
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
-}
-
-/* סגנון לבלוקים בתוך אזור ה-repeat */
-.repeat-drop-area .block-container {
-    position: relative !important;
-    margin: 5px auto !important;
-    left: auto !important;
-    top: auto !important;
-    transform: none !important;
-}
-
-/* סגנון למיכל ה-repeat באזור הקטגוריה */
-#block-palette .repeat-container {
+/* סגנון מיוחד לבלוק repeat */
+#block-palette .block-container[data-type="repeat"] .block-svg-image,
+#programming-area .block-container[data-type="repeat"] .block-svg-image {
     width: 256px !important;
     height: 118px !important;
-    overflow: hidden; /* מניעת הצגת האזור הפנימי בתצוגת הקטגוריה */
 }
 
-#block-palette .repeat-drop-area {
-    display: none; /* הסתרת אזור הדרופ בתצוגת הקטגוריה */
-}
-
-#block-palette .repeat-bottom {
-    display: none; /* הסתרת החלק התחתון בתצוגת הקטגוריה */
+#block-palette .block-container[data-type="repeat"],
+#programming-area .block-container[data-type="repeat"] {
+    width: 256px !important;
+    height: 118px !important;
 }
