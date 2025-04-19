@@ -1,495 +1,445 @@
-// ========================================================================
-// הגדרת בלוקים (Blocks) עם שמות הקבצים המדויקים
-// ========================================================================
+// === linkage-complete.js ===
 
-const blocks = {
-    triggering: [
-        {
-            name: "Green Flag",
-            type: "startOnGreenFlag",
-            svgFile: "Start on Green Flag.svg"
-        },
-        {
-            name: "Tap",
-            type: "startOnTap",
-            svgFile: "Start on Tap.svg"
-        },
-        {
-            name: "Bump",
-            type: "startOnBump",
-            svgFile: "Start on Bump.svg"
-        },
-        {
-            name: "Send Message",
-            type: "sendMessage",
-            svgFile: "Send Message blue.svg"
-        },
-        {
-            name: "Receive Message",
-            type: "startOnMessage",
-            svgFile: "Send Message orange.svg"
-        },
-    ],
-    motion: [
-        {
-            name: "Move Right",
-            type: "moveRight",
-            svgFile: "Move Right.svg"
-        },
-        {
-            name: "Move Left",
-            type: "moveLeft",
-            svgFile: "Move Left.svg"
-        },
-        {
-            name: "Move Up",
-            type: "moveUp",
-            svgFile: "Move Up.svg"
-        },
-        {
-            name: "Move Down",
-            type: "moveDown",
-            svgFile: "Move Down.svg"
-        },
-        {
-            name: "Turn Right",
-            type: "turnRight",
-            svgFile: "Turn Right.svg"
-        },
-        {
-            name: "Turn Left",
-            type: "turnLeft",
-            svgFile: "Turn Left.svg"
-        },
-        {
-            name: "Hop",
-            type: "hop",
-            svgFile: "Hop.svg"
-        },
-        {
-            name: "Go Home",
-            type: "goHome",
-            svgFile: "Go home.svg"
-        },
-    ],
-    looks: [
-        {
-            name: "Say",
-            type: "say",
-            svgFile: "say.svg"
-        },
-        {
-            name: "Grow",
-            type: "grow",
-            svgFile: "reset-size.svg"
-        },
-        {
-            name: "Shrink",
-            type: "shrink",
-            svgFile: "Shrink.svg"
-        },
-        {
-            name: "Reset Size",
-            type: "resetSize",
-            svgFile: "reset-size.svg"
-        },
-        {
-            name: "Hide",
-            type: "hide",
-            svgFile: "hide.svg"
-        },
-        {
-            name: "Show",
-            type: "show",
-            svgFile: "show.svg"
-        },
-    ],
-    sound: [
-        {
-            name: "Play Sound",
-            type: "popSound",
-            svgFile: "pop.svg"
-        },
-        {
-            name: "Play Recorded Sound",
-            type: "playRecordedSound",
-            svgFile: "Play Recorded Sound.svg"
-        },
-    ],
-    control: [
-        {
-            name: "Stop",
-            type: "stop",
-            svgFile: "Stop.svg"
-        },
-        {
-            name: "Wait",
-            type: "wait",
-            svgFile: "Wait.svg"
-        },
-        {
-            name: "Set Speed",
-            type: "setSpeed",
-            svgFile: "Set Speed.svg"
-        },
-        {
-            name: "Repeat",
-            type: "repeat",
-            svgFile: "repeat.svg",
-            isSpecial: true
-        },
-    ],
-    end: [
-        {
-            name: "End",
-            type: "end",
-            svgFile: "end.svg"
-        },
-        {
-            name: "Repeat Forever",
-            type: "repeatForever",
-            svgFile: "repeat-forever.svg"
-        },
-        {
-            name: "Go To Page",
-            type: "goToPage",
-            svgFile: "Go to page.svg"
-        },
-    ],
-};
+document.addEventListener('DOMContentLoaded', () => {
 
-// ========================================================================
-// פונקציה ליצירת אלמנט בלוק
-// ========================================================================
-function createBlockElement(block, category) {
-    const blockContainer = document.createElement("div");
-    blockContainer.classList.add("block-container");
-    blockContainer.dataset.type = block.type;
-    blockContainer.dataset.category = category;
+  // --- משתנים גלובליים ---
+  let currentDraggedBlock = null;   // הבלוק שנגרר כרגע
+  let potentialSnapTarget = null; // בלוק המטרה הפוטנציאלי להצמדה
+  let snapDirection = null;         // כיוון ההצמדה הפוטנציאלי ('left' או 'right' ביחס לנגרר)
+  let lastClickedBlock = null;      // (לשימוש עתידי/קיים בלוגיקה אחרת)
+  let lastRightClickedBlock = null; // (לשימוש עתידי/קיים בלוגיקה אחרת)
 
-    // יצירת אלמנט תמונה לבלוק
-    const blockImage = document.createElement("img");
-    blockImage.src = `assets/block/${block.svgFile}`;
-    blockImage.alt = block.name;
-    blockImage.classList.add("block-svg-image");
-    
-    // טיפול בשגיאות טעינת תמונה
-    blockImage.onerror = function() {
-        console.warn(`SVG image not found: assets/block/${block.svgFile}`);
-        this.style.border = "2px dashed red";
-        this.style.background = "#ffeeee";
-    };
-    
-    blockContainer.appendChild(blockImage);
+  const SNAP_THRESHOLD = 30; // מרחק בפיקסלים להפעלת הדגשת פוטנציאל הצמדה
 
-    // הוספת מאפייני גרירה
-    blockContainer.draggable = true;
-    blockContainer.addEventListener("dragstart", (event) => {
-        event.dataTransfer.setData("text/plain", JSON.stringify({
-            type: block.type,
-            category: category,
-            name: block.name
-        }));
-        event.dataTransfer.effectAllowed = "move";
+  // --- פונקציות עזר ---
+
+  // הוספת סגנונות CSS להדגשה ואנימציה
+  function addHighlightStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+      /* סגנון לבלוק בזמן שהוא נגרר - להפחתת אפקט ה"רוח" */
+      .block.dragging {
+        opacity: 0.5;
+        cursor: grabbing;
+      }
+
+      /* ברירת מחדל לבלוקים */
+      .block {
+        cursor: grab;
+        position: absolute; /* חשוב למיקום וחיבור */
+        user-select: none; /* למנוע בחירת טקסט בזמן גרירה */
+        /* הוסף כאן מידות ועיצוב בסיסי לבלוקים שלך */
+        width: 100px;
+        height: 50px;
+        border: 1px solid black;
+        background-color: lightblue;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1; /* ברירת מחדל */
+      }
+      .block.dragging {
+        z-index: 1000; /* ודא שהבלוק הנגרר מעל הכל */
+      }
+
+      /* הדגשת בלוק מקור (הנגרר) כשקרוב להצמדה */
+      .snap-source {
+        filter: brightness(1.05);
+        transition: filter 0.15s ease-out, box-shadow 0.15s ease-out;
+        box-shadow: 0 0 8px 2px rgba(0, 180, 255, 0.6);
+      }
+      /* אפשר להוסיף גם הדגשה לתמונה אם יש */
+      .snap-source img, .snap-source .block-svg-image {
+         box-shadow: 0 0 8px 2px rgba(0, 180, 255, 0.6);
+         filter: brightness(1.05);
+      }
+
+      /* הדגשת בלוק יעד פוטנציאלי */
+      .snap-target {
+        filter: brightness(1.1);
+        transition: filter 0.15s ease-out, box-shadow 0.15s ease-out;
+        box-shadow: 0 0 8px 2px rgba(255, 255, 0, 0.6);
+      }
+      /* אפשר להוסיף גם הדגשה לתמונה אם יש */
+       .snap-target img, .snap-target .block-svg-image {
+         box-shadow: 0 0 8px 2px rgba(255, 255, 0, 0.6);
+         filter: brightness(1.1);
+      }
+
+      /* הדגשת השקע השמאלי בבלוק היעד (כשהמקור יתחבר מימין לו) */
+      .snap-target.snap-left::before {
+        content: '';
+        position: absolute;
+        left: -5px; /* הצמד לשמאל */
+        top: 50%;
+        transform: translateY(-50%);
+        width: 8px; /* קצת יותר בולט */
+        height: 22px;
+        background-color: rgba(255, 255, 100, 0.9);
+        border: 1px solid rgba(200, 200, 0, 0.7);
+        border-radius: 0 5px 5px 0; /* פינות מעוגלות בצד הפונה לרווח */
+        box-shadow: 1px 0 3px rgba(0,0,0,0.2);
+        z-index: 10;
+        animation: pulseIndicator 1.5s infinite ease-in-out;
+      }
+
+      /* הדגשת הפין הימני בבלוק היעד (כשהמקור יתחבר משמאל לו) */
+      .snap-target.snap-right::after {
+        content: '';
+        position: absolute;
+        right: -5px; /* הצמד לימין */
+        top: 50%;
+        transform: translateY(-50%);
+        width: 8px; /* קצת יותר בולט */
+        height: 22px;
+        background-color: rgba(255, 255, 100, 0.9);
+        border: 1px solid rgba(200, 200, 0, 0.7);
+        border-radius: 5px 0 0 5px; /* פינות מעוגלות בצד הפונה לרווח */
+        box-shadow: -1px 0 3px rgba(0,0,0,0.2);
+        z-index: 10;
+        animation: pulseIndicator 1.5s infinite ease-in-out;
+      }
+
+      /* אנימציית הצמדה */
+      @keyframes snapEffect {
+        0% { transform: scale(1.02); }
+        40% { transform: scale(0.98); }
+        70% { transform: scale(1.01); }
+        100% { transform: scale(1); }
+      }
+      .snap-animation {
+        animation: snapEffect 0.3s ease-out;
+      }
+
+      /* אנימציית ניתוק */
+      @keyframes detachEffect {
+        0% { transform: scale(1); }
+        30% { transform: scale(1.04) rotate(1deg); }
+        60% { transform: scale(0.98) rotate(-1deg); }
+        100% { transform: scale(1) rotate(0); }
+      }
+      .detach-animation {
+        animation: detachEffect 0.3s ease-out;
+      }
+
+      /* אנימציית פעימה לאינדיקטור החיבור */
+      @keyframes pulseIndicator {
+        0% { opacity: 0.6; transform: translateY(-50%) scale(0.95); }
+        50% { opacity: 1.0; transform: translateY(-50%) scale(1.05); }
+        100% { opacity: 0.6; transform: translateY(-50%) scale(0.95); }
+      }
+
+      /* סימון בלוקים מחוברים (דוגמה) */
+      .connected-block {
+         /* אפשר להוסיף סימן קבוע קטן או לשנות רקע קלות */
+         /* filter: brightness(1.02); */
+      }
+      .has-connected-block {
+         /* position: relative; */ /* כבר מוגדר בדרך כלל */
+      }
+
+      /* סימון חיבור ויזואלי - קו דק בין בלוקים מחוברים (דוגמה) */
+      .connected-block[data-connection-direction="right"]::after,
+      .has-connected-block[data-connection-direction="left"]::before {
+        content: '';
+        position: absolute;
+        width: 4px; /* עובי הקו */
+        height: 12px; /* גובה הקו */
+        background-color: rgba(150, 150, 0, 0.6); /* צבע הקו */
+        z-index: 5;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      /* מיקום הקו לימין הבלוק המחובר */
+       .connected-block[data-connection-direction="right"]::after {
+           right: -2px; /* ממקם את הקו בדיוק ברווח */
+           border-radius: 0 2px 2px 0;
+       }
+       /* מיקום הקו לשמאל הבלוק שיש לו חיבור */
+       .has-connected-block[data-connection-direction="left"]::before {
+           left: -2px; /* ממקם את הקו בדיוק ברווח */
+           border-radius: 2px 0 0 2px;
+       }
+
+      /* עיצוב התפריט הקשר (אם יש) */
+      .detach-context-menu {
+        min-width: 120px;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        /* ... שאר העיצוב ... */
+      }
+
+      /* סגנון לאינדיקטור החיבור (אם יש) */
+      #connection-indicator {
+        transition: all 0.2s ease-out;
+        /* ... שאר העיצוב ... */
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // פונקציה לניקוי הדגשות של פוטנציאל הצמדה
+  function clearPotentialSnapHighlights() {
+    // הסר הדגשה מהמקור (שהיה נגרר)
+    const currentSource = document.querySelector('.snap-source');
+    if (currentSource) {
+        currentSource.classList.remove('snap-source');
+    }
+    // הסר הדגשה מהיעד הפוטנציאלי
+    const currentTarget = document.querySelector('.snap-target');
+    if (currentTarget) {
+        currentTarget.classList.remove('snap-target', 'snap-left', 'snap-right');
+    }
+  }
+
+  // פונקציה לניקוי *כל* ההדגשות והמצבים הזמניים
+  function clearAllHighlights() {
+    clearPotentialSnapHighlights(); // נקה הדגשות פוטנציאל
+    document.querySelectorAll('.connected-block, .has-connected-block, .snap-animation, .detach-animation').forEach(el => {
+      el.classList.remove('connected-block', 'has-connected-block', 'snap-animation', 'detach-animation');
+      el.removeAttribute('data-connection-direction'); // נקה גם את נתוני הכיוון
     });
-    
-    return blockContainer;
-}
+    // ניתן להוסיף כאן ניקוי של הדגשות נוספות אם יש
+  }
 
-// ========================================================================
-// פונקציה למילוי הקטגוריה בבלוקים
-// ========================================================================
-function populateBlockPalette(category) {
-    const categoryDiv = document.getElementById(`${category}-blocks`);
-    if (!categoryDiv) {
-        console.error(`Category div not found for ${category}`);
-        return;
-    }
-    
-    // ניקוי הבלוקים הקיימים
-    categoryDiv.innerHTML = "";
+  // פונקציות פלייס הולדר (ממש לפי הצורך)
+  function removeDetachMenu() {
+    // console.log("Placeholder: Removing detach menu");
+    const menu = document.querySelector('.detach-context-menu');
+    if (menu) menu.remove();
+  }
 
-    // בדיקה אם יש בלוקים לקטגוריה
-    if (!blocks[category] || blocks[category].length === 0) {
-        console.warn(`No blocks defined for category ${category}`);
-        return;
-    }
+  function hideConnectionIndicator() {
+    // console.log("Placeholder: Hiding connection indicator");
+     const indicator = document.getElementById('connection-indicator');
+     if(indicator) indicator.style.display = 'none';
+  }
 
-    console.log(`Populating category: ${category} with ${blocks[category].length} blocks`);
+  // --- הגדרת האזנה לאירועים ---
 
-    // יצירת הבלוקים והוספתם לקטגוריה
-    blocks[category].forEach(block => {
-        console.log(`Creating block: ${block.name} (${block.svgFile})`);
-        const blockElement = createBlockElement(block, category);
-        categoryDiv.appendChild(blockElement);
+  // הזרקת ה-CSS לדף
+  addHighlightStyles();
+
+  const blocksContainer = document.getElementById('blocks-container'); // עדכן את המזהה בהתאם ל-HTML
+  const allBlocks = document.querySelectorAll('.block'); // עדכן את הסלקטור בהתאם ל-HTML
+
+  // הוספת מאזיני גרירה לכל בלוק
+  allBlocks.forEach(block => {
+    block.setAttribute('draggable', true);
+
+    block.addEventListener('dragstart', (event) => {
+      // event.dataTransfer.setData('text/plain', event.target.id); // אם צריך להעביר מידע
+      event.dataTransfer.effectAllowed = 'move';
+      currentDraggedBlock = event.target; // שמור את הבלוק הנגרר
+      console.log('dragstart:', currentDraggedBlock.id);
+
+      // השתמש ב-setTimeout כדי לאפשר לדפדפן ליצור את תמונת ה"רוח" לפני שינוי הסגנון
+      setTimeout(() => {
+        if (currentDraggedBlock) { // בדיקה נוספת למקרה שהגרירה בוטלה מיד
+           currentDraggedBlock.classList.add('dragging');
+        }
+      }, 0);
     });
-}
 
-// ========================================================================
-// פונקציה לטיפול בשינוי קטגוריה עם עדכון צבע הרקע
-// ========================================================================
-function handleCategoryChange(category) {
-    console.log(`Changing category to: ${category}`);
-    
-    // הסרת מחלקת active מכל הקטגוריות והכרטיסיות
-    const categoryTabs = document.querySelectorAll(".category-tab");
-    const blockCategories = document.querySelectorAll(".block-category");
-
-    blockCategories.forEach(element => element.classList.remove("active"));
-    categoryTabs.forEach(tab => tab.classList.remove("active"));
-
-    // הוספת מחלקת active לקטגוריה שנבחרה
-    const tab = document.querySelector(`.category-tab[data-category="${category}"]`);
-    const categoryDiv = document.getElementById(`${category}-blocks`);
-
-    if (tab) {
-        tab.classList.add("active");
-        console.log('Activated tab:', tab.getAttribute('data-category'));
-    } else {
-        console.warn(`Tab not found for category: ${category}`);
-    }
-
-    if (categoryDiv) {
-        categoryDiv.classList.add("active");
-        console.log('Activated category div:', categoryDiv.id);
-        
-        // עדכון צבע הגבול של מכל הבלוקים
-        const blockPalette = document.getElementById("block-palette");
-        if (blockPalette) {
-            // שימוש בצבע המתאים לקטגוריה
-            const categoryColor = getCategoryColor(category);
-            blockPalette.style.borderColor = categoryColor;
+    block.addEventListener('dragend', (event) => {
+        console.log('dragend:', event.target.id);
+        // ודא שהבלוק שסיים את הגרירה הוא זה ששמרנו
+        if (currentDraggedBlock && currentDraggedBlock === event.target) {
+            currentDraggedBlock.classList.remove('dragging'); // הסר את קלאס השקיפות
         }
-        
-        // מילוי הקטגוריה בבלוקים
-        populateBlockPalette(category);
-    } else {
-        console.warn(`Block category container not found for: ${category}`);
-    }
-}
+        // נקה הדגשות פוטנציאליות ומצב אם הגרירה הסתיימה בלי הצמדה
+        clearPotentialSnapHighlights();
+        currentDraggedBlock = null;
+        potentialSnapTarget = null;
+        snapDirection = null;
+        // חשוב: אל תנקה כאן את connected-block וכו', רק את הדגשות הפוטנציאל
+    });
 
-// ========================================================================
-// פונקציית עזר לקבלת הצבע המתאים לקטגוריה
-// ========================================================================
-function getCategoryColor(category) {
-    switch(category) {
-        case 'triggering': return getComputedStyle(document.documentElement).getPropertyValue('--triggering-color');
-        case 'motion': return getComputedStyle(document.documentElement).getPropertyValue('--motion-color');
-        case 'looks': return getComputedStyle(document.documentElement).getPropertyValue('--looks-color');
-        case 'sound': return getComputedStyle(document.documentElement).getPropertyValue('--sound-color');
-        case 'control': return getComputedStyle(document.documentElement).getPropertyValue('--control-color');
-        case 'end': return getComputedStyle(document.documentElement).getPropertyValue('--end-color');
-        default: return '#f0f0f0'; // צבע ברירת מחדל
-    }
-}
+    // (אופציונלי) מאזין ל-dragleave על בלוקים בודדים
+    block.addEventListener('dragleave', (event) => {
+        // אם הסמן עוזב בלוק שהיה מודגש כיעד פוטנציאלי
+        if (potentialSnapTarget === event.target) {
+            clearPotentialSnapHighlights();
+            potentialSnapTarget = null;
+            snapDirection = null;
+        }
+    });
+  });
 
-// ========================================================================
-// פונקציה לטיפול בהשמטת בלוק באזור התכנות
-// ========================================================================
-function handleDrop(event) {
-    event.preventDefault();
-    
-    // בדיקה אם מדובר בהזזת בלוק קיים
-    const blockIndex = event.dataTransfer.getData('block-index');
-    if (blockIndex !== undefined && blockIndex !== '') {
-        // הזזת בלוק קיים
-        const programmingArea = document.getElementById("program-blocks");
-        const draggedBlockIndex = parseInt(blockIndex);
-        
-        if (draggedBlockIndex >= 0 && draggedBlockIndex < programmingArea.children.length) {
-            const draggedBlock = programmingArea.children[draggedBlockIndex];
-            if (draggedBlock) {
-                const rect = programmingArea.getBoundingClientRect();
-                draggedBlock.style.position = "absolute";
-                draggedBlock.style.left = `${event.clientX - rect.left - (draggedBlock.offsetWidth / 2)}px`;
-                draggedBlock.style.top = `${event.clientY - rect.top - (draggedBlock.offsetHeight / 2)}px`;
-            }
-        }
-    } else {
-        // יצירת בלוק חדש
-        const programmingArea = document.getElementById("program-blocks");
-        const dataString = event.dataTransfer.getData("text/plain");
-        
-        if (!dataString) {
-            console.error("No data transferred on drop.");
-            return;
-        }
-        
-        try {
-            const data = JSON.parse(dataString);
-            const blockCategory = data.category;
-            const blockDefinition = blocks[blockCategory]?.find(b => b.type === data.type);
-            
-            if (!blockDefinition) {
-                console.error("Could not find block definition:", data);
-                return;
-            }
-            
-            // יצירת בלוק חדש והוספתו לאזור התכנות
-            const newBlock = createBlockElement(blockDefinition, blockCategory);
-            programmingArea.appendChild(newBlock);
-            
-            // הוספת מאזין גרירה לבלוק החדש
-            newBlock.addEventListener("dragstart", (e) => {
-                const index = Array.from(programmingArea.children).indexOf(newBlock);
-                e.dataTransfer.setData('block-index', index.toString());
-                e.dataTransfer.effectAllowed = "move";
-            });
-            
-            // מיקום הבלוק החדש
-            const rect = programmingArea.getBoundingClientRect();
-            newBlock.style.position = "absolute";
-            const blockWidth = newBlock.offsetWidth || 100;
-            const blockHeight = newBlock.offsetHeight || 80;
-            newBlock.style.left = `${event.clientX - rect.left - (blockWidth / 2)}px`;
-            newBlock.style.top = `${event.clientY - rect.top - (blockHeight / 2)}px`;
-            
-        } catch (e) {
-            console.error("Error parsing dropped data:", e);
-        }
-    }
-}
+  // מאזינים על הקונטיינר (יעיל יותר ממאזינים על כל בלוק בנפרד עבור dragover/drop)
+  if (blocksContainer) {
+    blocksContainer.addEventListener('dragover', (event) => {
+      event.preventDefault(); // חובה כדי לאפשר drop
+      event.dataTransfer.dropEffect = 'move';
 
-// ========================================================================
-// אתחול כללי - מופעל כשה-DOM נטען
-// ========================================================================
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM fully loaded");
-    
-    // אתחול אזור התכנות
-    const programmingArea = document.getElementById("program-blocks");
-    if (programmingArea) {
-        programmingArea.addEventListener("dragover", (event) => {
-            event.preventDefault();
-            event.dataTransfer.dropEffect = "move";
-        });
-        
-        programmingArea.addEventListener("drop", handleDrop);
-        console.log("Programming area initialized");
-    } else {
-        console.error("Programming area element not found!");
-    }
-    
-    // אתחול כרטיסיות הקטגוריות
-    const categoryTabs = document.querySelectorAll(".category-tab");
-    if (categoryTabs.length > 0) {
-        categoryTabs.forEach(tab => {
-            tab.addEventListener("click", () => {
-                const category = tab.getAttribute('data-category');
-                console.log(`Tab clicked: ${category}`);
-                handleCategoryChange(category);
-            });
-        });
-        console.log(`${categoryTabs.length} category tabs initialized`);
-    } else {
-        console.error("No category tabs found!");
-    }
-    
-    // אתחול כפתור הרשת
-    const gridToggle = document.getElementById("grid-toggle");
-    const stage = document.getElementById("stage");
-    if (gridToggle && stage) {
-        gridToggle.addEventListener("click", () => {
-            stage.classList.toggle("show-grid");
-            console.log("Grid toggled");
-        });
-    }
-    
-    // אתחול כפתור ניקוי
-    const clearAllButton = document.getElementById("clear-all");
-    if (clearAllButton && programmingArea) {
-        clearAllButton.addEventListener("click", () => {
-            programmingArea.innerHTML = "";
-            console.log("Programming area cleared");
-        });
-    }
-    
-    // אתחול גרירת דמות
-    const character = document.getElementById('character');
-    const stageElement = document.getElementById('stage');
-    
-    if (character && stageElement) {
-        // מרכוז הדמות
-        function centerCharacter() {
-            character.style.transform = 'none';
-            character.style.transition = 'none';
-            
-            const stageRect = stageElement.getBoundingClientRect();
-            const charRect = character.getBoundingClientRect();
-            
-            const centerX = (stageRect.width - charRect.width) / 2;
-            const centerY = (stageRect.height - charRect.height) / 2;
-            
-            character.style.position = 'absolute';
-            character.style.left = centerX + 'px';
-            character.style.top = centerY + 'px';
+      if (!currentDraggedBlock) return; // אין בלוק נגרר כרגע
+
+      const draggedRect = currentDraggedBlock.getBoundingClientRect();
+      let foundPotentialTargetThisCycle = false;
+      let closestTarget = null;
+      let closestDirection = null;
+      let minDistance = SNAP_THRESHOLD;
+
+      // נקה הדגשות קודמות *בתחילת* כל בדיקה ב-dragover
+      clearPotentialSnapHighlights();
+
+      // עבור על כל הבלוקים האחרים כדי לבדוק אם הם יעד פוטנציאלי
+      document.querySelectorAll('.block:not(.dragging)').forEach(targetBlock => {
+        if (targetBlock === currentDraggedBlock) return; // אל תשווה בלוק לעצמו
+
+        const targetRect = targetBlock.getBoundingClientRect();
+
+        // בדוק קרבה אנכית גסה (למשל, חפיפה של לפחות חצי גובה)
+        const verticalOverlap = Math.max(0, Math.min(draggedRect.bottom, targetRect.bottom) - Math.max(draggedRect.top, targetRect.top));
+        if (verticalOverlap < targetRect.height / 3) { // דרוש חפיפה מינימלית
+             return;
         }
-        
-        setTimeout(centerCharacter, 500);
-        
-        // טיפול בגרירת דמות
-        let isDragging = false;
-        let offsetX, offsetY;
-        
-        character.addEventListener('dragstart', function(e) {
-            e.preventDefault();
-            return false;
-        });
-        
-        character.addEventListener('mousedown', function(e) {
-            if (e.target !== character) return;
-            e.preventDefault();
-            
-            const charRect = character.getBoundingClientRect();
-            offsetX = e.clientX - charRect.left;
-            offsetY = e.clientY - charRect.top;
-            
-            isDragging = true;
-            character.style.cursor = 'grabbing';
-        });
-        
-        document.addEventListener('mousemove', function(e) {
-            if (!isDragging) return;
-            
-            character.style.transform = 'none';
-            character.style.transition = 'none';
-            
-            const stageRect = stageElement.getBoundingClientRect();
-            let newLeft = e.clientX - stageRect.left - offsetX;
-            let newTop = e.clientY - stageRect.top - offsetY;
-            
-            const charRect = character.getBoundingClientRect();
-            const maxLeft = stageRect.width - charRect.width;
-            const maxTop = stageRect.height - charRect.height;
-            
-            newLeft = Math.max(0, Math.min(newLeft, maxLeft));
-            newTop = Math.max(0, Math.min(newTop, maxTop));
-            
-            character.style.left = newLeft + 'px';
-            character.style.top = newTop + 'px';
-        });
-        
-        document.addEventListener('mouseup', function() {
-            if (isDragging) {
-                isDragging = false;
-                character.style.cursor = 'grab';
-            }
-        });
-    }
-    
-    // אתחול הקטגוריה הראשונית
-    let initialCategory = 'triggering';
-    const activeTab = document.querySelector(".category-tab.active");
-    
-    if (activeTab && activeTab.getAttribute('data-category')) {
-        initialCategory = activeTab.getAttribute('data-category');
-    } else {
-        const triggeringTab = document.querySelector('.category-tab[data-category="triggering"]');
-        if (triggeringTab) {
-            triggeringTab.classList.add('active');
+
+        // מרחק בין הצד הימני של הנגרר לשמאלי של המטרה
+        const distRightToLeft = Math.abs(draggedRect.right - targetRect.left);
+        // מרחק בין הצד השמאלי של הנגרר לימני של המטרה
+        const distLeftToRight = Math.abs(draggedRect.left - targetRect.right);
+
+        // בדוק אפשרות הצמדה מימין לנגרר (לשמאל המטרה)
+        if (distRightToLeft < minDistance) {
+            minDistance = distRightToLeft;
+            closestTarget = targetBlock;
+            closestDirection = 'right'; // הנגרר יתחבר מימין (לשמאל המטרה)
+            foundPotentialTargetThisCycle = true;
         }
-    }
-    
-    // הפעלת הקטגוריה הראשונית
-    handleCategoryChange(initialCategory);
-});
+
+        // בדוק אפשרות הצמדה משמאל לנגרר (לימין המטרה)
+        if (distLeftToRight < minDistance) {
+            minDistance = distLeftToRight;
+            closestTarget = targetBlock;
+            closestDirection = 'left'; // הנגרר יתחבר משמאל (לימין המטרה)
+            foundPotentialTargetThisCycle = true;
+        }
+      }); // סוף לולאת forEach
+
+      // אם מצאנו יעד קרוב מספיק במחזור הנוכחי
+      if (foundPotentialTargetThisCycle && closestTarget) {
+        potentialSnapTarget = closestTarget; // שמור את היעד הקרוב ביותר
+        snapDirection = closestDirection; // שמור את הכיוון שלו
+
+        // הדגש את הבלוק הנגרר כמקור
+        currentDraggedBlock.classList.add('snap-source');
+        // הדגש את בלוק המטרה
+        potentialSnapTarget.classList.add('snap-target');
+        // הדגש את הצד המתאים בבלוק המטרה
+        potentialSnapTarget.classList.add(snapDirection === 'right' ? 'snap-left' : 'snap-right');
+
+      } else {
+        // אם לא נמצא יעד קרוב במחזור הזה, נקה משתנים
+        potentialSnapTarget = null;
+        snapDirection = null;
+        // clearPotentialSnapHighlights() כבר נקרא בתחילת הפונקציה
+      }
+    });
+
+    blocksContainer.addEventListener('drop', (event) => {
+      event.preventDefault(); // מנע התנהגות ברירת מחדל (כמו פתיחת קובץ)
+      console.log('drop event');
+
+      if (potentialSnapTarget && snapDirection && currentDraggedBlock) {
+        console.log(`Attempting to snap ${currentDraggedBlock.id} to ${potentialSnapTarget.id}, direction: ${snapDirection}`);
+
+        // --- לוגיקת חיבור הבלוקים בפועל ---
+        // כאן תצטרך להוסיף את הקוד ש:
+        // 1. מחשב את המיקום החדש של currentDraggedBlock (למשל, צמוד ל-potentialSnapTarget)
+        // 2. מעדכן את style.left ו-style.top של currentDraggedBlock
+        // 3. אולי שומר את הקשר הלוגי ביניהם (למשל, ב-data attributes או במבנה נתונים אחר)
+        // 4. מטפל במקרה שבלוק כבר מחובר בצד זה
+
+        // דוגמה פשוטה לחישוב מיקום (צריך להתאים לגודל הבלוקים ולרווח הרצוי):
+        const targetRect = potentialSnapTarget.getBoundingClientRect();
+        const draggedRect = currentDraggedBlock.getBoundingClientRect();
+        const containerRect = blocksContainer.getBoundingClientRect(); // לקבלת אופסט הקונטיינר
+
+        let newX, newY;
+        newY = targetRect.top - containerRect.top; // שמור על אותו גובה Y (בהנחה שהם כבר מיושרים)
+
+        if (snapDirection === 'right') { // הצמד את הנגרר מימין לעצמו = משמאל למטרה
+          newX = targetRect.left - draggedRect.width - containerRect.left - 2; // 2px רווח
+        } else { // snapDirection === 'left' // הצמד את הנגרר משמאל לעצמו = מימין למטרה
+          newX = targetRect.right - containerRect.left + 2; // 2px רווח
+        }
+
+        // עדכן מיקום (חשוב שהבלוקים יהיו position: absolute)
+         currentDraggedBlock.style.left = `${newX}px`;
+         currentDraggedBlock.style.top = `${newY}px`;
+
+        console.log(`Snapped! New position for ${currentDraggedBlock.id}: (${newX}px, ${newY}px)`);
+        // -----------------------------------------
+
+        // הוסף אנימציית הצמדה
+        currentDraggedBlock.classList.add('snap-animation');
+        potentialSnapTarget.classList.add('snap-animation');
+        setTimeout(() => {
+          if(currentDraggedBlock) currentDraggedBlock.classList.remove('snap-animation');
+          if(potentialSnapTarget) potentialSnapTarget.classList.remove('snap-animation');
+        }, 300); // משך האנימציה ב-ms
+
+        // הוסף סימונים לבלוקים מחוברים
+        currentDraggedBlock.classList.add('connected-block');
+        potentialSnapTarget.classList.add('has-connected-block');
+        // קבע את כיוון החיבור עבור הקו הדק (::after / ::before)
+        if (snapDirection === 'right') {
+          currentDraggedBlock.dataset.connectionDirection = 'right';
+          potentialSnapTarget.dataset.connectionDirection = 'left';
+        } else { // snapDirection === 'left'
+          currentDraggedBlock.dataset.connectionDirection = 'left';
+          potentialSnapTarget.dataset.connectionDirection = 'right';
+        }
+
+      } else {
+        console.log('Drop occurred outside a snap zone.');
+        // אם רוצים שהבלוק יזוז למקום השחרור גם אם אין הצמדה:
+        // const dropX = event.clientX - (currentDraggedBlock?.dataset?.offsetX || 0); // צריך לשמור אופסט ב-dragstart
+        // const dropY = event.clientY - (currentDraggedBlock?.dataset?.offsetY || 0);
+        // if (currentDraggedBlock) {
+        //   currentDraggedBlock.style.left = `${dropX}px`;
+        //   currentDraggedBlock.style.top = `${dropY}px`;
+        // }
+      }
+
+      // נקה את מצב ההדגשה והפוטנציאל בכל מקרה לאחר ה-drop
+      clearPotentialSnapHighlights();
+      potentialSnapTarget = null;
+      snapDirection = null;
+      // ה-dragend ינקה את currentDraggedBlock ואת ה-dragging class
+    });
+  } // סוף if (blocksContainer)
+
+  // מאזין לכפתור "נקה הכל" (מהקוד המקורי)
+  const clearAllButton = document.getElementById('clear-all');
+  if (clearAllButton) {
+    clearAllButton.addEventListener('click', function() {
+      console.log('Clear All button clicked');
+      // ניקוי משתנים גלובליים
+      currentDraggedBlock = null;
+      potentialSnapTarget = null;
+      snapDirection = null;
+      lastClickedBlock = null;
+      lastRightClickedBlock = null;
+
+      // ניקוי כל ההדגשות והסימונים מה-DOM
+      clearAllHighlights(); // מנקה את רוב הדברים
+       document.querySelectorAll('.block.dragging').forEach(el => el.classList.remove('dragging')); // הסר גם dragging אם נתקע
+
+      // ניקוי אלמנטים נוספים (לפי הצורך)
+      removeDetachMenu();
+      hideConnectionIndicator();
+
+      // אופציונלי: איפוס מיקום הבלוקים למיקום התחלתי
+      // allBlocks.forEach(block => {
+      //    block.style.left = block.dataset.initialX + 'px'; // אם שמרת מיקום התחלתי
+      //    block.style.top = block.dataset.initialY + 'px';
+      // });
+
+      // אופציונלי: הסרת כל הבלוקים מהקונטיינר
+      // if (blocksContainer) blocksContainer.innerHTML = '';
+    });
+  }
+
+}); // סוף DOMContentLoaded
