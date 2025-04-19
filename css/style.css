@@ -1,4 +1,4 @@
-/* style.css - עם צבעים מעודכנים לילדי גן ותמיכה בבלוק REPEAT דינמי */
+/* style.css - עם צבעים מעודכנים לילדי גן */
 :root {
     --motion-color: #66D2FF;    /* כחול-תכלת בהיר */
     --triggering-color: #FFE866; /* צהוב בננה רך */
@@ -281,51 +281,59 @@ main {
     cursor: grabbing;
 }
 
-/* --------- סגנונות דינמיים לבלוק REPEAT --------- */
+/* ======== סגנון לבלוק repeat דינמי ======== */
 
-/* סגנון לבלוק repeat המורחב */
+/* סגנון למיכל ה-repeat */
 .repeat-container {
     position: relative;
     width: 256px !important;
-    min-height: 118px; /* גובה מינימלי - החלק העליון בלבד */
+    min-height: 118px; /* גובה מינימלי התחלתי */
     display: flex;
     flex-direction: column;
     background: transparent;
+    margin: 8px;
+    cursor: grab;
 }
 
+.repeat-container:active {
+    cursor: grabbing;
+}
+
+/* החלק העליון של בלוק ה-repeat */
 .repeat-top {
     width: 256px;
     height: 118px;
     position: relative;
-    z-index: 2;
+    z-index: 3;
+    pointer-events: none;
 }
 
+/* אזור הדרופ הפנימי של בלוק repeat */
 .repeat-drop-area {
     width: 220px; /* מעט צר יותר מהבלוק עצמו */
     min-height: 30px;
     background-color: white;
-    border-radius: 0 0 8px 8px;
+    border-left: 2px solid var(--control-color);
+    border-right: 2px solid var(--control-color);
     margin-left: 18px; /* יישור לפתח בתמונה */
     padding: 5px;
     position: relative;
-    z-index: 1;
+    z-index: 2;
     display: flex;
     flex-direction: column;
     align-items: center;
-    border-left: 2px solid var(--control-color);
-    border-right: 2px solid var(--control-color);
 }
 
+/* החלק התחתון של בלוק ה-repeat */
 .repeat-bottom {
     width: 256px;
-    height: 35px; /* גובה החלק התחתון */
+    height: 40px; /* גובה החלק התחתון */
     position: relative;
-    z-index: 2;
-    background-color: var(--control-color);
-    border-radius: 0 0 10px 10px;
-    margin-top: -5px; /* התאמה למרווח */
+    z-index: 3;
+    pointer-events: none;
 }
 
+/* סימון ויזואלי כשגוררים בלוק מעל אזור הדרופ */
 .repeat-drop-area.drag-over {
     background-color: #f0f8ff;
     box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
@@ -334,17 +342,23 @@ main {
 /* סגנון לבלוקים בתוך אזור ה-repeat */
 .repeat-drop-area .block-container {
     position: relative !important;
-    margin: 5px 0;
-    left: 0 !important;
-    top: 0 !important;
+    margin: 5px auto !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
 }
 
-/* ודא שהבלוקים בתוך repeat נמצאים מעל אחרים */
-.repeat-drop-area .block-container {
-    z-index: 3;
+/* סגנון למיכל ה-repeat באזור הקטגוריה */
+#block-palette .repeat-container {
+    width: 256px !important;
+    height: 118px !important;
+    overflow: hidden; /* מניעת הצגת האזור הפנימי בתצוגת הקטגוריה */
 }
 
-/* מסגרת היקפית כשגוררים מעל אזור הנפילה */
-.repeat-drop-area.drag-over {
-    box-shadow: inset 0 0 0 2px #4a90e2;
+#block-palette .repeat-drop-area {
+    display: none; /* הסתרת אזור הדרופ בתצוגת הקטגוריה */
+}
+
+#block-palette .repeat-bottom {
+    display: none; /* הסתרת החלק התחתון בתצוגת הקטגוריה */
 }
