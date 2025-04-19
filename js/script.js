@@ -195,60 +195,37 @@ const blocks = {
 };
 
 // ========================================================================
-// פונקציות ליצירת אלמנטים (no changes needed here from previous version)
+// פונקציה מעודכנת ליצירת אלמנטי בלוקים עם תמונות SVG
 // ========================================================================
-// ... (rest of the create functions: createRightConnector, createLeftConnector, createScratchBlock, createBlockElement) ...
-function createRightConnector(color) {
-    const rightConnector = document.createElement("div");
-    rightConnector.classList.add("right-connector");
-    rightConnector.style.backgroundColor = color;
-    return rightConnector;
-}
-function createLeftConnector() {
-    const leftConnectorWrapper = document.createElement("div");
-    leftConnectorWrapper.classList.add("left-connector-wrapper");
-    const leftConnector = document.createElement("div");
-    leftConnector.classList.add("left-connector");
-    leftConnectorWrapper.appendChild(leftConnector);
-    return leftConnectorWrapper;
-}
-function createScratchBlock(block) {
-    const scratchBlock = document.createElement("div");
-    scratchBlock.classList.add("scratch-block");
-    // Color is now mainly set by CSS based on category/type, but we can keep this as fallback/initial
-    scratchBlock.style.backgroundColor = block.color;
-    const iconImg = document.createElement("img");
-    iconImg.src = block.icon;
-    iconImg.alt = block.name;
-    iconImg.classList.add("block-icon-img");
-    scratchBlock.appendChild(iconImg);
-    return scratchBlock;
-}
 function createBlockElement(block, category) {
     const blockContainer = document.createElement("div");
     blockContainer.classList.add("block-container");
-    blockContainer.dataset.type = block.type; // Ensure type is set for styling (e.g., repeat)
-    blockContainer.dataset.category = category; // Store category info
+    blockContainer.dataset.type = block.type;
+    blockContainer.dataset.category = category;
 
-    const scratchBlock = createScratchBlock(block);
-    blockContainer.appendChild(scratchBlock);
+    // יצירת אלמנט תמונה במקום div מעוצב
+    const blockImage = document.createElement("img");
+    blockImage.src = `assets/block/${block.type}.svg`; // שימוש בנתיב החדש לתמונות SVG
+    blockImage.alt = block.name;
+    blockImage.classList.add("block-svg-image");
+    
+    blockContainer.appendChild(blockImage);
 
     blockContainer.draggable = true;
     blockContainer.addEventListener("dragstart", (event) => {
         handleDragStart(event, block, category);
     });
+    
     return blockContainer;
 }
 
-
 // ========================================================================
-// פונקציות טיפול באירועים (no changes needed here from previous version)
+// עדכון הטיפול בגרירה והשמטה
 // ========================================================================
-// ... (rest of the event handlers: handleDragStart, handleDrop) ...
 function handleDragStart(event, block, category) {
     const data = {
         type: block.type,
-        icon: block.icon,
+        icon: `assets/block/${block.type}.svg`, // עדכון נתיב האייקון
         color: block.color,
         category: category,
         name: block.name
@@ -261,10 +238,9 @@ function handleDrop(event) {
     event.preventDefault();
     const blockIndex = event.dataTransfer.getData('block-index');
 
-    if (blockIndex !== undefined && blockIndex !== '') { // Check if blockIndex is valid
+    if (blockIndex !== undefined && blockIndex !== '') {
         const programmingArea = document.getElementById("program-blocks");
         const draggedBlockIndex = parseInt(blockIndex);
-        // Ensure the index is valid before trying to access the element
         if (draggedBlockIndex >= 0 && draggedBlockIndex < programmingArea.children.length) {
              const draggedBlock = programmingArea.children[draggedBlockIndex];
             if (draggedBlock) {
@@ -272,7 +248,6 @@ function handleDrop(event) {
                 draggedBlock.style.position = "absolute";
                 draggedBlock.style.left = `${event.clientX - rect.left - (draggedBlock.offsetWidth / 2)}px`;
                 draggedBlock.style.top = `${event.clientY - rect.top - (draggedBlock.offsetHeight / 2)}px`;
-                // No need to remove/append if just moving within the same container
             }
         } else {
              console.warn("Invalid block index received during drop:", blockIndex);
@@ -295,23 +270,21 @@ function handleDrop(event) {
                  return;
             }
 
-            // Create new block element using the full definition
+            // יצירת בלוק חדש עם הגדרה מלאה
             const newBlock = createBlockElement(blockDefinition, blockCategory);
 
             programmingArea.appendChild(newBlock);
 
-            // Add drag listener for the new block within the programming area
+            // הוספת מאזין גרירה לבלוק החדש בתוך אזור התכנות
              newBlock.addEventListener("dragstart", (e) => {
-                  // Find the index *after* appending
                   const index = Array.from(programmingArea.children).indexOf(newBlock);
                   e.dataTransfer.setData('block-index', index.toString());
                   e.dataTransfer.effectAllowed = "move";
              });
 
-            // Position the new block
+            // מיקום הבלוק החדש
             const rect = programmingArea.getBoundingClientRect();
             newBlock.style.position = "absolute";
-            // Use offsetWidth/Height *after* appending to DOM
             const blockWidth = newBlock.offsetWidth || 100;
             const blockHeight = newBlock.offsetHeight || 100;
             newBlock.style.left = `${event.clientX - rect.left - (blockWidth / 2)}px`;
@@ -322,11 +295,9 @@ function handleDrop(event) {
     }
 }
 
-
 // ========================================================================
-// פונקציות אתחול (no changes needed here from previous version)
+// פונקציות אתחול
 // ========================================================================
-// ... (populateBlockPalette, handleCategoryChange) ...
 function populateBlockPalette(category) {
     const categoryDiv = document.getElementById(`${category}-blocks`);
     if (!categoryDiv) {
@@ -377,9 +348,8 @@ function handleCategoryChange(category) {
     }
 }
 
-
 // ========================================================================
-//  לוגיקת גרירה ושחרור (Drag and Drop) Setup (no changes needed here from previous version)
+//  לוגיקת גרירה ושחרור (Drag and Drop) Setup
 // ========================================================================
 const programmingArea = document.getElementById("program-blocks");
 const categoryTabs = document.querySelectorAll(".category-tab");
@@ -404,7 +374,7 @@ categoryTabs.forEach(tab => {
 });
 
 // ========================================================================
-// Grid Toggle Setup (no changes needed here from previous version)
+// Grid Toggle Setup
 // ========================================================================
 const gridToggle = document.getElementById("grid-toggle");
 const stage = document.getElementById("stage");
@@ -415,7 +385,7 @@ if (gridToggle && stage) {
 }
 
 // ========================================================================
-// Clear All Button Setup (no changes needed here from previous version)
+// Clear All Button Setup
 // ========================================================================
 const clearAllButton = document.getElementById("clear-all");
 if (clearAllButton && programmingArea) { // Check if programmingArea exists
@@ -475,71 +445,4 @@ document.addEventListener('DOMContentLoaded', function() {
     if (e.target !== character) return;
     e.preventDefault();
     
-    // גילוי המיקום המדויק של הלחיצה יחסית לפינת הדמות
-    const charRect = character.getBoundingClientRect();
-    offsetX = e.clientX - charRect.left;
-    offsetY = e.clientY - charRect.top;
-    
-    isDragging = true;
-    character.style.cursor = 'grabbing';
-  });
-  
-  // אירוע תנועה
-  document.addEventListener('mousemove', function(e) {
-    if (!isDragging) return;
-    
-    // מניעת ברירות מחדל שמפריעות לנו
-    character.style.transform = 'none';
-    character.style.transition = 'none';
-    
-    // חישוב מיקום חדש - המיקום של העכבר פחות ההיסט ופחות המיקום של הבמה
-    const stageRect = stage.getBoundingClientRect();
-    let newLeft = e.clientX - stageRect.left - offsetX;
-    let newTop = e.clientY - stageRect.top - offsetY;
-    
-    // הגבלת גבולות פנימיים של הבמה
-    const charRect = character.getBoundingClientRect();
-    const maxLeft = stageRect.width - charRect.width;
-    const maxTop = stageRect.height - charRect.height;
-    
-    // וידוא שלא חורגים מהגבולות
-    newLeft = Math.max(0, Math.min(newLeft, maxLeft));
-    newTop = Math.max(0, Math.min(newTop, maxTop));
-    
-    // עדכון מיקום
-    character.style.left = newLeft + 'px';
-    character.style.top = newTop + 'px';
-    
-    // דיבוג
-    console.log('Position:', newLeft, newTop, 'Max:', maxLeft, maxTop);
-  });
-  
-  // אירוע עזיבת לחצן
-  document.addEventListener('mouseup', function() {
-    if (isDragging) {
-      isDragging = false;
-      character.style.cursor = 'grab';
-    }
-  });
-});
-
-
-// ========================================================================
-// Initial Setup
-// ========================================================================
-document.addEventListener('DOMContentLoaded', () => {
-    // Find the initially active tab or default to 'triggering'
-    let initialCategory = 'triggering';
-    const activeTab = document.querySelector(".category-tab.active");
-    if (activeTab && activeTab.dataset.category) {
-        initialCategory = activeTab.dataset.category;
-    } else {
-        // If no tab is active initially, make the 'triggering' tab active
-        const triggeringTab = document.querySelector('.category-tab[data-category="triggering"]');
-        if (triggeringTab) {
-            triggeringTab.classList.add('active');
-        }
-    }
-    // Ensure the DOM is ready before trying to manipulate it
-    handleCategoryChange(initialCategory);
-});
+    // גילוי המיקום המדויק של הלחיצה
