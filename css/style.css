@@ -259,13 +259,15 @@ main {
     border-radius: 8px;
 }
 
-/* סגנון לתמונות SVG של הבלוקים */
+/* סגנון לתמונות SVG של הבלוקים - הוספת שקיפות */
 .block-svg-image {
     width: 100px;
     height: 80px;
     user-select: none;
     pointer-events: none;
     -webkit-user-drag: none;
+    background-color: transparent !important; /* וידוא רקע שקוף */
+    mix-blend-mode: multiply; /* שילוב טוב יותר עם הרקע */
 }
 
 /* עדכון מיכל הבלוק */
@@ -298,22 +300,37 @@ main {
     height: 118px !important;
 }
 
-/* ביטול צבעי הרקע הצבעוניים בקטגוריות השונות */
-.block-category[data-category="triggering"].active,
-.block-category[data-category="motion"].active,
-.block-category[data-category="looks"].active,
-.block-category[data-category="sound"].active,
-.block-category[data-category="control"].active,
+/* צבעי רקע לקטגוריות השונות */
+.block-category[data-category="triggering"].active {
+    background-color: var(--triggering-color) !important;
+}
+
+.block-category[data-category="motion"].active {
+    background-color: var(--motion-color) !important;
+}
+
+.block-category[data-category="looks"].active {
+    background-color: var(--looks-color) !important;
+}
+
+.block-category[data-category="sound"].active {
+    background-color: var(--sound-color) !important;
+}
+
+.block-category[data-category="control"].active {
+    background-color: var(--control-color) !important;
+}
+
 .block-category[data-category="end"].active {
-    background-color: transparent !important; /* רקע שקוף במקום הצבע המקורי */
+    background-color: var(--end-color) !important;
 }
 
-/* עיצוב משופר ללבנים בלי רקע צבעוני */
-#block-palette .block-container {
-    margin: 10px;
-    transition: transform 0.2s ease;
+/* התאמה של הגוון כדי להבטיח שהלבנים יראו טוב על הרקע */
+.block-category.active {
+    opacity: 0.85; /* מעט שקיפות לרקע כדי שהלבנים יבלטו */
 }
 
-#block-palette .block-container:hover {
-    transform: scale(1.05);
+/* שיפורים לתמונות ה-SVG */
+img[src*=".svg"] {
+    background-color: transparent !important;
 }
