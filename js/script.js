@@ -226,7 +226,7 @@ function populateBlockPalette(category) {
 }
 
 // ========================================================================
-// פונקציה לטיפול בשינוי קטגוריה
+// פונקציה לטיפול בשינוי קטגוריה עם עדכון צבע הרקע
 // ========================================================================
 function handleCategoryChange(category) {
     console.log(`Changing category to: ${category}`);
@@ -252,9 +252,34 @@ function handleCategoryChange(category) {
     if (categoryDiv) {
         categoryDiv.classList.add("active");
         console.log('Activated category div:', categoryDiv.id);
-        populateBlockPalette(category); // מילוי הקטגוריה בבלוקים
+        
+        // עדכון צבע הגבול של מכל הבלוקים
+        const blockPalette = document.getElementById("block-palette");
+        if (blockPalette) {
+            // שימוש בצבע המתאים לקטגוריה
+            const categoryColor = getCategoryColor(category);
+            blockPalette.style.borderColor = categoryColor;
+        }
+        
+        // מילוי הקטגוריה בבלוקים
+        populateBlockPalette(category);
     } else {
         console.warn(`Block category container not found for: ${category}`);
+    }
+}
+
+// ========================================================================
+// פונקציית עזר לקבלת הצבע המתאים לקטגוריה
+// ========================================================================
+function getCategoryColor(category) {
+    switch(category) {
+        case 'triggering': return getComputedStyle(document.documentElement).getPropertyValue('--triggering-color');
+        case 'motion': return getComputedStyle(document.documentElement).getPropertyValue('--motion-color');
+        case 'looks': return getComputedStyle(document.documentElement).getPropertyValue('--looks-color');
+        case 'sound': return getComputedStyle(document.documentElement).getPropertyValue('--sound-color');
+        case 'control': return getComputedStyle(document.documentElement).getPropertyValue('--control-color');
+        case 'end': return getComputedStyle(document.documentElement).getPropertyValue('--end-color');
+        default: return '#f0f0f0'; // צבע ברירת מחדל
     }
 }
 
