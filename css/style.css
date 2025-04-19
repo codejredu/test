@@ -1,4 +1,4 @@
-/* style.css - עם צבעים מעודכנים לילדי גן */
+/* style.css - עם צבעים מעודכנים לילדי גן ותמיכה בבלוק REPEAT דינמי */
 :root {
     --motion-color: #66D2FF;    /* כחול-תכלת בהיר */
     --triggering-color: #FFE866; /* צהוב בננה רך */
@@ -281,23 +281,70 @@ main {
     cursor: grabbing;
 }
 
-/* סגנון מיוחד לבלוק repeat - מידות ייחודיות */
-#block-palette .block-container[data-type="repeat"] .block-svg-image,
-#programming-area .block-container[data-type="repeat"] .block-svg-image {
-    width: 190px !important; /* רוחב מיוחד לבלוק repeat */
-    height: 102px !important; /* גובה מיוחד לבלוק repeat */
-    object-fit: contain; /* שמירה על יחס התמונה */
+/* --------- סגנונות דינמיים לבלוק REPEAT --------- */
+
+/* סגנון לבלוק repeat המורחב */
+.repeat-container {
+    position: relative;
+    width: 256px !important;
+    min-height: 118px; /* גובה מינימלי - החלק העליון בלבד */
+    display: flex;
+    flex-direction: column;
+    background: transparent;
 }
 
-/* הגדלת רוחב וגובה מיכל הבלוק להתאים לתמונה המורחבת של repeat */
-#block-palette .block-container[data-type="repeat"],
-#programming-area .block-container[data-type="repeat"] {
-    width: 190px !important;
-    height: 102px !important;
+.repeat-top {
+    width: 256px;
+    height: 118px;
+    position: relative;
+    z-index: 2;
 }
 
-/* כאשר בלוק repeat נמצא באזור הקטגוריה, כדי שלא יגלוש */
-#control-blocks .block-container[data-type="repeat"] {
-    margin-bottom: 0;
-    margin-top: 0;
+.repeat-drop-area {
+    width: 220px; /* מעט צר יותר מהבלוק עצמו */
+    min-height: 30px;
+    background-color: white;
+    border-radius: 0 0 8px 8px;
+    margin-left: 18px; /* יישור לפתח בתמונה */
+    padding: 5px;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-left: 2px solid var(--control-color);
+    border-right: 2px solid var(--control-color);
+}
+
+.repeat-bottom {
+    width: 256px;
+    height: 35px; /* גובה החלק התחתון */
+    position: relative;
+    z-index: 2;
+    background-color: var(--control-color);
+    border-radius: 0 0 10px 10px;
+    margin-top: -5px; /* התאמה למרווח */
+}
+
+.repeat-drop-area.drag-over {
+    background-color: #f0f8ff;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+/* סגנון לבלוקים בתוך אזור ה-repeat */
+.repeat-drop-area .block-container {
+    position: relative !important;
+    margin: 5px 0;
+    left: 0 !important;
+    top: 0 !important;
+}
+
+/* ודא שהבלוקים בתוך repeat נמצאים מעל אחרים */
+.repeat-drop-area .block-container {
+    z-index: 3;
+}
+
+/* מסגרת היקפית כשגוררים מעל אזור הנפילה */
+.repeat-drop-area.drag-over {
+    box-shadow: inset 0 0 0 2px #4a90e2;
 }
