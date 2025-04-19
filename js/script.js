@@ -4,7 +4,6 @@
 
 const blocks = {
     triggering: [
-        // ... (triggering blocks remain the same)
         {
             name: "Green Flag",
             color: "var(--triggering-color)",
@@ -37,7 +36,6 @@ const blocks = {
         },
     ],
     motion: [
-        // ... (motion blocks remain the same)
         {
             name: "Move Right",
             color: "var(--motion-color)",
@@ -88,8 +86,7 @@ const blocks = {
         },
     ],
     looks: [
-        // ... (looks blocks remain the same)
-         {
+        {
             name: "Say",
             color: "var(--looks-color)",
             type: "say",
@@ -127,7 +124,6 @@ const blocks = {
         },
     ],
     sound: [
-        // ... (sound blocks remain the same)
         {
             name: "Play Sound",
             color: "var(--sound-color)",
@@ -142,8 +138,6 @@ const blocks = {
         },
     ],
     control: [
-        // --- START OF CONTROL BLOCKS ---
-        // --- MOVED THE STOP BLOCK TO BE FIRST ---
         {
             name: "Stop",
             color: "var(--control-color)",
@@ -168,10 +162,8 @@ const blocks = {
             icon: "assets/images/blocks/repeat.svg",
             color: "var(--control-color)"
         },
-        // --- END OF CONTROL BLOCKS ---
     ],
     end: [
-        // --- START OF END BLOCKS ---
         {
             name: "End",
             color: "var(--end-color)",
@@ -190,7 +182,6 @@ const blocks = {
             type: "goToPage",
             icon: "assets/images/blocks/go-to-page.svg",
         },
-        // --- END OF END BLOCKS ---
     ],
 };
 
@@ -208,6 +199,16 @@ function createBlockElement(block, category) {
     blockImage.src = `assets/block/${block.type}.svg`; // שימוש בנתיב החדש לתמונות SVG
     blockImage.alt = block.name;
     blockImage.classList.add("block-svg-image");
+    
+    // הוספת טיפול בשגיאות לטעינת התמונה
+    blockImage.onerror = function() {
+        console.warn(`SVG image for ${block.type} not found at assets/block/${block.type}.svg`);
+        // במקרה של שגיאה, ננסה להשתמש באייקון המקורי כגיבוי
+        if (block.icon) {
+            this.src = block.icon;
+            console.log(`Using fallback icon: ${block.icon}`);
+        }
+    };
     
     blockContainer.appendChild(blockImage);
 
@@ -304,45 +305,53 @@ function populateBlockPalette(category) {
         console.error(`Category div not found for ${category}`);
         return;
     }
-    categoryDiv.innerHTML = ""; // Clear existing blocks
+    
+    // נקה את הבלוקים הקיימים
+    categoryDiv.innerHTML = "";
 
-    if (!blocks[category]) {
-        console.warn(`No blocks defined for category ${category}`); // Use warn instead of error if it might be intentional
+    // בדוק אם יש בלוקים מוגדרים לקטגוריה זו
+    if (!blocks[category] || blocks[category].length === 0) {
+        console.warn(`No blocks defined for category ${category}`);
         return;
     }
 
-    console.log(`Populating category: ${category} with`, blocks[category]); // Debug log
+    console.log(`Populating category: ${category} with ${blocks[category].length} blocks`);
 
+    // צור את הבלוקים עבור הקטגוריה
     blocks[category].forEach(block => {
-        console.log(`Creating element for: ${block.name}`); // Debug log
+        console.log(`Creating element for: ${block.name} (${block.type})`);
         const blockElement = createBlockElement(block, category);
         categoryDiv.appendChild(blockElement);
     });
 }
 
 function handleCategoryChange(category) {
+    console.log(`Changing category to: ${category}`);
+    
+    // הסר את המחלקה 'active' מכל הקטגוריות והכרטיסיות
     const categoryTabs = document.querySelectorAll(".category-tab");
     const blockCategories = document.querySelectorAll(".block-category");
-
-    console.log(`Changing category to: ${category}`); // Debug log
 
     blockCategories.forEach(element => element.classList.remove("active"));
     categoryTabs.forEach(tab => tab.classList.remove("active"));
 
+    // מצא את הכרטיסייה והקטגוריה המתאימות
     const tab = document.querySelector(`.category-tab[data-category="${category}"]`);
     const categoryDiv = document.getElementById(`${category}-blocks`);
 
+    // הוסף את המחלקה 'active' לכרטיסייה
     if (tab) {
         tab.classList.add("active");
-        console.log('Activated tab:', tab); // Debug log
+        console.log('Activated tab:', tab.getAttribute('data-category'));
     } else {
         console.warn(`Tab not found for category: ${category}`);
     }
 
+    // הוסף את המחלקה 'active' לקטגוריה ומלא אותה בבלוקים
     if (categoryDiv) {
         categoryDiv.classList.add("active");
-        console.log('Activated category div:', categoryDiv); // Debug log
-        populateBlockPalette(category); // Populate the now active category
+        console.log('Activated category div:', categoryDiv.id);
+        populateBlockPalette(category); // אכלס את הקטגוריה הפעילה
     } else {
         console.warn(`Block category container not found for: ${category}`);
     }
@@ -351,98 +360,163 @@ function handleCategoryChange(category) {
 // ========================================================================
 //  לוגיקת גרירה ושחרור (Drag and Drop) Setup
 // ========================================================================
-const programmingArea = document.getElementById("program-blocks");
-const categoryTabs = document.querySelectorAll(".category-tab");
-const blockCategories = document.querySelectorAll(".block-category"); // Define these earlier if needed
-
-// Ensure programmingArea exists before adding listeners
-if (programmingArea) {
-    programmingArea.addEventListener("dragover", (event) => {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = "move";
-    });
-    programmingArea.addEventListener("drop", handleDrop);
-} else {
-    console.error("Programming area element (#program-blocks) not found!");
-}
-
-categoryTabs.forEach(tab => {
-    tab.addEventListener("click", () => {
-        const category = tab.dataset.category;
-        handleCategoryChange(category);
-    });
-});
-
-// ========================================================================
-// Grid Toggle Setup
-// ========================================================================
-const gridToggle = document.getElementById("grid-toggle");
-const stage = document.getElementById("stage");
-if (gridToggle && stage) {
-    gridToggle.addEventListener("click", () => {
-        stage.classList.toggle("show-grid");
-    });
-}
-
-// ========================================================================
-// Clear All Button Setup
-// ========================================================================
-const clearAllButton = document.getElementById("clear-all");
-if (clearAllButton && programmingArea) { // Check if programmingArea exists
-    clearAllButton.addEventListener("click", () => {
-        programmingArea.innerHTML = "";
-    });
-}
-
-// ========================================================================
-// Character Dragging - קוד גרירת דמות מתוקן
-// ========================================================================
 document.addEventListener('DOMContentLoaded', function() {
-  const character = document.getElementById('character');
-  const stage = document.getElementById('stage');
-  
-  if (!character || !stage) return;
-  
-  // 1. מרכוז הדמות במרכז הבמה
-  function centerCharacterExactly() {
-    // מאפס את כל המאפיינים שיכולים להפריע
-    character.style.transform = 'none';
-    character.style.transition = 'none';
+    console.log("DOM fully loaded");
     
-    // מדידת הגדלים האמיתיים
-    const stageRect = stage.getBoundingClientRect();
-    const charRect = character.getBoundingClientRect();
-    
-    // חישוב המרכז
-    const centerX = (stageRect.width - charRect.width) / 2;
-    const centerY = (stageRect.height - charRect.height) / 2;
-    
-    // מיקום מדויק
-    character.style.position = 'absolute';
-    character.style.left = centerX + 'px';
-    character.style.top = centerY + 'px';
-    
-    console.log('Character centered at:', centerX, centerY);
-  }
-  
-  // קריאה למרכוז אחרי השהייה קטנה
-  setTimeout(centerCharacterExactly, 500);
-  
-  // 2. תיקון גרירת דמות
-  let isDragging = false;
-  let offsetX, offsetY; // המרחק בין נקודת הלחיצה לפינה העליונה-שמאלית של הדמות
-  
-  // מניעת גרירה מובנית של HTML5
-  character.addEventListener('dragstart', function(e) {
-    if (e.target === character) {
-      e.preventDefault();
-      return false;
+    const programmingArea = document.getElementById("program-blocks");
+    const categoryTabs = document.querySelectorAll(".category-tab");
+    const blockCategories = document.querySelectorAll(".block-category");
+
+    // וודא שאזור התכנות קיים לפני הוספת מאזינים
+    if (programmingArea) {
+        programmingArea.addEventListener("dragover", (event) => {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
+        });
+        
+        programmingArea.addEventListener("drop", handleDrop);
+        console.log("Drop handlers added to programming area");
+    } else {
+        console.error("Programming area element (#program-blocks) not found!");
     }
-  });
-  
-  // אירוע לחיצה
-  character.addEventListener('mousedown', function(e) {
-    if (e.target !== character) return;
-    e.preventDefault();
+
+    // הוסף מאזיני אירועים לכרטיסיות הקטגוריות
+    if (categoryTabs.length > 0) {
+        categoryTabs.forEach(tab => {
+            tab.addEventListener("click", () => {
+                const category = tab.getAttribute('data-category');
+                console.log(`Tab clicked: ${category}`);
+                handleCategoryChange(category);
+            });
+        });
+        console.log(`${categoryTabs.length} category tabs initialized`);
+    } else {
+        console.error("No category tabs found!");
+    }
+
+    // ========================================================================
+    // Grid Toggle Setup
+    // ========================================================================
+    const gridToggle = document.getElementById("grid-toggle");
+    const stage = document.getElementById("stage");
+    if (gridToggle && stage) {
+        gridToggle.addEventListener("click", () => {
+            stage.classList.toggle("show-grid");
+            console.log("Grid toggled");
+        });
+    }
+
+    // ========================================================================
+    // Clear All Button Setup
+    // ========================================================================
+    const clearAllButton = document.getElementById("clear-all");
+    if (clearAllButton && programmingArea) {
+        clearAllButton.addEventListener("click", () => {
+            programmingArea.innerHTML = "";
+            console.log("Programming area cleared");
+        });
+    }
+
+    // ========================================================================
+    // Character Dragging - קוד גרירת דמות
+    // ========================================================================
+    const character = document.getElementById('character');
+    const stageElement = document.getElementById('stage');
     
-    // גילוי המיקום המדויק של הלחיצה
+    if (character && stageElement) {
+        // מרכוז הדמות
+        function centerCharacterExactly() {
+            character.style.transform = 'none';
+            character.style.transition = 'none';
+            
+            const stageRect = stageElement.getBoundingClientRect();
+            const charRect = character.getBoundingClientRect();
+            
+            const centerX = (stageRect.width - charRect.width) / 2;
+            const centerY = (stageRect.height - charRect.height) / 2;
+            
+            character.style.position = 'absolute';
+            character.style.left = centerX + 'px';
+            character.style.top = centerY + 'px';
+            
+            console.log('Character centered at:', centerX, centerY);
+        }
+        
+        setTimeout(centerCharacterExactly, 500);
+        
+        // גרירת דמות
+        let isDragging = false;
+        let offsetX, offsetY;
+        
+        character.addEventListener('dragstart', function(e) {
+            if (e.target === character) {
+                e.preventDefault();
+                return false;
+            }
+        });
+        
+        character.addEventListener('mousedown', function(e) {
+            if (e.target !== character) return;
+            e.preventDefault();
+            
+            const charRect = character.getBoundingClientRect();
+            offsetX = e.clientX - charRect.left;
+            offsetY = e.clientY - charRect.top;
+            
+            isDragging = true;
+            character.style.cursor = 'grabbing';
+        });
+        
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            
+            character.style.transform = 'none';
+            character.style.transition = 'none';
+            
+            const stageRect = stageElement.getBoundingClientRect();
+            let newLeft = e.clientX - stageRect.left - offsetX;
+            let newTop = e.clientY - stageRect.top - offsetY;
+            
+            const charRect = character.getBoundingClientRect();
+            const maxLeft = stageRect.width - charRect.width;
+            const maxTop = stageRect.height - charRect.height;
+            
+            newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+            newTop = Math.max(0, Math.min(newTop, maxTop));
+            
+            character.style.left = newLeft + 'px';
+            character.style.top = newTop + 'px';
+        });
+        
+        document.addEventListener('mouseup', function() {
+            if (isDragging) {
+                isDragging = false;
+                character.style.cursor = 'grab';
+            }
+        });
+    }
+
+    // ========================================================================
+    // Initial Setup - אתחול התצוגה הראשונית
+    // ========================================================================
+    
+    // מצא את הכרטיסייה הפעילה כרגע או השתמש ב-'triggering' כברירת מחדל
+    let initialCategory = 'triggering';
+    const activeTab = document.querySelector(".category-tab.active");
+    
+    if (activeTab && activeTab.getAttribute('data-category')) {
+        initialCategory = activeTab.getAttribute('data-category');
+        console.log(`Found active tab: ${initialCategory}`);
+    } else {
+        // אם אין כרטיסייה פעילה, הפעל את 'triggering'
+        const triggeringTab = document.querySelector('.category-tab[data-category="triggering"]');
+        if (triggeringTab) {
+            triggeringTab.classList.add('active');
+            console.log("No active tab found, activating triggering tab");
+        }
+    }
+    
+    // אתחל את התצוגה עם הקטגוריה הראשונית
+    handleCategoryChange(initialCategory);
+    console.log(`Initial category set to: ${initialCategory}`);
+});
