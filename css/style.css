@@ -273,12 +273,12 @@ main {
 /* סגנון מיוחד לבלוק repeat */
 #block-palette .block-container[data-type="repeat"] .block-svg-image,
 #programming-area .block-container[data-type="repeat"] .block-svg-image {
-    width: 256px !important;
-    height: 118px !important;
+    width: 218px !important;
+    height: 102px !important;
 }
 
 #block-palette .block-container[data-type="repeat"],
 #programming-area .block-container[data-type="repeat"] {
-    width: 256px !important;
-    height: 118px !important;
+    width: 218px !important;
+    height: 102px !important;
 }
