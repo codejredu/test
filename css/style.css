@@ -284,7 +284,7 @@ main {
 /* סגנון מיוחד לבלוק repeat - מידות ייחודיות */
 #block-palette .block-container[data-type="repeat"] .block-svg-image,
 #programming-area .block-container[data-type="repeat"] .block-svg-image {
-    width: 208px !important; /* רוחב מיוחד לבלוק repeat */
+    width: 203px !important; /* רוחב מיוחד לבלוק repeat */
     height: 102px !important; /* גובה מיוחד לבלוק repeat */
     object-fit: contain; /* שמירה על יחס התמונה */
 }
@@ -292,7 +292,7 @@ main {
 /* הגדלת רוחב וגובה מיכל הבלוק להתאים לתמונה המורחבת של repeat */
 #block-palette .block-container[data-type="repeat"],
 #programming-area .block-container[data-type="repeat"] {
-    width: 208px !important;
+    width: 203px !important;
     height: 102px !important;
 }
 
