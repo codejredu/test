@@ -57,6 +57,17 @@ main {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
+#stage::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background: none;
+}
+
 #stage.show-grid {
   background-image:
     linear-gradient(to right, lightgrey 1px, transparent 1px),
@@ -94,6 +105,7 @@ main {
     flex-direction: row;
     align-items: stretch;
     overflow: hidden;
+    transition: border-color 0.3s ease;
 }
 
 .category-tabs {
@@ -143,12 +155,14 @@ main {
     margin-left: 0px;
     background-color: #f0f0f0;
     overflow-x: auto;
+    transition: background-color 0.3s ease;
 }
 
 .block-category.active {
     display: flex;
     flex-wrap: wrap;
     padding: 10px;
+    border-radius: 0 10px 10px 0;
 }
 
 #programming-area {
@@ -263,6 +277,7 @@ main {
     margin: 8px;
     cursor: grab;
     background-color: transparent;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 #block-palette .block-container:active,
@@ -273,12 +288,42 @@ main {
 /* סגנון מיוחד לבלוק repeat */
 #block-palette .block-container[data-type="repeat"] .block-svg-image,
 #programming-area .block-container[data-type="repeat"] .block-svg-image {
-    width: 218px !important;
-    height: 102px !important;
+    width: 256px !important;
+    height: 118px !important;
 }
 
 #block-palette .block-container[data-type="repeat"],
 #programming-area .block-container[data-type="repeat"] {
-    width: 218px !important;
-    height: 102px !important;
+    width: 256px !important;
+    height: 118px !important;
+}
+
+/* צבעי רקע לקטגוריות השונות */
+.block-category[data-category="triggering"].active {
+    background-color: var(--triggering-color) !important;
+}
+
+.block-category[data-category="motion"].active {
+    background-color: var(--motion-color) !important;
+}
+
+.block-category[data-category="looks"].active {
+    background-color: var(--looks-color) !important;
+}
+
+.block-category[data-category="sound"].active {
+    background-color: var(--sound-color) !important;
+}
+
+.block-category[data-category="control"].active {
+    background-color: var(--control-color) !important;
+}
+
+.block-category[data-category="end"].active {
+    background-color: var(--end-color) !important;
+}
+
+/* התאמה של הגוון כדי להבטיח שהלבנים יראו טוב על הרקע */
+.block-category.active {
+    opacity: 0.85; /* מעט שקיפות לרקע כדי שהלבנים יבלטו */
 }
