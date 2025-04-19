@@ -1,5 +1,5 @@
 // ========================================================================
-// הגדרת בלוקים (Blocks) - מעודכן לנתיבי קבצים חדשים
+// הגדרת בלוקים (Blocks)
 // ========================================================================
 
 const blocks = {
@@ -32,7 +32,7 @@ const blocks = {
             name: "Receive Message",
             color: "var(--triggering-color)",
             type: "startOnMessage",
-            svgFile: "Send Message orange.svg" // משתמש בקובץ הכתום עבור קבלת הודעות
+            svgFile: "Send Message orange.svg"
         },
     ],
     motion: [
@@ -160,7 +160,8 @@ const blocks = {
             name: "Repeat",
             type: "repeat",
             svgFile: "repeat.svg",
-            color: "var(--control-color)"
+            color: "var(--control-color)",
+            isContainer: true // מסמן שזה בלוק מכיל
         },
     ],
     end: [
@@ -186,9 +187,9 @@ const blocks = {
 };
 
 // ========================================================================
-// פונקציה מעודכנת ליצירת אלמנטי בלוקים עם תמונות SVG
+// פונקציה ליצירת אלמנטי בלוקים רגילים
 // ========================================================================
-function createBlockElement(block, category) {
+function createRegularBlockElement(block, category) {
     const blockContainer = document.createElement("div");
     blockContainer.classList.add("block-container");
     blockContainer.dataset.type = block.type;
@@ -196,7 +197,6 @@ function createBlockElement(block, category) {
 
     // יצירת אלמנט תמונה SVG
     const blockImage = document.createElement("img");
-    // שימוש בשם הקובץ המדויק שציינו
     blockImage.src = `assets/block/${block.svgFile}`;
     blockImage.alt = block.name;
     blockImage.classList.add("block-svg-image");
@@ -204,8 +204,7 @@ function createBlockElement(block, category) {
     // הוספת טיפול בשגיאות לטעינת התמונה
     blockImage.onerror = function() {
         console.warn(`SVG image not found: assets/block/${block.svgFile}`);
-        // אם יש שגיאה, הצג שגיאה בקונסול אבל אל תעשה כלום אחר
-        this.style.border = "2px dashed red"; // סימון ויזואלי לבעיה
+        this.style.border = "2px dashed red";
         this.style.background = "#ffeeee";
     };
     
@@ -220,7 +219,59 @@ function createBlockElement(block, category) {
 }
 
 // ========================================================================
-// עדכון הטיפול בגרירה והשמטה
+// פונקציה ליצירת בלוק repeat מיוחד
+// ========================================================================
+function createRepeatBlockElement(block, category) {
+    const blockContainer = document.createElement("div");
+    blockContainer.classList.add("block-container", "repeat-container");
+    blockContainer.dataset.type = "repeat";
+    blockContainer.dataset.category = category;
+    
+    // יצירת החלק העליון של בלוק ה-repeat
+    const topImage = document.createElement("img");
+    topImage.src = `assets/block/${block.svgFile}`;
+    topImage.alt = "Repeat";
+    topImage.classList.add("repeat-top");
+    
+    // יצירת אזור הדרופ - לכאן יגררו בלוקים
+    const dropArea = document.createElement("div");
+    dropArea.classList.add("repeat-drop-area");
+    
+    // הוספת אירועי גרירה ייחודיים לאזור הדרופ
+    dropArea.addEventListener("dragover", handleRepeatDragOver);
+    dropArea.addEventListener("drop", handleRepeatDrop);
+    
+    // החלק התחתון (סוגר) של בלוק ה-repeat
+    const bottomImage = document.createElement("div");
+    bottomImage.classList.add("repeat-bottom");
+    bottomImage.style.backgroundColor = "var(--control-color)";
+    bottomImage.style.borderRadius = "0 0 10px 10px";
+    
+    // הרכבת הבלוק
+    blockContainer.appendChild(topImage);
+    blockContainer.appendChild(dropArea);
+    blockContainer.appendChild(bottomImage);
+    
+    blockContainer.draggable = true;
+    blockContainer.addEventListener("dragstart", handleRepeatDragStart);
+    
+    return blockContainer;
+}
+
+// ========================================================================
+// פונקציה מרכזית ליצירת אלמנטי בלוקים מכל הסוגים
+// ========================================================================
+function createBlockElement(block, category) {
+    // בדיקה אם זהו בלוק מסוג repeat (מכיל)
+    if (block.type === "repeat" && block.isContainer) {
+        return createRepeatBlockElement(block, category);
+    } else {
+        return createRegularBlockElement(block, category);
+    }
+}
+
+// ========================================================================
+// טיפול בגרירת בלוקים רגילים
 // ========================================================================
 function handleDragStart(event, block, category) {
     const data = {
@@ -228,12 +279,121 @@ function handleDragStart(event, block, category) {
         svgFile: block.svgFile,
         color: block.color,
         category: category,
-        name: block.name
+        name: block.name,
+        isContainer: block.isContainer || false
     };
     event.dataTransfer.setData("text/plain", JSON.stringify(data));
     event.dataTransfer.effectAllowed = "move";
 }
 
+// ========================================================================
+// טיפול בגרירת בלוק repeat
+// ========================================================================
+function handleRepeatDragStart(event) {
+    const repeatBlock = this;
+    
+    // שמירת מידע על הבלוק והתוכן שלו
+    const blocksInsideHTML = repeatBlock.querySelector(".repeat-drop-area").innerHTML;
+    
+    const data = {
+        type: "repeat",
+        isContainer: true,
+        category: repeatBlock.dataset.category,
+        name: "Repeat",
+        blocksInside: blocksInsideHTML
+    };
+    
+    event.dataTransfer.setData("text/plain", JSON.stringify(data));
+    event.dataTransfer.effectAllowed = "move";
+}
+
+// ========================================================================
+// טיפול בגרירה מעל אזור הדרופ של בלוק repeat
+// ========================================================================
+function handleRepeatDragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    this.classList.add("drag-over");
+}
+
+// ========================================================================
+// טיפול בהשמטה (drop) בתוך בלוק repeat
+// ========================================================================
+function handleRepeatDrop(event) {
+    event.preventDefault();
+    event.stopPropagation(); // מניעת בועה למעלה לאזור התכנות
+    this.classList.remove("drag-over");
+    
+    const dataString = event.dataTransfer.getData("text/plain");
+    if (!dataString) {
+        console.error("No data transferred on drop inside repeat.");
+        return;
+    }
+    
+    try {
+        const data = JSON.parse(dataString);
+        
+        // אם מנסים לגרור בלוק repeat לתוך בלוק repeat - לא מאפשרים
+        if (data.isContainer) {
+            console.warn("Cannot drag container blocks into repeat blocks");
+            return;
+        }
+        
+        const blockCategory = data.category;
+        const blockDefinition = blocks[blockCategory]?.find(b => b.type === data.type);
+        
+        if (!blockDefinition) {
+            console.error("Could not find block definition for dropped item:", data);
+            return;
+        }
+        
+        // יצירת בלוק חדש
+        const newBlock = createRegularBlockElement(blockDefinition, blockCategory);
+        newBlock.style.position = "static"; // בתוך repeat הבלוקים צריכים להיות סטטיים
+        
+        // הוספת הבלוק לאזור ה-repeat
+        this.appendChild(newBlock);
+        
+        // עדכון גובה בלוק ה-repeat
+        updateRepeatBlockHeight(this.parentElement);
+        
+    } catch (e) {
+        console.error("Error parsing dropped data inside repeat:", e, dataString);
+    }
+}
+
+// ========================================================================
+// עדכון גובה בלוק repeat בהתאם לתוכן שלו
+// ========================================================================
+function updateRepeatBlockHeight(repeatBlock) {
+    if (!repeatBlock || !repeatBlock.classList.contains("repeat-container")) return;
+    
+    const dropArea = repeatBlock.querySelector(".repeat-drop-area");
+    if (!dropArea) return;
+    
+    // ספירת מספר הבלוקים באזור
+    const blocksInside = dropArea.querySelectorAll(".block-container");
+    const blockCount = blocksInside.length;
+    
+    // חישוב הגובה הדרוש
+    const minHeight = 30; // גובה מינימלי לאזור הדרופ
+    const blockHeight = 85; // גובה משוער לכל בלוק
+    let dropAreaHeight = Math.max(minHeight, blockCount * blockHeight);
+    
+    // עדכון הגובה באזור הדרופ
+    dropArea.style.height = dropAreaHeight + "px";
+    
+    // עדכון הגובה הכולל של מיכל ה-repeat
+    const topHeight = 118; // גובה החלק העליון
+    const bottomHeight = 40; // גובה החלק התחתון
+    repeatBlock.style.height = (topHeight + dropAreaHeight + bottomHeight) + "px";
+    
+    console.log(`Updated repeat block height: ${repeatBlock.style.height}, contains ${blockCount} blocks`);
+}
+
+// ========================================================================
+// טיפול בגרירה ושחרור באזור התכנות הראשי
+// ========================================================================
 function handleDrop(event) {
     event.preventDefault();
     const blockIndex = event.dataTransfer.getData('block-index');
@@ -242,7 +402,7 @@ function handleDrop(event) {
         const programmingArea = document.getElementById("program-blocks");
         const draggedBlockIndex = parseInt(blockIndex);
         if (draggedBlockIndex >= 0 && draggedBlockIndex < programmingArea.children.length) {
-             const draggedBlock = programmingArea.children[draggedBlockIndex];
+            const draggedBlock = programmingArea.children[draggedBlockIndex];
             if (draggedBlock) {
                 const rect = programmingArea.getBoundingClientRect();
                 draggedBlock.style.position = "absolute";
@@ -250,271 +410,55 @@ function handleDrop(event) {
                 draggedBlock.style.top = `${event.clientY - rect.top - (draggedBlock.offsetHeight / 2)}px`;
             }
         } else {
-             console.warn("Invalid block index received during drop:", blockIndex);
+            console.warn("Invalid block index received during drop:", blockIndex);
         }
-
     } else {
         const programmingArea = document.getElementById("program-blocks");
         const dataString = event.dataTransfer.getData("text/plain");
-         if (!dataString) {
-             console.error("No data transferred on drop.");
-             return;
-         }
+        if (!dataString) {
+            console.error("No data transferred on drop.");
+            return;
+        }
+        
         try {
             const data = JSON.parse(dataString);
-            const blockCategory = data.category;
-            const blockDefinition = blocks[blockCategory]?.find(b => b.type === data.type);
-
-            if (!blockDefinition) {
-                 console.error("Could not find block definition for dropped item:", data);
-                 return;
-            }
-
-            // יצירת בלוק חדש עם הגדרה מלאה
-            const newBlock = createBlockElement(blockDefinition, blockCategory);
-
-            programmingArea.appendChild(newBlock);
-
-            // הוספת מאזין גרירה לבלוק החדש בתוך אזור התכנות
-             newBlock.addEventListener("dragstart", (e) => {
-                  const index = Array.from(programmingArea.children).indexOf(newBlock);
-                  e.dataTransfer.setData('block-index', index.toString());
-                  e.dataTransfer.effectAllowed = "move";
-             });
-
-            // מיקום הבלוק החדש
-            const rect = programmingArea.getBoundingClientRect();
-            newBlock.style.position = "absolute";
-            const blockWidth = newBlock.offsetWidth || 100;
-            const blockHeight = newBlock.offsetHeight || 100;
-            newBlock.style.left = `${event.clientX - rect.left - (blockWidth / 2)}px`;
-            newBlock.style.top = `${event.clientY - rect.top - (blockHeight / 2)}px`;
-        } catch (e) {
-            console.error("Error parsing dropped data or creating block:", e, dataString);
-        }
-    }
-}
-
-// ========================================================================
-// פונקציות אתחול
-// ========================================================================
-function populateBlockPalette(category) {
-    const categoryDiv = document.getElementById(`${category}-blocks`);
-    if (!categoryDiv) {
-        console.error(`Category div not found for ${category}`);
-        return;
-    }
-    
-    // נקה את הבלוקים הקיימים
-    categoryDiv.innerHTML = "";
-
-    // בדוק אם יש בלוקים מוגדרים לקטגוריה זו
-    if (!blocks[category] || blocks[category].length === 0) {
-        console.warn(`No blocks defined for category ${category}`);
-        return;
-    }
-
-    console.log(`Populating category: ${category} with ${blocks[category].length} blocks`);
-
-    // צור את הבלוקים עבור הקטגוריה
-    blocks[category].forEach(block => {
-        console.log(`Creating block: ${block.name} (${block.svgFile})`);
-        const blockElement = createBlockElement(block, category);
-        categoryDiv.appendChild(blockElement);
-    });
-}
-
-function handleCategoryChange(category) {
-    console.log(`Changing category to: ${category}`);
-    
-    // הסר את המחלקה 'active' מכל הקטגוריות והכרטיסיות
-    const categoryTabs = document.querySelectorAll(".category-tab");
-    const blockCategories = document.querySelectorAll(".block-category");
-
-    blockCategories.forEach(element => element.classList.remove("active"));
-    categoryTabs.forEach(tab => tab.classList.remove("active"));
-
-    // מצא את הכרטיסייה והקטגוריה המתאימות
-    const tab = document.querySelector(`.category-tab[data-category="${category}"]`);
-    const categoryDiv = document.getElementById(`${category}-blocks`);
-
-    // הוסף את המחלקה 'active' לכרטיסייה
-    if (tab) {
-        tab.classList.add("active");
-        console.log('Activated tab:', tab.getAttribute('data-category'));
-    } else {
-        console.warn(`Tab not found for category: ${category}`);
-    }
-
-    // הוסף את המחלקה 'active' לקטגוריה ומלא אותה בבלוקים
-    if (categoryDiv) {
-        categoryDiv.classList.add("active");
-        console.log('Activated category div:', categoryDiv.id);
-        populateBlockPalette(category); // אכלס את הקטגוריה הפעילה
-    } else {
-        console.warn(`Block category container not found for: ${category}`);
-    }
-}
-
-// ========================================================================
-//  לוגיקת גרירה ושחרור (Drag and Drop) Setup
-// ========================================================================
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM fully loaded");
-    
-    const programmingArea = document.getElementById("program-blocks");
-    const categoryTabs = document.querySelectorAll(".category-tab");
-
-    // וודא שאזור התכנות קיים לפני הוספת מאזינים
-    if (programmingArea) {
-        programmingArea.addEventListener("dragover", (event) => {
-            event.preventDefault();
-            event.dataTransfer.dropEffect = "move";
-        });
-        
-        programmingArea.addEventListener("drop", handleDrop);
-        console.log("Drop handlers added to programming area");
-    } else {
-        console.error("Programming area element (#program-blocks) not found!");
-    }
-
-    // הוסף מאזיני אירועים לכרטיסיות הקטגוריות
-    if (categoryTabs.length > 0) {
-        categoryTabs.forEach(tab => {
-            tab.addEventListener("click", () => {
-                const category = tab.getAttribute('data-category');
-                console.log(`Tab clicked: ${category}`);
-                handleCategoryChange(category);
-            });
-        });
-        console.log(`${categoryTabs.length} category tabs initialized`);
-    } else {
-        console.error("No category tabs found!");
-    }
-
-    // ========================================================================
-    // Grid Toggle Setup
-    // ========================================================================
-    const gridToggle = document.getElementById("grid-toggle");
-    const stage = document.getElementById("stage");
-    if (gridToggle && stage) {
-        gridToggle.addEventListener("click", () => {
-            stage.classList.toggle("show-grid");
-            console.log("Grid toggled");
-        });
-    }
-
-    // ========================================================================
-    // Clear All Button Setup
-    // ========================================================================
-    const clearAllButton = document.getElementById("clear-all");
-    if (clearAllButton && programmingArea) {
-        clearAllButton.addEventListener("click", () => {
-            programmingArea.innerHTML = "";
-            console.log("Programming area cleared");
-        });
-    }
-
-    // ========================================================================
-    // Character Dragging - קוד גרירת דמות
-    // ========================================================================
-    const character = document.getElementById('character');
-    const stageElement = document.getElementById('stage');
-    
-    if (character && stageElement) {
-        // מרכוז הדמות
-        function centerCharacterExactly() {
-            character.style.transform = 'none';
-            character.style.transition = 'none';
             
-            const stageRect = stageElement.getBoundingClientRect();
-            const charRect = character.getBoundingClientRect();
-            
-            const centerX = (stageRect.width - charRect.width) / 2;
-            const centerY = (stageRect.height - charRect.height) / 2;
-            
-            character.style.position = 'absolute';
-            character.style.left = centerX + 'px';
-            character.style.top = centerY + 'px';
-            
-            console.log('Character centered at:', centerX, centerY);
-        }
-        
-        setTimeout(centerCharacterExactly, 500);
-        
-        // גרירת דמות
-        let isDragging = false;
-        let offsetX, offsetY;
-        
-        character.addEventListener('dragstart', function(e) {
-            if (e.target === character) {
-                e.preventDefault();
-                return false;
-            }
-        });
-        
-        character.addEventListener('mousedown', function(e) {
-            if (e.target !== character) return;
-            e.preventDefault();
-            
-            const charRect = character.getBoundingClientRect();
-            offsetX = e.clientX - charRect.left;
-            offsetY = e.clientY - charRect.top;
-            
-            isDragging = true;
-            character.style.cursor = 'grabbing';
-        });
-        
-        document.addEventListener('mousemove', function(e) {
-            if (!isDragging) return;
-            
-            character.style.transform = 'none';
-            character.style.transition = 'none';
-            
-            const stageRect = stageElement.getBoundingClientRect();
-            let newLeft = e.clientX - stageRect.left - offsetX;
-            let newTop = e.clientY - stageRect.top - offsetY;
-            
-            const charRect = character.getBoundingClientRect();
-            const maxLeft = stageRect.width - charRect.width;
-            const maxTop = stageRect.height - charRect.height;
-            
-            newLeft = Math.max(0, Math.min(newLeft, maxLeft));
-            newTop = Math.max(0, Math.min(newTop, maxTop));
-            
-            character.style.left = newLeft + 'px';
-            character.style.top = newTop + 'px';
-        });
-        
-        document.addEventListener('mouseup', function() {
-            if (isDragging) {
-                isDragging = false;
-                character.style.cursor = 'grab';
-            }
-        });
-    }
-
-    // ========================================================================
-    // Initial Setup - אתחול התצוגה הראשונית
-    // ========================================================================
-    
-    // מצא את הכרטיסייה הפעילה כרגע או השתמש ב-'triggering' כברירת מחדל
-    let initialCategory = 'triggering';
-    const activeTab = document.querySelector(".category-tab.active");
-    
-    if (activeTab && activeTab.getAttribute('data-category')) {
-        initialCategory = activeTab.getAttribute('data-category');
-        console.log(`Found active tab: ${initialCategory}`);
-    } else {
-        // אם אין כרטיסייה פעילה, הפעל את 'triggering'
-        const triggeringTab = document.querySelector('.category-tab[data-category="triggering"]');
-        if (triggeringTab) {
-            triggeringTab.classList.add('active');
-            console.log("No active tab found, activating triggering tab");
-        }
-    }
-    
-    // אתחל את התצוגה עם הקטגוריה הראשונית
-    handleCategoryChange(initialCategory);
-    console.log(`Initial category set to: ${initialCategory}`);
-});
+            // טיפול בבלוק repeat שנגרר עם תוכן
+            if (data.type === "repeat" && data.isContainer) {
+                const blockCategory = "control";
+                const blockDefinition = blocks[blockCategory].find(b => b.type === "repeat");
+                
+                if (!blockDefinition) {
+                    console.error("Could not find repeat block definition");
+                    return;
+                }
+                
+                // יצירת בלוק repeat חדש
+                const newRepeatBlock = createRepeatBlockElement(blockDefinition, blockCategory);
+                
+                // אם יש בלוקים בפנים - שחזור שלהם
+                if (data.blocksInside) {
+                    const dropArea = newRepeatBlock.querySelector(".repeat-drop-area");
+                    if (dropArea) {
+                        dropArea.innerHTML = data.blocksInside;
+                        // עדכון מאזיני אירועים לבלוקים המשוחזרים
+                        dropArea.querySelectorAll(".block-container").forEach(block => {
+                            block.draggable = true;
+                            block.addEventListener("dragstart", (e) => {
+                                const blockData = {
+                                    type: block.dataset.type,
+                                    category: block.dataset.category
+                                };
+                                e.dataTransfer.setData("text/plain", JSON.stringify(blockData));
+                            });
+                        });
+                        updateRepeatBlockHeight(newRepeatBlock);
+                    }
+                }
+                
+                programmingArea.appendChild(newRepeatBlock);
+                
+                // מיקום הבלוק החדש
+                const rect = programmingArea.getBoundingClientRect();
+                newRepeatBlock.style.position = "absolute";
+                newRepeatBlock.style.left = `${event.
