@@ -29,9 +29,13 @@ document.addEventListener('DOMContentLoaded', function() {
     let lastClickedBlock = null;
     let lastClickTime = 0;
     let lastRightClickedBlock = null; // לזיהוי לחיצת כפתור ימני
+    let connectionIndicator = null; // אינדיקטור חיבור ויזואלי
     
     // הוספת סגנונות להדגשה ויזואלית באופן דינמי
     addHighlightStyles();
+    
+    // יצירת אינדיקטור חיבור
+    createConnectionIndicator();
     
     // ---- התאמת מערכת הגרירה הקיימת ----
     
@@ -58,6 +62,9 @@ document.addEventListener('DOMContentLoaded', function() {
           detachBlock(e.target);
         }
         
+        // הסתרת האינדיקטור אם הוא מוצג
+        hideConnectionIndicator();
+        
         // עדכון תצוגת הבלוק בזמן אמת
         updateDraggedBlockPosition(e);
       }
@@ -76,6 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // נקה את המצב
         resetHighlighting();
+        hideConnectionIndicator();
         currentDraggedBlock = null;
       }
     });
@@ -139,6 +147,81 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
     
+    // ---- פונקציות לאינדיקטור חיבור ----
+    
+    // יצירת אינדיקטור חיבור
+    function createConnectionIndicator() {
+      // בדיקה אם האינדיקטור כבר קיים
+      if (document.getElementById('connection-indicator')) return;
+      
+      // יצירת אלמנט האינדיקטור
+      connectionIndicator = document.createElement('div');
+      connectionIndicator.id = 'connection-indicator';
+      connectionIndicator.style.position = 'absolute';
+      connectionIndicator.style.display = 'none';
+      connectionIndicator.style.pointerEvents = 'none'; // שלא יפריע לאירועי עכבר
+      connectionIndicator.style.zIndex = '100';
+      
+      // הוספת האינדיקטור לאזור התכנות
+      programmingArea.appendChild(connectionIndicator);
+    }
+    
+    // הצגת אינדיקטור החיבור
+    function showConnectionIndicator(targetBlock, direction) {
+      if (!connectionIndicator || !targetBlock) return;
+      
+      const targetRect = targetBlock.getBoundingClientRect();
+      const programRect = programmingArea.getBoundingClientRect();
+      
+      // קביעת גודל האינדיקטור
+      connectionIndicator.style.width = '10px';
+      connectionIndicator.style.height = targetRect.height + 'px';
+      
+      // קביעת צבע האינדיקטור בהתאם לסוג הבלוק (אם אפשר לקבוע)
+      let indicatorColor = 'rgba(0, 255, 0, 0.4)'; // ברירת מחדל - ירוק
+      
+      // ניסיון לקבוע צבע לפי קטגוריית הבלוק
+      const category = targetBlock.dataset.category;
+      if (category) {
+        switch(category) {
+          case 'motion': indicatorColor = 'rgba(102, 210, 255, 0.5)'; break; // כחול
+          case 'looks': indicatorColor = 'rgba(210, 149, 246, 0.5)'; break; // סגול
+          case 'sound': indicatorColor = 'rgba(126, 217, 87, 0.5)'; break; // ירוק
+          case 'control': indicatorColor = 'rgba(255, 189, 103, 0.5)'; break; // כתום
+          case 'end': indicatorColor = 'rgba(255, 107, 107, 0.5)'; break; // אדום
+          case 'triggering': indicatorColor = 'rgba(255, 232, 102, 0.5)'; break; // צהוב
+        }
+      }
+      
+      connectionIndicator.style.backgroundColor = indicatorColor;
+      connectionIndicator.style.boxShadow = `0 0 10px ${indicatorColor}`;
+      connectionIndicator.style.borderRadius = '5px';
+      
+      // קביעת מיקום האינדיקטור בהתאם לכיוון החיבור
+      if (direction === 'left') {
+        // הצמדה משמאל לבלוק המטרה
+        connectionIndicator.style.left = (targetRect.left - programRect.left - 10) + 'px';
+        connectionIndicator.style.top = (targetRect.top - programRect.top) + 'px';
+      } else if (direction === 'right') {
+        // הצמדה מימין לבלוק המטרה
+        connectionIndicator.style.left = (targetRect.right - programRect.left) + 'px';
+        connectionIndicator.style.top = (targetRect.top - programRect.top) + 'px';
+      }
+      
+      // הוספת אנימציה קלה לאינדיקטור
+      connectionIndicator.style.animation = 'pulseIndicator 1s infinite';
+      
+      // הצגת האינדיקטור
+      connectionIndicator.style.display = 'block';
+    }
+    
+    // הסתרת אינדיקטור החיבור
+    function hideConnectionIndicator() {
+      if (connectionIndicator) {
+        connectionIndicator.style.display = 'none';
+      }
+    }
+    
     // פונקציה לעדכון מיקום הבלוק הנגרר בזמן אמת
     function updateDraggedBlockPosition(e) {
       if (!currentDraggedBlock) return;
@@ -176,6 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // נקה את המצב
         resetHighlighting();
+        hideConnectionIndicator();
       }, 100);
     });
     
@@ -318,6 +402,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // נקה הדגשות קודמות
       clearAllHighlights();
+      hideConnectionIndicator();
       
       // חפש בלוק קרוב להצמדה
       const result = findClosestBlockForSnap(draggedBlock, mouseX, mouseY);
@@ -330,6 +415,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // הדגש את שני הבלוקים
         highlightBlockForSnapping(draggedBlock, potentialSnapTarget, snapDirection);
+        
+        // הצג את אינדיקטור החיבור
+        showConnectionIndicator(potentialSnapTarget, snapDirection);
       } else {
         potentialSnapTarget = null;
         snapDirection = null;
@@ -510,123 +598,3 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // הוספת סגנונות CSS להדגשה ואנימציה
-    function addHighlightStyles() {
-      // יצירת אלמנט style
-      const style = document.createElement('style');
-      style.textContent = `
-        /* הדגשת בלוק מקור (הנגרר) כשקרוב להצמדה */
-        .snap-source .block-svg-image,
-        .snap-source img {
-          filter: brightness(1.05);
-          transition: all 0.15s ease-out;
-          box-shadow: 0 0 8px 2px rgba(0, 180, 255, 0.6);
-        }
-        
-        /* הדגשת בלוק יעד */
-        .snap-target .block-svg-image,
-        .snap-target img {
-          filter: brightness(1.1);
-          transition: all 0.15s ease-out;
-          box-shadow: 0 0 8px 2px rgba(255, 255, 0, 0.6);
-        }
-        
-        /* הדגשת השקע השמאלי בבלוק היעד */
-        .snap-left::before {
-          content: '';
-          position: absolute;
-          left: 0;
-          top: 50%;
-          transform: translateY(-50%);
-          width: 5px;
-          height: 18px;
-          background-color: rgba(255, 255, 100, 0.8);
-          border-radius: 0 3px 3px 0;
-          z-index: 10;
-        }
-        
-        /* הדגשת הפין הימני בבלוק היעד */
-        .snap-right::after {
-          content: '';
-          position: absolute;
-          right: 0;
-          top: 50%;
-          transform: translateY(-50%);
-          width: 5px;
-          height: 18px;
-          background-color: rgba(255, 255, 100, 0.8);
-          border-radius: 3px 0 0 3px;
-          z-index: 10;
-        }
-        
-        /* אנימציית הצמדה */
-        @keyframes snapEffect {
-          0% { transform: scale(1.02); }
-          40% { transform: scale(0.98); }
-          70% { transform: scale(1.01); }
-          100% { transform: scale(1); }
-        }
-        
-        .snap-animation {
-          animation: snapEffect 0.3s ease-out;
-        }
-        
-        /* אנימציית ניתוק */
-        @keyframes detachEffect {
-          0% { transform: scale(1); }
-          30% { transform: scale(1.04) rotate(1deg); }
-          60% { transform: scale(0.98) rotate(-1deg); }
-          100% { transform: scale(1) rotate(0); }
-        }
-        
-        .detach-animation {
-          animation: detachEffect 0.3s ease-out;
-        }
-        
-        /* סימון בלוקים מחוברים */
-        .connected-block {
-          filter: brightness(1.02);
-        }
-        
-        .has-connected-block {
-          position: relative;
-        }
-        
-        /* סימון חיבור ויזואלי - קו דק בין בלוקים מחוברים */
-        .connected-block[data-connection-direction="right"]::after,
-        .has-connected-block[data-connection-direction="left"]::before {
-          content: '';
-          position: absolute;
-          width: 4px;
-          height: 12px;
-          background-color: rgba(255, 255, 0, 0.4);
-          z-index: 5;
-        }
-        
-        /* עיצוב התפריט הקשר */
-        .detach-context-menu {
-          min-width: 120px;
-          font-family: Arial, sans-serif;
-          font-size: 14px;
-        }
-      `;
-      
-      // הוספה לראש המסמך
-      document.head.appendChild(style);
-    }
-    
-    // מאזין לכפתור "נקה הכל"
-    const clearAllButton = document.getElementById('clear-all');
-    if (clearAllButton) {
-      clearAllButton.addEventListener('click', function() {
-        // ניקוי משתנים גלובליים
-        currentDraggedBlock = null;
-        potentialSnapTarget = null;
-        snapDirection = null;
-        lastClickedBlock = null;
-        lastRightClickedBlock = null;
-        clearAllHighlights();
-        removeDetachMenu();
-      });
-    }
-  }
-});
