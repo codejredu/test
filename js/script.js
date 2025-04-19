@@ -11,95 +11,122 @@ document.addEventListener('DOMContentLoaded', () => {
   let dragOffsetY = 0;
   let currentPotentialSnapTarget = null; // Track previous target for efficient clearing
 
-  // פונקציה ליצירת תפריט הקשר (אם עדיין רלוונטי)
+  // *** קונטיינר הבלוקים - חשוב לוודא שהוא קיים ושהוא ההורה של הבלוקים ***
+  // *** ודא שיש לו position: relative או absolute כדי שהמיקום האבסולוטי של הבלוקים יעבוד נכון ***
+  const blocksContainer = document.getElementById('blocks-container') || document.body;
+  // ודא שלקונטיינר יש מיקום יחסי אם הבלוקים ממוקמים אבסולוטית בתוכו
+  if (window.getComputedStyle(blocksContainer).position === 'static' && blocksContainer !== document.body) {
+       console.warn("Warning: blocksContainer should have position: relative or absolute for absolute block positioning.");
+       // blocksContainer.style.position = 'relative'; // Uncomment to force it if needed
+  }
+
+
+  // פונקציה ליצירת תפריט הקשר
   function createDetachMenu(block, x, y) {
     removeDetachMenu(); // הסרת תפריט קודם אם קיים
 
     const menu = document.createElement('div');
+    menu.id = 'detachMenu'; // Add ID for easier selection
     menu.classList.add('detach-context-menu'); // Use class from CSS
-    menu.style.position = 'absolute';
+    menu.style.position = 'fixed'; // Use fixed to position relative to viewport
     menu.style.left = `${x}px`;
     menu.style.top = `${y}px`;
-    menu.style.backgroundColor = 'white';
-    menu.style.border = '1px solid #ccc';
-    menu.style.padding = '5px';
-    menu.style.zIndex = '1000';
-    menu.style.boxShadow = '2px 2px 5px rgba(0,0,0,0.2)'; // Added shadow
+    // Styles moved to CSS for cleaner code
 
     const detachButton = document.createElement('button');
     detachButton.textContent = 'נתק חיבור'; // Detach connection
-    detachButton.style.display = 'block'; // Ensure button takes full width
-    detachButton.style.width = '100%';
-    detachButton.style.padding = '5px 10px';
-    detachButton.style.border = 'none';
-    detachButton.style.backgroundColor = 'transparent';
-    detachButton.style.cursor = 'pointer';
-    detachButton.addEventListener('mouseover', () => detachButton.style.backgroundColor = '#eee');
-    detachButton.addEventListener('mouseout', () => detachButton.style.backgroundColor = 'transparent');
+    // Styles moved to CSS
 
-
-    detachButton.onclick = () => {
-      // לוגיקה לניתוק הבלוק (זו דוגמה, יש להתאים ללוגיקה הספציפית)
+    detachButton.onclick = (e) => {
+      e.stopPropagation(); // Prevent closing menu immediately
       console.log(`Attempting to detach block: ${block.id}`);
       disconnectBlock(block); // Call your specific disconnect function
       removeDetachMenu();
     };
 
     menu.appendChild(detachButton);
-    document.body.appendChild(menu);
+    document.body.appendChild(menu); // Append to body to avoid positioning issues
 
     // סגירת התפריט בלחיצה מחוץ לו
     setTimeout(() => { // Use timeout to avoid immediate closing by the same click
-        document.addEventListener('click', handleOutsideClick, { once: true });
+        document.addEventListener('click', handleOutsideClick, { capture: true, once: true }); // Use capture to catch clicks anywhere
     }, 0);
 
-    lastRightClickedBlock = block; // Store the block associated with the menu
+    lastRightClickedBlock = block;
   }
 
   // פונקציה להסרת תפריט הקשר
   function removeDetachMenu() {
-    const existingMenu = document.querySelector('.detach-context-menu');
+    const existingMenu = document.getElementById('detachMenu');
     if (existingMenu) {
       existingMenu.remove();
-      document.removeEventListener('click', handleOutsideClick); // Clean up listener
+      // Clean up listener if it wasn't used (removed by 'once: true' if clicked outside)
+      document.removeEventListener('click', handleOutsideClick, { capture: true });
     }
-    lastRightClickedBlock = null;
+    // lastRightClickedBlock = null; // Don't clear this here, might be needed elsewhere briefly
   }
 
   // פונקציה לסגירת התפריט בלחיצה מחוץ לו
   function handleOutsideClick(event) {
-      const menu = document.querySelector('.detach-context-menu');
+      const menu = document.getElementById('detachMenu');
       // Check if the click was outside the menu
       if (menu && !menu.contains(event.target)) {
+           // console.log("Clicked outside menu, removing.");
           removeDetachMenu();
-      } else {
-          // If the click was inside, re-attach the listener
-          // because the 'once: true' removed it. This happens
-          // if the click was on the button itself.
-           document.addEventListener('click', handleOutsideClick, { once: true });
+      } else if (menu) {
+          // Click was inside (likely the button), re-attach listener because 'once' removed it
+          // console.log("Clicked inside menu, re-attaching listener.");
+          // The button's click handler should have already removed the menu,
+          // but this is a fallback if not. Re-attaching is complex due to 'once'.
+          // It's simpler to rely on the button click handler. If the menu persists,
+          // there might be an issue in the button handler or event propagation.
+          // For now, assume button click removes it correctly.
+           document.removeEventListener('click', handleOutsideClick, { capture: true }); // Ensure cleanup
       }
   }
 
 
-  // פונקציה להסתרת אינדיקטור החיבור (אם קיים)
+  // פונקציה להסתרת אינדיקטור החיבור
   function hideConnectionIndicator() {
     const indicator = document.getElementById('connection-indicator');
     if (indicator) {
       indicator.style.opacity = '0';
-      indicator.style.pointerEvents = 'none'; // Make it non-interactive when hidden
+      indicator.style.pointerEvents = 'none';
     }
   }
 
   // הוספת סגנונות CSS להדגשה ואנימציה
   function addHighlightStyles() {
-    // יצירת אלמנט style
     const style = document.createElement('style');
     style.textContent = `
+      /* Container needs relative/absolute positioning if blocks are absolute */
+      #blocks-container {
+         /* position: relative; */ /* Uncomment if needed */
+         /* min-height: 300px; */ /* Example minimum size */
+         /* border: 1px dashed grey; */ /* For debugging layout */
+      }
+
+      .block {
+        /* Ensure blocks are visible by default and positioned if needed */
+        /* position: absolute; */ /* Set this if you calculate left/top */
+        cursor: grab;
+        user-select: none; /* Prevent text selection during drag */
+        opacity: 1; /* Default state */
+        transition: opacity 0.15s ease-out; /* Smooth opacity transition */
+      }
+
+      /* Style for the original element WHILE dragging */
+      .dragging {
+        opacity: 0.4; /* Make original semi-transparent */
+        cursor: grabbing;
+        /* box-shadow: 0 4px 15px rgba(0,0,0,0.2); Optional: lift effect */
+      }
+
       /* הדגשת בלוק מקור (הנגרר) כשקרוב להצמדה */
       .snap-source .block-svg-image,
       .snap-source img {
         filter: brightness(1.05);
-        transition: filter 0.15s ease-out, box-shadow 0.15s ease-out; /* עדכון המעבר */
+        transition: filter 0.15s ease-out, box-shadow 0.15s ease-out;
         box-shadow: 0 0 8px 2px rgba(0, 180, 255, 0.6);
       }
 
@@ -107,544 +134,447 @@ document.addEventListener('DOMContentLoaded', () => {
       .snap-target .block-svg-image,
       .snap-target img {
         filter: brightness(1.1);
-        transition: filter 0.15s ease-out, box-shadow 0.15s ease-out; /* עדכון המעבר */
+        transition: filter 0.15s ease-out, box-shadow 0.15s ease-out;
         box-shadow: 0 0 8px 2px rgba(255, 255, 0, 0.6);
       }
 
-      /* *** סגנון חדש: הילה צהובה בוהקת ל"מוכן להצמדה" *** */
+      /* הילה צהובה בוהקת ל"מוכן להצמדה" */
       .ready-to-snap .block-svg-image,
       .ready-to-snap img {
-         box-shadow: 0 0 12px 5px rgba(255, 223, 0, 0.9) !important; /* צהוב-זהב בוהק, שימוש ב-!important אם יש התנגשויות */
-         filter: brightness(1.15) !important; /* שימוש ב-!important אם יש התנגשויות */
-         transition: filter 0.1s ease-out, box-shadow 0.1s ease-out; /* מעבר מהיר יותר */
+         box-shadow: 0 0 12px 5px rgba(255, 223, 0, 0.9) !important;
+         filter: brightness(1.15) !important;
+         transition: filter 0.1s ease-out, box-shadow 0.1s ease-out;
       }
-      /* **************************************************** */
 
-      /* הדגשת השקע השמאלי בבלוק היעד */
-      .snap-left::before {
+      /* הדגשת שקע/פין ביעד */
+      .snap-left::before, .snap-right::after {
         content: '';
         position: absolute;
-        left: 0;
         top: 50%;
         transform: translateY(-50%);
         width: 5px;
         height: 18px;
         background-color: rgba(255, 255, 100, 0.8);
-        border-radius: 0 3px 3px 0;
         z-index: 10;
-        pointer-events: none; /* למנוע הפרעה לאירועי עכבר */
+        pointer-events: none;
       }
+      .snap-left::before { left: 0; border-radius: 0 3px 3px 0; }
+      .snap-right::after { right: 0; border-radius: 3px 0 0 3px; }
 
-      /* הדגשת הפין הימני בבלוק היעד */
-      .snap-right::after {
-        content: '';
-        position: absolute;
-        right: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 5px;
-        height: 18px;
-        background-color: rgba(255, 255, 100, 0.8);
-        border-radius: 3px 0 0 3px;
-        z-index: 10;
-        pointer-events: none; /* למנוע הפרעה לאירועי עכבר */
-      }
+      /* אנימציות */
+      @keyframes snapEffect { /* ... */ }
+      .snap-animation { animation: snapEffect 0.3s ease-out; }
+      @keyframes detachEffect { /* ... */ }
+      .detach-animation { animation: detachEffect 0.3s ease-out; }
+      @keyframes pulseIndicator { /* ... */ }
 
-      /* אנימציית הצמדה */
-      @keyframes snapEffect {
-        0% { transform: scale(1.02); }
-        40% { transform: scale(0.98); }
-        70% { transform: scale(1.01); }
-        100% { transform: scale(1); }
-      }
-
-      .snap-animation {
-        animation: snapEffect 0.3s ease-out;
-      }
-
-      /* אנימציית ניתוק */
-      @keyframes detachEffect {
-        0% { transform: scale(1); }
-        30% { transform: scale(1.04) rotate(1deg); }
-        60% { transform: scale(0.98) rotate(-1deg); }
-        100% { transform: scale(1) rotate(0); }
-      }
-
-      .detach-animation {
-        animation: detachEffect 0.3s ease-out;
-      }
-
-      /* אנימציית פעימה לאינדיקטור החיבור (אם קיים) */
-      @keyframes pulseIndicator {
-        0% { opacity: 0.5; }
-        50% { opacity: 0.9; }
-        100% { opacity: 0.5; }
-      }
-
-      /* סימון בלוקים מחוברים */
-      .connected-block {
-        /* אפשר להוסיף סגנון עדין אם רוצים, אך ההילה עדיפה */
-        /* filter: brightness(1.02); */
-      }
-
-      .has-connected-block {
-        position: relative; /* נדרש עבור המיקום של הקו */
-      }
-
-      /* סימון חיבור ויזואלי - קו דק בין בלוקים מחוברים (אופציונלי) */
+      /* סימון חיבור */
+      .connected-block { /* ... */ }
+      .has-connected-block { position: relative; }
       .connected-block[data-connection-direction="right"]::after,
       .has-connected-block[data-connection-direction="left"]::before {
-        content: '';
-        position: absolute;
-        width: 4px; /* רוחב הקו */
-        height: 12px; /* גובה הקו */
-        background-color: rgba(255, 255, 0, 0.4); /* צבע צהוב שקוף */
-        z-index: 5; /* מתחת להדגשות אבל מעל הרקע */
-        pointer-events: none; /* למנוע הפרעה לאירועי עכבר */
+        content: ''; position: absolute; width: 4px; height: 12px;
+        background-color: rgba(255, 255, 0, 0.4); z-index: 5; pointer-events: none;
+        top: 50%; transform: translateY(-50%);
       }
-      /* מיקום הקו הימני */
-      .connected-block[data-connection-direction="right"]::after {
-         right: -2px; /* ממקם אותו בין הבלוקים */
-         top: 50%;
-         transform: translateY(-50%);
-      }
-       /* מיקום הקו השמאלי */
-      .has-connected-block[data-connection-direction="left"]::before {
-          left: -2px; /* ממקם אותו בין הבלוקים */
-          top: 50%;
-          transform: translateY(-50%);
-      }
+      .connected-block[data-connection-direction="right"]::after { right: -2px; }
+      .has-connected-block[data-connection-direction="left"]::before { left: -2px; }
 
-
-      /* עיצוב התפריט הקשר */
+      /* תפריט הקשר */
       .detach-context-menu {
+        position: fixed; /* Changed from absolute */
         min-width: 120px;
-        font-family: Arial, sans-serif;
-        font-size: 14px;
-        background-color: white; /* Ensure background */
-        border: 1px solid #ccc; /* Ensure border */
-        padding: 5px; /* Ensure padding */
-        z-index: 1000; /* Ensure visibility */
-        box-shadow: 2px 2px 5px rgba(0,0,0,0.2); /* Ensure shadow */
+        font-family: Arial, sans-serif; font-size: 14px;
+        background-color: white; border: 1px solid #ccc;
+        padding: 5px; z-index: 1000;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+        color: #333; /* Added text color */
       }
        .detach-context-menu button {
-            display: block;
-            width: 100%;
-            padding: 5px 10px;
-            border: none;
-            background-color: transparent;
-            cursor: pointer;
-            text-align: right; /* Or left based on language */
+            display: block; width: 100%; padding: 5px 10px;
+            border: none; background-color: transparent; cursor: pointer;
+            text-align: right; /* Or left */
+            color: inherit; /* Inherit text color */
+            font-size: inherit; /* Inherit font size */
         }
-        .detach-context-menu button:hover {
-            background-color: #eee;
-        }
+        .detach-context-menu button:hover { background-color: #eee; }
 
-      /* סגנון לאינדיקטור החיבור (אם קיים) */
-      #connection-indicator {
-        position: fixed; /* Or absolute depending on container */
-        /* Add other styles: size, background, border-radius, etc. */
-        transition: all 0.2s ease-out;
-        opacity: 0; /* Start hidden */
-        pointer-events: none;
-        z-index: 900;
-        /* Example Style:
-        width: 10px;
-        height: 10px;
-        background-color: yellow;
-        border-radius: 50%;
-        border: 1px solid orange;
-        */
-      }
+      /* אינדיקטור חיבור */
+      #connection-indicator { /* ... */ }
     `;
-
-    // הוספה לראש המסמך
     document.head.appendChild(style);
   }
 
-  // *** פונקציית עזר לניקוי הדגשות ספציפיות ***
+  // פונקציית עזר לניקוי הדגשות ספציפיות
   function clearSpecificHighlights(sourceBlock, targetBlock) {
       const classesToRemove = ['snap-source', 'snap-target', 'snap-left', 'snap-right', 'ready-to-snap'];
       if (sourceBlock) {
           sourceBlock.classList.remove(...classesToRemove);
-          // Sometimes direct img/svg manipulation might be needed if classes aren't on the parent
+          // Reset filter/shadow directly on image if classes aren't enough
           const sourceImage = sourceBlock.querySelector('.block-svg-image, img');
-          if (sourceImage) sourceImage.style.filter = ''; // Reset direct styles if any
+          if (sourceImage) {
+              sourceImage.style.filter = '';
+              sourceImage.style.boxShadow = '';
+          }
       }
       if (targetBlock) {
           targetBlock.classList.remove(...classesToRemove);
            const targetImage = targetBlock.querySelector('.block-svg-image, img');
-          if (targetImage) targetImage.style.filter = '';
+           if (targetImage) {
+               targetImage.style.filter = '';
+               targetImage.style.boxShadow = '';
+            }
       }
   }
 
-  // פונקציית ניקוי כללית (מעודכנת)
+  // פונקציית ניקוי כללית
   function clearAllHighlights() {
-      document.querySelectorAll('.snap-source, .snap-target, .snap-left, .snap-right, .ready-to-snap').forEach(el => {
+      document.querySelectorAll('.block').forEach(el => { // Iterate all blocks
           el.classList.remove('snap-source', 'snap-target', 'snap-left', 'snap-right', 'ready-to-snap');
            const image = el.querySelector('.block-svg-image, img');
-           if (image) image.style.filter = ''; // Reset direct styles if any
+           if (image) {
+                image.style.filter = '';
+                image.style.boxShadow = '';
+           }
       });
-      // Reset global state variables related to highlighting
       potentialSnapTarget = null;
       snapDirection = null;
       currentPotentialSnapTarget = null;
   }
 
-  // --- הגדרת הפונקציות הדרושות (יש להשלים או לוודא שהן קיימות) ---
+  // --- פונקציות ליבה (ודא שהן ממומשות כראוי) ---
 
-  // מחזיר את הבלוק הקרוב ביותר שניתן להצמיד אליו, או null
   function findPotentialSnapTarget(draggedBlock) {
-    // Placeholder: Implement logic to find the nearest snappable block
-    // based on distance and connection rules (e.g., type compatibility).
-    // Example: Iterate through all '.block' elements, calculate distance,
-    // check if connection is allowed.
-    const allBlocks = document.querySelectorAll('.block:not(.dragging)'); // Select blocks that are not being dragged
-    let closestTarget = null;
-    let minDistance = 50; // Maximum snap distance in pixels
+     // Implement logic to find the nearest snappable block based on position and rules.
+     // Returns the target block element or null.
+     // Crucial: Ensure this correctly calculates distances relative to the viewport/container.
+     const allBlocks = blocksContainer.querySelectorAll('.block:not(.dragging)');
+     let closestTarget = null;
+     let minValidDistance = 50; // Max snap distance
 
-    const draggedRect = draggedBlock.getBoundingClientRect();
-    const draggedCenterX = draggedRect.left + draggedRect.width / 2;
-    const draggedCenterY = draggedRect.top + draggedRect.height / 2;
+     const draggedRect = draggedBlock.getBoundingClientRect(); // Position relative to viewport
 
-    allBlocks.forEach(block => {
-        if (block === draggedBlock) return; // Don't snap to self
+     allBlocks.forEach(block => {
+         if (block === draggedBlock) return;
 
-        const targetRect = block.getBoundingClientRect();
-        const targetCenterX = targetRect.left + targetRect.width / 2;
-        const targetCenterY = targetRect.top + targetRect.height / 2;
+         // Check connection eligibility first (if applicable)
+         // e.g., if (!canConnect(draggedBlock, block)) return;
 
-        const dx = draggedCenterX - targetCenterX;
-        const dy = draggedCenterY - targetCenterY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+         const targetRect = block.getBoundingClientRect();
 
-        // Check horizontal proximity for left/right snapping
-        const horizontalProximity = Math.abs(draggedRect.right - targetRect.left) < minDistance || Math.abs(draggedRect.left - targetRect.right) < minDistance;
-        const verticalAlignment = Math.abs(draggedCenterY - targetCenterY) < targetRect.height * 0.7; // Allow some vertical leeway
+         // Calculate distances between potential connection points
+         const verticalAlign = Math.abs(draggedRect.top - targetRect.top) < draggedRect.height * 0.7; // Example vertical check
 
-        if (distance < minDistance * 1.5 && horizontalProximity && verticalAlignment) { // Adjust distance check logic as needed
-             // Basic distance check, refine with connection point logic
-             // Check connection point proximity more specifically if needed
-             // Here, we just find the closest one within range for simplicity
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestTarget = block;
-            }
-        }
-    });
-    // console.log("Potential Target:", closestTarget ? closestTarget.id : 'None');
-    return closestTarget;
+         if (verticalAlign) {
+             // Check right-to-left snap potential
+             const distRightLeft = Math.abs(draggedRect.right - targetRect.left);
+             if (distRightLeft < minValidDistance && !draggedBlock.dataset.connectedRight && !block.dataset.connectedLeft) {
+                 minValidDistance = distRightLeft;
+                 closestTarget = block;
+                 // Could store snap type here too if needed immediately
+             }
+
+             // Check left-to-right snap potential
+             const distLeftRight = Math.abs(draggedRect.left - targetRect.right);
+              if (distLeftRight < minValidDistance && !draggedBlock.dataset.connectedLeft && !block.dataset.connectedRight) {
+                 minValidDistance = distLeftRight;
+                 closestTarget = block;
+              }
+         }
+     });
+     return closestTarget;
   }
 
-  // קובע את כיוון ההצמדה ('left' או 'right') או null
   function determineSnapDirection(draggedBlock, targetBlock) {
     if (!draggedBlock || !targetBlock) return null;
 
     const draggedRect = draggedBlock.getBoundingClientRect();
     const targetRect = targetBlock.getBoundingClientRect();
-    const snapThreshold = 25; // How close the edges need to be
+    const snapThreshold = 35; // Increased threshold slightly
+    const verticalThreshold = draggedRect.height * 0.7; // Vertical alignment tolerance
 
-    const canConnectRight = !draggedBlock.dataset.connectedRight; // Check if right side is free
-    const canConnectLeft = !targetBlock.dataset.connectedLeft;   // Check if target's left side is free
-
-    // Check for snapping dragged block's RIGHT to target block's LEFT
-    if (canConnectRight && canConnectLeft &&
-        Math.abs(draggedRect.right - targetRect.left) < snapThreshold &&
-        Math.abs(draggedRect.top - targetRect.top) < draggedRect.height / 2) { // Check vertical alignment too
-      return 'left'; // Snap target highlights its left socket
+    if (Math.abs(draggedRect.top - targetRect.top) < verticalThreshold) {
+        // Check right-to-left snap: dragged right edge near target left edge
+        if (!draggedBlock.dataset.connectedRight && !targetBlock.dataset.connectedLeft &&
+            Math.abs(draggedRect.right - targetRect.left) < snapThreshold) {
+          return 'left'; // Target highlights its left side
+        }
+        // Check left-to-right snap: dragged left edge near target right edge
+        if (!draggedBlock.dataset.connectedLeft && !targetBlock.dataset.connectedRight &&
+            Math.abs(draggedRect.left - targetRect.right) < snapThreshold) {
+          return 'right'; // Target highlights its right side
+        }
     }
-
-    const canConnectLeftDragged = !draggedBlock.dataset.connectedLeft; // Check if dragged left is free
-    const canConnectRightTarget = !targetBlock.dataset.connectedRight; // Check if target right is free
-
-    // Check for snapping dragged block's LEFT to target block's RIGHT
-     if (canConnectLeftDragged && canConnectRightTarget &&
-         Math.abs(draggedRect.left - targetRect.right) < snapThreshold &&
-         Math.abs(draggedRect.top - targetRect.top) < draggedRect.height / 2) {
-       return 'right'; // Snap target highlights its right pin
-     }
-
-    return null; // No valid snap direction found
+    return null;
   }
 
-  // מבצע את החיבור הלוגי והויזואלי בין הבלוקים
   function connectBlocks(sourceBlock, targetBlock, direction) {
     console.log(`Connecting ${sourceBlock.id} to ${targetBlock.id} (direction: ${direction})`);
+    // --- IMPORTANT: Positioning Logic ---
+    // This assumes blocks are absolutely positioned within blocksContainer
 
-    // 1. Update Data Attributes to mark connection
-    if (direction === 'left') { // Source right connects to Target left
-      sourceBlock.dataset.connectedRight = targetBlock.id;
-      targetBlock.dataset.connectedLeft = sourceBlock.id;
-      sourceBlock.dataset.connectionDirection = 'right'; // Visual cue on source
-      targetBlock.dataset.connectionDirection = 'left'; // Visual cue on target
-    } else { // Source left connects to Target right
-      sourceBlock.dataset.connectedLeft = targetBlock.id;
-      targetBlock.dataset.connectedRight = sourceBlock.id;
-      sourceBlock.dataset.connectionDirection = 'left'; // Visual cue on source
-      targetBlock.dataset.connectionDirection = 'right'; // Visual cue on target
-    }
+    // Ensure both blocks are absolutely positioned BEFORE calculating final position
+    sourceBlock.style.position = 'absolute';
+    targetBlock.style.position = 'absolute'; // Should already be, but safe to ensure
 
-    // Add classes for visual styling of connected state
-    sourceBlock.classList.add('connected-block', 'has-connected-block');
-    targetBlock.classList.add('connected-block', 'has-connected-block');
-
-
-    // 2. Align Blocks Visually (Absolute Positioning Example)
-    const targetRect = targetBlock.getBoundingClientRect();
-    const sourceRect = sourceBlock.getBoundingClientRect(); // Get current position
-    const container = sourceBlock.parentElement; // Assuming they share a parent
-    const containerRect = container.getBoundingClientRect();
-
-     // Calculate position relative to the container
     const targetStyle = window.getComputedStyle(targetBlock);
+    const sourceStyle = window.getComputedStyle(sourceBlock); // Get current style before moving
+
+    // Use offsetLeft/Top if relative to a positioned parent (blocksContainer)
+    // Make sure the parent container HAS position: relative or absolute!
     const targetLeft = parseFloat(targetStyle.left) || targetBlock.offsetLeft;
     const targetTop = parseFloat(targetStyle.top) || targetBlock.offsetTop;
 
+    // Use getBoundingClientRect().width/height for accurate dimensions
+    const sourceWidth = sourceBlock.getBoundingClientRect().width;
+    const targetWidth = targetBlock.getBoundingClientRect().width;
 
-    let newLeft, newTop;
+    let newLeft, newTop = targetTop; // Assume vertical alignment is desired
 
-    if (direction === 'left') { // Snap source's right to target's left
-        newLeft = targetLeft - sourceRect.width + 1; // +1 for slight overlap or gap adjustment
-        newTop = targetTop;
-    } else { // Snap source's left to target's right
-        newLeft = targetLeft + targetRect.width -1; // -1 for slight overlap or gap adjustment
-        newTop = targetTop;
+    if (direction === 'left') { // Source right connects to Target left
+      newLeft = targetLeft - sourceWidth + 1; // +1 for slight overlap/gap adjustment
+      sourceBlock.dataset.connectedRight = targetBlock.id;
+      targetBlock.dataset.connectedLeft = sourceBlock.id;
+      sourceBlock.dataset.connectionDirection = 'right';
+      targetBlock.dataset.connectionDirection = 'left';
+    } else { // Source left connects to Target right
+      newLeft = targetLeft + targetWidth - 1; // -1 for slight overlap/gap adjustment
+      sourceBlock.dataset.connectedLeft = targetBlock.id;
+      targetBlock.dataset.connectedRight = sourceBlock.id;
+      sourceBlock.dataset.connectionDirection = 'left';
+      targetBlock.dataset.connectionDirection = 'right';
     }
 
-     // Set new position - Make sure blocks are absolutely positioned
-     sourceBlock.style.position = 'absolute'; // Ensure positioning context
-     targetBlock.style.position = 'absolute'; // Ensure positioning context
-     sourceBlock.style.left = `${newLeft}px`;
-     sourceBlock.style.top = `${newTop}px`;
+    // Apply new position
+    sourceBlock.style.left = `${newLeft}px`;
+    sourceBlock.style.top = `${newTop}px`;
 
-    // Optional: Disable dragging for connected blocks or implement chain dragging
-     // sourceBlock.draggable = false; // Simple approach
+    // Add classes for styling
+    sourceBlock.classList.add('connected-block', 'has-connected-block');
+    targetBlock.classList.add('connected-block', 'has-connected-block');
 
-    console.log(`Blocks connected: ${sourceBlock.id} <=> ${targetBlock.id}`);
-     // Optional: Play sound effect
-     // const snapSound = document.getElementById('snapSound');
-     // if(snapSound) snapSound.play();
+    console.log(`Block ${sourceBlock.id} moved to ${newLeft}px, ${newTop}px`);
   }
 
-  // מנתק בלוק מהבלוקים המחוברים אליו
   function disconnectBlock(blockToDisconnect) {
      console.log(`Disconnecting block ${blockToDisconnect.id}`);
-
-     // Play detach animation
      blockToDisconnect.classList.add('detach-animation');
-     blockToDisconnect.addEventListener('animationend', () => {
-         blockToDisconnect.classList.remove('detach-animation');
-     }, { once: true });
+     blockToDisconnect.addEventListener('animationend', () => blockToDisconnect.classList.remove('detach-animation'), { once: true });
 
      let disconnected = false;
+     const rightId = blockToDisconnect.dataset.connectedRight;
+     const leftId = blockToDisconnect.dataset.connectedLeft;
 
-     // Check connection on the right side of the block
-     const connectedRightId = blockToDisconnect.dataset.connectedRight;
-     if (connectedRightId) {
-         const connectedBlock = document.getElementById(connectedRightId);
+     if (rightId) {
+         const connectedBlock = document.getElementById(rightId);
          if (connectedBlock) {
-             console.log(`  - Disconnecting from ${connectedBlock.id} (right side)`);
-             delete connectedBlock.dataset.connectedLeft; // Clear connection from the other block
+             delete connectedBlock.dataset.connectedLeft;
              connectedBlock.removeAttribute('data-connection-direction');
-             connectedBlock.classList.remove('has-connected-block','connected-block'); // Adjust classes as needed
+             connectedBlock.classList.remove('has-connected-block','connected-block');
          }
          delete blockToDisconnect.dataset.connectedRight;
          disconnected = true;
      }
-
-     // Check connection on the left side of the block
-     const connectedLeftId = blockToDisconnect.dataset.connectedLeft;
-     if (connectedLeftId) {
-         const connectedBlock = document.getElementById(connectedLeftId);
+     if (leftId) {
+         const connectedBlock = document.getElementById(leftId);
          if (connectedBlock) {
-              console.log(`  - Disconnecting from ${connectedBlock.id} (left side)`);
-             delete connectedBlock.dataset.connectedRight; // Clear connection from the other block
+             delete connectedBlock.dataset.connectedRight;
              connectedBlock.removeAttribute('data-connection-direction');
-              connectedBlock.classList.remove('has-connected-block','connected-block'); // Adjust classes as needed
+             connectedBlock.classList.remove('has-connected-block','connected-block');
          }
          delete blockToDisconnect.dataset.connectedLeft;
          disconnected = true;
      }
 
-     // Clean up the disconnected block itself
      if (disconnected) {
           blockToDisconnect.removeAttribute('data-connection-direction');
           blockToDisconnect.classList.remove('has-connected-block','connected-block');
-          // Optional: Make draggable again if it was disabled
-          // blockToDisconnect.draggable = true;
-     } else {
-         console.log(`  - Block ${blockToDisconnect.id} was not connected.`);
+          // Make draggable again? (Should be draggable by default)
+          // blockToDisconnect.setAttribute('draggable', 'true');
      }
-
-     // Optional: Play sound effect
-     // const detachSound = document.getElementById('detachSound');
-     // if(detachSound) detachSound.play();
-
-     hideConnectionIndicator(); // Hide indicator after any disconnection
+     hideConnectionIndicator();
   }
 
   // --- מאזיני אירועים ---
 
-  // הוספת מאזינים לכל הבלוקים שניתנים לגרירה
   document.querySelectorAll('.block').forEach(block => {
-    block.setAttribute('draggable', 'true'); // Make sure blocks are draggable
+    block.setAttribute('draggable', 'true');
 
-    // לחיצה ימנית להצגת תפריט (אם הבלוק מחובר)
-     block.addEventListener('contextmenu', (e) => {
-         e.preventDefault(); // מניעת תפריט ברירת מחדל של הדפדפן
-         // הצג תפריט רק אם הבלוק מחובר למשהו
+    // Context Menu
+    block.addEventListener('contextmenu', (e) => {
+         e.preventDefault();
          if (block.dataset.connectedLeft || block.dataset.connectedRight) {
               createDetachMenu(block, e.clientX, e.clientY);
          } else {
-             removeDetachMenu(); // הסר תפריט אם קיים ולא רלוונטי
+             removeDetachMenu();
          }
-         lastRightClickedBlock = block; // Store the clicked block regardless
+         lastRightClickedBlock = block;
      });
 
-    // התחלת גרירה
+    // Drag Start
     block.addEventListener('dragstart', (e) => {
-      // Delay slightly to allow potential disconnect logic from context menu
-      setTimeout(() => {
-          // If a context menu was just used to disconnect, don't start drag
-          if (lastRightClickedBlock === block && document.querySelector('.detach-context-menu')) {
-              // Potentially prevent drag if menu is active / just used?
-              // Or just let drag proceed after menu closes. For now, let it drag.
-          }
-
-          currentDraggedBlock = block;
-          currentDraggedBlock.classList.add('dragging'); // Add class for styling during drag
-
-          // חישוב ההיסט (offset) של העכבר יחסית לפינה השמאלית העליונה של הבלוק
-          const rect = block.getBoundingClientRect();
-          dragOffsetX = e.clientX - rect.left;
-          dragOffsetY = e.clientY - rect.top;
-
-          e.dataTransfer.effectAllowed = 'move';
-          // Optional: Set drag image (can be tricky with custom styling)
-          // e.dataTransfer.setDragImage(block, dragOffsetX, dragOffsetY);
-
-          // Hide original block slightly later to avoid flash
-           setTimeout(() => block.style.opacity = '0.5', 0); // Make original semi-transparent
-
-          // ניקוי הדגשות קודמות אם נשארו בטעות
-          clearAllHighlights();
-          removeDetachMenu(); // Close context menu on drag start
-      }, 10); // Short delay
-    });
-
-    // במהלך גרירה (dragover על קונטיינר או body)
-    // Note: 'drag' event fires frequently on the dragged element itself.
-    // 'dragover' fires on potential drop targets. We need position, so maybe use document listener?
-    // Let's use drag event for position update and check targets.
-
-    block.addEventListener('drag', (e) => {
-        if (!currentDraggedBlock || e.clientX === 0 && e.clientY === 0) return; // Fix for drag end ghost event
-
-        // עדכון ויזואלי מיידי (פחות מומלץ אם משתמשים ב-setDragImage)
-        // במקום זה, נשתמש במיקום העכבר כדי לבדוק מטרות הצמדה
-        const currentX = e.clientX;
-        const currentY = e.clientY;
-
-        // ניקוי הדגשות ספציפיות מהפעם הקודמת
-        clearSpecificHighlights(currentDraggedBlock, currentPotentialSnapTarget); // Use the new function
-
-        // מציאת יעד פוטנציאלי חדש
-        potentialSnapTarget = findPotentialSnapTarget(currentDraggedBlock); // Find target based on current pos
-        snapDirection = determineSnapDirection(currentDraggedBlock, potentialSnapTarget); // Determine direction
-
-        if (potentialSnapTarget && snapDirection) {
-            // 1. הוספת הדגשות הקרבה הרגילות
-            currentDraggedBlock.classList.add('snap-source');
-            potentialSnapTarget.classList.add('snap-target');
-            potentialSnapTarget.classList.add(snapDirection === 'left' ? 'snap-left' : 'snap-right');
-
-            // 2. *** הוספת הילת "מוכן להצמדה" לשני הבלוקים ***
-            currentDraggedBlock.classList.add('ready-to-snap');
-            potentialSnapTarget.classList.add('ready-to-snap');
-
-            currentPotentialSnapTarget = potentialSnapTarget; // שמירת היעד הנוכחי לבדיקה הבאה
-
-        } else {
-            // לא נמצא יעד או שהתנאים לא מתקיימים
-            currentPotentialSnapTarget = null; // איפוס היעד הקודם
-        }
-    });
-
-
-    // סיום גרירה (שחרור)
-    block.addEventListener('dragend', (e) => {
-        if (!currentDraggedBlock) return;
-
-        currentDraggedBlock.style.opacity = '1'; // Restore original opacity
-        currentDraggedBlock.classList.remove('dragging');
-
-        if (potentialSnapTarget && snapDirection) {
-            // *** הצמדה מתבצעת ***
-
-            // הסרת הילת "מוכן להצמדה" לפני האנימציה
-            currentDraggedBlock.classList.remove('ready-to-snap');
-            potentialSnapTarget.classList.remove('ready-to-snap');
-
-            // הוספת אנימציית הצמדה
-            currentDraggedBlock.classList.add('snap-animation');
-            potentialSnapTarget.classList.add('snap-animation');
-            currentDraggedBlock.addEventListener('animationend', () => currentDraggedBlock.classList.remove('snap-animation'), { once: true });
-            potentialSnapTarget.addEventListener('animationend', () => potentialSnapTarget.classList.remove('snap-animation'), { once: true });
-
-            // לוגיקת החיבור עצמה
-            connectBlocks(currentDraggedBlock, potentialSnapTarget, snapDirection);
-
-            // ניקוי הדגשות קרבה לאחר ההצמדה
-            currentDraggedBlock.classList.remove('snap-source');
-            potentialSnapTarget.classList.remove('snap-target', snapDirection === 'left' ? 'snap-left' : 'snap-right');
-
-        } else {
-            // שחרור ללא הצמדה - מקם את הבלוק במקום השחרור
-            const container = document.getElementById('blocks-container') || document.body; // Or your specific container
-            const containerRect = container.getBoundingClientRect();
-            // Calculate position relative to container, considering scroll
-            let finalX = e.clientX - containerRect.left - dragOffsetX + container.scrollLeft;
-            let finalY = e.clientY - containerRect.top - dragOffsetY + container.scrollTop;
-
-            // Ensure block stays within bounds (optional)
-            finalX = Math.max(0, Math.min(finalX, containerRect.width - currentDraggedBlock.offsetWidth));
-            finalY = Math.max(0, Math.min(finalY, containerRect.height - currentDraggedBlock.offsetHeight));
-
-
-             // Ensure block is absolutely positioned for this to work
-            currentDraggedBlock.style.position = 'absolute';
-            currentDraggedBlock.style.left = `${finalX}px`;
-            currentDraggedBlock.style.top = `${finalY}px`;
-
-
-            // ודא שכל ההדגשות הוסרו
-            clearSpecificHighlights(currentDraggedBlock, potentialSnapTarget); // Use specific clear
-             // or use clearAllHighlights(); if preferred and updated
+        // Check if context menu is open for this block - if so, maybe prevent drag?
+        const menu = document.getElementById('detachMenu');
+        if (menu && lastRightClickedBlock === block) {
+            console.log("Context menu open, preventing drag start for now.");
+            e.preventDefault(); // Stop the drag if menu is open
+            return;
         }
 
-        // איפוס משתני מצב הגרירה
-        currentDraggedBlock = null;
-        potentialSnapTarget = null;
-        snapDirection = null;
-        currentPotentialSnapTarget = null; // איפוס המשתנה החדש
-        dragOffsetX = 0;
-        dragOffsetY = 0;
-        lastRightClickedBlock = null; // Clear right-click context on drag end
+        console.log(`dragstart: ${block.id}`);
+        currentDraggedBlock = block;
+        currentDraggedBlock.classList.add('dragging'); // Apply dragging style
 
-        // הסתר אינדיקטור אם היה מוצג
-        hideConnectionIndicator();
+        const rect = block.getBoundingClientRect();
+        dragOffsetX = e.clientX - rect.left;
+        dragOffsetY = e.clientY - rect.top;
+
+        e.dataTransfer.effectAllowed = 'move';
+        // Try setting data (required for Firefox in some cases)
+        e.dataTransfer.setData('text/plain', block.id);
+        // Avoid setting drag image if default ghost is okay
+        // e.dataTransfer.setDragImage(block, dragOffsetX, dragOffsetY);
+
+        // **REMOVED**: setTimeout(() => block.style.opacity = '0.5', 0);
+        // Rely on .dragging class for visual feedback
+
+        clearAllHighlights();
+        removeDetachMenu();
     });
 
-    // --- אירועי מטרה (על הקונטיינר או אלמנטים אחרים) ---
-    // Need dragover on the container to allow dropping
-     const container = document.getElementById('blocks-container') || document.body;
-     container.addEventListener('dragover', (e) => {
-         e.preventDefault(); // Necessary to allow dropping
+    // Drag Over (on potential drop targets or container)
+    // This listener is primarily to allow dropping by preventing default handling
+    blocksContainer.addEventListener('dragover', (e) => {
+         e.preventDefault(); // *** Crucial to allow drop ***
          e.dataTransfer.dropEffect = 'move';
-     });
 
-     // Optional: dragenter / dragleave on targets for different highlighting
-     // (but our current logic handles highlights during the 'drag' event)
+         // --- Logic moved from 'drag' event to 'dragover' for better target detection ---
+         if (!currentDraggedBlock) return;
+
+         // Update highlighting based on cursor position over the container
+         clearSpecificHighlights(currentDraggedBlock, currentPotentialSnapTarget);
+
+         // Find potential target based on current dragged block's *ghost* position (approximated)
+         // Or better: find target based on current mouse position (e.clientX, e.clientY) relative to potential targets
+         potentialSnapTarget = findPotentialSnapTarget(currentDraggedBlock); // Use the same function, it uses getBoundingClientRect
+         snapDirection = determineSnapDirection(currentDraggedBlock, potentialSnapTarget);
+
+         if (potentialSnapTarget && snapDirection) {
+             currentDraggedBlock.classList.add('snap-source');
+             potentialSnapTarget.classList.add('snap-target');
+             potentialSnapTarget.classList.add(snapDirection === 'left' ? 'snap-left' : 'snap-right');
+             currentDraggedBlock.classList.add('ready-to-snap');
+             potentialSnapTarget.classList.add('ready-to-snap');
+             currentPotentialSnapTarget = potentialSnapTarget;
+         } else {
+             currentPotentialSnapTarget = null;
+         }
+         // --- End of logic moved from 'drag' ---
+    });
+
+
+    // Drag End (fired on the source element when drag finishes)
+    block.addEventListener('dragend', (e) => {
+      // Check if block is still the one being dragged (sanity check)
+      if (currentDraggedBlock !== block) {
+        // console.log("dragend: Mismatch, currentDraggedBlock is", currentDraggedBlock ? currentDraggedBlock.id : 'null', "block is", block.id);
+        // This might happen if drag was cancelled unexpectedly or state is corrupt
+        // Just try to reset the style of the block firing the event
+        block.style.opacity = '1';
+        block.classList.remove('dragging');
+        clearAllHighlights(); // General cleanup might be needed
+        return; // Exit early
+      }
+
+      console.log(`dragend: ${block.id}. Opacity before reset: ${block.style.opacity}`);
+
+      // *** GUARANTEE VISIBILITY RESTORATION ***
+      block.style.opacity = '1';
+      block.classList.remove('dragging');
+
+      // Determine final action based on state variables set during dragover/drag
+      if (potentialSnapTarget && snapDirection) {
+          console.log(`dragend: Snapping ${block.id} to ${potentialSnapTarget.id}`);
+          // --- Snap Logic ---
+          currentDraggedBlock.classList.remove('ready-to-snap');
+          potentialSnapTarget.classList.remove('ready-to-snap');
+
+          // Add animation (check if elements still exist)
+          if (currentDraggedBlock) currentDraggedBlock.classList.add('snap-animation');
+          if (potentialSnapTarget) potentialSnapTarget.classList.add('snap-animation');
+           if (currentDraggedBlock) currentDraggedBlock.addEventListener('animationend', () => currentDraggedBlock.classList.remove('snap-animation'), { once: true });
+           if (potentialSnapTarget) potentialSnapTarget.addEventListener('animationend', () => potentialSnapTarget.classList.remove('snap-animation'), { once: true });
+
+          connectBlocks(currentDraggedBlock, potentialSnapTarget, snapDirection);
+
+          // Clean up remaining highlights
+          if (currentDraggedBlock) currentDraggedBlock.classList.remove('snap-source');
+           if (potentialSnapTarget) potentialSnapTarget.classList.remove('snap-target', snapDirection === 'left' ? 'snap-left' : 'snap-right');
+
+      } else {
+          console.log(`dragend: No snap for ${block.id}. Final position calculation.`);
+          // --- No Snap: Position the block where it was dropped ---
+           // Check if drop was successful (e.dataTransfer.dropEffect is not 'none')
+           // Note: dropEffect might not be reliably set on dragend in all browsers
+           // We assume if no snap target, it should be placed.
+
+          // Calculate position relative to the CONTAINER
+          const containerRect = blocksContainer.getBoundingClientRect();
+
+           // Use event coordinates (e.clientX/Y) which are relative to viewport
+           let finalX = e.clientX - containerRect.left - dragOffsetX + blocksContainer.scrollLeft;
+           let finalY = e.clientY - containerRect.top - dragOffsetY + blocksContainer.scrollTop;
+
+           // Clamp position within container bounds (adjust as needed)
+           const blockWidth = block.offsetWidth;
+           const blockHeight = block.offsetHeight;
+           finalX = Math.max(0, Math.min(finalX, blocksContainer.scrollWidth - blockWidth));
+           finalY = Math.max(0, Math.min(finalY, blocksContainer.scrollHeight - blockHeight));
+
+           console.log(`dragend: Setting ${block.id} position to X: ${finalX}, Y: ${finalY}`);
+
+           // *** Ensure block is absolutely positioned ***
+           block.style.position = 'absolute';
+           block.style.left = `${finalX}px`;
+           block.style.top = `${finalY}px`;
+
+           // Clear any lingering highlights just in case
+           clearSpecificHighlights(block, potentialSnapTarget);
+      }
+
+      // --- Final Cleanup ---
+      console.log(`dragend: Resetting state for ${block.id}`);
+      currentDraggedBlock = null;
+      potentialSnapTarget = null;
+      snapDirection = null;
+      currentPotentialSnapTarget = null;
+      dragOffsetX = 0;
+      dragOffsetY = 0;
+      lastRightClickedBlock = null; // Clear right-click context after drag potentially involving it
+      hideConnectionIndicator();
+      clearAllHighlights(); // Clear any remaining highlights globally as a safety net
+    });
+
+    // Optional: Handle dragleave from container to clear highlights if needed
+    blocksContainer.addEventListener('dragleave', (e) => {
+        // Be careful with this, it fires when moving over child elements.
+        // Check if the relatedTarget is outside the container.
+        if (!blocksContainer.contains(e.relatedTarget) && currentDraggedBlock) {
+             console.log("dragleave container");
+             clearSpecificHighlights(currentDraggedBlock, currentPotentialSnapTarget);
+             currentPotentialSnapTarget = null; // Reset target when leaving container
+        }
+    });
+
+     // Optional: Handle drop event on container (can be alternative place for final positioning)
+     // blocksContainer.addEventListener('drop', (e) => {
+     //    e.preventDefault(); // Prevent default drop handling (like opening link)
+     //    if (currentDraggedBlock && !potentialSnapTarget) {
+     //        // Logic to position the block if it wasn't snapped
+     //        // This duplicates logic in dragend, usually one place is sufficient
+     //    }
+     // });
+
 
   }); // End forEach block
 
@@ -653,49 +583,46 @@ document.addEventListener('DOMContentLoaded', () => {
   if (clearAllButton) {
     clearAllButton.addEventListener('click', function() {
        console.log("Clearing all connections and resetting positions...");
-      // ניקוי משתנים גלובליים
-      currentDraggedBlock = null;
-      potentialSnapTarget = null;
-      snapDirection = null;
-      lastClickedBlock = null;
-      lastRightClickedBlock = null;
-      currentPotentialSnapTarget = null;
+       currentDraggedBlock = null; // Reset state variables
+       potentialSnapTarget = null;
+       snapDirection = null;
+       lastClickedBlock = null;
+       lastRightClickedBlock = null;
+       currentPotentialSnapTarget = null;
 
-      clearAllHighlights(); // ניקוי כל ההדגשות החזותיות
-      removeDetachMenu(); // הסרת תפריט קשר פתוח
-      hideConnectionIndicator(); // הסתרת אינדיקטור
+       clearAllHighlights();
+       removeDetachMenu();
+       hideConnectionIndicator();
 
-      // ניתוק כל הבלוקים ואיפוס מיקומים (דוגמה)
-      document.querySelectorAll('.block').forEach((block, index) => {
-          // לוגיקת ניתוק מלאה
-          disconnectBlock(block); // Ensure disconnect logic runs for each
+       document.querySelectorAll('.block').forEach((block, index) => {
+           disconnectBlock(block); // Disconnect first
 
-          // איפוס מיקום התחלתי (צריך להתאים ללוגיקת הפריסה המקורית)
-          block.style.position = ''; // Remove absolute positioning if not default
-          block.style.left = '';
-          block.style.top = '';
-          // Maybe reset to initial grid or list position? Example:
-          // block.style.position = 'relative'; // Or static
-          // Or re-apply initial absolute positions if known
+           // Reset styles - Adjust based on your initial layout
+           block.style.position = ''; // Or 'relative'/'static' if that's the default
+           block.style.left = '';
+           block.style.top = '';
+           block.style.opacity = '1'; // Ensure visible
+           block.classList.remove('dragging', 'connected-block', 'has-connected-block');
+           block.removeAttribute('data-connected-left');
+           block.removeAttribute('data-connected-right');
+           block.removeAttribute('data-connection-direction');
+           block.setAttribute('draggable', 'true'); // Ensure draggable
 
-          // ניקוי כל data attributes הקשורים לחיבורים
-           delete block.dataset.connectedLeft;
-           delete block.dataset.connectedRight;
-           delete block.dataset.connectionDirection;
-           block.classList.remove('connected-block', 'has-connected-block');
-           block.style.filter = ''; // Reset any lingering filters
-           block.style.opacity = '1'; // Ensure full opacity
-           block.draggable = true; // Make sure it's draggable again
-      });
-
-        // כאן תוכל להוסיף קוד ש"מסדר מחדש" את הבלוקים אם יש לך פריסה התחלתית
-        // לדוגמה, למקם אותם בשורה או בעמודה.
-        alert("הכל נוקה ואופס!"); // Feedback למשתמש
+           // TODO: Add logic here to reposition blocks to their initial state/layout
+           // Example: Place them in a row/column based on index
+           // block.style.position = 'absolute';
+           // block.style.left = `${10 + index * 120}px`; // Example horizontal layout
+           // block.style.top = '10px';
+       });
+       console.log("Clear all complete.");
+       // alert("הכל נוקה ואופס!");
     });
   }
 
   // קריאה לפונקציה שמוסיפה את ה-CSS ל-head
   addHighlightStyles();
+
+  console.log("linkage-improved.js loaded and initialized.");
 
 }); // End DOMContentLoaded
 
