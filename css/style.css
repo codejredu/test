@@ -13,7 +13,7 @@ body {
     margin: 0;
     padding: 0;
     background-color: #f0f4ff;
-    direction: ltr; /* Make sure direction is LTR */
+    direction: ltr; /* כיוון משמאל לימין */
 }
 
 .container {
@@ -26,9 +26,8 @@ header {
     background-color: #fff;
     padding: 10px 20px;
     display: flex;
-    flex-direction: column; /* Changed to column */
-    /* justify-content: space-between; Removed justify-content */
-    align-items: center; /* Added align-items: center */
+    flex-direction: column;
+    align-items: center;
     border-bottom: 1px solid #e0e0e0;
 }
 
@@ -69,16 +68,12 @@ main {
     background: none;
 }
 
-#stage.show-grid::before {
-    background: none;
-}
-
 #stage.show-grid {
   background-image:
     linear-gradient(to right, lightgrey 1px, transparent 1px),
     linear-gradient(to bottom, lightgrey 1px, transparent 1px);
-  background-size: 56px 46px; /* Set the size of the grid lines */
-  background-position: top left; /* Align the grid to the top left */
+  background-size: 56px 46px; /* גודל קווי הרשת */
+  background-position: top left; /* יישור הרשת לפינה השמאלית העליונה */
 }
 
 #character {
@@ -100,16 +95,16 @@ main {
 }
 
 #block-palette {
-    background-color: #f0f0f0; /* Gray background as requested */
+    background-color: #f0f0f0; /* רקע אפור */
     border: 1px solid #e0e0e0;
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    height: 105px; /* Fixed height of 114px as requested */
+    height: 105px; /* גובה קבוע */
     display: flex;
     flex-direction: row;
     align-items: stretch;
-    overflow: hidden; /* Prevent content from overflowing */
+    overflow: hidden; /* מניעת גלישת תוכן */
 }
 
 .category-tabs {
@@ -119,7 +114,7 @@ main {
     margin-bottom: 0;
     height: 100%;
     align-content: flex-start;
-    background-color: #f0f0f0; /* Gray background behind tabs */
+    background-color: #f0f0f0; /* רקע אפור מאחורי הכרטיסיות */
 }
 
 /* סגנון לכפתורי הקטגוריות החדשים עם תמונות SVG */
@@ -135,7 +130,7 @@ main {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: transparent; /* רקע שקוף במקום צבע */
+    background-color: transparent; /* רקע שקוף */
 }
 
 .category-tab img {
@@ -156,9 +151,8 @@ main {
     padding: 10px;
     flex-grow: 1;
     height: 100%;
-    border-right: 1px solid #e0e0e0;
     margin-left: 0px;
-    background-color: #f0f0f0; /* עדכון צבע הרקע */
+    background-color: #f0f0f0; /* רקע אפור בהיר */
 }
 
 .block-category.active {
@@ -173,8 +167,8 @@ main {
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    flex: 2; /* Increased to make programming area taller */
-    min-height: 200px; /* Set minimum height */
+    flex: 2; /* מוגדל כדי להגדיל את אזור התכנות */
+    min-height: 200px; /* גובה מינימלי */
 }
 
 .program-header {
@@ -190,7 +184,7 @@ main {
 }
 
 #program-blocks {
-    min-height: 180px; /* Increased height */
+    min-height: 180px; /* גובה מוגדל */
     border: 1px dashed #ccc;
     padding: 10px;
     position: relative;
@@ -204,7 +198,7 @@ main {
     font-size: 20px;
     font-weight: bold;
     color: #4a90e2;
-    margin-bottom: 5px; /* Add some margin between logo and icons */
+    margin-bottom: 5px; /* מרווח בין הלוגו לאייקונים */
 }
 
 /* עיצוב לאזור האייקונים בכותרת */
@@ -226,7 +220,6 @@ main {
     outline: none;
     position: relative;
     background-color: transparent;
-    /* הסרת הבורדר השחור וההצללה */
     box-shadow: none;
 }
 
@@ -238,7 +231,6 @@ main {
     border: none;
     outline: none;
     padding: 0;
-    /* הסרת המסגרת שראינו בתמונה */
     background-color: transparent;
     border-radius: 0;
 }
@@ -258,7 +250,6 @@ main {
     border-radius: 8px;
 }
 
-/* הסרת מאפיינים מיותרים שהיו בכותרת */
 #grid-toggle:hover {
     background-color: #f0f0f0;
     border-radius: 8px;
