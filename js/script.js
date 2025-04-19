@@ -1,19 +1,18 @@
-// block-connection.js - מנגנוני הצמדה וניתוק משופרים
+// linkage-improved.js - הצמדת בלוקים עם חיווי ויזואלי
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('טוען מערכת הצמדה וניתוק משופרת...');
+  console.log('טוען מערכת הצמדת בלוקים משופרת...');
   
   // מחכה שהדף יטען לגמרי כולל הסקריפטים האחרים
   setTimeout(function() {
-    setupBlockConnections();
+    setupSnapping();
   }, 1000);
   
-  function setupBlockConnections() {
-    console.log('מפעיל מערכת הצמדה וניתוק עם חיווי ויזואלי...');
+  function setupSnapping() {
+    console.log('מפעיל מערכת הצמדה עם חיווי ויזואלי...');
     
     // קבועים
     const SNAP_THRESHOLD = 25; // מרחק מקסימלי בפיקסלים להצמדה
     const HIGHLIGHT_THRESHOLD = 50; // מרחק להתחלת הדגשה ויזואלית
-    const DOUBLE_CLICK_THRESHOLD = 300; // זמן מקסימלי בין לחיצות לזיהוי כלחיצה כפולה
     
     // איתור אזור התכנות
     const programmingArea = document.getElementById('program-blocks');
@@ -25,10 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // משתנים גלובליים
     let currentDraggedBlock = null;
     let potentialSnapTarget = null;
-    let snapDirection = null; // 'left' או 'right'
-    let lastClickedBlock = null;
-    let lastClickTime = 0;
-    let lastRightClickedBlock = null; // לזיהוי לחיצת כפתור ימני
+    let snapDirection = null; // 'left' or 'right'
     
     // הוספת סגנונות להדגשה ויזואלית באופן דינמי
     addHighlightStyles();
@@ -46,17 +42,12 @@ document.addEventListener('DOMContentLoaded', function() {
         img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
         e.dataTransfer.setDragImage(img, 0, 0);
         
-        // מסמנים את הבלוק כנגרר
+        // מסמנים את הבלוק כנגרר (בלי אפקטים ויזואליים)
         e.target.classList.add('dragging');
         
         // מיקום מקורי של הבלוק למקרה שנצטרך לשחזר אותו
         e.target.dataset.originalLeft = e.target.style.left || '';
         e.target.dataset.originalTop = e.target.style.top || '';
-        
-        // אם הבלוק היה מחובר, נתק אותו
-        if (isBlockConnected(e.target)) {
-          detachBlock(e.target);
-        }
         
         // עדכון תצוגת הבלוק בזמן אמת
         updateDraggedBlockPosition(e);
@@ -95,47 +86,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // בדיקה אם יש בלוק פוטנציאלי להצמדה בקרבת מקום
         checkForSnapTarget(currentDraggedBlock, e.clientX, e.clientY);
-      }
-    });
-    
-    // ---- הוספת מנגנון ניתוק ----
-    
-    // זיהוי לחיצה כפולה על בלוק לניתוק
-    programmingArea.addEventListener('click', function(e) {
-      const clickedBlock = findParentBlockContainer(e.target);
-      if (!clickedBlock) return;
-      
-      const currentTime = new Date().getTime();
-      
-      // בדיקה אם מדובר בלחיצה כפולה על אותו בלוק
-      if (lastClickedBlock === clickedBlock && 
-          currentTime - lastClickTime < DOUBLE_CLICK_THRESHOLD) {
-        // זוהתה לחיצה כפולה על בלוק
-        console.log('לחיצה כפולה זוהתה - מנסה לנתק את הבלוק');
-        detachBlock(clickedBlock);
-        lastClickedBlock = null; // איפוס כדי למנוע ניתוק חוזר
-      } else {
-        // לחיצה ראשונה או לחיצה על בלוק אחר
-        lastClickedBlock = clickedBlock;
-        lastClickTime = currentTime;
-      }
-    });
-    
-    // זיהוי לחיצה ימנית לפתיחת תפריט ניתוק
-    programmingArea.addEventListener('contextmenu', function(e) {
-      const clickedBlock = findParentBlockContainer(e.target);
-      if (!clickedBlock) return;
-      
-      // מניעת תפריט הדפדפן המובנה
-      e.preventDefault();
-      
-      // בדיקה אם הבלוק מחובר
-      if (isBlockConnected(clickedBlock)) {
-        // שמירת הבלוק לניתוק
-        lastRightClickedBlock = clickedBlock;
-        
-        // הצגת תפריט ניתוק
-        showDetachMenu(e.clientX, e.clientY);
       }
     });
     
@@ -179,120 +129,19 @@ document.addEventListener('DOMContentLoaded', function() {
       }, 100);
     });
     
+    // צעד 5: מאזין לתזוזת העכבר לזיהוי קרבה בין בלוקים
+    programmingArea.addEventListener('mousemove', function(e) {
+      // בדיקה אם יש בלוק בגרירה פעילה
+      if (!currentDraggedBlock) return;
+      
+      // עדכון מיקום הבלוק הנגרר אם אנחנו צריכים לעשות זאת ידנית
+      // זה לרוב לא נדרש כי הדפדפן מטפל בזה, אבל אם יש צורך אפשר להוסיף כאן
+      
+      // בדיקה אם יש בלוק פוטנציאלי להצמדה בקרבת מקום
+      checkForSnapTarget(currentDraggedBlock, e.clientX, e.clientY);
+    });
+    
     // ---- פונקציות עזר ----
-    
-    // מציאת אלמנט ההורה מסוג block-container
-    function findParentBlockContainer(element) {
-      while (element && !element.classList.contains('block-container')) {
-        element = element.parentElement;
-      }
-      return element;
-    }
-    
-    // בדיקה אם בלוק מחובר לבלוק אחר
-    function isBlockConnected(block) {
-      return block.classList.contains('connected-block') || 
-             block.hasAttribute('data-connected-to');
-    }
-    
-    // ניתוק בלוק מהחיבור שלו
-    function detachBlock(block) {
-      if (!block || !isBlockConnected(block)) return;
-      
-      console.log('מנתק בלוק:', block.id || block.dataset.type);
-      
-      // נקה את הסימונים של חיבור
-      block.classList.remove('connected-block');
-      
-      // קבל את הבלוק שאליו היה מחובר
-      const connectedToId = block.getAttribute('data-connected-to');
-      if (connectedToId) {
-        const connectedBlock = document.getElementById(connectedToId);
-        if (connectedBlock) {
-          connectedBlock.classList.remove('has-connected-block');
-        }
-      }
-      
-      // נקה מידע על חיבור
-      block.removeAttribute('data-connected-to');
-      block.removeAttribute('data-connection-direction');
-      
-      // הזז את הבלוק מעט כדי להדגיש את הניתוק ויזואלית
-      const currentTop = parseInt(block.style.top) || 0;
-      block.style.top = (currentTop + 10) + 'px';
-      
-      // הוסף אנימציית ניתוק
-      addDetachEffectAnimation(block);
-      
-      return true;
-    }
-    
-    // הצגת תפריט ניתוק
-    function showDetachMenu(x, y) {
-      // בדיקה אם כבר קיים תפריט פתוח
-      removeDetachMenu();
-      
-      // יצירת תפריט הקשר פשוט
-      const menu = document.createElement('div');
-      menu.className = 'detach-context-menu';
-      menu.style.position = 'fixed';
-      menu.style.left = x + 'px';
-      menu.style.top = y + 'px';
-      menu.style.zIndex = '1000';
-      menu.style.background = 'white';
-      menu.style.border = '1px solid #ccc';
-      menu.style.borderRadius = '4px';
-      menu.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
-      menu.style.padding = '5px 0';
-      
-      // הוספת פעולת ניתוק
-      const detachItem = document.createElement('div');
-      detachItem.textContent = 'נתק בלוק';
-      detachItem.style.padding = '8px 12px';
-      detachItem.style.cursor = 'pointer';
-      detachItem.style.direction = 'rtl'; // כיוון טקסט מימין לשמאל
-      
-      detachItem.addEventListener('mouseenter', function() {
-        this.style.backgroundColor = '#f0f0f0';
-      });
-      
-      detachItem.addEventListener('mouseleave', function() {
-        this.style.backgroundColor = 'white';
-      });
-      
-      detachItem.addEventListener('click', function() {
-        if (lastRightClickedBlock) {
-          detachBlock(lastRightClickedBlock);
-          lastRightClickedBlock = null;
-        }
-        removeDetachMenu();
-      });
-      
-      menu.appendChild(detachItem);
-      document.body.appendChild(menu);
-      
-      // הוספת מאזין לסגירת התפריט בלחיצה מחוץ אליו
-      setTimeout(function() {
-        document.addEventListener('click', closeDetachMenuOnClick);
-      }, 100);
-    }
-    
-    // הסרת תפריט הניתוק
-    function removeDetachMenu() {
-      const existingMenu = document.querySelector('.detach-context-menu');
-      if (existingMenu) {
-        existingMenu.remove();
-      }
-      document.removeEventListener('click', closeDetachMenuOnClick);
-    }
-    
-    // סגירת תפריט בלחיצה מחוץ אליו
-    function closeDetachMenuOnClick(e) {
-      const clickedOnMenu = e.target.closest('.detach-context-menu');
-      if (!clickedOnMenu) {
-        removeDetachMenu();
-      }
-    }
     
     // בדיקה אם יש בלוק פוטנציאלי להצמדה אחרי גרירה
     function checkForPossibleSnapAfterDrag(draggedBlock) {
@@ -498,64 +347,42 @@ document.addEventListener('DOMContentLoaded', function() {
       }, 300); // 300ms - משך האנימציה
     }
     
-    // הוספת אנימציית ניתוק
-    function addDetachEffectAnimation(block) {
-      // הוספת קלאס אנימציה
-      block.classList.add('detach-animation');
-      
-      // הסרת הקלאס אחרי סיום האנימציה
-      setTimeout(() => {
-        block.classList.remove('detach-animation');
-      }, 300); // 300ms - משך האנימציה
-    }
-    
     // הוספת סגנונות CSS להדגשה ואנימציה
     function addHighlightStyles() {
       // יצירת אלמנט style
       const style = document.createElement('style');
       style.textContent = `
         /* הדגשת בלוק מקור (הנגרר) כשקרוב להצמדה */
-        .snap-source .block-svg-image,
-        .snap-source img {
+        .snap-source .scratch-block {
+          box-shadow: 0 0 8px 2px rgba(0, 180, 255, 0.6) !important;
           filter: brightness(1.05);
           transition: all 0.15s ease-out;
-          box-shadow: 0 0 8px 2px rgba(0, 180, 255, 0.6);
         }
         
         /* הדגשת בלוק יעד */
-        .snap-target .block-svg-image,
-        .snap-target img {
+        .snap-target .scratch-block {
+          box-shadow: 0 0 8px 2px rgba(255, 255, 0, 0.6) !important;
           filter: brightness(1.1);
           transition: all 0.15s ease-out;
-          box-shadow: 0 0 8px 2px rgba(255, 255, 0, 0.6);
         }
         
         /* הדגשת השקע השמאלי בבלוק היעד */
-        .snap-left::before {
-          content: '';
-          position: absolute;
-          left: 0;
-          top: 50%;
-          transform: translateY(-50%);
-          width: 5px;
-          height: 18px;
-          background-color: rgba(255, 255, 100, 0.8);
-          border-radius: 0 3px 3px 0;
-          z-index: 10;
+        .snap-left .scratch-block::before {
+          background-color: rgba(255, 255, 255, 0.8) !important;
+          box-shadow: inset 0 0 4px 1px rgba(255, 255, 255, 0.8) !important;
+          transition: all 0.15s ease-out;
         }
         
         /* הדגשת הפין הימני בבלוק היעד */
-        .snap-right::after {
-          content: '';
-          position: absolute;
-          right: 0;
-          top: 50%;
-          transform: translateY(-50%);
-          width: 5px;
-          height: 18px;
-          background-color: rgba(255, 255, 100, 0.8);
-          border-radius: 3px 0 0 3px;
-          z-index: 10;
+        .snap-right .scratch-block::after {
+          box-shadow: 0 0 4px 1px rgba(255, 255, 0, 0.6) !important;
+          transition: all 0.15s ease-out;
+        }
+        
+        /* בלוק בזמן גרירה - ללא אפקטים מיוחדים */
+        .block-container.dragging {
+          /* אין אפקטים ויזואליים בזמן גרירה רגילה */
+          /* כל האפקטים יופיעו רק בזמן התקרבות להצמדה */
         }
         
         /* אנימציית הצמדה */
@@ -570,43 +397,9 @@ document.addEventListener('DOMContentLoaded', function() {
           animation: snapEffect 0.3s ease-out;
         }
         
-        /* אנימציית ניתוק */
-        @keyframes detachEffect {
-          0% { transform: scale(1); }
-          30% { transform: scale(1.04) rotate(1deg); }
-          60% { transform: scale(0.98) rotate(-1deg); }
-          100% { transform: scale(1) rotate(0); }
-        }
-        
-        .detach-animation {
-          animation: detachEffect 0.3s ease-out;
-        }
-        
         /* סימון בלוקים מחוברים */
-        .connected-block {
+        .connected-block, .has-connected-block {
           filter: brightness(1.02);
-        }
-        
-        .has-connected-block {
-          position: relative;
-        }
-        
-        /* סימון חיבור ויזואלי - קו דק בין בלוקים מחוברים */
-        .connected-block[data-connection-direction="right"]::after,
-        .has-connected-block[data-connection-direction="left"]::before {
-          content: '';
-          position: absolute;
-          width: 4px;
-          height: 12px;
-          background-color: rgba(255, 255, 0, 0.4);
-          z-index: 5;
-        }
-        
-        /* עיצוב התפריט הקשר */
-        .detach-context-menu {
-          min-width: 120px;
-          font-family: Arial, sans-serif;
-          font-size: 14px;
         }
       `;
       
@@ -622,10 +415,7 @@ document.addEventListener('DOMContentLoaded', function() {
         currentDraggedBlock = null;
         potentialSnapTarget = null;
         snapDirection = null;
-        lastClickedBlock = null;
-        lastRightClickedBlock = null;
         clearAllHighlights();
-        removeDetachMenu();
       });
     }
   }
