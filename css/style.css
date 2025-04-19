@@ -284,16 +284,16 @@ main {
 /* סגנון מיוחד לבלוק repeat - מידות ייחודיות */
 #block-palette .block-container[data-type="repeat"] .block-svg-image,
 #programming-area .block-container[data-type="repeat"] .block-svg-image {
-    width: 256px !important; /* רוחב מיוחד לבלוק repeat */
-    height: 118px !important; /* גובה מיוחד לבלוק repeat */
+    width: 227px !important; /* רוחב מיוחד לבלוק repeat */
+    height: 112px !important; /* גובה מיוחד לבלוק repeat */
     object-fit: contain; /* שמירה על יחס התמונה */
 }
 
 /* הגדלת רוחב וגובה מיכל הבלוק להתאים לתמונה המורחבת של repeat */
 #block-palette .block-container[data-type="repeat"],
 #programming-area .block-container[data-type="repeat"] {
-    width: 256px !important;
-    height: 118px !important;
+    width: 227px !important;
+    height: 112px !important;
 }
 
 /* כאשר בלוק repeat נמצא באזור הקטגוריה, כדי שלא יגלוש */
