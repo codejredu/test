@@ -1,11 +1,11 @@
 /* style.css - עם צבעים מעודכנים לילדי גן */
 :root {
-    --motion-color: rgba(102, 210, 255, 0.4);    /* כחול-תכלת בהיר עם שקיפות */
-    --triggering-color: rgba(255, 232, 102, 0.4); /* צהוב בננה רך עם שקיפות */
-    --looks-color: rgba(210, 149, 246, 0.4);     /* סגול לבנדר רך עם שקיפות */
-    --sound-color: rgba(126, 217, 87, 0.4);     /* ירוק תפוח בהיר עם שקיפות */
-    --control-color: rgba(255, 189, 103, 0.4);   /* כתום אפרסק עם שקיפות */
-    --end-color: rgba(255, 107, 107, 0.4);       /* אדום קורל רך עם שקיפות */
+    --motion-color: #66D2FF;    /* כחול-תכלת בהיר */
+    --triggering-color: #FFE866; /* צהוב בננה רך */
+    --looks-color: #D295F6;     /* סגול לבנדר רך */
+    --sound-color: #7ED957;     /* ירוק תפוח בהיר */
+    --control-color: #FFBD67;   /* כתום אפרסק */
+    --end-color: #FF6B6B;       /* אדום קורל רך */
 }
 
 body {
@@ -95,7 +95,7 @@ main {
 }
 
 #block-palette {
-    background-color: transparent; /* רקע שקוף למכל הבלוקים */
+    background-color: #f0f0f0;
     border: 1px solid #e0e0e0;
     margin: 10px;
     padding: 10px;
@@ -115,7 +115,7 @@ main {
     margin-bottom: 0;
     height: 100%;
     align-content: flex-start;
-    background-color: transparent; /* רקע שקוף לטאבים */
+    background-color: #f0f0f0;
 }
 
 /* סגנון לכפתורי הקטגוריות */
@@ -153,7 +153,7 @@ main {
     flex-grow: 1;
     height: 100%;
     margin-left: 0px;
-    background-color: transparent; /* רקע שקוף לקטגוריות */
+    background-color: #f0f0f0;
     overflow-x: auto;
     transition: background-color 0.3s ease;
 }
@@ -166,7 +166,7 @@ main {
 }
 
 #programming-area {
-    background-color: rgba(255, 255, 255, 0.7); /* רקע לבן עם שקיפות לאזור התכנות */
+    background-color: #fff;
     border: 1px solid #e0e0e0;
     margin: 10px;
     padding: 10px;
@@ -192,7 +192,6 @@ main {
     border: 1px dashed #ccc;
     padding: 10px;
     position: relative;
-    background-color: rgba(255, 255, 255, 0.5); /* רקע לבן עם שקיפות לאזור הבלוקים */
 }
 
 #program-blocks .block-container {
@@ -251,12 +250,12 @@ main {
 
 /* עיצוב כשהעכבר מרחף מעל האייקון */
 .icon:hover {
-    background-color: rgba(240, 240, 240, 0.5); /* רקע אפור שקוף בהרחפה */
+    background-color: #f0f0f0;
     border-radius: 8px;
 }
 
 #grid-toggle:hover {
-    background-color: rgba(240, 240, 240, 0.5);
+    background-color: #f0f0f0;
     border-radius: 8px;
 }
 
@@ -267,7 +266,6 @@ main {
     user-select: none;
     pointer-events: none;
     -webkit-user-drag: none;
-    opacity: 0.85; /* שקיפות קלה לתמונות הבלוקים */
 }
 
 /* עדכון מיכל הבלוק */
@@ -278,8 +276,8 @@ main {
     height: 80px;
     margin: 8px;
     cursor: grab;
-    background-color: transparent; /* רקע שקוף למיכל הבלוק */
-    box-shadow: none; /* הסרת צל */
+    background-color: transparent;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 #block-palette .block-container:active,
@@ -300,18 +298,32 @@ main {
     height: 118px !important;
 }
 
-/* צבעי רקע שקופים לחלוטין לקטגוריות השונות */
-.block-category[data-category="triggering"].active,
-.block-category[data-category="motion"].active,
-.block-category[data-category="looks"].active,
-.block-category[data-category="sound"].active,
-.block-category[data-category="control"].active,
-.block-category[data-category="end"].active {
-    background-color: transparent !important;
+/* צבעי רקע לקטגוריות השונות */
+.block-category[data-category="triggering"].active {
+    background-color: var(--triggering-color) !important;
 }
 
-/* הוספת אפקט הרחפה לבלוקים */
-#block-palette .block-container:hover {
-    transform: scale(1.05);
-    transition: transform 0.2s ease;
+.block-category[data-category="motion"].active {
+    background-color: var(--motion-color) !important;
+}
+
+.block-category[data-category="looks"].active {
+    background-color: var(--looks-color) !important;
+}
+
+.block-category[data-category="sound"].active {
+    background-color: var(--sound-color) !important;
+}
+
+.block-category[data-category="control"].active {
+    background-color: var(--control-color) !important;
+}
+
+.block-category[data-category="end"].active {
+    background-color: var(--end-color) !important;
+}
+
+/* התאמה של הגוון כדי להבטיח שהלבנים יראו טוב על הרקע */
+.block-category.active {
+    opacity: 0.85; /* מעט שקיפות לרקע כדי שהלבנים יבלטו */
 }
