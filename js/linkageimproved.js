@@ -1,14 +1,14 @@
  // ========================================================================
 // Improved Block Linkage System (linkageimproved.js)
-// Version: Horizontal Snap - Center Align - Reduced Logs
+// Version: Horizontal Snap - Top Align Y - Final Position Tuning Attempt
 // ========================================================================
 
 (function() {
     // Configuration
-    const HORIZONTAL_SNAP_DISTANCE = 40;
-    const VERTICAL_ALIGNMENT_TOLERANCE = 30;
-    const HORIZONTAL_SNAP_OFFSET = 2; // נסה לשנות ערך זה (למשל 0, 5, ...)
-    const ENABLE_DETAILED_SNAP_LOGGING = false; // *** כיבוי לוגים מפורטים ***
+    const HORIZONTAL_SNAP_DISTANCE = 40; // טווח הצמדה אופקי
+    const VERTICAL_ALIGNMENT_TOLERANCE = 30; // כמה מותר הפרש גובה בין מרכזי הבלוקים
+    const HORIZONTAL_SNAP_OFFSET = 2; // היסט קל בעת ההצמדה האופקית (נשאר בינתיים)
+    const ENABLE_DETAILED_SNAP_LOGGING = false; // ברירת מחדל: כבוי
 
     // State Variables
     let isDragging = false; let draggedElement = null; let dragGroup = [];
@@ -20,7 +20,7 @@
     // Initialization
     // ========================================================================
     function initializeLinkageSystem() {
-        console.log("Attempting Linkage Init..."); // לוג מקוצר
+        console.log("Attempting Linkage Init...");
         programmingArea = document.getElementById("program-blocks");
         if (!programmingArea) { console.error("Programming area not found!"); return; }
         const currentPosition = window.getComputedStyle(programmingArea).position;
@@ -55,15 +55,13 @@
     // ========================================================================
     function handleMouseDown(event) {
         const targetBlock = event.target.closest('.block-container');
-        if (!targetBlock || !programmingArea || !programmingArea.contains(targetBlock)) { return; }
+        if (!targetBlock || !programmingArea || !programmingArea.contains(targetBlock)) return;
         event.preventDefault(); isDragging = true; draggedElement = targetBlock;
         if (!draggedElement.id) { draggedElement.id = generateUniqueBlockId(); }
-
         const prevBlockId = draggedElement.dataset.prevBlockId;
         if (prevBlockId) { const pb = document.getElementById(prevBlockId); if (pb) delete pb.dataset.nextBlockId; delete draggedElement.dataset.prevBlockId; }
         const leftBlockId = draggedElement.dataset.leftBlockId;
         if (leftBlockId) { const lb = document.getElementById(leftBlockId); if (lb) delete lb.dataset.rightBlockId; delete draggedElement.dataset.leftBlockId; }
-
         dragGroup = getVerticalBlockGroup(draggedElement); // עדיין אנכי
         initialMouseX = event.clientX; initialMouseY = event.clientY;
         initialElementX = draggedElement.offsetLeft; initialElementY = draggedElement.offsetTop;
@@ -114,11 +112,11 @@
     // ========================================================================
     // Drag Group Management (Vertical Only)
     // ========================================================================
-    function getVerticalBlockGroup(startBlock) { /* ... קוד זהה ... */
+    function getVerticalBlockGroup(startBlock) {
          const group = [startBlock]; let currentBlock = startBlock;
          while (currentBlock && currentBlock.dataset.nextBlockId) { const nextId = currentBlock.dataset.nextBlockId; const nextBlock = document.getElementById(nextId); if (nextBlock && programmingArea && programmingArea.contains(nextBlock)) { group.push(nextBlock); currentBlock = nextBlock; } else { if (nextId) { delete currentBlock.dataset.nextBlockId; } break; } } return group;
     }
-    function updateVerticalDragGroupPosition(leaderX, leaderY) { /* ... קוד זהה ... */
+    function updateVerticalDragGroupPosition(leaderX, leaderY) {
          if (dragGroup.length <= 1) return; let currentTop = leaderY; let currentLeft = leaderX; for (let i = 0; i < dragGroup.length; i++) { const block = dragGroup[i]; if (!block) continue; const blockHeight = block.offsetHeight; if (i === 0) { currentTop += blockHeight - VERTICAL_SNAP_OFFSET; } else { block.style.left = `${currentLeft}px`; block.style.top = `${currentTop}px`; currentTop += blockHeight - VERTICAL_SNAP_OFFSET; } }
     }
 
@@ -127,14 +125,11 @@
     // ========================================================================
     function findAndHighlightSnapTarget() {
         const shouldLog = ENABLE_DETAILED_SNAP_LOGGING && isDragging && draggedElement;
-        // if (shouldLog) console.log(`--- find H Snap (${draggedElement.id}) ---`); // לוג מקוצר יותר
-
         clearSnapHighlighting(); potentialSnapTarget = null;
         if (!isDragging || !draggedElement || !programmingArea) return;
 
         const dragRect = draggedElement.getBoundingClientRect();
-        if (dragRect.height <= 0 || dragRect.width <= 0) return; // יציאה שקטה
-
+        if (dragRect.height <= 0 || dragRect.width <= 0) return;
         const dragLeftConnector = { x: dragRect.left, y: dragRect.top + dragRect.height / 2 };
         let closestDistance = HORIZONTAL_SNAP_DISTANCE; let bestTarget = null;
         const allBlocks = programmingArea.querySelectorAll('.block-container');
@@ -148,19 +143,18 @@
             const horizontalDistance = Math.abs(dx); const verticalDistance = Math.abs(dy);
 
             if (horizontalDistance < closestDistance && verticalDistance < VERTICAL_ALIGNMENT_TOLERANCE) {
-                // if (shouldLog) console.log(` ==> H Match: ${block.id || 'no-id'} (H:${horizontalDistance.toFixed(0)}, V:${verticalDistance.toFixed(0)})`);
                 closestDistance = horizontalDistance; bestTarget = block;
             }
         });
 
         if (bestTarget) {
             potentialSnapTarget = bestTarget; highlightSnapTarget(draggedElement, true);
-            // if (shouldLog) console.log(`--- Best H target: ${bestTarget.id}. Highlighting dragged ONLY. ---`);
-        } else { highlightSnapTarget(draggedElement, false); /* if (shouldLog) console.log(`--- No H target found. ---`); */ }
+            if (shouldLog) console.log(`--- Best H target: ${bestTarget.id}. Highlighting dragged ONLY. ---`);
+        } else { highlightSnapTarget(draggedElement, false); if (shouldLog) console.log(`--- No H target found. ---`); }
     }
 
     function highlightSnapTarget(block, shouldHighlight) {
-         if (block) { try { if (shouldHighlight) { block.classList.add('snap-highlight'); } else { block.classList.remove('snap-highlight'); } } catch (e) { console.error("Highlight error", e); } }
+         if (block) { try { if (shouldHighlight) { block.classList.add('snap-highlight'); } else { block.classList.remove('snap-highlight'); } } catch (e) { /* ignore */ } }
     }
      function clearSnapHighlighting() {
          if (!programmingArea) return;
@@ -169,41 +163,53 @@
      }
 
     // ========================================================================
-    // Linking Logic (Horizontal - *** Center Align Y ***)
+    // Linking Logic (Horizontal - *** Top Align Y, WITH Offset X ***)
     // ========================================================================
     function linkBlocksHorizontally(leftBlock, rightBlock) {
         if (!leftBlock || !rightBlock || leftBlock === rightBlock || !programmingArea) return;
-        if (leftBlock.dataset.rightBlockId || rightBlock.dataset.leftBlockId) return; // בדיקה כפולה
+        if (leftBlock.dataset.rightBlockId || rightBlock.dataset.leftBlockId) return;
+
+        console.log(`Linking ${leftBlock.id} -> ${rightBlock.id}`);
+        console.log(`  Before Link - Left [${leftBlock.id}]: offsetLeft=${leftBlock.offsetLeft}, offsetTop=${leftBlock.offsetTop}, offsetWidth=${leftBlock.offsetWidth}`);
+        console.log(`  Before Link - Right [${rightBlock.id}]: offsetLeft=${rightBlock.offsetLeft}, offsetTop=${rightBlock.offsetTop}`);
+
 
         leftBlock.dataset.rightBlockId = rightBlock.id; rightBlock.dataset.leftBlockId = leftBlock.id;
 
-        // חישוב רוחב וגובה
         const leftWidth = leftBlock.offsetWidth;
-        const leftHeight = leftBlock.offsetHeight;
-        const rightHeight = rightBlock.offsetHeight; // גובה הבלוק הנגרר
 
         // חישוב מיקום X (קצה שמאלי של המטרה + רוחב המטרה - היסט)
-        const targetX = leftBlock.offsetLeft + leftWidth - HORIZONTAL_SNAP_OFFSET;
+        const targetX = leftBlock.offsetLeft + leftWidth - HORIZONTAL_SNAP_OFFSET; // חזרה לשימוש בהיסט
 
-        // *** חישוב מיקום Y (יישור למרכז האנכי של המטרה) ***
-        const targetY = (leftBlock.offsetTop + leftHeight / 2) - (rightHeight / 2);
+        // חישוב מיקום Y (יישור לקצה העליון של המטרה)
+        const targetY = leftBlock.offsetTop;
 
-        rightBlock.style.left = `${targetX}px`; rightBlock.style.top = `${targetY}px`;
+        console.log(`  Calculated Target Position: targetX=${targetX.toFixed(0)}, targetY=${targetY.toFixed(0)} (Using offset: ${HORIZONTAL_SNAP_OFFSET})`);
+
+
+        rightBlock.style.left = `${targetX}px`;
+        rightBlock.style.top = `${targetY}px`;
+
+        // קריאה חוזרת של המיקום *אחרי* ההגדרה כדי לראות אם הדפדפן שינה אותו
+        // דורש עיכוב קל כדי שהדפדפן יספיק לעבד
+        setTimeout(() => {
+            console.log(`  After Link & Set - Right [${rightBlock.id}]: FINAL offsetLeft=${rightBlock.offsetLeft}, FINAL offsetTop=${rightBlock.offsetTop}`);
+        }, 0);
+
 
         // updateHorizontalDragGroupPosition(targetX, targetY); // עדיין לא ממומש
-        console.log(`Linked HORIZONTALLY ${leftBlock.id} -> ${rightBlock.id} at pos (${targetX.toFixed(0)}, ${targetY.toFixed(0)}) (Center Y Aligned)`);
+        console.log(`Linked HORIZONTALLY ${leftBlock.id} -> ${rightBlock.id}. Set position.`);
     }
 
     // ========================================================================
     // Public API
     // ========================================================================
     window.registerNewBlockForLinkage = function(newBlockElement) {
-         // if (ENABLE_DETAILED_SNAP_LOGGING) console.log("Registering...", newBlockElement); // לוגים מופחתים
          if (!newBlockElement) return;
          if (!newBlockElement.id) { newBlockElement.id = generateUniqueBlockId(); }
          try { newBlockElement.style.position = 'absolute'; } catch (e) { console.error("Reg Error", e); }
-         // if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`Registered block ${newBlockElement.id}.`);
     };
 
-})();
-console.log("linkageimproved.js script finished execution (Horizontal Snap - Center Align - Reduced Logs).");
+
+})(); // IIFE to encapsulate scope
+console.log("linkageimproved.js script finished execution (Horizontal Snap - Top Align Y - Pos Tuning).");
