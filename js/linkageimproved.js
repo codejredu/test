@@ -1,6 +1,6 @@
- // ========================================================================
+// ========================================================================
 // Improved Block Linkage System (linkageimproved.js)
-// Version: Horizontal Snap Detection (Highlight Dragged Only)
+// Version: Horizontal Snap Detection (Highlight Dragged Only + Fixed MouseUp)
 // ========================================================================
 
 (function() {
@@ -96,7 +96,7 @@
              console.log(`   Detached Horizontally ${draggedElement.id} from ${leftBlockId}`);
         }
 
-        dragGroup = getVerticalBlockGroup(draggedElement); // עדיין משתמש בשרשור אנכי לקבוצה
+        dragGroup = getVerticalBlockGroup(draggedElement);
         console.log(`   Calculated drag group (size ${dragGroup.length}) - Currently Vertical Only:`, dragGroup);
 
         initialMouseX = event.clientX; initialMouseY = event.clientY;
@@ -115,19 +115,25 @@
         const deltaX = currentMouseX - initialMouseX; const deltaY = currentMouseY - initialMouseY;
         const newX = initialElementX + deltaX; const newY = initialElementY + deltaY;
         draggedElement.style.left = `${newX}px`; draggedElement.style.top = `${newY}px`;
-        updateVerticalDragGroupPosition(newX, newY); // עדיין משתמש בשרשור אנכי לקבוצה
+        updateVerticalDragGroupPosition(newX, newY);
         findAndHighlightSnapTarget();
     }
 
+    // ========================================================
+    // *** handleMouseUp - הגרסה המתוקנת ***
+    // ========================================================
     function handleMouseUp(event) {
         if (!isDragging || !draggedElement) return;
         const isValidSnapTarget = potentialSnapTarget && programmingArea && programmingArea.contains(potentialSnapTarget);
         if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`--- Drag End: ${draggedElement.id}. Potential target: ${potentialSnapTarget ? potentialSnapTarget.id : 'None'} ---`);
 
         if (isValidSnapTarget) {
+            // הצמדה זוהתה
              if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`Attempting to link HORIZONTALLY ${potentialSnapTarget.id} (left) -> ${draggedElement.id} (right)`);
-            linkBlocksHorizontally(potentialSnapTarget, draggedElement);
+            linkBlocksHorizontally(potentialSnapTarget, draggedElement); // קורא לקישור ומיקום
+            // *** אין קריאה ל-updateVerticalDragGroupPosition כאן במקרה של הצמדה מוצלחת ***
         } else {
+            // אין הצמדה - מיקום רגיל
              if (programmingArea && draggedElement) {
                  const areaRect = programmingArea.getBoundingClientRect();
                  const elemRect = draggedElement.getBoundingClientRect();
@@ -135,18 +141,24 @@
                  finalX = Math.max(0, Math.min(finalX, areaRect.width - elemRect.width));
                  finalY = Math.max(0, Math.min(finalY, areaRect.height - elemRect.height));
                  draggedElement.style.left = `${finalX}px`; draggedElement.style.top = `${finalY}px`;
-                 updateVerticalDragGroupPosition(finalX, finalY); // עדיין משתמש בשרשור אנכי לקבוצה
+                 // במקרה הזה, *כן* הגיוני לעדכן קבוצה אנכית אם קיימת (אם נתמוך בזה בעתיד)
+                 updateVerticalDragGroupPosition(finalX, finalY);
                   if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`Placed block ${draggedElement.id} at ${finalX}, ${finalY} (no snap)`);
              }
         }
 
-        clearSnapHighlighting(); // תמיד מנקה הדגשות בסוף
+        // ניקוי (זהה לקודם)
+        clearSnapHighlighting();
         dragGroup.forEach(block => { if (block) { block.style.zIndex = ''; block.style.cursor = ''; } });
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
         document.removeEventListener('mouseleave', handleMouseLeave);
         isDragging = false; draggedElement = null; dragGroup = []; potentialSnapTarget = null;
     }
+    // ========================================================
+    // *** סוף handleMouseUp המתוקן ***
+    // ========================================================
+
 
     function handleMouseLeave(event) {
          if (isDragging) { console.warn("Mouse left window during drag..."); handleMouseUp(event); }
@@ -155,7 +167,7 @@
     // ========================================================================
     // Drag Group Management (שמות שונו לאנכי)
     // ========================================================================
-    function getVerticalBlockGroup(startBlock) { // שם שונה
+    function getVerticalBlockGroup(startBlock) {
         const group = [startBlock]; let currentBlock = startBlock;
         while (currentBlock && currentBlock.dataset.nextBlockId) {
             const nextId = currentBlock.dataset.nextBlockId;
@@ -166,7 +178,7 @@
         }
         return group;
     }
-    function updateVerticalDragGroupPosition(leaderX, leaderY) { // שם שונה
+    function updateVerticalDragGroupPosition(leaderX, leaderY) {
         if (dragGroup.length <= 1) return;
         let currentTop = leaderY; let currentLeft = leaderX;
         for (let i = 0; i < dragGroup.length; i++) {
@@ -178,13 +190,13 @@
     }
 
     // ========================================================================
-    // Snapping Logic ( *** Horizontal - Highlight Dragged Only *** )
+    // Snapping Logic (Horizontal - Highlight Dragged Only)
     // ========================================================================
     function findAndHighlightSnapTarget() {
         const shouldLog = ENABLE_DETAILED_SNAP_LOGGING && isDragging && draggedElement;
         if (shouldLog) console.log(`--- findAndHighlightSnapTarget HORIZONTAL (${draggedElement.id}) ---`);
 
-        clearSnapHighlighting(); // מנקה הדגשות קודמות משני הבלוקים
+        clearSnapHighlighting();
         potentialSnapTarget = null;
 
         if (!isDragging || !draggedElement || !programmingArea) return;
@@ -192,14 +204,10 @@
         const dragRect = draggedElement.getBoundingClientRect();
         if (shouldLog) console.log(`Dragged (${draggedElement.id}): Rect T:${dragRect.top.toFixed(0)} L:${dragRect.left.toFixed(0)} W:${dragRect.width.toFixed(0)} H:${dragRect.height.toFixed(0)}`);
         if (dragRect.height <= 0 || dragRect.width <= 0) {
-             if (shouldLog) console.warn(`Dragged block ${draggedElement.id} has invalid dimensions!`);
-             return;
+             if (shouldLog) console.warn(`Dragged block ${draggedElement.id} has invalid dimensions!`); return;
         }
 
-        const dragLeftConnector = {
-            x: dragRect.left,
-            y: dragRect.top + dragRect.height / 2
-        };
+        const dragLeftConnector = { x: dragRect.left, y: dragRect.top + dragRect.height / 2 };
         if (shouldLog) console.log(`Dragged Left Connector: X:${dragLeftConnector.x.toFixed(0)} Y:${dragLeftConnector.y.toFixed(0)}`);
 
         let closestDistance = HORIZONTAL_SNAP_DISTANCE;
@@ -219,10 +227,7 @@
             if (targetRect.height <= 0 || targetRect.width <= 0) { if (shouldLog) console.warn(`Target block ${targetId} invalid dims.`); return; }
             if (shouldLog) console.log(` -> Target (${targetId}): Rect T:${targetRect.top.toFixed(0)} L:${targetRect.left.toFixed(0)} R:${targetRect.right.toFixed(0)} W:${targetRect.width.toFixed(0)} H:${targetRect.height.toFixed(0)}`);
 
-            const targetRightConnector = {
-                x: targetRect.right - HORIZONTAL_SNAP_OFFSET,
-                y: targetRect.top + targetRect.height / 2
-            };
+            const targetRightConnector = { x: targetRect.right - HORIZONTAL_SNAP_OFFSET, y: targetRect.top + targetRect.height / 2 };
              if (shouldLog) console.log(` -> Target Right Connector: X:${targetRightConnector.x.toFixed(0)} Y:${targetRightConnector.y.toFixed(0)}`);
 
             const dx = dragLeftConnector.x - targetRightConnector.x;
@@ -239,20 +244,17 @@
             } else {
                  if (shouldLog) console.log(` -> No Match: Horizontal or Vertical failed.`);
             }
-        }); // End forEach block
+        });
 
-        // *** השינוי כאן - הדגשת הנגרר בלבד ***
         if (bestTarget) {
             potentialSnapTarget = bestTarget;
-            // highlightSnapTarget(potentialSnapTarget, true); // לא מדגישים את המטרה
-            highlightSnapTarget(draggedElement, true);      // מדגישים רק את הבלוק הנגרר
+            highlightSnapTarget(draggedElement, true);
              if (shouldLog) console.log(`--- Best target found (horizontally): ${bestTarget.id}. Highlighting dragged element ONLY. ---`);
         } else {
-             // אם לא נמצא יעד, נוודא שגם הבלוק הנגרר לא מודגש
              highlightSnapTarget(draggedElement, false);
             if (shouldLog) console.log(`--- No suitable target found (horizontally). Clearing highlights. ---`);
         }
-    } // End findAndHighlightSnapTarget
+    }
 
     function highlightSnapTarget(block, shouldHighlight) {
          if (block) {
@@ -265,8 +267,6 @@
 
      function clearSnapHighlighting() {
          if (!programmingArea) return;
-         // *** שינוי: נמצא את *כל* הבלוקים המודגשים וננקה אותם ***
-         // זה חשוב כי יכול להיות שהבלוק שהיה מודגש כבר לא נגרר
          const highlighted = programmingArea.querySelectorAll('.snap-highlight');
          highlighted.forEach(el => {
              try { el.classList.remove('snap-highlight'); }
@@ -288,7 +288,7 @@
 
         const leftRect = leftBlock.getBoundingClientRect();
         const targetX = leftBlock.offsetLeft + leftBlock.offsetWidth - HORIZONTAL_SNAP_OFFSET;
-        const targetY = leftBlock.offsetTop;
+        const targetY = leftBlock.offsetTop; // מיישר קו עליון
 
         rightBlock.style.left = `${targetX}px`;
         rightBlock.style.top = `${targetY}px`;
@@ -311,4 +311,4 @@
 
 
 })(); // IIFE to encapsulate scope
-console.log("linkageimproved.js script finished execution (Horizontal Snap - Highlight Dragged Only).");
+console.log("linkageimproved.js script finished execution (Horizontal Snap - Highlight Dragged - Fixed MouseUp).");
