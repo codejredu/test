@@ -457,7 +457,13 @@ const BlockLinkageManager = {
 // הוספת סגנונות CSS למערכת ההצמדה
 // ========================================================================
 function addLinkageStyles() {
+    // בדיקה האם הסגנונות כבר קיימים
+    if (document.getElementById('linkage-styles')) {
+        return;
+    }
+    
     const styleSheet = document.createElement("style");
+    styleSheet.id = "linkage-styles";
     styleSheet.type = "text/css";
     styleSheet.innerHTML = `
         /* סגנון בלוק בגרירה */
@@ -468,15 +474,16 @@ function addLinkageStyles() {
         
         /* סגנון בלוק שמהווה יעד הצמדה */
         .block-container.snap-target {
-            outline: 3px solid #FFD700 !important;
-            box-shadow: 0 0 12px 4px rgba(255, 215, 0, 0.7) !important;
+            background-color: rgba(255, 255, 0, 0.3) !important;
+            border: 2px solid #FFD700 !important;
+            box-shadow: 0 0 8px 2px rgba(255, 215, 0, 0.5) !important;
             z-index: 999;
         }
         
         /* סגנון בלוק נגרר בעת קרבה להצמדה */
         .block-container.near-snap {
-            outline: 3px solid #0078FF !important;
-            box-shadow: 0 0 12px 4px rgba(0, 120, 255, 0.7) !important;
+            border: 2px dashed #0078FF !important;
+            box-shadow: 0 0 8px 2px rgba(0, 120, 255, 0.5) !important;
             z-index: 1001;
         }
         
@@ -492,6 +499,7 @@ function addLinkageStyles() {
         }
     `;
     document.head.appendChild(styleSheet);
+    console.log("Added linkage styles");
 }
 
 // ========================================================================
