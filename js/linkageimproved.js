@@ -1,4 +1,335 @@
 // ========================================================================
+  // הוספת כפתור בדיקת שמע - גרסה משופרת ומהימנה יותר
+  // ========================================================================
+  function addSoundTestButton() {
+    if (!CONFIG.PLAY_SOUND) return;
+    
+    try {
+      // הסר כפתור קודם אם קיים
+      const existingButton = document.getElementById('sound-test-button');
+      if (existingButton) existingButton.remove();
+      
+      // צור כפתור בדיקת שמע חדש
+      const button = document.createElement('button');
+      button.id = 'sound-test-button';
+      button.textContent = 'הפעל צליל חיבור';
+      button.title = 'לחץ כאן כדי להפעיל את צליל ההצמדה';
+      
+      // עיצוב הכפתור
+      button.style.position = 'fixed';
+      button.style.bottom = '15px';
+      button.style.right = '15px';
+      button.style.zIndex = '9999';
+      button.style.padding = '8px 12px';
+      button.style.backgroundColor = '#2196F3';
+      button.style.color = 'white';
+      button.style.border = 'none';
+      button.style.borderRadius = '4px';
+      button.style.cursor = 'pointer';
+      button.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+      button.style.fontFamily = 'Arial, sans-serif';
+      button.style.fontSize = '14px';
+      button.style.fontWeight = 'bold';
+      
+      // אפקט מעבר עכבר
+      button.onmouseover = function() {
+        this.style.backgroundColor = '#0b7dda';
+      };
+      
+      button.onmouseout = function() {
+        this.style.backgroundColor = '#2196F3';
+      };
+      
+      // הוסף מאזין לחיצה - עם צליל שבוודאות יעבוד
+      button.addEventListener('click', function() {
+        // בדוק אם אפשר להפעיל שמע
+        const shortBeep = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAAFAAAKhgBISEhISEhISEhISEiHh4eHh4eHh4eHh4eHwMDAwMDAwMDAwMDAwP//////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+        shortBeep.volume = 1.0;
+        
+        shortBeep.play().then(() => {
+          console.log('Sound test successful!');
+          button.textContent = 'הצליל מופעל! ✓';
+          button.style.backgroundColor = '#4CAF50'; // ירוק
+          audioEnabled = true;
+          
+          // העלם את הכפתור אחרי 3 שניות
+          setTimeout(() => {
+            button.style.opacity = '0';
+            button.style.transition = 'opacity 0.5s ease-out';
+            
+            setTimeout(() => {
+              button.remove();
+            }, 500); // אחרי שהמעבר הסתיים
+            
+          }, 3000);
+          
+        }).catch(err => {
+          console.warn('Sound test failed:', err);
+          button.textContent = 'נסה שוב...';
+          button.style.backgroundColor = '#f44336'; // אדום
+        });
+      });
+      
+      // הוסף את הכפתור לעמוד
+      document.body.appendChild(button);
+      console.log('Sound test button added to page');
+    } catch (err) {
+      console.error('Error adding sound test button:', err);
+    }
+  }  // ========================================================================
+  // השמעת צליל הצמדה - גרסה חדשה עם צליל ישיר
+  // ========================================================================
+  function playSnapSound() {
+    if (!CONFIG.PLAY_SOUND) return;
+    
+    // גרסה פשוטה שעובדת בכל מקרה - ללא תלות באובייקט האודיו
+    try {
+      // יצירת אובייקט אודיו חדש בכל פעם - מבטיח שהצליל תמיד יושמע
+      const tempSound = new Audio('data:audio/mp3;base64,SUQzAwAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjM2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAUAAAiSAANDQ0NDRoaGhoaKCgoKCg1NTU1NUNDQ0NDUFBQUFBeXl5eXmtra2trd3d3d3eEhISEhJKSkpKSn5+fn5+tra2traioqKiotbW1tbXDw8PDw9DQ0NDQ3d3d3d3q6urq6vj4+Pj4//8AAAAATGF2YzU2LjQxAAAAAAAAAAAAAAAAJAAAAAAAAAAAIkgZuk9gAAAAAAAAAAAAAAAAAAAA//NEAAAU7GVDkMMTDQAJu0AAuBlLT8aCYqUQP7d34f9LFNKS9CCmEgABg/wMP8C/Ax/4QBFzP///EYPwQf0JwyE/4eeAQ8CABAnDCw8g+CAPH3ggD7/hAD/hCCOGrx0/CCMh4D4YBA');
+      
+      // הגדר עוצמת שמע גבוהה ונסה להשמיע
+      tempSound.volume = 1.0;
+      
+      // נסה להשמיע את הצליל
+      tempSound.play().then(() => {
+        console.log('Snap sound played successfully');
+      }).catch(err => {
+        console.warn('Could not play snap sound:', err);
+        
+        // אם נכשל, נסה אופציה אחרת
+        try {
+          // אם יש אלמנט שמע מוגדר, נסה להשתמש בו
+          if (snapSound) {
+            snapSound.currentTime = 0;
+            snapSound.play();
+          }
+        } catch (innerErr) {
+          console.error('All sound playback methods failed', innerErr);
+        }
+      });
+    } catch (err) {
+      console.error('Error playing snap sound:', err);
+    }
+  }
+
+  // ========================================================================
+  // הוספת סגנונות CSS - גרסה משופרת עם הילה יותר בולטת
+  // ========================================================================
+  function addHighlightStyles() {
+    if (document.getElementById('block-connection-styles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'block-connection-styles';
+    style.textContent = `
+      /* בלוק נגרר - הופכים עליון ומדגישים */
+      .snap-source {
+         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+         transition: box-shadow 0.15s ease-out;
+         cursor: grabbing !important;
+         z-index: 1001 !important;
+      }
+
+      /* הילה צהובה סביב בלוק יעד פוטנציאלי - מודגשת מאוד */
+      .snap-target {
+        outline: 6px solid #FFC107 !important; /* צהוב בולט */
+        outline-offset: 4px;
+        box-shadow: 0 0 20px 8px rgba(255, 193, 7, 0.8) !important;
+        transition: outline 0.1s ease-out, box-shadow 0.1s ease-out;
+        z-index: 999 !important; /* חשוב שיהיה מתחת לנגרר */
+      }
+
+      /* מלבן כחול מקווקו לציון מיקום עתידי - יותר בולט */
+      .future-position-indicator {
+        position: absolute; 
+        border: 3px dashed rgba(0, 120, 255, 0.95);
+        border-radius: 5px; 
+        background-color: rgba(0, 120, 255, 0.15);
+        pointer-events: none; 
+        z-index: 998; 
+        opacity: 0;
+        transition: opacity 0.15s ease-out, left 0.05s linear, top 0.05s linear;
+        display: none;
+      }
+      .future-position-indicator[style*="display: block"] { 
+        opacity: 0.9; 
+      }
+
+      /* סימון כיוון (פס צהוב בצד ימין/שמאל) - יותר בולט */
+      .snap-left::before {
+        content: ''; 
+        position: absolute; 
+        left: -8px; 
+        top: 15%; 
+        bottom: 15%; 
+        width: 8px;
+        background-color: #FFC107; 
+        border-radius: 2px; 
+        z-index: 1000;
+        box-shadow: 0 0 10px 2px rgba(255, 193, 7, 0.8); 
+        transition: all 0.1s ease-out;
+      }
+      .snap-right::after {
+        content: ''; 
+        position: absolute; 
+        right: -8px; 
+        top: 15%; 
+        bottom: 15%; 
+        width: 8px;
+        background-color: #FFC107; 
+        border-radius: 2px; 
+        z-index: 1000;
+        box-shadow: 0 0 10px 2px rgba(255, 193, 7, 0.8); 
+        transition: all 0.1s ease-out;
+      }
+
+      /* אנימציות משופרות */
+      @keyframes snapEffect { 
+        0% { transform: scale(1); } 
+        35% { transform: scale(1.05); } 
+        70% { transform: scale(0.98); }
+        100% { transform: scale(1); } 
+      }
+      .snap-animation { 
+        animation: snapEffect 0.3s ease-out; 
+      }
+      
+      @keyframes detachEffect { 
+        0% { transform: translate(0, 0) rotate(0); } 
+        30% { transform: translate(3px, 1px) rotate(0.8deg); } 
+        60% { transform: translate(-2px, 2px) rotate(-0.5deg); }
+        100% { transform: translate(0, 0) rotate(0); } 
+      }
+      .detach-animation { 
+        animation: detachEffect 0.3s ease-in-out; 
+      }
+
+      /* תפריט ניתוק */
+      #detach-menu { 
+        position: absolute; 
+        background-color: white; 
+        border: 1px solid #ccc; 
+        border-radius: 4px; 
+        box-shadow: 0 3px 8px rgba(0,0,0,0.2); 
+        z-index: 1100; 
+        padding: 5px; 
+        font-size: 14px; 
+        min-width: 100px; 
+      }
+      #detach-menu div { 
+        padding: 6px 12px; 
+        cursor: pointer; 
+        border-radius: 3px; 
+      }
+      #detach-menu div:hover { 
+        background-color: #eee; 
+      }
+
+      /* כללי: מניעת בחירת טקסט בזמן גרירה */
+      body.user-select-none { 
+        user-select: none; 
+        -webkit-user-select: none; 
+        -moz-user-select: none; 
+        -ms-user-select: none; 
+      }
+      
+      /* בלוקים מחוברים - אופציונלי להוספת אינדיקציה חזותית */
+      .connected-block {
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+      }
+      .has-connected-block {
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+      }
+      
+      /* כפתור בדיקת שמע - יופיע אם הצליל לא פועל */
+      #sound-test-button {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        padding: 6px 12px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        z-index: 9999;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      }
+      #sound-test-button:hover {
+        background-color: #45a049;
+      }
+    `;
+    document.head.appendChild(style);
+    console.log('Highlighting and animation styles added/verified.');
+  }  // ========================================================================
+  // אתחול השמע (גרסה פשוטה יותר שעובדת בכל הדפדפנים)
+  // ========================================================================
+  function initAudio() {
+    if (!CONFIG.PLAY_SOUND) return;
+    
+    try {
+      // צור אלמנט שמע בסיסי
+      const audioElement = document.createElement('audio');
+      audioElement.id = 'snap-sound';
+      
+      // צור שני מקורות שמע - עבור דפדפנים שונים
+      const mp3Source = document.createElement('source');
+      mp3Source.type = 'audio/mp3';
+      mp3Source.src = 'data:audio/mp3;base64,SUQzAwAAAAAAJlRQRTEAAAAcAAAAU291bmRKYXkuY29tIFNvdW5kIEVmZmVjdHMAVENPTgAAAAwAAABTRlggLSBDbGlja3NUSVRMAAAAIAAAAER1bGwgTWVjaGFuaWNhbCBDbGljayAwMSAoU2luZ2xlKVRZRVIAAAAFAAAAMjAyMVRDT04AAAAPAAAAU291bmQgRWZmZWN0c1BMRUMAAAAPAAAAUG9wIGFuZCBDbGlja3NUUEUBAAAAGAAAAFB1YmxpYyBEb21haW4gTWFya2VkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/+2DEAAAMogAKMwAAJORpJ/mwADIhL5qYJoAiQmLCEfCeAYPGfWYOBhkhQSgQeICQ9iP/+CIhABBi1DDpI0qJp2aGnIeASgxfnEcPEwxBTUUzLjk5VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjk5VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+1DEBACKsIahtJAAAAAVsUAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=';
+      
+      const wavSource = document.createElement('source');
+      wavSource.type = 'audio/wav';
+      wavSource.src = 'data:audio/wav;base64,UklGRigBAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQBAABpAFgATwBpAKEA0QDUALQAkAB8AHgAkAC2AN8A+QD+AN4AuwCUAHQAZQBuAIcApgDEANQA1gDMALQAkwBxAF0AWQBpAIQAngC0AMQA0QDPAMEApwCJAG4AWwBXAF8AfQCZALYAzQDZANsA0QC9AKIAhABrAF0AWQBkAHwAmACxAMUA0wDXAM8AxACrAI0AcgBeAFgAYAB0AIwApwDAANAA1gDWAMwAuACaAH8AagBbAFgAYAB2AIkAogC5AMsA0wDTAMkAtgCbAIEAbQBcAFkAYQB0AIQAmQCvAMEAygDNAMUAsQCWAH0AbABfAF0AZgB5AIwAoACyAL8AxQDFAL4AqwCQAHsAbQBiAGAAZwB6AIwAnwCvALwAwQDCALsAqgCRAH0AcABnAGcAcAB/';
+      
+      // הוסף את המקורות לאלמנט השמע
+      audioElement.appendChild(mp3Source);
+      audioElement.appendChild(wavSource);
+      
+      // קבע הגדרות נוספות
+      audioElement.volume = CONFIG.SOUND_VOLUME;
+      audioElement.preload = 'auto';
+      
+      // הוסף לעמוד
+      document.body.appendChild(audioElement);
+      
+      // שמור את אלמנט השמע
+      snapSound = audioElement;
+      soundInitialized = true;
+      
+      console.log('Audio element created and added to the page.');
+      
+      // הפעל צליל ריק כדי "לפתוח" את השמע בדפדפנים שדורשים אינטראקציה
+      document.addEventListener('click', function enableSound() {
+        console.log('Attempting to enable sound on first click');
+        
+        try {
+          // נסה להפעיל את השמע
+          snapSound.play().then(() => {
+            console.log('Sound enabled successfully');
+            audioEnabled = true;
+            snapSound.pause();
+            snapSound.currentTime = 0;
+          }).catch(err => {
+            console.warn('Initial sound enablement failed:', err);
+          });
+        } catch (err) {
+          console.error('Error in click handler:', err);
+        }
+        
+        // הסר את המאזין אחרי השימוש הראשון
+        document.removeEventListener('click', enableSound);
+      });
+      
+    } catch(err) {
+      console.error('Error initializing audio:', err);
+      CONFIG.PLAY_SOUND = false;
+      snapSound = null;
+    }
+  }  // ========================================================================
+  // אתחול המערכת
+  // ========================================================================
+    // ========================================================================
   // אתחול המערכת
   // ========================================================================
   document.addEventListener('DOMContentLoaded', function() {
@@ -8,11 +339,14 @@
     initExistingBlocks();
     initGlobalMouseListeners();
     initAudio(); // אתחול שמע
-    console.log(`Block linkage system initialized (Version 2.2 - Fixed Snap with Sound)`);
-    console.log(`Configuration: Snap threshold=${CONFIG.CONNECT_THRESHOLD}px, Sound=${CONFIG.PLAY_SOUND}`);
     
-    // הוסף את כפתור בדיקת השמע (מאפשר למשתמש להפעיל שמע בדפדפנים שדורשים אינטראקציה)
-    addSoundTestButton();
+    // הוסף את כפתור בדיקת השמע עם השהייה קלה
+    setTimeout(function() {
+      addSoundTestButton();
+    }, 1000);
+    
+    console.log(`Block linkage system initialized (Version 3.0)`);
+    console.log(`Configuration: Pin threshold=${CONFIG.CONNECT_THRESHOLD}px, Sound=${CONFIG.PLAY_SOUND}`);
   });
   
   // ========================================================================
@@ -270,16 +604,17 @@
   let futureIndicator = null;
   let snapSound = null; // אודיו לצליל הצמדה
   let audioEnabled = false; // האם השמע פעיל
+  let soundInitialized = false; // האם השמע אותחל
 
   // קונפיגורציה - פרמטרים שניתן להתאים
   const CONFIG = {
-    PIN_SOCKET_DEPTH: 5,       // עומק/רוחב הפין/שקע 
-    CONNECT_THRESHOLD: 6,      // מרחק מקסימלי בפיקסלים לזיהוי אפשרות חיבור - שונה ל-6 בדיוק
-    VERTICAL_OVERLAP_REQ: 0.5, // אחוז החפיפה האנכית הנדרש (50%)
-    BLOCK_GAP: 0,              // רווח בין בלוקים מחוברים (0 = צמוד)
-    PLAY_SOUND: true,          // האם להשמיע צליל בעת הצמדה
-    SOUND_VOLUME: 1.0,         // עוצמת הצליל (בין 0 ל-1) - הגברנו לעוצמה מלאה
-    DEBUG: true                // האם להציג לוגים מפורטים לדיבוג
+    PIN_WIDTH: 5,            // רוחב הפין בפיקסלים
+    CONNECT_THRESHOLD: 10,   // מרחק מקסימלי בפיקסלים לזיהוי הצמדה - הגדלנו ל-10 לשיפור הזיהוי
+    VERTICAL_ALIGN_THRESHOLD: 20, // מרחק אנכי מקסימלי לזיהוי הצמדה
+    BLOCK_GAP: 0,            // רווח בין בלוקים מחוברים (0 = צמוד)
+    PLAY_SOUND: true,        // האם להשמיע צליל בעת הצמדה
+    SOUND_VOLUME: 1.0,       // עוצמת הצליל (בין 0 ל-1) - עוצמה מלאה
+    DEBUG: true              // האם להציג לוגים מפורטים לדיבוג
   };
 
   // ========================================================================
@@ -685,7 +1020,7 @@
   }
 
   // ========================================================================
-  // בדיקת הצמדה והדגשה (עם לוגים ברורים)
+  // בדיקת הצמדה והדגשה - גרסה פשוטה שמדגישה כשהפין נוגע בבלוק אחר
   // ========================================================================
   function checkAndHighlightSnapPossibility() {
     if (!currentDraggedBlock) return;
@@ -700,57 +1035,49 @@
     let bestDirection = null;
     let bestDistance = Infinity;
     
-    const previousPotentialTarget = potentialSnapTarget; // שמור את היעד הקודם
-    potentialSnapTarget = null; // אפס את היעד הנוכחי לפני החיפוש
+    // הסר כל הדגשה קודמת 
+    document.querySelectorAll('.snap-target, .snap-left, .snap-right').forEach(el => {
+      el.classList.remove('snap-target', 'snap-left', 'snap-right');
+    });
+    
+    removeFuturePositionIndicator(); // הסר מלבן כחול
+    
+    // איפוס יעד ההצמדה הפוטנציאלי
+    potentialSnapTarget = null;
+    snapDirection = null;
 
-    // חיפוש היעד הקרוב ביותר שמתאים לתנאי ההצמדה
+    // חיפוש הבלוק הקרוב ביותר שמתאים לחיבור
     for (const targetBlock of allBlocks) {
-      if (targetBlock === currentDraggedBlock) continue; // אל תצמיד לעצמו
-      if (!targetBlock.id) generateUniqueId(targetBlock); // ודא שיש ID
+      if (targetBlock === currentDraggedBlock) continue; // לא לבדוק התאמה לעצמו
+      if (!targetBlock.id) generateUniqueId(targetBlock); // ודא שיש מזהה לבלוק
 
       const targetRect = targetBlock.getBoundingClientRect();
       
-      // בדוק אפשרויות הצמדה וחשב מרחק
-      const connectionInfo = calculateSnapInfo(sourceRect, targetRect);
+      // בדוק אם יש התאמת הצמדה
+      const snapInfo = calculateSnapInfo(sourceRect, targetRect);
       
-      if (connectionInfo && connectionInfo.distance < bestDistance) {
-          bestTarget = targetBlock;
-          bestDirection = connectionInfo.direction;
-          bestDistance = connectionInfo.distance;
+      if (snapInfo && snapInfo.distance < bestDistance) {
+        bestTarget = targetBlock;
+        bestDirection = snapInfo.direction;
+        bestDistance = snapInfo.distance;
       }
     }
 
-    // --- ניהול הדגשות ---
-
-    // 1. אם היעד החדש *שונה* מהיעד הקודם, הסר הדגשה מהקודם (אם היה)
-    if (previousPotentialTarget && previousPotentialTarget !== bestTarget) {
-        console.log(`[Highlight] De-highlighting PREVIOUS target: ${previousPotentialTarget.id}`);
-        previousPotentialTarget.classList.remove('snap-target', 'snap-left', 'snap-right');
-    }
-
-    // 2. אם מצאנו יעד מתאים
+    // אם נמצא יעד מתאים, עדכן את ההדגשה וה-indicators
     if (bestTarget) {
-        potentialSnapTarget = bestTarget; // עדכן את היעד הגלובלי
-        snapDirection = bestDirection;    // עדכן את הכיוון הגלובלי
+      console.log(`[Highlight] Found target ${bestTarget.id} with direction ${bestDirection}, distance=${bestDistance.toFixed(1)}px`);
+      
+      // עדכן משתנים גלובליים
+      potentialSnapTarget = bestTarget;
+      snapDirection = bestDirection;
 
-        // הוסף הדגשה ליעד הנוכחי (אם היא לא קיימת כבר)
-        if (!bestTarget.classList.contains('snap-target')) {
-            console.log(`[Highlight] Highlighting NEW target: ${bestTarget.id} (${bestDirection})`);
-            bestTarget.classList.add('snap-target');
-        }
-        
-        // עדכן את סימון הכיוון
-        bestTarget.classList.remove('snap-left', 'snap-right'); // נקה כיוון קודם
-        bestTarget.classList.add(bestDirection === 'left' ? 'snap-left' : 'snap-right');
-
-        // הצג/עדכן את המלבן הכחול
-        const programRect = programmingArea.getBoundingClientRect();
-        updateFuturePositionIndicator(currentDraggedBlock, potentialSnapTarget, snapDirection, programRect);
-
-    } else {
-        // 3. לא נמצא יעד מתאים
-        snapDirection = null; // אפס כיוון גלובלי
-        removeFuturePositionIndicator(); // הסר מלבן כחול
+      // הוסף הדגשה ליעד
+      bestTarget.classList.add('snap-target');
+      bestTarget.classList.add(bestDirection === 'left' ? 'snap-left' : 'snap-right');
+      
+      // עדכן את מחוון המיקום העתידי
+      const programRect = programmingArea.getBoundingClientRect();
+      updateFuturePositionIndicator(currentDraggedBlock, potentialSnapTarget, snapDirection, programRect);
     }
   }
 
