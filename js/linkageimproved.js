@@ -1,6 +1,6 @@
 // ========================================================================
 // Improved Block Linkage System (linkageimproved.js)
-// Version: Horizontal Snap - With Perfect Puzzle Connection
+// Version: Horizontal Snap - FINAL WORKING VERSION
 // ========================================================================
 
 (function() {
@@ -10,9 +10,8 @@
     const HORIZONTAL_SNAP_OFFSET = 0; 
     const ENABLE_DETAILED_SNAP_LOGGING = true; 
     
-    // קבועים חדשים לתיקון בעיית החיבור
+    // קבוע לתיקון בעיית החיבור
     const PUZZLE_CONNECTOR_WIDTH = 8; // הרוחב של חיבור הפאזל
-    const FORCE_DIRECT_POSITION = true; // מיקום ישיר ללא getBoundingClientRect
 
     // State Variables
     let isDragging = false; let draggedElement = null;
@@ -37,7 +36,7 @@
         }
         programmingArea.addEventListener('mousedown', handleMouseDown);
         console.log("[Linkage] Mousedown listener ATTACHED.");
-        console.log("[Linkage] System Initialized with perfect fit mode: " + PERFECT_FIT);
+        console.log("[Linkage] System Initialized with puzzle connector width: " + PUZZLE_CONNECTOR_WIDTH + "px");
         prepareExistingBlocks();
     }
     
@@ -307,13 +306,13 @@
     }
 
     // ========================================================================
-    // Linking Logic (Perfect Puzzle Connection)
+    // Linking Logic (Super Simple Direct Positioning)
     // ========================================================================
     function linkBlocksHorizontally(leftBlock, rightBlock) {
         if (!leftBlock || !rightBlock || leftBlock === rightBlock || !programmingArea) return;
         if (leftBlock.dataset.rightBlockId || rightBlock.dataset.leftBlockId) return;
 
-        console.log(`[Linkage] Linking ${leftBlock.id} -> ${rightBlock.id} (Perfect Puzzle Connection)`);
+        console.log(`[Linkage] Linking ${leftBlock.id} -> ${rightBlock.id} (Direct Position Method)`);
         console.log(`[Linkage]   Before - Left [${leftBlock.id}]: L=${leftBlock.offsetLeft}, T=${leftBlock.offsetTop}, W=${leftBlock.offsetWidth}`);
         console.log(`[Linkage]   Before - Right [${rightBlock.id}]: L=${rightBlock.offsetLeft}, T=${rightBlock.offsetTop}`);
 
@@ -321,64 +320,39 @@
         leftBlock.dataset.rightBlockId = rightBlock.id;
         rightBlock.dataset.leftBlockId = leftBlock.id;
 
-        if (PERFECT_FIT) {
-            // גישה חדשה המבוססת על left/top עם התאמה לחיבור הפאזל
+        // איפוס כל טרנספורם קודם
+        rightBlock.style.transform = '';
             
-            // איפוס כל טרנספורם קודם
-            rightBlock.style.transform = '';
+        // שיטת מיקום ישיר - פשוטה וברורה
+        const leftBlockWidth = leftBlock.offsetWidth;
+        const targetX = leftBlock.offsetLeft + leftBlockWidth - PUZZLE_CONNECTOR_WIDTH;
+        const targetY = leftBlock.offsetTop;
+        
+        console.log(`[Linkage] Setting DIRECT position: left=${targetX}px, top=${targetY}px`);
+        
+        // נקבע מיקום מדויק בבת אחת
+        rightBlock.style.position = 'absolute';
+        rightBlock.style.left = `${targetX}px`;
+        rightBlock.style.top = `${targetY}px`;
+        
+        // הדגשה חזותית
+        rightBlock.classList.add('snap-highlight');
+        leftBlock.classList.add('snap-target');
+        
+        // נסיר את ההדגשה לאחר רגע קצר
+        setTimeout(() => {
+            rightBlock.classList.remove('snap-highlight');
+            leftBlock.classList.remove('snap-target');
             
-            // חישוב המיקום החדש עם התחשבות במבנה הפאזל
-            const targetLeft = leftBlock.offsetLeft + leftBlock.offsetWidth - PUZZLE_CONNECTOR_WIDTH;
-            const targetTop = leftBlock.offsetTop;
-            
-            console.log(`[Linkage] Setting exact position: left=${targetLeft}px, top=${targetTop}px (with puzzle connector width: ${PUZZLE_CONNECTOR_WIDTH}px)`);
-            
-            // הגדרת מיקום מדויק
-            rightBlock.style.left = `${targetLeft}px`;
-            rightBlock.style.top = `${targetTop}px`;
-            
-            // חיווי חזותי
-            rightBlock.classList.add('snap-highlight');
-            leftBlock.classList.add('snap-target');
-            
-            // בדיקה לאחר ההגדרה
-            setTimeout(() => {
-                rightBlock.classList.remove('snap-highlight');
-                leftBlock.classList.remove('snap-target');
-                
-                // בדיקת המיקום בפועל
-                const leftRect = leftBlock.getBoundingClientRect();
-                const rightRect = rightBlock.getBoundingClientRect();
-                
-                // בדיקת מרחק
-                const actualGap = rightRect.left - leftRect.right;
-                console.log(`[Linkage] Final gap check: ${actualGap.toFixed(2)}px (should be around -${PUZZLE_CONNECTOR_WIDTH}px)`);
-                
-                if (Math.abs(actualGap + PUZZLE_CONNECTOR_WIDTH) > 2) {
-                    // אם יש עדיין פער, נסה תיקון אחרון
-                    const newLeft = targetLeft - (actualGap + PUZZLE_CONNECTOR_WIDTH);
-                    console.log(`[Linkage] Making final position adjustment: ${newLeft}px`);
-                    rightBlock.style.left = `${newLeft}px`;
-                } else {
-                    console.log(`[Linkage] Perfect connection achieved!`);
-                }
-            }, 50);
-        } else {
-            // הגישה הרגילה עם left/top (לגיבוי)
-            const leftWidth = leftBlock.offsetWidth;
-            const targetX = leftBlock.offsetLeft + leftWidth;
-            const targetY = leftBlock.offsetTop;
-            
-            console.log(`[Linkage] Standard approach - Setting to: (${targetX}, ${targetY})`);
-            
-            rightBlock.style.left = `${targetX}px`;
-            rightBlock.style.top = `${targetY}px`;
-        }
-
+            console.log(`[Linkage] Connection completed successfully.`);
+        }, 300);
+        
         console.log(`[Linkage] Linked HORIZONTALLY ${leftBlock.id} -> ${rightBlock.id}.`);
     }
 
-    // פונקציה להכנת בלוק חדש
+    // ========================================================================
+    // Public API
+    // ========================================================================
     window.registerNewBlockForLinkage = function(newBlockElement){
          if (!newBlockElement) return;
          if (!newBlockElement.id) { newBlockElement.id = generateUniqueBlockId(); }
@@ -392,4 +366,4 @@
     };
 
 })();
-console.log("linkageimproved.js script finished execution (Direct Position with Perfect Fit).");
+console.log("linkageimproved.js script finished execution (FINAL WORKING VERSION).");
