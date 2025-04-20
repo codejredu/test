@@ -1,6 +1,6 @@
- // ========================================================================
+// ========================================================================
 // Improved Block Linkage System (linkageimproved.js)
-// Version: Horizontal Snap - With Visual Indication & Position Fix - Final
+// Version: Horizontal Snap - With Perfect Puzzle Connection
 // ========================================================================
 
 (function() {
@@ -8,14 +8,10 @@
     const HORIZONTAL_SNAP_DISTANCE = 40;
     const VERTICAL_ALIGNMENT_TOLERANCE = 30;
     const HORIZONTAL_SNAP_OFFSET = 0; 
-    const ENABLE_DETAILED_SNAP_LOGGING = true; // הפכתי לפעיל כדי לקבל יותר לוגים
+    const ENABLE_DETAILED_SNAP_LOGGING = true; 
     
-    // Fixed Position Correction Values (based on logs analysis)
-    const POSITION_CORRECTION_X = 0; // איפוס התיקון - נשתמש בגישה חדשה
-    const POSITION_CORRECTION_Y = 0; // איפוס התיקון - נשתמש בגישה חדשה
-    
-    // מיקום יחסי במקום מיקום מוחלט
-    const USE_TRANSFORM = true;
+    // דיוק מושלם - הצמדה מלאה ללא רווחים
+    const PERFECT_FIT = true;
 
     // State Variables
     let isDragging = false; let draggedElement = null;
@@ -40,7 +36,7 @@
         }
         programmingArea.addEventListener('mousedown', handleMouseDown);
         console.log("[Linkage] Mousedown listener ATTACHED.");
-        console.log("[Linkage] System Initialized with position correction X=" + POSITION_CORRECTION_X + ", Y=" + POSITION_CORRECTION_Y);
+        console.log("[Linkage] System Initialized with perfect fit mode: " + PERFECT_FIT);
         prepareExistingBlocks();
     }
     
@@ -69,6 +65,11 @@
                 pointer-events: none;
                 z-index: 999;
                 transition: opacity 0.2s ease-in-out;
+            }
+            
+            /* אנימציה חלקה למעבר בין מצבים */
+            .block-container {
+                transition: transform 0.15s ease-out;
             }
         `;
         document.head.appendChild(styleElement);
@@ -107,10 +108,17 @@
             console.log(`[Linkage] Started dragging block: ${draggedElement.id}`);
         }
 
+        // איפוס כל טרנספורמציה קודמת
+        draggedElement.style.transform = '';
+
         const prevBlockId = draggedElement.dataset.prevBlockId;
         if (prevBlockId) { const pb = document.getElementById(prevBlockId); if (pb) delete pb.dataset.nextBlockId; delete draggedElement.dataset.prevBlockId; }
         const leftBlockId = draggedElement.dataset.leftBlockId;
-        if (leftBlockId) { const lb = document.getElementById(leftBlockId); if (lb) delete lb.dataset.rightBlockId; delete draggedElement.dataset.leftBlockId; }
+        if (leftBlockId) { 
+            const lb = document.getElementById(leftBlockId); 
+            if (lb) delete lb.dataset.rightBlockId; 
+            delete draggedElement.dataset.leftBlockId; 
+        }
 
         initialMouseX = event.clientX; initialMouseY = event.clientY;
         initialElementX = draggedElement.offsetLeft; initialElementY = draggedElement.offsetTop;
@@ -298,13 +306,13 @@
     }
 
     // ========================================================================
-    // Linking Logic (Horizontal - With Position Correction)
+    // Linking Logic (Perfect Puzzle Connection)
     // ========================================================================
     function linkBlocksHorizontally(leftBlock, rightBlock) {
         if (!leftBlock || !rightBlock || leftBlock === rightBlock || !programmingArea) return;
         if (leftBlock.dataset.rightBlockId || rightBlock.dataset.leftBlockId) return;
 
-        console.log(`[Linkage] Linking ${leftBlock.id} -> ${rightBlock.id} (Using Left/Top + Position Fix)`);
+        console.log(`[Linkage] Linking ${leftBlock.id} -> ${rightBlock.id} (Perfect Puzzle Connection)`);
         console.log(`[Linkage]   Before - Left [${leftBlock.id}]: L=${leftBlock.offsetLeft}, T=${leftBlock.offsetTop}, W=${leftBlock.offsetWidth}`);
         console.log(`[Linkage]   Before - Right [${rightBlock.id}]: L=${rightBlock.offsetLeft}, T=${rightBlock.offsetTop}`);
 
@@ -312,65 +320,69 @@
         leftBlock.dataset.rightBlockId = rightBlock.id;
         rightBlock.dataset.leftBlockId = leftBlock.id;
 
-        const leftWidth = leftBlock.offsetWidth;
+        // קבלת מידע על הלבנים
+        const leftRect = leftBlock.getBoundingClientRect();
+        const rightRect = rightBlock.getBoundingClientRect();
         
-        // חישוב מיקום עם תיקון הפער
-        const targetX = leftBlock.offsetLeft + leftWidth - HORIZONTAL_SNAP_OFFSET - POSITION_CORRECTION_X;
-        const targetY = leftBlock.offsetTop - POSITION_CORRECTION_Y;
-        
-        console.log(`[Linkage]   Calculated Target: X=${targetX.toFixed(0)}, Y=${targetY.toFixed(0)} (With correction X=${POSITION_CORRECTION_X}, Y=${POSITION_CORRECTION_Y})`);
-
-        // מיקום מדויק עם התאמה
-        rightBlock.style.left = `${targetX}px`;
-        rightBlock.style.top = `${targetY}px`;
-        console.log(`[Linkage]   Set Left/Top Style for ${rightBlock.id}`);
-
-        // אנימציה קצרה להדגשת הצימוד
-        rightBlock.classList.add('snap-highlight');
-        leftBlock.classList.add('snap-target');
-        
-        // תיקון מיידי נוסף - יש להוסיף עוד פעם מיד אחרי השמת המיקום הראשון
-        // כך הדפדפן לא יספיק להזיז את הלבנה למקום אחר
-        rightBlock.style.left = `${targetX}px`;
-        rightBlock.style.top = `${targetY}px`;
-        
-        // בדיקה של המיקום הסופי לאחר הצימוד
-        setTimeout(() => {
-            rightBlock.classList.remove('snap-highlight');
-            leftBlock.classList.remove('snap-target');
+        if (PERFECT_FIT) {
+            // הגישה החדשה - התאמה מושלמת באמצעות transform במקום שינוי left/top
+            // 1. הגדר את מיקום הלבנה כמיקומה הנוכחי (מיקום מוחלט)
+            rightBlock.style.left = `${rightBlock.offsetLeft}px`;
+            rightBlock.style.top = `${rightBlock.offsetTop}px`;
             
-            const finalLeft = rightBlock.offsetLeft;
-            const finalTop = rightBlock.offsetTop;
-            console.log(`[Linkage]   After Link (async) - Right [${rightBlock.id}]: FINAL L=${finalLeft}, FINAL T=${finalTop}`);
+            // 2. מדוד כמה צריך להזיז את הלבנה כדי להצמיד אותה ללבנה השמאלית
+            const leftWidth = leftBlock.offsetWidth;
             
-            // בדוק אם המיקום עדיין שגוי
-            const positionError = Math.abs(finalLeft - targetX) > 1 || Math.abs(finalTop - targetY) > 1;
-            if (positionError) {
-                console.warn(`[Linkage] Position discrepancy detected for ${rightBlock.id}! Expected (${targetX.toFixed(0)}, ${targetY.toFixed(0)}), Got (${finalLeft}, ${finalTop})`);
+            // החלק החשוב - חישוב המיקום הרצוי כך שיהיה תואם לפאזל
+            // במקום להשתמש ב-offset עבור המיקום המוחלט, אנחנו משתמשים ב-getBoundingClientRect
+            // כדי לקבל את המיקום המדויק על המסך
+            
+            const desiredX = leftRect.right - rightRect.left;
+            const desiredY = leftRect.top - rightRect.top;
+            
+            console.log(`[Linkage] Perfect fit transform: translateX(${desiredX}px) translateY(${desiredY}px)`);
+
+            // הגדר transform שיזיז את הלבנה למיקום המדויק
+            rightBlock.style.transform = `translateX(${desiredX}px) translateY(${desiredY}px)`;
+            
+            // הוסף אנימציה והדגשה
+            rightBlock.classList.add('snap-highlight');
+            leftBlock.classList.add('snap-target');
+            
+            // הסר את ההדגשה לאחר האנימציה
+            setTimeout(() => {
+                rightBlock.classList.remove('snap-highlight');
+                leftBlock.classList.remove('snap-target');
                 
-                // תיקון אגרסיבי: הפעם נשתמש בהפרש הממשי שמצאנו
-                const offsetX = finalLeft - targetX; // ההפרש הממשי
-                const offsetY = finalTop - targetY;  // ההפרש הממשי
+                // בדוק את המיקום הסופי עם המידות החדשות
+                const finalRightRect = rightBlock.getBoundingClientRect();
+                const finalLeftRect = leftBlock.getBoundingClientRect();
                 
-                // חישוב מיקום עם תיקון כפול של ההפרש הממשי
-                const retryX = targetX - offsetX * 2;
-                const retryY = targetY - offsetY * 2;
+                console.log(`[Linkage] Final position check - Left right edge: ${finalLeftRect.right}, Right left edge: ${finalRightRect.left}`);
                 
-                rightBlock.style.left = `${retryX}px`;
-                rightBlock.style.top = `${retryY}px`;
+                // מדידת הדיוק
+                const finalGap = Math.abs(finalLeftRect.right - finalRightRect.left);
+                console.log(`[Linkage] Final gap between blocks: ${finalGap.toFixed(2)}px`);
                 
-                console.log(`[Linkage] Made final correction using aggressive X=${retryX}, Y=${retryY}`);
-                
-                // בדיקה נוספת לוודא שהתיקון עבד
-                setTimeout(() => {
-                    const finalCheckLeft = rightBlock.offsetLeft;
-                    const finalCheckTop = rightBlock.offsetTop;
-                    console.log(`[Linkage] Final check - Right [${rightBlock.id}]: L=${finalCheckLeft}, T=${finalCheckTop}`);
-                }, 20);
-            } else {
-                console.log(`[Linkage] Position looks good!`);
-            }
-        }, 50); // הקטנתי את הזמן כדי לתקן מהר יותר
+                if (finalGap > 1) {
+                    // תיקון נוסף אם צריך
+                    const newDesiredX = finalLeftRect.right - finalRightRect.left + parseFloat(rightBlock.style.transform.split('translateX(')[1]);
+                    console.log(`[Linkage] Making final adjustment: translateX(${newDesiredX}px)`);
+                    rightBlock.style.transform = `translateX(${newDesiredX}px) translateY(${desiredY}px)`;
+                }
+            }, 150);
+            
+        } else {
+            // הגישה הרגילה עם left/top (לגיבוי)
+            const leftWidth = leftBlock.offsetWidth;
+            const targetX = leftBlock.offsetLeft + leftWidth;
+            const targetY = leftBlock.offsetTop;
+            
+            console.log(`[Linkage] Standard approach - Setting to: (${targetX}, ${targetY})`);
+            
+            rightBlock.style.left = `${targetX}px`;
+            rightBlock.style.top = `${targetY}px`;
+        }
 
         console.log(`[Linkage] Linked HORIZONTALLY ${leftBlock.id} -> ${rightBlock.id}.`);
     }
@@ -385,4 +397,4 @@
     };
 
 })();
-console.log("linkageimproved.js script finished execution (With Visual Indication + Position Fix).");
+console.log("linkageimproved.js script finished execution (Perfect Puzzle Connection).");
