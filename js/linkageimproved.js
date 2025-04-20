@@ -10,11 +10,9 @@
     const HORIZONTAL_SNAP_OFFSET = 0; 
     const ENABLE_DETAILED_SNAP_LOGGING = true; 
     
-    // דיוק מושלם - הצמדה מלאה ללא רווחים
-    const PERFECT_FIT = true;
-    
-    // תיקון חיבור פאזל - הערך הקבוע של הפאזל
+    // קבועים חדשים לתיקון בעיית החיבור
     const PUZZLE_CONNECTOR_WIDTH = 8; // הרוחב של חיבור הפאזל
+    const FORCE_DIRECT_POSITION = true; // מיקום ישיר ללא getBoundingClientRect
 
     // State Variables
     let isDragging = false; let draggedElement = null;
@@ -380,14 +378,18 @@
         console.log(`[Linkage] Linked HORIZONTALLY ${leftBlock.id} -> ${rightBlock.id}.`);
     }
 
-    // ========================================================================
-    // Public API
-    // ========================================================================
+    // פונקציה להכנת בלוק חדש
     window.registerNewBlockForLinkage = function(newBlockElement){
          if (!newBlockElement) return;
          if (!newBlockElement.id) { newBlockElement.id = generateUniqueBlockId(); }
-         try { newBlockElement.style.position = 'absolute'; } catch (e) { console.error("Reg Error", e); }
+         try { 
+             newBlockElement.style.position = 'absolute'; 
+             // איפוס כל טרנספורם שעלול להשפיע
+             newBlockElement.style.transform = '';
+         } catch (e) { 
+             console.error("Reg Error", e); 
+         }
     };
 
 })();
-console.log("linkageimproved.js script finished execution (Perfect Puzzle Connection).");
+console.log("linkageimproved.js script finished execution (Direct Position with Perfect Fit).");
