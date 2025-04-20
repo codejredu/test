@@ -17,8 +17,11 @@ const BlockLinkageManager = {
     snapDistance: 20, // המרחק שבו תופעל ההצמדה האוטומטית (בפיקסלים)
     blockHeight: 80,  // גובה ברירת מחדל של בלוק
     
-    // צבע ההדגשה בעת קרבה להצמדה
-    highlightColor: 'rgba(0, 255, 0, 0.3)',
+    // צבעי ההדגשה בעת קרבה להצמדה
+    highlightColors: {
+        target: 'rgba(255, 255, 0, 0.5)', // הילה צהובה סביב יעד ההצמדה
+        dragged: 'rgba(0, 120, 255, 0.7)' // הילה כחולה סביב הבלוק הנגרר בעת קרבה להצמדה
+    },
     
     // פונקציה לאתחול המנגנון
     initialize: function() {
@@ -175,12 +178,14 @@ const BlockLinkageManager = {
         const blocks = document.querySelectorAll('.block-container');
         blocks.forEach(block => {
             block.classList.remove('snap-target');
+            block.classList.remove('near-snap');
         });
         
         // אם מתבצעת הפרדה, אין צורך לחפש יעדי הצמדה
         if (this.shouldDetach) return;
         
         const draggedRect = draggedBlock.getBoundingClientRect();
+        let foundSnapTarget = false;
         
         // חיפוש מועמדים להצמדה - בלוקים שאינם חלק מהקבוצה הנגררת
         blocks.forEach(targetBlock => {
@@ -202,6 +207,7 @@ const BlockLinkageManager = {
                 // סימון הבלוק כיעד אפשרי להצמדה
                 targetBlock.classList.add('snap-target');
                 targetBlock.dataset.snapDirection = 'bottom-to-top';
+                foundSnapTarget = true;
             }
             
             // בדיקה אם הנקודה העליונה של הבלוק הנגרר קרובה מספיק לנקודה התחתונה של הבלוק היעד
@@ -211,8 +217,14 @@ const BlockLinkageManager = {
                 // סימון הבלוק כיעד אפשרי להצמדה
                 targetBlock.classList.add('snap-target');
                 targetBlock.dataset.snapDirection = 'top-to-bottom';
+                foundSnapTarget = true;
             }
         });
+        
+        // אם נמצא יעד הצמדה, נוסיף גם מסגרת כחולה לבלוק הנגרר
+        if (foundSnapTarget) {
+            draggedBlock.classList.add('near-snap');
+        }
     },
     
     // פונקציה לסיום פעולת ההצמדה
@@ -452,8 +464,14 @@ function addLinkageStyles() {
         
         /* סגנון בלוק שמהווה יעד הצמדה */
         .block-container.snap-target {
-            outline: 2px solid #4CAF50;
-            box-shadow: 0 0 10px rgba(76, 175, 80, 0.7);
+            outline: 2px solid #FFD700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+        }
+        
+        /* סגנון בלוק נגרר בעת קרבה להצמדה */
+        .block-container.near-snap {
+            outline: 2px solid #0078FF;
+            box-shadow: 0 0 8px rgba(0, 120, 255, 0.7);
         }
         
         /* אנימציית הצמדה */
