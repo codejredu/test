@@ -1,4 +1,4 @@
-  // ========================================================================
+ // ========================================================================
 // Improved Block Linkage System (linkageimproved.js)
 // Version: Horizontal Snap - Top Align Y - Final Position Tuning Attempt
 // ========================================================================
@@ -84,16 +84,39 @@
         findAndHighlightSnapTarget();
     }
 
+      // ========================================================
+    // *** handleMouseUp - ניסיון אחרון לנטרול השפעות ***
+    // ========================================================
     function handleMouseUp(event) {
         if (!isDragging || !draggedElement) return;
-        const currentDraggedElement = draggedElement;
+
+        const currentDraggedElement = draggedElement; // שמור הפניות לפני איפוס גלובלי
         const currentTarget = potentialSnapTarget;
         const isValidSnapTarget = currentTarget && programmingArea && programmingArea.contains(currentTarget);
+
         if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`--- Drag End: ${currentDraggedElement.id}. Target: ${currentTarget ? currentTarget.id : 'None'} ---`);
 
+        // קודם כל, הסר מאזינים גלובליים כדי למנוע אירועים נוספים
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('mouseleave', handleMouseLeave);
+        console.log("--- Global listeners removed ---"); // ודא שהמאזינים הוסרו
+
+        // אפס את מצב הגרירה מיידית
+        isDragging = false;
+        draggedElement = null;
+        potentialSnapTarget = null;
+         // אין dragGroup לאפס
+
+        // עכשיו בצע את ההצמדה או המיקום הסופי
         if (isValidSnapTarget) {
             linkBlocksHorizontally(currentTarget, currentDraggedElement);
+            // *** סיום מיידי אחרי הצמדה! לא מבצעים ניקוי נוסף ***
+            console.log("--- Snap performed, handleMouseUp exiting early ---");
+            // החזרת הסגנון הרגיל לבלוקים תתבצע בפעם הבאה שילחצו עליהם
+            return;
         } else {
+             // אין הצמדה - רק וידוא מיקום סופי של הבלוק הנגרר
              if (programmingArea && currentDraggedElement) {
                  const areaRect = programmingArea.getBoundingClientRect();
                  let finalX = currentDraggedElement.offsetLeft; let finalY = currentDraggedElement.offsetTop;
@@ -105,16 +128,19 @@
                  if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`Placed single block ${currentDraggedElement.id} at final pos X=${finalX.toFixed(0)}, Y=${finalY.toFixed(0)} (no snap)`);
              }
         }
+
+        // ניקוי סגנונות (יתבצע רק אם לא הייתה הצמדה)
         clearSnapHighlighting();
         if(currentDraggedElement) {
-             currentDraggedElement.style.zIndex = ''; currentDraggedElement.style.cursor = '';
+             currentDraggedElement.style.zIndex = '';
+             currentDraggedElement.style.cursor = '';
         }
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-        document.removeEventListener('mouseleave', handleMouseLeave);
-        isDragging = false; draggedElement = null; potentialSnapTarget = null;
-        // console.log("--- MouseUp Finished ---");
+
+        console.log("--- MouseUp Finished (No Snap Path) ---");
     }
+    // ========================================================
+    // *** סוף handleMouseUp החדש ***
+    // ========================================================
 
     function handleMouseLeave(event) { if (isDragging) { handleMouseUp(event); } }
 
