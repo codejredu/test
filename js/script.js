@@ -1,4 +1,4 @@
- // ========================================================================
+// ========================================================================
 // הגדרת בלוקים (Blocks) עם שמות הקבצים המדויקים
 // ========================================================================
 
@@ -35,30 +35,20 @@ function getCategoryColor(category) { /* ... תוכן זהה ... */
 }
 
 // ========================================================================
-// פונקציה לטיפול בהשמטת בלוק באזור התכנות ( *** מתוקנת *** )
+// פונקציה לטיפול בהשמטת בלוק באזור התכנות (נטרלנו קוד ישן)
 // ========================================================================
 function handleDrop(event) {
     event.preventDefault();
     const programmingArea = document.getElementById("program-blocks");
     if (!programmingArea) { console.error("Programming area not found in handleDrop!"); return; }
 
-    // --- *** התיקון: נטפל רק בנתונים שמגיעים מהפלטה (JSON) *** ---
     const dataString = event.dataTransfer.getData("text/plain");
     let data;
-    try {
-        data = JSON.parse(dataString);
-    } catch (e) {
-        // אם זה לא JSON תקין, זה *לא* מהפלטה.
-        // נניח שזו גרירה פנימית והקוד ב-linkageimproved.js יטפל בה ב-mouseup.
-        // לכן, פשוט יוצאים מהפונקציה הזו ולא עושים כלום.
-        console.log("handleDrop ignored: Not valid JSON data (likely internal drag).");
-        return;
-    }
+    try { data = JSON.parse(dataString); }
+    catch (e) { console.log("handleDrop ignored: Not valid JSON data (likely internal drag)."); return; }
 
-    // --- המשך טיפול רק אם הנתונים תקינים מהפלטה ---
     if (!data || !data.type || !data.category || !data.name || !data.svgFile) {
-        console.warn("handleDrop ignored: Dropped data missing required fields.", data);
-        return;
+        console.warn("handleDrop ignored: Dropped data missing required fields.", data); return;
     }
 
     console.log("handleDrop: Processing drop from palette:", data);
@@ -73,7 +63,6 @@ function handleDrop(event) {
 
         const rect = programmingArea.getBoundingClientRect();
         newBlock.style.position = "absolute";
-        // קבל מידות *אחרי* הוספה ל-DOM
         const blockWidth = newBlock.offsetWidth || 100;
         const blockHeight = newBlock.offsetHeight || 40;
         let dropX = event.clientX - rect.left - (blockWidth / 2);
@@ -87,9 +76,7 @@ function handleDrop(event) {
         if (window.registerNewBlockForLinkage) {
             console.log(">>> Calling registerNewBlockForLinkage for:", newBlock.id || 'new block (no id yet!)');
             window.registerNewBlockForLinkage(newBlock);
-        } else {
-            console.error("!!! Linkage system function 'registerNewBlockForLinkage' not found.");
-        }
+        } else { console.error("!!! Linkage system function 'registerNewBlockForLinkage' not found."); }
 
     } catch (e) { console.error("Error processing dropped block:", e); }
 }
@@ -105,15 +92,43 @@ function createProgrammingBlockElement(block, category) { /* ... תוכן זהה
 // ========================================================================
 // אתחול כללי - מופעל כשה-DOM נטען
 // ========================================================================
-document.addEventListener('DOMContentLoaded', function() { /* ... תוכן זהה עם קריאה תקינה ל-handleCategoryChange בסוף ... */
+document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM fully loaded");
+
+    // אתחול אזור התכנות
     const programmingArea = document.getElementById("program-blocks");
     if (programmingArea) { programmingArea.addEventListener("dragover", (event) => { if (event.dataTransfer.types.includes("text/plain")) { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; } else { event.dataTransfer.dropEffect = "none"; } }); programmingArea.addEventListener("drop", handleDrop); console.log("Programming area drag listeners initialized (for palette drops)"); } else { console.error("Programming area element not found!"); }
+
+    // אתחול כרטיסיות הקטגוריות
     const categoryTabs = document.querySelectorAll(".category-tab");
     if (categoryTabs.length > 0) { categoryTabs.forEach(tab => { tab.addEventListener("click", () => { handleCategoryChange(tab.getAttribute('data-category')); }); }); console.log(`${categoryTabs.length} category tabs initialized`); } else { console.error("No category tabs found!"); }
+
+    // אתחול כפתור הרשת
     const gridToggle = document.getElementById("grid-toggle"); const stage = document.getElementById("stage"); if (gridToggle && stage) { gridToggle.addEventListener("click", () => { stage.classList.toggle("show-grid"); }); }
+
+    // אתחול כפתור ניקוי
     const clearAllButton = document.getElementById("clear-all"); if (clearAllButton && programmingArea) { clearAllButton.addEventListener("click", () => { programmingArea.innerHTML = ""; console.log("Programming area cleared"); }); }
-    const character = document.getElementById('character'); const stageElement = document.getElementById('stage'); if (character && stageElement) { function centerCharacter() { character.style.transform = 'none'; character.style.transition = 'none'; const stageRect = stageElement.getBoundingClientRect(); const charRect = character.getBoundingClientRect(); const centerX = (stageRect.width - charRect.width) / 2; const centerY = (stageRect.height - charRect.height) / 2; character.style.position = 'absolute'; character.style.left = centerX + 'px'; character.style.top = centerY + 'px'; } setTimeout(centerCharacter, 100); let isCharDragging = false; let charOffsetX, charOffsetY; character.addEventListener('dragstart', (e) => {e.preventDefault(); return false;}); character.addEventListener('mousedown', function(e) { if (e.target !== character) return; e.preventDefault(); const charRect = character.getBoundingClientRect(); charOffsetX = e.clientX - charRect.left; charOffsetY = e.clientY - charRect.top; isCharDragging = true; character.style.cursor = 'grabbing'; character.style.transition = 'none'; document.addEventListener('mousemove', handleCharacterMove); document.addEventListener('mouseup', handleCharacterUp); }); function handleCharacterMove(e) { if (!isCharDragging) return; character.style.transform = 'none'; const stageRect = stageElement.getBoundingClientRect(); let newLeft = e.clientX - stageRect.left - charOffsetX; let newTop = e.clientY - stageRect.top - charOffsetY; const charRect = character.getBoundingClientRect(); const maxLeft = stageRect.width - charRect.width; const maxTop = stageRect.height - charRect.height; newLeft = Math.max(0, Math.min(newLeft, maxLeft)); newTop = Math.max(0, Math.min(newTop, maxTop)); character.style.left = newLeft + 'px'; character.style.top = newTop + 'px'; } function handleCharacterUp() { if (isCharDragging) { isCharDragging = false; character.style.cursor = 'grab'; document.removeEventListener('mousemove', handleCharacterMove); document.removeEventListener('mouseup', handleCharacterUp); } } }
+
+
+    // --- *** קוד הדמות מנוטרל זמנית *** ---
+    /*
+    const character = document.getElementById('character');
+    const stageElement = document.getElementById('stage');
+    if (character && stageElement) {
+         function centerCharacter() { character.style.transform = 'none'; character.style.transition = 'none'; const stageRect = stageElement.getBoundingClientRect(); const charRect = character.getBoundingClientRect(); const centerX = (stageRect.width - charRect.width) / 2; const centerY = (stageRect.height - charRect.height) / 2; character.style.position = 'absolute'; character.style.left = centerX + 'px'; character.style.top = centerY + 'px'; }
+         setTimeout(centerCharacter, 100);
+         let isCharDragging = false; // שם שונה כדי למנוע התנגשות
+         let charOffsetX, charOffsetY;
+         character.addEventListener('dragstart', (e) => {e.preventDefault(); return false;});
+         character.addEventListener('mousedown', function(e) { if (e.target !== character) return; e.preventDefault(); const charRect = character.getBoundingClientRect(); charOffsetX = e.clientX - charRect.left; charOffsetY = e.clientY - charRect.top; isCharDragging = true; character.style.cursor = 'grabbing'; character.style.transition = 'none'; document.addEventListener('mousemove', handleCharacterMove); document.addEventListener('mouseup', handleCharacterUp); });
+         function handleCharacterMove(e) { if (!isCharDragging) return; character.style.transform = 'none'; const stageRect = stageElement.getBoundingClientRect(); let newLeft = e.clientX - stageRect.left - charOffsetX; let newTop = e.clientY - stageRect.top - charOffsetY; const charRect = character.getBoundingClientRect(); const maxLeft = stageRect.width - charRect.width; const maxTop = stageRect.height - charRect.height; newLeft = Math.max(0, Math.min(newLeft, maxLeft)); newTop = Math.max(0, Math.min(newTop, maxTop)); character.style.left = newLeft + 'px'; character.style.top = newTop + 'px'; }
+         function handleCharacterUp() { if (isCharDragging) { isCharDragging = false; character.style.cursor = 'grab'; document.removeEventListener('mousemove', handleCharacterMove); document.removeEventListener('mouseup', handleCharacterUp); } }
+     }
+     */
+     // --- *** סוף קוד הדמות המנוטרל *** ---
+
+
+    // אתחול הקטגוריה הראשונית
     let initialCategory = 'triggering'; const activeTab = document.querySelector(".category-tab.active"); if (activeTab && activeTab.getAttribute('data-category')) { initialCategory = activeTab.getAttribute('data-category'); handleCategoryChange(initialCategory); } else { const triggeringTab = document.querySelector('.category-tab[data-category="triggering"]'); if (triggeringTab) { handleCategoryChange(initialCategory); } else { const firstTab = document.querySelector(".category-tab"); if (firstTab) { initialCategory = firstTab.getAttribute('data-category'); handleCategoryChange(initialCategory); } else { console.warn("No category tabs found to initialize."); } } }
     console.log("Initialization complete.");
 });
