@@ -1,4 +1,4 @@
- // ========================================================================
+// ========================================================================
 // Improved Block Linkage System (linkageimproved.js)
 // Version: Horizontal Snap - With Visual Indication & Position Fix - Final
 // ========================================================================
@@ -11,8 +11,8 @@
     const ENABLE_DETAILED_SNAP_LOGGING = true; // הפכתי לפעיל כדי לקבל יותר לוגים
     
     // Fixed Position Correction Values (based on logs analysis)
-    const POSITION_CORRECTION_X = 8; // תיקון קבוע לציר X
-    const POSITION_CORRECTION_Y = 8; // תיקון קבוע לציר Y
+    const POSITION_CORRECTION_X = 16; // תיקון קבוע לציר X - הוכפל ל-16
+    const POSITION_CORRECTION_Y = 16; // תיקון קבוע לציר Y - הוכפל ל-16
 
     // State Variables
     let isDragging = false; let draggedElement = null;
@@ -326,6 +326,11 @@
         rightBlock.classList.add('snap-highlight');
         leftBlock.classList.add('snap-target');
         
+        // תיקון מיידי נוסף - יש להוסיף עוד פעם מיד אחרי השמת המיקום הראשון
+        // כך הדפדפן לא יספיק להזיז את הלבנה למקום אחר
+        rightBlock.style.left = `${targetX}px`;
+        rightBlock.style.top = `${targetY}px`;
+        
         // בדיקה של המיקום הסופי לאחר הצימוד
         setTimeout(() => {
             rightBlock.classList.remove('snap-highlight');
@@ -340,12 +345,25 @@
             if (positionError) {
                 console.warn(`[Linkage] Position discrepancy detected for ${rightBlock.id}! Expected (${targetX.toFixed(0)}, ${targetY.toFixed(0)}), Got (${finalLeft}, ${finalTop})`);
                 
-                // נסה לתקן את המיקום שוב עם תיקון נוסף
-                const retryX = targetX - (finalLeft - targetX);
-                const retryY = targetY - (finalTop - targetY);
+                // תיקון אגרסיבי: הפעם נשתמש בהפרש הממשי שמצאנו
+                const offsetX = finalLeft - targetX; // ההפרש הממשי
+                const offsetY = finalTop - targetY;  // ההפרש הממשי
+                
+                // חישוב מיקום עם תיקון כפול של ההפרש הממשי
+                const retryX = targetX - offsetX * 2;
+                const retryY = targetY - offsetY * 2;
+                
                 rightBlock.style.left = `${retryX}px`;
                 rightBlock.style.top = `${retryY}px`;
-                console.log(`[Linkage] Made second attempt to correct position using X=${retryX}, Y=${retryY}`);
+                
+                console.log(`[Linkage] Made final correction using aggressive X=${retryX}, Y=${retryY}`);
+                
+                // בדיקה נוספת לוודא שהתיקון עבד
+                setTimeout(() => {
+                    const finalCheckLeft = rightBlock.offsetLeft;
+                    const finalCheckTop = rightBlock.offsetTop;
+                    console.log(`[Linkage] Final check - Right [${rightBlock.id}]: L=${finalCheckLeft}, T=${finalCheckTop}`);
+                }, 20);
             } else {
                 console.log(`[Linkage] Position looks good!`);
             }
