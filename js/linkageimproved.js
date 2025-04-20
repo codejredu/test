@@ -1,4 +1,4 @@
-// ========================================================================
+ // ========================================================================
 // Improved Block Linkage System (linkageimproved.js)
 // Version: Horizontal Snap - With Visual Indication & Position Fix - Final
 // ========================================================================
@@ -11,8 +11,11 @@
     const ENABLE_DETAILED_SNAP_LOGGING = true; // הפכתי לפעיל כדי לקבל יותר לוגים
     
     // Fixed Position Correction Values (based on logs analysis)
-    const POSITION_CORRECTION_X = 16; // תיקון קבוע לציר X - הוכפל ל-16
-    const POSITION_CORRECTION_Y = 16; // תיקון קבוע לציר Y - הוכפל ל-16
+    const POSITION_CORRECTION_X = 0; // איפוס התיקון - נשתמש בגישה חדשה
+    const POSITION_CORRECTION_Y = 0; // איפוס התיקון - נשתמש בגישה חדשה
+    
+    // מיקום יחסי במקום מיקום מוחלט
+    const USE_TRANSFORM = true;
 
     // State Variables
     let isDragging = false; let draggedElement = null;
