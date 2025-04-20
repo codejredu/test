@@ -54,12 +54,12 @@
     // Event Handlers
     // ========================================================================
     function handleMouseDown(event) {
-        // console.log(`>>> handleMouseDown triggered!`); // הפכתי להערה זמנית
+        // console.log(`>>> handleMouseDown triggered!`);
         const targetBlock = event.target.closest('.block-container');
         if (!targetBlock || !programmingArea || !programmingArea.contains(targetBlock)) return;
         event.preventDefault(); isDragging = true; draggedElement = targetBlock;
         if (!draggedElement.id) { draggedElement.id = generateUniqueBlockId(); }
-        // console.log(`   Dragging single block: ${draggedElement.id}`); // הפכתי להערה זמנית
+        // console.log(`   Dragging single block: ${draggedElement.id}`);
 
         const prevBlockId = draggedElement.dataset.prevBlockId;
         if (prevBlockId) { const pb = document.getElementById(prevBlockId); if (pb) delete pb.dataset.nextBlockId; delete draggedElement.dataset.prevBlockId; }
@@ -79,7 +79,7 @@
         if (!isDragging || !draggedElement) return;
         const deltaX = event.clientX - initialMouseX; const deltaY = event.clientY - initialMouseY;
         const newX = initialElementX + deltaX; const newY = initialElementY + deltaY;
-        // if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`MouseMove: Setting ${draggedElement.id} to X=${newX.toFixed(0)}, Y=${newY.toFixed(0)}`); // הפכתי להערה
+        // if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`MouseMove: Setting ${draggedElement.id} to X=${newX.toFixed(0)}, Y=${newY.toFixed(0)}`);
         draggedElement.style.left = `${newX}px`; draggedElement.style.top = `${newY}px`;
         findAndHighlightSnapTarget();
     }
@@ -98,12 +98,10 @@
                  const areaRect = programmingArea.getBoundingClientRect();
                  let finalX = currentDraggedElement.offsetLeft; let finalY = currentDraggedElement.offsetTop;
                  const elemRect = currentDraggedElement.getBoundingClientRect();
-                 // הגבלת גבולות עשויה להיות מיותרת אם אין קפיצות
-                 // finalX = Math.max(0, Math.min(finalX, areaRect.width - elemRect.width));
-                 // finalY = Math.max(0, Math.min(finalY, areaRect.height - elemRect.height));
-                 // פשוט נשאיר את המיקום האחרון מה-mousemove
-                 // currentDraggedElement.style.left = `${finalX}px`;
-                 // currentDraggedElement.style.top = `${finalY}px`;
+                 finalX = Math.max(0, Math.min(finalX, areaRect.width - elemRect.width));
+                 finalY = Math.max(0, Math.min(finalY, areaRect.height - elemRect.height));
+                 currentDraggedElement.style.left = `${finalX}px`;
+                 currentDraggedElement.style.top = `${finalY}px`;
                  if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`Placed single block ${currentDraggedElement.id} at final pos X=${finalX.toFixed(0)}, Y=${finalY.toFixed(0)} (no snap)`);
              }
         }
@@ -115,7 +113,7 @@
         document.removeEventListener('mouseup', handleMouseUp);
         document.removeEventListener('mouseleave', handleMouseLeave);
         isDragging = false; draggedElement = null; potentialSnapTarget = null;
-        // console.log("--- MouseUp Finished ---"); // הפכתי להערה
+        // console.log("--- MouseUp Finished ---");
     }
 
     function handleMouseLeave(event) { if (isDragging) { handleMouseUp(event); } }
@@ -159,14 +157,8 @@
         } else { highlightSnapTarget(draggedElement, false); if (shouldLog) console.log(`--- No H target found. ---`); }
     }
 
-    function highlightSnapTarget(block, shouldHighlight) {
-         if (block) { try { if (shouldHighlight) { block.classList.add('snap-highlight'); } else { block.classList.remove('snap-highlight'); } } catch (e) { /* ignore */ } }
-    }
-     function clearSnapHighlighting() {
-         if (!programmingArea) return;
-         const highlighted = programmingArea.querySelectorAll('.snap-highlight');
-         highlighted.forEach(el => { try { el.classList.remove('snap-highlight'); } catch(e) { /* ignore */ } });
-     }
+    function highlightSnapTarget(block, shouldHighlight){ if (block) { try { if (shouldHighlight) { block.classList.add('snap-highlight'); } else { block.classList.remove('snap-highlight'); } } catch (e) { /* ignore */ } } }
+    function clearSnapHighlighting(){ if (!programmingArea) return; const highlighted = programmingArea.querySelectorAll('.snap-highlight'); highlighted.forEach(el => { try { el.classList.remove('snap-highlight'); } catch(e) { /* ignore */ } }); }
 
     // ========================================================================
     // Linking Logic (Horizontal - Top Align Y, WITH Offset X)
@@ -189,12 +181,12 @@
         rightBlock.style.top = `${targetY}px`;
         console.log(`  Set Style for ${rightBlock.id}`);
 
-        // בדיקה אסינכרונית של המיקום הסופי
         setTimeout(() => {
-            console.log(`  After Link (async) - Right [${rightBlock.id}]: FINAL L=${rightBlock.offsetLeft}, FINAL T=${rightBlock.offsetTop}`);
-            // אפשר להוסיף כאן בדיקה אם המיקום הסופי שונה מהמחושב ולהדפיס אזהרה
-            if (Math.abs(rightBlock.offsetLeft - targetX) > 1 || Math.abs(rightBlock.offsetTop - targetY) > 1) {
-                 console.warn(`Position discrepancy detected for ${rightBlock.id}! Expected (${targetX.toFixed(0)}, ${targetY.toFixed(0)}), Got (${rightBlock.offsetLeft}, ${rightBlock.offsetTop})`);
+            const finalLeft = rightBlock.offsetLeft;
+            const finalTop = rightBlock.offsetTop;
+            console.log(`  After Link (async) - Right [${rightBlock.id}]: FINAL L=${finalLeft}, FINAL T=${finalTop}`);
+            if (Math.abs(finalLeft - targetX) > 1 || Math.abs(finalTop - targetY) > 1) {
+                 console.warn(`Position discrepancy detected for ${rightBlock.id}! Expected (${targetX.toFixed(0)}, ${targetY.toFixed(0)}), Got (${finalLeft}, ${finalTop})`);
             }
         }, 0);
 
@@ -204,7 +196,7 @@
     // ========================================================================
     // Public API
     // ========================================================================
-    window.registerNewBlockForLinkage = function(newBlockElement) {
+    window.registerNewBlockForLinkage = function(newBlockElement){
          if (!newBlockElement) return;
          if (!newBlockElement.id) { newBlockElement.id = generateUniqueBlockId(); }
          try { newBlockElement.style.position = 'absolute'; } catch (e) { console.error("Reg Error", e); }
