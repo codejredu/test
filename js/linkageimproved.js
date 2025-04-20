@@ -167,6 +167,11 @@ const BlockLinkageManager = {
             block.classList.remove('dragging');
             block.classList.remove('snap-target');
             block.classList.remove('near-snap');
+            
+            // ניקוי סגנונות מותאמים אישית
+            block.style.border = '';
+            block.style.backgroundColor = '';
+            block.style.boxShadow = '';
         });
         
         // בדיקה האם יש צורך בהצמדה וביצוע ההצמדה
@@ -183,6 +188,10 @@ const BlockLinkageManager = {
         blocks.forEach(block => {
             block.classList.remove('snap-target');
             block.classList.remove('near-snap');
+            // ניקוי סגנונות מותאמים אישית
+            block.style.border = '';
+            block.style.backgroundColor = '';
+            block.style.boxShadow = '';
         });
         
         // אם מתבצעת הפרדה, אין צורך לחפש יעדי הצמדה
@@ -211,7 +220,14 @@ const BlockLinkageManager = {
                 // סימון הבלוק כיעד אפשרי להצמדה
                 targetBlock.classList.add('snap-target');
                 targetBlock.dataset.snapDirection = 'bottom-to-top';
+                
+                // החלת סגנונות ישירות
+                targetBlock.style.backgroundColor = 'rgba(255, 255, 0, 0.3)';
+                targetBlock.style.border = '2px solid #FFD700';
+                targetBlock.style.boxShadow = '0 0 8px 2px rgba(255, 215, 0, 0.5)';
+                
                 foundSnapTarget = true;
+                console.log('Target found for snap: bottom-to-top', targetBlock);
             }
             
             // בדיקה אם הנקודה העליונה של הבלוק הנגרר קרובה מספיק לנקודה התחתונה של הבלוק היעד
@@ -221,13 +237,26 @@ const BlockLinkageManager = {
                 // סימון הבלוק כיעד אפשרי להצמדה
                 targetBlock.classList.add('snap-target');
                 targetBlock.dataset.snapDirection = 'top-to-bottom';
+                
+                // החלת סגנונות ישירות
+                targetBlock.style.backgroundColor = 'rgba(255, 255, 0, 0.3)';
+                targetBlock.style.border = '2px solid #FFD700';
+                targetBlock.style.boxShadow = '0 0 8px 2px rgba(255, 215, 0, 0.5)';
+                
                 foundSnapTarget = true;
+                console.log('Target found for snap: top-to-bottom', targetBlock);
             }
         });
         
         // אם נמצא יעד הצמדה, נוסיף גם מסגרת כחולה לבלוק הנגרר
         if (foundSnapTarget) {
             draggedBlock.classList.add('near-snap');
+            
+            // החלת סגנונות ישירות
+            draggedBlock.style.border = '2px dashed #0078FF';
+            draggedBlock.style.boxShadow = '0 0 8px 2px rgba(0, 120, 255, 0.5)';
+            
+            console.log('Added near-snap styling to dragged block', draggedBlock);
         }
     },
     
@@ -475,16 +504,18 @@ function addLinkageStyles() {
         /* סגנון בלוק שמהווה יעד הצמדה */
         .block-container.snap-target {
             background-color: rgba(255, 255, 0, 0.3) !important;
-            border: 2px solid #FFD700 !important;
-            box-shadow: 0 0 8px 2px rgba(255, 215, 0, 0.5) !important;
-            z-index: 999;
+            border: 4px solid #FFD700 !important;
+            box-shadow: 0 0 12px 4px rgba(255, 215, 0, 0.7) !important;
+            position: relative !important;
+            z-index: 999 !important;
         }
         
         /* סגנון בלוק נגרר בעת קרבה להצמדה */
         .block-container.near-snap {
-            border: 2px dashed #0078FF !important;
-            box-shadow: 0 0 8px 2px rgba(0, 120, 255, 0.5) !important;
-            z-index: 1001;
+            border: 4px dashed #0078FF !important;
+            box-shadow: 0 0 12px 4px rgba(0, 120, 255, 0.7) !important;
+            position: relative !important;
+            z-index: 1001 !important;
         }
         
         /* אנימציית הצמדה */
