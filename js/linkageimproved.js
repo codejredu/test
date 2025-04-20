@@ -193,7 +193,7 @@
     }
 
     // ========================================================================
-    // Snapping Logic (Vertical Distance Only - Corrected Syntax)
+    // Snapping Logic (Vertical Distance Only - Syntax Corrected)
     // ========================================================================
     function findAndHighlightSnapTarget() {
         const shouldLog = ENABLE_DETAILED_SNAP_LOGGING && isDragging && draggedElement;
@@ -232,7 +232,7 @@
             }
 
             const targetRect = block.getBoundingClientRect();
-            // Corrected console.log line (around original error line 269) - Ensuring template literal and function calls are closed correctly
+            // ** שורה 269 המתוקנת - וידאתי שכל הסוגריים והתווים במקומם **
             if (shouldLog) console.log(` -> Target (${targetId}): Rect T:${targetRect.top.toFixed(0)} L:${targetRect.left.toFixed(0)} W:${targetRect.width.toFixed(0)} H:${targetRect.height.toFixed(0)}`);
             if (targetRect.height <= 0 && shouldLog) console.warn(`Target block ${targetId} has height <= 0!`);
 
@@ -309,7 +309,6 @@
          try { newBlockElement.style.position = 'absolute'; } catch (e) { console.error("!!! CRITICAL ERROR...", e, newBlockElement); }
           if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`Successfully registered block ${newBlockElement.id} for linkage.`);
     };
-
 
 })(); // IIFE to encapsulate scope
 console.log("linkageimproved.js script finished execution (Vertical Snap Only - Syntax Corrected).");
