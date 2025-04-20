@@ -1,5 +1,5 @@
 // --- START OF FILE linkageimproved.js ---
-// --- Version 3.2.1: תיקון בעיית השמעת צליל ---
+// --- Version 3.2.2: תיקון אפקט ההילה והצליל ---
 
 (function() {
   // משתנים גלובליים במודול
@@ -31,7 +31,9 @@
   // הוספת סגנונות CSS - גרסה משופרת עם הילה בולטת
   // ========================================================================
   function addHighlightStyles() {
-    if (document.getElementById('block-connection-styles')) return;
+    if (document.getElementById('block-connection-styles')) {
+      document.getElementById('block-connection-styles').remove(); // הסר סגנונות קודמים אם קיימים
+    }
 
     const style = document.createElement('style');
     style.id = 'block-connection-styles';
@@ -83,7 +85,6 @@
         border-radius: 2px;
         z-index: 1000;
         box-shadow: 0 0 10px 2px rgba(255, 193, 7, 0.8);
-        transition: all 0.1s ease-out;
       }
       .snap-target.snap-right::after { /* Target specific */
         content: '';
@@ -96,7 +97,6 @@
         border-radius: 2px;
         z-index: 1000;
         box-shadow: 0 0 10px 2px rgba(255, 193, 7, 0.8);
-        transition: all 0.1s ease-out;
       }
 
       /* אנימציות משופרות */
@@ -203,83 +203,81 @@
     if (!CONFIG.PLAY_SOUND) return;
     if (soundInitialized) return; // אל תאתחל שוב
     
+    // נאפס שמע קיים אם יש כזה
+    if (snapSound) {
+      snapSound.pause();
+      if (snapSound.parentNode) {
+        snapSound.parentNode.removeChild(snapSound);
+      }
+      snapSound = null;
+    }
+    
     // סמן שניסינו לאתחל אודיו - למניעת ניסיונות חוזרים
     soundLoadAttempted = true;
 
     try {
-      // בדוק אם כבר קיים אלמנט (למקרה של ריצה חוזרת)
-      const existingAudio = document.getElementById('snap-sound-element');
-      if (existingAudio) {
-          snapSound = existingAudio;
-          soundInitialized = true;
-          if (CONFIG.DEBUG) console.log('Audio element already exists and reused.');
-          // ודא שהמקור הנכון טעון
-          if (!snapSound.querySelector(`source[src="${CONFIG.SOUND_PATH}"]`)) {
-               if (CONFIG.DEBUG) console.log('Audio element exists but needs updated source.');
-               snapSound.innerHTML = ''; // נקה מקורות קודמים
-               const source = document.createElement('source');
-               source.src = CONFIG.SOUND_PATH;
-               source.type = 'audio/mpeg';
-               snapSound.appendChild(source);
-               snapSound.load(); // טען מחדש
-          }
-          return;
-      }
-
-      // צור אלמנט אודיו גלובלי חדש
-      snapSound = document.createElement('audio');
+      // נסה לטעון קובץ צליל חדש ישירות
+      snapSound = new Audio(CONFIG.SOUND_PATH);
       snapSound.id = 'snap-sound-element';
-      snapSound.preload = 'auto'; // בקש מהדפדפן לטעון מראש
+      snapSound.preload = 'auto';
       snapSound.volume = CONFIG.SOUND_VOLUME;
-
-      // הוסף מקור MP3 חיצוני
-      const source = document.createElement('source');
-      source.src = CONFIG.SOUND_PATH;
-      source.type = 'audio/mpeg'; // MIME type for MP3
-      snapSound.appendChild(source);
-
-      // הוסף הודעה למשתמש אם הקובץ לא נטען
-      snapSound.addEventListener('error', (e) => {
+      
+      // מאזין לשגיאה 
+      snapSound.addEventListener('error', function(e) {
         console.error(`Error loading audio file: ${CONFIG.SOUND_PATH}`, e);
-        // עדכן כפתור בדיקה אם קיים
         const button = document.getElementById('sound-test-button');
         if (button) {
-            button.textContent = 'שגיאה בטעינת קובץ';
-            button.classList.remove('success', 'loading');
-            button.classList.add('error');
-            button.style.backgroundColor = '#f44336';
-            button.disabled = true; // נטרל את הכפתור
+          button.textContent = 'שגיאה בטעינת קובץ';
+          button.classList.remove('success', 'loading');
+          button.classList.add('error');
+          button.style.backgroundColor = '#f44336';
+          button.disabled = true;
         }
         // נטרל השמעת צלילים
         CONFIG.PLAY_SOUND = false;
-        snapSound = null; // שחרר את האובייקט הלא תקין
-        soundInitialized = false; // סמן כשלון באתחול
+        snapSound = null;
+        soundInitialized = false;
       });
 
-       // אירוע המציין שהדפדפן יכול להתחיל לנגן (לא בהכרח כל הקובץ נטען)
-      snapSound.addEventListener('canplaythrough', () => {
-          soundInitialized = true; // סמן שהשמע מוכן
-          if (CONFIG.DEBUG) console.log('Audio element initialized and ready to play.');
-          // עדכן כפתור בדיקה אם קיים והוא במצב טעינה
-          const button = document.getElementById('sound-test-button');
-          if (button && button.classList.contains('loading')) {
-              button.textContent = 'בדוק צליל הצמדה';
-              button.classList.remove('loading');
-              button.disabled = false;
-              button.style.backgroundColor = '#2196F3'; // החזר לצבע ברירת מחדל
-          }
+      // מאזין למצב מוכן
+      snapSound.addEventListener('canplaythrough', function() {
+        soundInitialized = true;
+        if (CONFIG.DEBUG) console.log('Audio element initialized and ready to play.');
+        const button = document.getElementById('sound-test-button');
+        if (button && button.classList.contains('loading')) {
+          button.textContent = 'בדוק צליל הצמדה';
+          button.classList.remove('loading');
+          button.disabled = false;
+          button.style.backgroundColor = '#2196F3';
+        }
       });
 
-
-      // הוסף לעמוד (מוסתר)
-      snapSound.style.display = 'none';
+      // הוסף אלמנט לעמוד (חשוב לדפדפנים מסוימים)
       document.body.appendChild(snapSound);
+      snapSound.style.display = 'none';
 
       if (CONFIG.DEBUG) console.log(`Audio element created, attempting to load: ${CONFIG.SOUND_PATH}`);
       
-      // התחל לטעון את הקובץ
-      snapSound.load();
-
+      // ניסיון התחלתי להשמיע צליל שקט כדי לאפשר ניגון עתידי
+      setTimeout(function() {
+        try {
+          const originalVolume = snapSound.volume;
+          snapSound.volume = 0.001; // כמעט שקט לחלוטין
+          snapSound.play().then(function() {
+            snapSound.pause();
+            snapSound.currentTime = 0;
+            snapSound.volume = originalVolume;
+            audioContextAllowed = true;
+            if (CONFIG.DEBUG) console.log("Initial audio permission granted!");
+          }).catch(function(err) {
+            snapSound.volume = originalVolume;
+            if (CONFIG.DEBUG) console.log("Initial audio permission denied:", err.name);
+          });
+        } catch (err) {
+          if (CONFIG.DEBUG) console.log("Error in initial audio permission attempt:", err);
+        }
+      }, 500);
+      
     } catch (err) {
       console.error('Error initializing audio element:', err);
       CONFIG.PLAY_SOUND = false;
@@ -287,7 +285,6 @@
       soundInitialized = false;
     }
   }
-
 
   // ========================================================================
   // הוספת כפתור בדיקת שמע - מעודכן לטפל במצב טעינה
@@ -352,20 +349,24 @@
 
       // מאזין לחיצה
       button.addEventListener('click', function() {
-        if (this.disabled || !snapSound) {
-            console.warn('Sound test clicked but audio not ready or disabled.');
-            
-            // נסה לאתחל מחדש אם עדיין לא ניסינו
-            if (!soundLoadAttempted) {
-                button.textContent = 'מנסה לטעון שוב...';
-                button.classList.add('loading');
-                button.style.backgroundColor = '#ff9800'; // כתום
-                initAudio(); // נסה לאתחל שוב
-            }
+        if (this.disabled) {
+            console.warn('Sound test button clicked but is disabled.');
+            return;
+        }
+        
+        if (!snapSound) {
+            console.warn('Sound test clicked but audio not ready.');
+            // נסה לאתחל מחדש
+            button.textContent = 'מנסה לטעון צליל...';
+            button.classList.add('loading');
+            button.style.backgroundColor = '#ff9800'; // כתום
+            initAudio(); // נסה לאתחל שוב
             return;
         }
 
         // נסה להפעיל את הצליל הגלובלי
+        snapSound.currentTime = 0;
+        snapSound.volume = CONFIG.SOUND_VOLUME;
         snapSound.play().then(() => {
           if (CONFIG.DEBUG) console.log('Sound test successful!');
           button.textContent = 'הצליל פועל ✓';
@@ -381,12 +382,6 @@
               button.remove();
             }, 500);
           }, 3000);
-
-          // החזר את הצליל להתחלה
-          if(snapSound) { // Check again in case it became null due to an error
-            snapSound.pause();
-            snapSound.currentTime = 0;
-          }
 
         }).catch(err => {
           console.warn('Sound test failed:', err);
@@ -429,38 +424,31 @@
     }
     
     // תמיד נסה להפעיל את הצליל, גם אם לא אישרו עדיין
-    // ניתן לשמוע את הצליל רק אם המשתמש כבר אינטראקט עם העמוד קודם
     try {
       // החזר את הצליל להתחלה לפני ניגון
       snapSound.currentTime = 0;
       
-      // הפעל עם עוצמה נכונה
+      // ודא שעוצמת השמע נכונה
       snapSound.volume = CONFIG.SOUND_VOLUME;
       
-      const playPromise = snapSound.play();
-
-      if (playPromise !== undefined) {
-        playPromise.then(() => {
+      // נגן עם קצת השהיה כדי לתת לאירועי ה-DOM להתעדכן קודם
+      setTimeout(function() {
+        snapSound.play().then(() => {
           // הצליל נוגן בהצלחה
-          audioContextAllowed = true; // אשר אינטראקציה מוצלחת
-          soundInitialized = true; // גם סמן שהצליל אותחל בהצלחה
+          audioContextAllowed = true;
+          soundInitialized = true;
           if (CONFIG.DEBUG) console.log('Snap sound played successfully!');
         }).catch(err => {
           if (err.name === 'NotAllowedError') {
-            // צפוי אם המשתמש לא אינטראקט קודם
-            if (CONFIG.DEBUG) console.warn('Snap sound blocked by browser policy. User interaction needed first.');
-            
-            // נסה לעודד אינטראקציה עם כפתור הבדיקה
-            if (!document.getElementById('sound-test-button')) {
-                addSoundTestButton();
-            }
+            if (CONFIG.DEBUG) console.warn('Snap sound blocked by browser. User interaction needed first.');
+            // לא עושים דבר מעבר לזה, כי אנחנו לא רוצים להפריע לחווית המשתמש עם הודעות שגיאה
           } else {
-            console.error('Error playing snap sound:', err);
+            if (CONFIG.DEBUG) console.error('Error playing snap sound:', err);
           }
         });
-      }
+      }, 10);
     } catch (err) {
-      console.error('Unexpected error trying to play snap sound:', err);
+      if (CONFIG.DEBUG) console.error('Unexpected error trying to play snap sound:', err);
     }
   }
 
@@ -681,4 +669,3 @@
       document.body.classList.add('user-select-none'); // מנע בחירת טקסט
 
       if (CONFIG.DEBUG) console.log(`[MouseDown] Initial drag setup: left=${block.style.left}, top=${block.style.top}, zIndex=${block.style.zIndex}`);
-  }
