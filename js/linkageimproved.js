@@ -8,7 +8,7 @@
     const HORIZONTAL_SNAP_DISTANCE = 40;
     const VERTICAL_ALIGNMENT_TOLERANCE = 30;
     const HORIZONTAL_SNAP_OFFSET = 0; 
-    const ENABLE_DETAILED_SNAP_LOGGING = false; // כבוי כברירת מחדל
+    const ENABLE_DETAILED_SNAP_LOGGING = true; // הפכתי לפעיל כדי לקבל יותר לוגים
 
     // State Variables
     let isDragging = false; let draggedElement = null;
@@ -39,7 +39,11 @@
     
     // פונקציה להוספת חיווי חזותי
     function addVisualIndicationStyles() {
+        // בדוק קודם אם הסגנונות כבר קיימים
+        if (document.getElementById('linkage-styles')) return;
+
         const styleElement = document.createElement('style');
+        styleElement.id = 'linkage-styles';
         styleElement.textContent = `
             .snap-highlight {
                 box-shadow: 0 0 0 3px #4285f4 !important;
@@ -92,6 +96,10 @@
         event.preventDefault(); isDragging = true; draggedElement = targetBlock;
         if (!draggedElement.id) { draggedElement.id = generateUniqueBlockId(); }
 
+        if (ENABLE_DETAILED_SNAP_LOGGING) {
+            console.log(`[Linkage] Started dragging block: ${draggedElement.id}`);
+        }
+
         const prevBlockId = draggedElement.dataset.prevBlockId;
         if (prevBlockId) { const pb = document.getElementById(prevBlockId); if (pb) delete pb.dataset.nextBlockId; delete draggedElement.dataset.prevBlockId; }
         const leftBlockId = draggedElement.dataset.leftBlockId;
@@ -131,11 +139,14 @@
 
         // בצע הצמדה או מיקום סופי
         if (isValidSnapTarget) {
+            if (ENABLE_DETAILED_SNAP_LOGGING) {
+                console.log(`[Linkage] Attempting to link with valid target`);
+            }
             linkBlocksHorizontally(currentTarget, currentDraggedElement);
         } else {
             // אין הצמדה - המיקום האחרון מ-mousemove נשאר
             if (ENABLE_DETAILED_SNAP_LOGGING && currentDraggedElement) {
-                 console.log(`Placed single block ${currentDraggedElement.id} (no snap)`);
+                 console.log(`[Linkage] Placed single block ${currentDraggedElement.id} (no snap)`);
             }
         }
 
@@ -192,6 +203,10 @@
             if (horizontalDistance < closestDistance && verticalDistance < VERTICAL_ALIGNMENT_TOLERANCE) { 
                 closestDistance = horizontalDistance; 
                 bestTarget = block; 
+                
+                if (shouldLog) {
+                    console.log(`[Linkage] Found potential target: ${block.id}, distance H=${horizontalDistance.toFixed(2)}, V=${verticalDistance.toFixed(2)}`);
+                }
             } 
         }); 
         
@@ -202,9 +217,9 @@
             // הוסף חיווי חזותי לאזור הצימוד
             showSnapAreaIndicator(bestTarget, draggedElement);
             
-            if (shouldLog) console.log(`--- Best H target: ${bestTarget.id}. Added visual indicators. ---`); 
+            if (shouldLog) console.log(`[Linkage] Best target found: ${bestTarget.id}. Added visual indicators.`); 
         } else { 
-            if (shouldLog) console.log(`--- No H target found. ---`); 
+            if (shouldLog) console.log(`[Linkage] No target found within range.`); 
         } 
     }
     
@@ -237,7 +252,7 @@
         });
     }
     
-    // פונקציות חדשות לחיווי חזותי של אזור הצימוד
+    // פונקציות לחיווי חזותי של אזור הצימוד
     function showSnapAreaIndicator(leftBlock, rightBlock) {
         if (!leftBlock || !rightBlock || !programmingArea) return;
         
@@ -290,11 +305,15 @@
         leftBlock.dataset.rightBlockId = rightBlock.id;
         rightBlock.dataset.leftBlockId = leftBlock.id; // תיקון: זה היה rightBlock.id במקור
 
-        const leftWidth = leftBlock.offsetWidth;
-        const targetX = leftBlock.offsetLeft + leftWidth - HORIZONTAL_SNAP_OFFSET;
-        const targetY = leftBlock.offsetTop;
-        console.log(`[Linkage]   Calculated Target: X=${targetX.toFixed(0)}, Y=${targetY.toFixed(0)} (Offset: ${HORIZONTAL_SNAP_OFFSET})`);
+        // קיבוע פער התאמה לתיקון הפרשי מיקום
+        const offsetCorrection = 8; // פיקסלים להתאמה מדויקת
 
+        const leftWidth = leftBlock.offsetWidth;
+        const targetX = leftBlock.offsetLeft + leftWidth - HORIZONTAL_SNAP_OFFSET - offsetCorrection;
+        const targetY = leftBlock.offsetTop - offsetCorrection;
+        console.log(`[Linkage]   Calculated Target: X=${targetX.toFixed(0)}, Y=${targetY.toFixed(0)} (With correction: ${offsetCorrection}px)`);
+
+        // מיקום מדויק עם התאמה
         rightBlock.style.left = `${targetX}px`;
         rightBlock.style.top = `${targetY}px`;
         console.log(`[Linkage]   Set Left/Top Style for ${rightBlock.id}`);
@@ -303,6 +322,7 @@
         rightBlock.classList.add('snap-highlight');
         leftBlock.classList.add('snap-target');
         
+        // בדיקה של המיקום הסופי לאחר הצימוד
         setTimeout(() => {
             rightBlock.classList.remove('snap-highlight');
             leftBlock.classList.remove('snap-target');
@@ -310,8 +330,18 @@
             const finalLeft = rightBlock.offsetLeft;
             const finalTop = rightBlock.offsetTop;
             console.log(`[Linkage]   After Link (async) - Right [${rightBlock.id}]: FINAL L=${finalLeft}, FINAL T=${finalTop}`);
-            if (Math.abs(finalLeft - targetX) > 1 || Math.abs(finalTop - targetY) > 1) {
-                 console.warn(`[Linkage] Position discrepancy STILL detected for ${rightBlock.id}! Expected (${targetX.toFixed(0)}, ${targetY.toFixed(0)}), Got (${finalLeft}, ${finalTop})`);
+            
+            // בדוק אם המיקום עדיין שגוי
+            const positionError = Math.abs(finalLeft - targetX) > 1 || Math.abs(finalTop - targetY) > 1;
+            if (positionError) {
+                console.warn(`[Linkage] Position discrepancy detected for ${rightBlock.id}! Expected (${targetX.toFixed(0)}, ${targetY.toFixed(0)}), Got (${finalLeft}, ${finalTop})`);
+                
+                // נסה לתקן את המיקום שוב
+                rightBlock.style.left = `${targetX}px`;
+                rightBlock.style.top = `${targetY}px`;
+                console.log(`[Linkage] Made second attempt to correct position.`);
+            } else {
+                console.log(`[Linkage] Position looks good!`);
             }
         }, 500);
 
@@ -328,4 +358,4 @@
     };
 
 })();
-console.log("linkageimproved.js script finished execution (With Visual Indication).");
+console.log("linkageimproved.js script finished execution (With Visual Indication + Position Correction).");
