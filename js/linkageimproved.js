@@ -152,6 +152,9 @@ const BlockLinkageManager = {
         
         // בדיקת הצמדה פוטנציאלית
         this.checkForSnapTargets(this.currentDraggedBlock);
+        
+        // ללא preventDefault, אירוע הdrag לא תמיד מופעל נכון בכל הדפדפנים
+        event.preventDefault();
     },
     
     // טיפול בסיום גרירה
@@ -163,6 +166,7 @@ const BlockLinkageManager = {
         blocks.forEach(block => {
             block.classList.remove('dragging');
             block.classList.remove('snap-target');
+            block.classList.remove('near-snap');
         });
         
         // בדיקה האם יש צורך בהצמדה וביצוע ההצמדה
@@ -464,14 +468,16 @@ function addLinkageStyles() {
         
         /* סגנון בלוק שמהווה יעד הצמדה */
         .block-container.snap-target {
-            outline: 2px solid #FFD700;
-            box-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+            outline: 3px solid #FFD700 !important;
+            box-shadow: 0 0 12px 4px rgba(255, 215, 0, 0.7) !important;
+            z-index: 999;
         }
         
         /* סגנון בלוק נגרר בעת קרבה להצמדה */
         .block-container.near-snap {
-            outline: 2px solid #0078FF;
-            box-shadow: 0 0 8px rgba(0, 120, 255, 0.7);
+            outline: 3px solid #0078FF !important;
+            box-shadow: 0 0 12px 4px rgba(0, 120, 255, 0.7) !important;
+            z-index: 1001;
         }
         
         /* אנימציית הצמדה */
