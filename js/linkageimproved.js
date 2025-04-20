@@ -24,7 +24,7 @@
   const CONFIG = {
     PIN_WIDTH: 5, // Not actively used in current snapping logic, but kept for context
     // *** שונה ***: סף מרחק קטן להפעלת ההדגשה וההצמדה
-    CONNECT_THRESHOLD: 3, // **הסף שונה ל-3 פיקסלים כפי שביקשת** (היה 15). ייתכן שתרצה להגדיל מעט לנוחות שימוש.
+    CONNECT_THRESHOLD: 1, // **הסף שונה ל-3 פיקסלים כפי שביקשת** (היה 15). ייתכן שתרצה להגדיל מעט לנוחות שימוש.
     VERTICAL_ALIGN_THRESHOLD: 20, // For potential future use, less critical with overlap check
     VERTICAL_OVERLAP_REQ: 0.4, // דרישה ל-40% חפיפה אנכית לפחות (חשוב מאוד)
     BLOCK_GAP: 0, // **אין רווח בין בלוקים מוצמדים (מדמה שקע-תקע)**
