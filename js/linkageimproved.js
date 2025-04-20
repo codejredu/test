@@ -9,7 +9,7 @@ let isDragging = false;
 let offsetX, offsetY;
 
 // הגדרות
-const SNAP_DISTANCE = 20; // מרחק בפיקסלים להצמדה
+const SNAP_DISTANCE = 30; // מרחק בפיקסלים להצמדה - הוגדל מ-20 ל-30 לשיפור רגישות
 
 // הוספת סגנונות הצמדה
 function addHighlightStyles() {
@@ -79,6 +79,8 @@ function dragBlock(event) {
     
     // קבלת אזור התכנות
     const programmingArea = document.getElementById('program-blocks');
+    if (!programmingArea) return; // וידוא שאזור התכנות קיים
+    
     const rect = programmingArea.getBoundingClientRect();
     
     // חישוב מיקום חדש
@@ -126,6 +128,9 @@ function checkForSnapTarget() {
     let minDistance = SNAP_DISTANCE;
     let snapDirection = '';
     
+    // לוגים של המרחק הנבדק וסטטוס כללי
+    console.log(`בדיקת הצמדה - minDistance התחלתי: ${minDistance}, בלוקים לבדיקה: ${blocks.length}`);
+    
     blocks.forEach(block => {
         const blockRect = block.getBoundingClientRect();
         
@@ -135,16 +140,16 @@ function checkForSnapTarget() {
         const bottomDist = Math.abs(draggedRect.top - blockRect.bottom);
         
         // יישור אופקי - בדיקה אם יש חפיפה אופקית בין הבלוקים
+        // הרחבת התנאי כדי להתחשב גם במקרים של חפיפה חלקית
         const horizontalOverlap = 
-            (draggedRect.left < blockRect.right) && 
-            (draggedRect.right > blockRect.left);
+            (draggedRect.left <= blockRect.right && draggedRect.right >= blockRect.left);
         
         // לוגינג מפורט - כדי לראות את חישובי המרחקים
         console.log(`בדיקת קרבה: בלוק=${block.dataset.type}, מרחק עליון=${topDist}, מרחק תחתון=${bottomDist}, חפיפה אופקית=${horizontalOverlap}`);
         
         if (horizontalOverlap) {
             // בדיקה אם יש להצמיד מלמעלה
-            if (topDist < minDistance) {
+            if (topDist <= minDistance) { // שונה מ < ל <= לשיפור הזיהוי
                 minDistance = topDist;
                 nearBlock = block;
                 snapDirection = 'top';
@@ -152,7 +157,7 @@ function checkForSnapTarget() {
             }
             
             // בדיקה אם יש להצמיד מלמטה
-            if (bottomDist < minDistance) {
+            if (bottomDist <= minDistance) { // שונה מ < ל <= לשיפור הזיהוי
                 minDistance = bottomDist;
                 nearBlock = block;
                 snapDirection = 'bottom';
@@ -163,7 +168,7 @@ function checkForSnapTarget() {
     
     // אם נמצא בלוק קרוב, הוסף הדגשות
     if (nearBlock) {
-        console.log('!!! נמצא בלוק קרוב להצמדה !!!', nearBlock);
+        console.log('!!! נמצא בלוק קרוב להצמדה !!!', nearBlock, 'כיוון:', snapDirection, 'מרחק:', minDistance);
         
         // הוסף הילה צהובה ליעד ההצמדה
         nearBlock.classList.add('snap-target');
@@ -171,6 +176,13 @@ function checkForSnapTarget() {
         
         // הוסף מסגרת כחולה לבלוק הנגרר - רק כשיש בלוק קרוב
         currentDraggedBlock.classList.add('near-snap');
+        
+        // בדיקת סטטוס הוספת המחלקות - דיבאג נוסף
+        console.log('סטטוס המחלקות:',
+            'snap-target:', nearBlock.classList.contains('snap-target'),
+            'near-snap:', currentDraggedBlock.classList.contains('near-snap'));
+    } else {
+        console.log('לא נמצא בלוק להצמדה במרחק מתאים');
     }
 }
 
@@ -251,7 +263,10 @@ function setupGlobalListeners() {
     
     // צופה בשינויים - להוספת מאזינים לבלוקים חדשים
     const programmingArea = document.getElementById('program-blocks');
-    if (!programmingArea) return;
+    if (!programmingArea) {
+        console.error('לא נמצא אזור תכנות עם ID: program-blocks');
+        return;
+    }
     
     const observer = new MutationObserver(mutations => {
         mutations.forEach(mutation => {
@@ -267,7 +282,7 @@ function setupGlobalListeners() {
     });
     
     // התחלת צפייה בשינויים
-    observer.observe(programmingArea, { childList: true });
+    observer.observe(programmingArea, { childList: true, subtree: true });
 }
 
 // אתחול הגדרות הצמדה לכל הבלוקים הנוכחיים
@@ -277,6 +292,20 @@ function setupExistingBlocks() {
         setupBlockForDragging(block);
     });
     console.log(`הוגדרו ${blocks.length} בלוקים קיימים לגרירה`);
+}
+
+// פונקציה לאיפוס ידני של ההדגשות במקרה של בעיות
+function forceResetHighlights() {
+    console.log('איפוס ידני של כל ההדגשות');
+    clearAllHighlights();
+    
+    // איפוס גם של המחלקה simple-dragging
+    document.querySelectorAll('.simple-dragging').forEach(block => {
+        block.classList.remove('simple-dragging');
+    });
+    
+    isDragging = false;
+    currentDraggedBlock = null;
 }
 
 // הפעלת המנגנון בטעינת הדף
@@ -291,6 +320,9 @@ function initializeFixedLinkage() {
     
     // הגדר בלוקים קיימים
     setupExistingBlocks();
+    
+    // הוסף פונקציית איפוס גלובלית לדיבאג
+    window.resetBlockHighlights = forceResetHighlights;
     
     console.log('מנגנון הצמדה מתוקן הופעל בהצלחה!');
 }
