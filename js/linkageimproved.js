@@ -12,6 +12,9 @@
     
     // דיוק מושלם - הצמדה מלאה ללא רווחים
     const PERFECT_FIT = true;
+    
+    // תיקון חיבור פאזל - הערך הקבוע של הפאזל
+    const PUZZLE_CONNECTOR_WIDTH = 8; // הרוחב של חיבור הפאזל
 
     // State Variables
     let isDragging = false; let draggedElement = null;
@@ -320,58 +323,48 @@
         leftBlock.dataset.rightBlockId = rightBlock.id;
         rightBlock.dataset.leftBlockId = leftBlock.id;
 
-        // קבלת מידע על הלבנים
-        const leftRect = leftBlock.getBoundingClientRect();
-        const rightRect = rightBlock.getBoundingClientRect();
-        
         if (PERFECT_FIT) {
-            // הגישה החדשה - התאמה מושלמת באמצעות transform במקום שינוי left/top
-            // 1. הגדר את מיקום הלבנה כמיקומה הנוכחי (מיקום מוחלט)
-            rightBlock.style.left = `${rightBlock.offsetLeft}px`;
-            rightBlock.style.top = `${rightBlock.offsetTop}px`;
+            // גישה חדשה המבוססת על left/top עם התאמה לחיבור הפאזל
             
-            // 2. מדוד כמה צריך להזיז את הלבנה כדי להצמיד אותה ללבנה השמאלית
-            const leftWidth = leftBlock.offsetWidth;
+            // איפוס כל טרנספורם קודם
+            rightBlock.style.transform = '';
             
-            // החלק החשוב - חישוב המיקום הרצוי כך שיהיה תואם לפאזל
-            // במקום להשתמש ב-offset עבור המיקום המוחלט, אנחנו משתמשים ב-getBoundingClientRect
-            // כדי לקבל את המיקום המדויק על המסך
+            // חישוב המיקום החדש עם התחשבות במבנה הפאזל
+            const targetLeft = leftBlock.offsetLeft + leftBlock.offsetWidth - PUZZLE_CONNECTOR_WIDTH;
+            const targetTop = leftBlock.offsetTop;
             
-            const desiredX = leftRect.right - rightRect.left;
-            const desiredY = leftRect.top - rightRect.top;
+            console.log(`[Linkage] Setting exact position: left=${targetLeft}px, top=${targetTop}px (with puzzle connector width: ${PUZZLE_CONNECTOR_WIDTH}px)`);
             
-            console.log(`[Linkage] Perfect fit transform: translateX(${desiredX}px) translateY(${desiredY}px)`);
-
-            // הגדר transform שיזיז את הלבנה למיקום המדויק
-            rightBlock.style.transform = `translateX(${desiredX}px) translateY(${desiredY}px)`;
+            // הגדרת מיקום מדויק
+            rightBlock.style.left = `${targetLeft}px`;
+            rightBlock.style.top = `${targetTop}px`;
             
-            // הוסף אנימציה והדגשה
+            // חיווי חזותי
             rightBlock.classList.add('snap-highlight');
             leftBlock.classList.add('snap-target');
             
-            // הסר את ההדגשה לאחר האנימציה
+            // בדיקה לאחר ההגדרה
             setTimeout(() => {
                 rightBlock.classList.remove('snap-highlight');
                 leftBlock.classList.remove('snap-target');
                 
-                // בדוק את המיקום הסופי עם המידות החדשות
-                const finalRightRect = rightBlock.getBoundingClientRect();
-                const finalLeftRect = leftBlock.getBoundingClientRect();
+                // בדיקת המיקום בפועל
+                const leftRect = leftBlock.getBoundingClientRect();
+                const rightRect = rightBlock.getBoundingClientRect();
                 
-                console.log(`[Linkage] Final position check - Left right edge: ${finalLeftRect.right}, Right left edge: ${finalRightRect.left}`);
+                // בדיקת מרחק
+                const actualGap = rightRect.left - leftRect.right;
+                console.log(`[Linkage] Final gap check: ${actualGap.toFixed(2)}px (should be around -${PUZZLE_CONNECTOR_WIDTH}px)`);
                 
-                // מדידת הדיוק
-                const finalGap = Math.abs(finalLeftRect.right - finalRightRect.left);
-                console.log(`[Linkage] Final gap between blocks: ${finalGap.toFixed(2)}px`);
-                
-                if (finalGap > 1) {
-                    // תיקון נוסף אם צריך
-                    const newDesiredX = finalLeftRect.right - finalRightRect.left + parseFloat(rightBlock.style.transform.split('translateX(')[1]);
-                    console.log(`[Linkage] Making final adjustment: translateX(${newDesiredX}px)`);
-                    rightBlock.style.transform = `translateX(${newDesiredX}px) translateY(${desiredY}px)`;
+                if (Math.abs(actualGap + PUZZLE_CONNECTOR_WIDTH) > 2) {
+                    // אם יש עדיין פער, נסה תיקון אחרון
+                    const newLeft = targetLeft - (actualGap + PUZZLE_CONNECTOR_WIDTH);
+                    console.log(`[Linkage] Making final position adjustment: ${newLeft}px`);
+                    rightBlock.style.left = `${newLeft}px`;
+                } else {
+                    console.log(`[Linkage] Perfect connection achieved!`);
                 }
-            }, 150);
-            
+            }, 50);
         } else {
             // הגישה הרגילה עם left/top (לגיבוי)
             const leftWidth = leftBlock.offsetWidth;
