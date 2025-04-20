@@ -349,9 +349,8 @@ main {
     opacity: 1; /* אין צורך בשקיפות נוספת כי הצבעים כבר מוגדרים עם שקיפות */
 }
 .snap-highlight {
-    outline: 3px dashed dodgerblue !important; /* הוספנו !important לבדיקה */
+    outline: 3px dashed dodgerblue !important;
     outline-offset: 2px;
-    box-shadow: 0 0 10px rgba(30, 144, 255, 0.7) !important; /* הוספנו גם הצללה לבדיקה */
-    /* אפשר להוסיף גם רקע לבדיקה */
-    /* background-color: rgba(30, 144, 255, 0.1); */
+    box-shadow: 0 0 10px rgba(30, 144, 255, 0.7) !important;
+    /* ודא שאין כאן בטעות משהו כמו display: none; או visibility: hidden; */
 }
