@@ -1,6 +1,6 @@
 /**
- * מנגנון פשוט להצמדת בלוקים - simplified-linkage.js
- * גרסה המבוססת על mousedown/mousemove במקום על drag/drop
+ * מנגנון מתוקן להצמדת בלוקים - fixed-linkage.js
+ * עם הדגשות רק בזמן קרבה (לא במהלך כל הגרירה)
  */
 
 // גלובלי - מידע על הבלוק הנוכחי שנגרר
@@ -23,20 +23,25 @@ function addHighlightStyles() {
     style.textContent = `
         /* הילה צהובה ליעד ההצמדה */
         .snap-target {
-            outline: 3px solid #FFD700 !important;
             background-color: rgba(255, 255, 0, 0.3) !important;
+            border: 2px solid #FFD700 !important;
             box-shadow: 0 0 8px 2px rgba(255, 215, 0, 0.6) !important;
             z-index: 100 !important;
             position: relative !important;
         }
         
-        /* מסגרת כחולה מקווקווה לבלוק הנגרר */
-        .dragging {
-            outline: 3px dashed #0078FF !important;
+        /* מסגרת כחולה מקווקווה לבלוק הנגרר - רק בזמן קרבה */
+        .near-snap {
+            border: 2px dashed #0078FF !important;
             box-shadow: 0 0 8px 2px rgba(0, 120, 255, 0.6) !important;
             z-index: 1000 !important;
-            cursor: grabbing !important;
             position: relative !important;
+        }
+        
+        /* סגנון גרירה רגילה - ללא דגשים מיוחדים */
+        .simple-dragging {
+            opacity: 0.9;
+            cursor: grabbing !important;
         }
     `;
     
@@ -59,8 +64,8 @@ function startDragging(event) {
     offsetX = event.clientX - rect.left;
     offsetY = event.clientY - rect.top;
     
-    // סימון ויזואלי
-    block.classList.add('dragging');
+    // סימון ויזואלי פשוט (בלי המסגרת הכחולה)
+    block.classList.add('simple-dragging');
     
     // מניעת ברירת המחדל לאפשר גרירה חלקה
     event.preventDefault();
@@ -86,7 +91,7 @@ function dragBlock(event) {
     currentDraggedBlock.style.top = y + 'px';
     
     // נקה הדגשות קודמות
-    clearSnapHighlights();
+    clearAllHighlights();
     
     // בדוק האם יש בלוק קרוב להצמדה
     checkForSnapTarget();
@@ -95,11 +100,17 @@ function dragBlock(event) {
     event.preventDefault();
 }
 
-// ניקוי הדגשות
-function clearSnapHighlights() {
+// ניקוי כל ההדגשות
+function clearAllHighlights() {
+    // ניקוי הדגשת יעד הצמדה
     document.querySelectorAll('.snap-target').forEach(block => {
         block.classList.remove('snap-target');
     });
+    
+    // ניקוי הדגשת בלוק נגרר
+    if (currentDraggedBlock) {
+        currentDraggedBlock.classList.remove('near-snap');
+    }
 }
 
 // חיפוש בלוק קרוב להצמדה
@@ -110,8 +121,8 @@ function checkForSnapTarget() {
     const draggedRect = currentDraggedBlock.getBoundingClientRect();
     
     // בדיקת כל הבלוקים האחרים
-    const blocks = document.querySelectorAll('.block-container:not(.dragging)');
-    let closestBlock = null;
+    const blocks = document.querySelectorAll('.block-container:not(.simple-dragging)');
+    let nearBlock = null;
     let minDistance = SNAP_DISTANCE;
     let snapDirection = '';
     
@@ -128,11 +139,14 @@ function checkForSnapTarget() {
             (draggedRect.left < blockRect.right) && 
             (draggedRect.right > blockRect.left);
         
+        // לוגינג מפורט - כדי לראות את חישובי המרחקים
+        console.log(`בדיקת קרבה: בלוק=${block.dataset.type}, מרחק עליון=${topDist}, מרחק תחתון=${bottomDist}, חפיפה אופקית=${horizontalOverlap}`);
+        
         if (horizontalOverlap) {
             // בדיקה אם יש להצמיד מלמעלה
             if (topDist < minDistance) {
                 minDistance = topDist;
-                closestBlock = block;
+                nearBlock = block;
                 snapDirection = 'top';
                 console.log('בלוק קרוב להצמדה מלמעלה:', block, 'מרחק:', topDist);
             }
@@ -140,18 +154,23 @@ function checkForSnapTarget() {
             // בדיקה אם יש להצמיד מלמטה
             if (bottomDist < minDistance) {
                 minDistance = bottomDist;
-                closestBlock = block;
+                nearBlock = block;
                 snapDirection = 'bottom';
                 console.log('בלוק קרוב להצמדה מלמטה:', block, 'מרחק:', bottomDist);
             }
         }
     });
     
-    // אם נמצא בלוק קרוב, הוסף הדגשה
-    if (closestBlock) {
-        closestBlock.classList.add('snap-target');
-        closestBlock.dataset.snapDirection = snapDirection;
-        console.log('נמצא בלוק להצמדה:', closestBlock, 'כיוון:', snapDirection);
+    // אם נמצא בלוק קרוב, הוסף הדגשות
+    if (nearBlock) {
+        console.log('!!! נמצא בלוק קרוב להצמדה !!!', nearBlock);
+        
+        // הוסף הילה צהובה ליעד ההצמדה
+        nearBlock.classList.add('snap-target');
+        nearBlock.dataset.snapDirection = snapDirection;
+        
+        // הוסף מסגרת כחולה לבלוק הנגרר - רק כשיש בלוק קרוב
+        currentDraggedBlock.classList.add('near-snap');
     }
 }
 
@@ -202,8 +221,9 @@ function stopDragging() {
     }
     
     // ניקוי מצב הגרירה
-    currentDraggedBlock.classList.remove('dragging');
-    clearSnapHighlights();
+    currentDraggedBlock.classList.remove('simple-dragging');
+    currentDraggedBlock.classList.remove('near-snap');
+    clearAllHighlights();
     
     isDragging = false;
     currentDraggedBlock = null;
@@ -216,6 +236,11 @@ function setupBlockForDragging(block) {
     
     // הוספת מאזין חדש
     block.addEventListener('mousedown', startDragging);
+    
+    // וידוא שהבלוק הוגדר למצב draggable=true
+    if (block.getAttribute('draggable') !== 'true') {
+        block.setAttribute('draggable', 'true');
+    }
 }
 
 // הגדרת מאזיני אירועים גלובליים
@@ -255,8 +280,8 @@ function setupExistingBlocks() {
 }
 
 // הפעלת המנגנון בטעינת הדף
-function initializeSimpleLinkage() {
-    console.log('מאתחל מנגנון הצמדה פשוט...');
+function initializeFixedLinkage() {
+    console.log('מאתחל מנגנון הצמדה מתוקן...');
     
     // הוסף סגנונות
     addHighlightStyles();
@@ -267,13 +292,13 @@ function initializeSimpleLinkage() {
     // הגדר בלוקים קיימים
     setupExistingBlocks();
     
-    console.log('מנגנון הצמדה הופעל בהצלחה!');
+    console.log('מנגנון הצמדה מתוקן הופעל בהצלחה!');
 }
 
 // הפעל בטעינת המסמך
-document.addEventListener('DOMContentLoaded', initializeSimpleLinkage);
+document.addEventListener('DOMContentLoaded', initializeFixedLinkage);
 
 // הפעל גם אם המסמך כבר נטען
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    setTimeout(initializeSimpleLinkage, 500);
+    setTimeout(initializeFixedLinkage, 500);
 }
