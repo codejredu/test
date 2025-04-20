@@ -1,6 +1,6 @@
-// ========================================================================
+ // ========================================================================
 // Improved Block Linkage System (linkageimproved.js)
-// Version: Horizontal Snap - With Visual Indication - Stable Syntax + Link Logs
+// Version: Horizontal Snap - With Visual Indication & Position Fix - Final
 // ========================================================================
 
 (function() {
@@ -9,6 +9,10 @@
     const VERTICAL_ALIGNMENT_TOLERANCE = 30;
     const HORIZONTAL_SNAP_OFFSET = 0; 
     const ENABLE_DETAILED_SNAP_LOGGING = true; // הפכתי לפעיל כדי לקבל יותר לוגים
+    
+    // Fixed Position Correction Values (based on logs analysis)
+    const POSITION_CORRECTION_X = 8; // תיקון קבוע לציר X
+    const POSITION_CORRECTION_Y = 8; // תיקון קבוע לציר Y
 
     // State Variables
     let isDragging = false; let draggedElement = null;
@@ -33,7 +37,7 @@
         }
         programmingArea.addEventListener('mousedown', handleMouseDown);
         console.log("[Linkage] Mousedown listener ATTACHED.");
-        console.log("[Linkage] System Initialized.");
+        console.log("[Linkage] System Initialized with position correction X=" + POSITION_CORRECTION_X + ", Y=" + POSITION_CORRECTION_Y);
         prepareExistingBlocks();
     }
     
@@ -291,27 +295,27 @@
     }
 
     // ========================================================================
-    // Linking Logic (Horizontal - Using ONLY Left/Top)
+    // Linking Logic (Horizontal - With Position Correction)
     // ========================================================================
     function linkBlocksHorizontally(leftBlock, rightBlock) {
         if (!leftBlock || !rightBlock || leftBlock === rightBlock || !programmingArea) return;
         if (leftBlock.dataset.rightBlockId || rightBlock.dataset.leftBlockId) return;
 
-        console.log(`[Linkage] Linking ${leftBlock.id} -> ${rightBlock.id} (Using Left/Top)`);
+        console.log(`[Linkage] Linking ${leftBlock.id} -> ${rightBlock.id} (Using Left/Top + Position Fix)`);
         console.log(`[Linkage]   Before - Left [${leftBlock.id}]: L=${leftBlock.offsetLeft}, T=${leftBlock.offsetTop}, W=${leftBlock.offsetWidth}`);
         console.log(`[Linkage]   Before - Right [${rightBlock.id}]: L=${rightBlock.offsetLeft}, T=${rightBlock.offsetTop}`);
 
         // תיקון: הגדרת קשרים נכונה בין הבלוקים
         leftBlock.dataset.rightBlockId = rightBlock.id;
-        rightBlock.dataset.leftBlockId = leftBlock.id; // תיקון: זה היה rightBlock.id במקור
-
-        // קיבוע פער התאמה לתיקון הפרשי מיקום
-        const offsetCorrection = 8; // פיקסלים להתאמה מדויקת
+        rightBlock.dataset.leftBlockId = leftBlock.id;
 
         const leftWidth = leftBlock.offsetWidth;
-        const targetX = leftBlock.offsetLeft + leftWidth - HORIZONTAL_SNAP_OFFSET - offsetCorrection;
-        const targetY = leftBlock.offsetTop - offsetCorrection;
-        console.log(`[Linkage]   Calculated Target: X=${targetX.toFixed(0)}, Y=${targetY.toFixed(0)} (With correction: ${offsetCorrection}px)`);
+        
+        // חישוב מיקום עם תיקון הפער
+        const targetX = leftBlock.offsetLeft + leftWidth - HORIZONTAL_SNAP_OFFSET - POSITION_CORRECTION_X;
+        const targetY = leftBlock.offsetTop - POSITION_CORRECTION_Y;
+        
+        console.log(`[Linkage]   Calculated Target: X=${targetX.toFixed(0)}, Y=${targetY.toFixed(0)} (With correction X=${POSITION_CORRECTION_X}, Y=${POSITION_CORRECTION_Y})`);
 
         // מיקום מדויק עם התאמה
         rightBlock.style.left = `${targetX}px`;
@@ -336,14 +340,16 @@
             if (positionError) {
                 console.warn(`[Linkage] Position discrepancy detected for ${rightBlock.id}! Expected (${targetX.toFixed(0)}, ${targetY.toFixed(0)}), Got (${finalLeft}, ${finalTop})`);
                 
-                // נסה לתקן את המיקום שוב
-                rightBlock.style.left = `${targetX}px`;
-                rightBlock.style.top = `${targetY}px`;
-                console.log(`[Linkage] Made second attempt to correct position.`);
+                // נסה לתקן את המיקום שוב עם תיקון נוסף
+                const retryX = targetX - (finalLeft - targetX);
+                const retryY = targetY - (finalTop - targetY);
+                rightBlock.style.left = `${retryX}px`;
+                rightBlock.style.top = `${retryY}px`;
+                console.log(`[Linkage] Made second attempt to correct position using X=${retryX}, Y=${retryY}`);
             } else {
                 console.log(`[Linkage] Position looks good!`);
             }
-        }, 500);
+        }, 50); // הקטנתי את הזמן כדי לתקן מהר יותר
 
         console.log(`[Linkage] Linked HORIZONTALLY ${leftBlock.id} -> ${rightBlock.id}.`);
     }
@@ -358,4 +364,4 @@
     };
 
 })();
-console.log("linkageimproved.js script finished execution (With Visual Indication + Position Correction).");
+console.log("linkageimproved.js script finished execution (With Visual Indication + Position Fix).");
