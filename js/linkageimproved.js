@@ -1,4 +1,4 @@
- // ========================================================================
+  // ========================================================================
 // Improved Block Linkage System (linkageimproved.js)
 // Version: Horizontal Snap - Top Align Y - Final Position Tuning Attempt
 // ========================================================================
@@ -163,32 +163,46 @@
     // ========================================================================
     // Linking Logic (Horizontal - Top Align Y, WITH Offset X)
     // ========================================================================
+        // ========================================================================
+    // Linking Logic (Horizontal - *** Using Transform for Positioning ***)
+    // ========================================================================
     function linkBlocksHorizontally(leftBlock, rightBlock) {
         if (!leftBlock || !rightBlock || leftBlock === rightBlock || !programmingArea) return;
         if (leftBlock.dataset.rightBlockId || rightBlock.dataset.leftBlockId) return;
 
-        console.log(`Linking ${leftBlock.id} -> ${rightBlock.id}`);
+        console.log(`Linking ${leftBlock.id} -> ${rightBlock.id} (Using Transform)`);
         console.log(`  Before Link - Left [${leftBlock.id}]: L=${leftBlock.offsetLeft}, T=${leftBlock.offsetTop}, W=${leftBlock.offsetWidth}`);
         console.log(`  Before Link - Right [${rightBlock.id}]: L=${rightBlock.offsetLeft}, T=${rightBlock.offsetTop}`);
 
         leftBlock.dataset.rightBlockId = rightBlock.id; rightBlock.dataset.leftBlockId = leftBlock.id;
         const leftWidth = leftBlock.offsetWidth;
+
+        // חישוב מיקום היעד X ו-Y (כמו קודם, יישור עליון)
         const targetX = leftBlock.offsetLeft + leftWidth - HORIZONTAL_SNAP_OFFSET;
-        const targetY = leftBlock.offsetTop; // יישור לפי קצה עליון
+        const targetY = leftBlock.offsetTop;
         console.log(`  Calculated Target: X=${targetX.toFixed(0)}, Y=${targetY.toFixed(0)} (Offset: ${HORIZONTAL_SNAP_OFFSET})`);
 
-        rightBlock.style.left = `${targetX}px`;
-        rightBlock.style.top = `${targetY}px`;
-        console.log(`  Set Style for ${rightBlock.id}`);
+        // *** שינוי: שימוש ב-transform במקום left/top ***
+        // ודא שהבלוק מתחיל בלי transform קודם שיפריע
+        rightBlock.style.transform = 'none';
+        // הגדר left/top ל-0 והשתמש ב-translate
+        rightBlock.style.left = '0px';
+        rightBlock.style.top = '0px';
+        rightBlock.style.transform = `translate(${targetX}px, ${targetY}px)`;
+        console.log(`  Set Transform Style for ${rightBlock.id}`);
 
+        // בדיקה אסינכרונית - נבדוק גם offset וגם transform
         setTimeout(() => {
             const finalLeft = rightBlock.offsetLeft;
             const finalTop = rightBlock.offsetTop;
-            console.log(`  After Link (async) - Right [${rightBlock.id}]: FINAL L=${finalLeft}, FINAL T=${finalTop}`);
-            if (Math.abs(finalLeft - targetX) > 1 || Math.abs(finalTop - targetY) > 1) {
-                 console.warn(`Position discrepancy detected for ${rightBlock.id}! Expected (${targetX.toFixed(0)}, ${targetY.toFixed(0)}), Got (${finalLeft}, ${finalTop})`);
-            }
-        }, 0);
+            const finalTransform = window.getComputedStyle(rightBlock).transform;
+            console.log(`  After Link (async) - Right [${rightBlock.id}]: FINAL L=${finalLeft}, T=${finalTop}, Transform=${finalTransform}`);
+
+            // נבדוק אם ה-transform נשאר כפי שהגדרנו (בערך)
+            // ניתוח ה-transform string הוא קצת מורכב, נדלג על הבדיקה האוטומטית בינתיים
+            // ונבדוק ידנית בלוג אם ה-transform נראה כמו `matrix(1, 0, 0, 1, targetX, targetY)`
+
+        }, 50); // ניתן עיכוב קצת יותר ארוך
 
         console.log(`Linked HORIZONTALLY ${leftBlock.id} -> ${rightBlock.id}.`);
     }
