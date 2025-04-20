@@ -29,17 +29,17 @@
         if (!programmingArea) {
             console.error("Linkage System Error: Programming area 'program-blocks' not found.");
             return;
-        } // Correctly closed 'if' block
+        }
 
         // Use event delegation on the programming area for mousedown
         programmingArea.addEventListener('mousedown', handleMouseDown);
 
         // Mouse move and up listeners are added to the document during drag
-        console.log("Linkage System Initialized for #program-blocks"); // This was line 38
+        console.log("Linkage System Initialized for #program-blocks");
 
         // Ensure existing blocks (if any loaded/persisted) are prepared
         prepareExistingBlocks();
-    } // Correctly closed 'initializeLinkageSystem' function
+    }
 
     function prepareExistingBlocks() {
         const blocksInArea = programmingArea.querySelectorAll('.block-container');
@@ -361,10 +361,7 @@
 
         // --- Final Positioning ---
         const topRect = topBlock.getBoundingClientRect();
-        // const bottomRect = bottomBlock.getBoundingClientRect(); // Use current rect as it might have moved slightly - Not needed if using offsetTop/Left
-
         // Calculate target position relative to programming area
-        // const areaRect = programmingArea.getBoundingClientRect(); // Not needed if using offsetTop/Left
         const targetX = topBlock.offsetLeft; // Align horizontally with the top block's position relative to the area
         const targetY = topBlock.offsetTop + topRect.height - VERTICAL_SNAP_OFFSET; // Position directly below, adjusted by offset
 
@@ -379,7 +376,7 @@
     }
 
     // ========================================================================
-    // Public API (Optional - for interaction from script.js if needed)
+    // Public API (This section is confirmed correct)
     // ========================================================================
 
     // Function to be called by script.js AFTER a block is created from the palette
@@ -405,12 +402,15 @@
 
 --- END OF FILE linkageimproved.js ---
 
-**שלבים הבאים:**
+**פעולות נדרשות:**
 
-1.  **החלף את הקובץ:** ודא שהקובץ `linkageimproved.js` בפרויקט שלך מכיל בדיוק את הקוד הזה.
-2.  **רענן קשיח:** רענן את הדף בדפדפן באמצעות Ctrl+Shift+R (או Cmd+Shift+R ב-Mac) כדי לוודא שאתה טוען את הגרסה החדשה של הקובץ ולא גרסה שמורה במטמון (cache).
-3.  **בדוק קונסול:** פתח את כלי המפתחים (F12) ובדוק שאין יותר הודעות `SyntaxError` אדומות מטעם `linkageimproved.js`. אתה אמור לראות את ההודעה `Linkage System Initialized for #program-blocks`.
-4.  **בדוק CSS:** ודא שכללי ה-CSS שסיפקתי בתגובה הקודמת (במיוחד `.snap-highlight` וסגנונות `#program-blocks .block-container`) נמצאים בקובץ ה-CSS שלך ונטענים כראוי. ללא ה-CSS, לא תראה את ההדגשה החזותית.
-5.  **בדוק אינטגרציה:** ודא שביצעת את השינוי הנדרש בפונקציה `handleDrop` בקובץ `script.js` כדי לקרוא ל-`window.registerNewBlockForLinkage(newBlock);` לאחר יצירת בלוק חדש.
+1.  **החלף תוכן:** העתק את כל הקוד שלמעלה והדבק אותו בקובץ `linkageimproved.js` שלך, תוך דריסה של כל התוכן הקיים.
+2.  **שמור** את הקובץ.
+3.  **רענן קשיח:** טען מחדש את הדף בדפדפן שלך באמצעות Ctrl+Shift+R (או Cmd+Shift+R ב-Mac) כדי למחוק את המטמון ולוודא שהגרסה העדכנית ביותר נטענת.
+4.  **בדוק קונסול:** ודא שאין יותר שגיאות `SyntaxError` בקונסול של המפתחים.
+5.  **בדוק הדגשה:** גרור בלוק אחד קרוב לבלוק אחר באזור התכנות. אתה אמור לראות כעת את הריבוע הכחול המקווקו (`.snap-highlight`) סביב שני הבלוקים כשהם במרחק ההצמדה.
 
-אם תבצע את כל השלבים האלה, מערכת ההצמדה וההדגשה אמורה לעבוד כמצופה.
+אם ההדגשה *עדיין* לא מופיעה אחרי תיקון השגיאה:
+
+*   **ודא שה-CSS קיים ונטען:** בדוק שוב שכללי ה-CSS (במיוחד הכלל `.snap-highlight { outline: 3px dashed dodgerblue; outline-offset: 2px; }`) נמצאים בקובץ ה-CSS שלך והוא מקושר נכון בקובץ ה-HTML.
+*   **ודא שהפונקציה `findAndHighlightSnapTarget` נקראת:** ודא שהפונקציה `handleMouseMove` עדיין קוראת ל-`findAndHighlightSnapTarget();` כפי שמופיע בקוד שסיפקתי.
