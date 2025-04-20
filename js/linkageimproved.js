@@ -22,7 +22,7 @@
   // קונפיגורציה - פרמטרים שניתן להתאים
   const CONFIG = {
     PIN_WIDTH: 5,
-    CONNECT_THRESHOLD: 0, // סף הדוק להפעלת הדגשה והצמדה (ניתן להגדיל מעט לנוחות)
+    CONNECT_THRESHOLD: 8, // סף הדוק להפעלת הדגשה והצמדה (ניתן להגדיל מעט לנוחות)
     VERTICAL_ALIGN_THRESHOLD: 20,
     VERTICAL_OVERLAP_REQ: 0.4, // דרישה ל-40% חפיפה אנכית לפחות
     BLOCK_GAP: 0, // אין רווח בין בלוקים מוצמדים
