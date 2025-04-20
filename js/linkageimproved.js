@@ -22,7 +22,7 @@
     BLOCK_GAP: 0,
     PLAY_SOUND: true,
     SOUND_VOLUME: 0.8, // עוצמה מעט מופחתת כדי לא להבהיל
-    SOUND_PATH: '/assets/sound/link.mp3', // **** נתיב לקובץ השמע ****
+    SOUND_PATH: 'assets/sound/link.mp3', // **** נתיב לקובץ השמע ****
     DEBUG: true
   };
 
