@@ -1,6 +1,6 @@
  // ========================================================================
 // Improved Block Linkage System (linkageimproved.js)
-// Version: Horizontal Snapping Detection (Left-to-Right)
+// Version: Horizontal Snap Detection (Highlight Dragged Only)
 // ========================================================================
 
 (function() {
@@ -13,8 +13,8 @@
     // State Variables
     let isDragging = false;
     let draggedElement = null;
-    let dragGroup = []; // חשוב: כרגע מטפל רק בשרשור אנכי! נצטרך לעדכן אם רוצים תנועה קבוצתית אופקית.
-    let potentialSnapTarget = null; // הבלוק משמאל שאליו אולי נצמד
+    let dragGroup = [];
+    let potentialSnapTarget = null;
     let initialMouseX = 0;
     let initialMouseY = 0;
     let initialElementX = 0;
@@ -41,15 +41,17 @@
         console.log("Linkage System Initialized for #program-blocks");
         prepareExistingBlocks();
     }
-    function prepareExistingBlocks() { /* ... קוד זהה ... */
+    function prepareExistingBlocks() {
         const blocksInArea = programmingArea.querySelectorAll('.block-container');
         blocksInArea.forEach(block => {
             if (!block.id) { block.id = generateUniqueBlockId(); }
-             if (!block.style.position || block.style.position === 'static') { block.style.position = 'absolute'; }
+             if (!block.style.position || block.style.position === 'static') {
+                 block.style.position = 'absolute';
+             }
         });
          console.log(`Prepared ${blocksInArea.length} existing blocks.`);
     }
-    function runInitialization() { /* ... קוד זהה ... */
+    function runInitialization() {
         if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initializeLinkageSystem); }
         else { initializeLinkageSystem(); }
     }
@@ -79,26 +81,22 @@
             console.log(`   Assigned new ID during mousedown: ${draggedElement.id}`);
         }
 
-        // --- Detaching Logic (*** צריך להוסיף ניתוק אופקי data-left/right בהמשך ***) ---
-        const prevBlockId = draggedElement.dataset.prevBlockId; // ניתוק אנכי קיים
+        const prevBlockId = draggedElement.dataset.prevBlockId;
         if (prevBlockId) {
             const prevBlock = document.getElementById(prevBlockId);
             if (prevBlock) delete prevBlock.dataset.nextBlockId;
             delete draggedElement.dataset.prevBlockId;
             console.log(`   Detached Vertically ${draggedElement.id} from ${prevBlockId}`);
         }
-        // ניתוק אופקי (מהבלוק משמאל)
         const leftBlockId = draggedElement.dataset.leftBlockId;
         if (leftBlockId) {
             const leftBlock = document.getElementById(leftBlockId);
-            if (leftBlock) delete leftBlock.dataset.rightBlockId; // הסר קישור מהבלוק משמאל
-            delete draggedElement.dataset.leftBlockId; // הסר קישור מהבלוק הנגרר
+            if (leftBlock) delete leftBlock.dataset.rightBlockId;
+            delete draggedElement.dataset.leftBlockId;
              console.log(`   Detached Horizontally ${draggedElement.id} from ${leftBlockId}`);
         }
-        // --- סוף עדכון ניתוק ---
 
-        // --- Grouping Logic (*** כרגע רק אנכי, צריך עדכון לתנועה אופקית קבוצתית ***) ---
-        dragGroup = getVerticalBlockGroup(draggedElement); // השתמש בפונקציה הישנה בינתיים
+        dragGroup = getVerticalBlockGroup(draggedElement); // עדיין משתמש בשרשור אנכי לקבוצה
         console.log(`   Calculated drag group (size ${dragGroup.length}) - Currently Vertical Only:`, dragGroup);
 
         initialMouseX = event.clientX; initialMouseY = event.clientY;
@@ -117,9 +115,8 @@
         const deltaX = currentMouseX - initialMouseX; const deltaY = currentMouseY - initialMouseY;
         const newX = initialElementX + deltaX; const newY = initialElementY + deltaY;
         draggedElement.style.left = `${newX}px`; draggedElement.style.top = `${newY}px`;
-        // *** חשוב: עדכון מיקום קבוצתי כרגע אנכי בלבד ***
-        updateVerticalDragGroupPosition(newX, newY);
-        findAndHighlightSnapTarget(); // קורא ללוגיקת ההצמדה האופקית החדשה
+        updateVerticalDragGroupPosition(newX, newY); // עדיין משתמש בשרשור אנכי לקבוצה
+        findAndHighlightSnapTarget();
     }
 
     function handleMouseUp(event) {
@@ -129,9 +126,8 @@
 
         if (isValidSnapTarget) {
              if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`Attempting to link HORIZONTALLY ${potentialSnapTarget.id} (left) -> ${draggedElement.id} (right)`);
-            linkBlocksHorizontally(potentialSnapTarget, draggedElement); // קרא לפונקציית הקישור האופקית החדשה
+            linkBlocksHorizontally(potentialSnapTarget, draggedElement);
         } else {
-            // מיקום רגיל אם אין הצמדה
              if (programmingArea && draggedElement) {
                  const areaRect = programmingArea.getBoundingClientRect();
                  const elemRect = draggedElement.getBoundingClientRect();
@@ -139,13 +135,12 @@
                  finalX = Math.max(0, Math.min(finalX, areaRect.width - elemRect.width));
                  finalY = Math.max(0, Math.min(finalY, areaRect.height - elemRect.height));
                  draggedElement.style.left = `${finalX}px`; draggedElement.style.top = `${finalY}px`;
-                 // *** עדכון מיקום קבוצתי כרגע אנכי בלבד ***
-                 updateVerticalDragGroupPosition(finalX, finalY);
+                 updateVerticalDragGroupPosition(finalX, finalY); // עדיין משתמש בשרשור אנכי לקבוצה
                   if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`Placed block ${draggedElement.id} at ${finalX}, ${finalY} (no snap)`);
              }
         }
 
-        clearSnapHighlighting();
+        clearSnapHighlighting(); // תמיד מנקה הדגשות בסוף
         dragGroup.forEach(block => { if (block) { block.style.zIndex = ''; block.style.cursor = ''; } });
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
@@ -162,7 +157,7 @@
     // ========================================================================
     function getVerticalBlockGroup(startBlock) { // שם שונה
         const group = [startBlock]; let currentBlock = startBlock;
-        while (currentBlock && currentBlock.dataset.nextBlockId) { // משתמש ב-next
+        while (currentBlock && currentBlock.dataset.nextBlockId) {
             const nextId = currentBlock.dataset.nextBlockId;
             const nextBlock = document.getElementById(nextId);
             if (nextBlock && programmingArea && programmingArea.contains(nextBlock)) {
@@ -173,7 +168,7 @@
     }
     function updateVerticalDragGroupPosition(leaderX, leaderY) { // שם שונה
         if (dragGroup.length <= 1) return;
-        let currentTop = leaderY; let currentLeft = leaderX; // עדיין מתיישר אופקית עם המוביל
+        let currentTop = leaderY; let currentLeft = leaderX;
         for (let i = 0; i < dragGroup.length; i++) {
             const block = dragGroup[i]; if (!block) continue;
             const blockHeight = block.offsetHeight;
@@ -183,13 +178,13 @@
     }
 
     // ========================================================================
-    // Snapping Logic ( *** חדש - אופקי *** )
+    // Snapping Logic ( *** Horizontal - Highlight Dragged Only *** )
     // ========================================================================
     function findAndHighlightSnapTarget() {
         const shouldLog = ENABLE_DETAILED_SNAP_LOGGING && isDragging && draggedElement;
         if (shouldLog) console.log(`--- findAndHighlightSnapTarget HORIZONTAL (${draggedElement.id}) ---`);
 
-        clearSnapHighlighting();
+        clearSnapHighlighting(); // מנקה הדגשות קודמות משני הבלוקים
         potentialSnapTarget = null;
 
         if (!isDragging || !draggedElement || !programmingArea) return;
@@ -197,19 +192,17 @@
         const dragRect = draggedElement.getBoundingClientRect();
         if (shouldLog) console.log(`Dragged (${draggedElement.id}): Rect T:${dragRect.top.toFixed(0)} L:${dragRect.left.toFixed(0)} W:${dragRect.width.toFixed(0)} H:${dragRect.height.toFixed(0)}`);
         if (dragRect.height <= 0 || dragRect.width <= 0) {
-             if (shouldLog) console.warn(`Dragged block ${draggedElement.id} has invalid dimensions! H:${dragRect.height} W:${dragRect.width}`);
-             return; // לא ניתן לחשב הצמדה לבלוק לא תקין
+             if (shouldLog) console.warn(`Dragged block ${draggedElement.id} has invalid dimensions!`);
+             return;
         }
 
-
-        // נקודת חיבור: מרכז הקצה השמאלי של הבלוק הנגרר
         const dragLeftConnector = {
             x: dragRect.left,
             y: dragRect.top + dragRect.height / 2
         };
         if (shouldLog) console.log(`Dragged Left Connector: X:${dragLeftConnector.x.toFixed(0)} Y:${dragLeftConnector.y.toFixed(0)}`);
 
-        let closestDistance = HORIZONTAL_SNAP_DISTANCE; // טווח אופקי
+        let closestDistance = HORIZONTAL_SNAP_DISTANCE;
         let bestTarget = null;
 
         const allBlocks = programmingArea.querySelectorAll('.block-container');
@@ -219,102 +212,96 @@
             const targetId = block.id || 'no-id';
             if (shouldLog) console.log(`\nChecking target: ${targetId}`);
 
-            // Condition 1: Don't snap to self or group members (קבוצה כרגע אנכית, אבל עדיין נכון)
-            if (dragGroup.includes(block)) {
-                if (shouldLog) console.log(` -> Skip ${targetId}: Part of drag group.`); return;
-            }
-
-            // Condition 2: Can only snap to blocks that DON'T already have a block to their RIGHT
-            if (block.dataset.rightBlockId) {
-                if (shouldLog) console.log(` -> Skip ${targetId}: Already has rightBlockId (${block.dataset.rightBlockId}).`); return;
-            }
+            if (dragGroup.includes(block)) { if (shouldLog) console.log(` -> Skip ${targetId}: Part of drag group.`); return; }
+            if (block.dataset.rightBlockId) { if (shouldLog) console.log(` -> Skip ${targetId}: Already has rightBlockId.`); return; }
 
             const targetRect = block.getBoundingClientRect();
-            if (targetRect.height <= 0 || targetRect.width <= 0) {
-                 if (shouldLog) console.warn(`Target block ${targetId} has invalid dimensions! Skipping.`);
-                 return;
-            }
+            if (targetRect.height <= 0 || targetRect.width <= 0) { if (shouldLog) console.warn(`Target block ${targetId} invalid dims.`); return; }
             if (shouldLog) console.log(` -> Target (${targetId}): Rect T:${targetRect.top.toFixed(0)} L:${targetRect.left.toFixed(0)} R:${targetRect.right.toFixed(0)} W:${targetRect.width.toFixed(0)} H:${targetRect.height.toFixed(0)}`);
 
-            // נקודת חיבור: מרכז הקצה הימני של בלוק המטרה
             const targetRightConnector = {
-                x: targetRect.right - HORIZONTAL_SNAP_OFFSET, // קצה ימני (עם היסט קל)
-                y: targetRect.top + targetRect.height / 2 // מרכז אנכי
+                x: targetRect.right - HORIZONTAL_SNAP_OFFSET,
+                y: targetRect.top + targetRect.height / 2
             };
              if (shouldLog) console.log(` -> Target Right Connector: X:${targetRightConnector.x.toFixed(0)} Y:${targetRightConnector.y.toFixed(0)}`);
 
-            // Condition 3: Calculate HORIZONTAL and VERTICAL distances
-            const dx = dragLeftConnector.x - targetRightConnector.x; // הפרש אופקי
-            const dy = dragLeftConnector.y - targetRightConnector.y; // הפרש אנכי
+            const dx = dragLeftConnector.x - targetRightConnector.x;
+            const dy = dragLeftConnector.y - targetRightConnector.y;
             const horizontalDistance = Math.abs(dx);
             const verticalDistance = Math.abs(dy);
 
             if (shouldLog) console.log(` -> Horiz Dist: ${horizontalDistance.toFixed(1)} (Need < ${closestDistance}). Vert Dist: ${verticalDistance.toFixed(1)} (Need < ${VERTICAL_ALIGNMENT_TOLERANCE})`);
 
-
-            // Final Check: Both horizontal distance AND vertical alignment must be within tolerance
             if (horizontalDistance < closestDistance && verticalDistance < VERTICAL_ALIGNMENT_TOLERANCE) {
                  if (shouldLog) console.log(` ==> Potential Match Found (Horizontal + Vertical): ${targetId} is close enough.`);
-                // שים לב: closestDistance מתעדכן עם המרחק האופקי
                 closestDistance = horizontalDistance;
                 bestTarget = block;
             } else {
-                 if (shouldLog) console.log(` -> No Match: Horizontal (${horizontalDistance.toFixed(1)}) or Vertical (${verticalDistance.toFixed(1)}) failed.`);
+                 if (shouldLog) console.log(` -> No Match: Horizontal or Vertical failed.`);
             }
         }); // End forEach block
 
+        // *** השינוי כאן - הדגשת הנגרר בלבד ***
         if (bestTarget) {
             potentialSnapTarget = bestTarget;
-            highlightSnapTarget(potentialSnapTarget, true);
-            highlightSnapTarget(draggedElement, true);
-             if (shouldLog) console.log(`--- Best target found (horizontally): ${bestTarget.id} ---`);
+            // highlightSnapTarget(potentialSnapTarget, true); // לא מדגישים את המטרה
+            highlightSnapTarget(draggedElement, true);      // מדגישים רק את הבלוק הנגרר
+             if (shouldLog) console.log(`--- Best target found (horizontally): ${bestTarget.id}. Highlighting dragged element ONLY. ---`);
         } else {
-            if (shouldLog) console.log(`--- No suitable target found (horizontally) ---`);
+             // אם לא נמצא יעד, נוודא שגם הבלוק הנגרר לא מודגש
+             highlightSnapTarget(draggedElement, false);
+            if (shouldLog) console.log(`--- No suitable target found (horizontally). Clearing highlights. ---`);
         }
     } // End findAndHighlightSnapTarget
 
-    function highlightSnapTarget(block, shouldHighlight) { /* ... קוד זהה ... */
-         if (block) { try { if (shouldHighlight) { block.classList.add('snap-highlight'); } else { block.classList.remove('snap-highlight'); } } catch (e) { console.error("Highlight error:", e, block); } }
+    function highlightSnapTarget(block, shouldHighlight) {
+         if (block) {
+             try {
+                 if (shouldHighlight) { block.classList.add('snap-highlight'); }
+                 else { block.classList.remove('snap-highlight'); }
+             } catch (e) { console.error("Error applying/removing highlight class:", e, block); }
+         }
     }
-     function clearSnapHighlighting() { /* ... קוד זהה ... */
+
+     function clearSnapHighlighting() {
          if (!programmingArea) return;
+         // *** שינוי: נמצא את *כל* הבלוקים המודגשים וננקה אותם ***
+         // זה חשוב כי יכול להיות שהבלוק שהיה מודגש כבר לא נגרר
          const highlighted = programmingArea.querySelectorAll('.snap-highlight');
-         highlighted.forEach(el => { try { el.classList.remove('snap-highlight'); } catch(e) { console.error("Highlight removal error:", e, el); } });
+         highlighted.forEach(el => {
+             try { el.classList.remove('snap-highlight'); }
+             catch(e) { console.error("Error removing highlight class:", e, el); }
+         });
      }
 
     // ========================================================================
-    // Linking Logic ( *** חדש - אופקי *** )
+    // Linking Logic (Horizontal)
     // ========================================================================
     function linkBlocksHorizontally(leftBlock, rightBlock) {
         if (!leftBlock || !rightBlock || leftBlock === rightBlock || !programmingArea) return;
 
-        // בדיקות נוספות לפני קישור
         if (leftBlock.dataset.rightBlockId) { console.warn(`Link H-aborted: Target ${leftBlock.id} already has right block`); return; }
         if (rightBlock.dataset.leftBlockId) { console.warn(`Link H-aborted: Source ${rightBlock.id} already has left block`); return; }
 
-        // --- עדכון מאפייני ה-Data ---
         leftBlock.dataset.rightBlockId = rightBlock.id;
         rightBlock.dataset.leftBlockId = leftBlock.id;
 
-        // --- מיקום סופי ---
-        // מקם את הבלוק הימני (הנגרר) מיד לימין הבלוק השמאלי (המטרה)
-        const leftRect = leftBlock.getBoundingClientRect(); // צריך גובה ליישור
+        const leftRect = leftBlock.getBoundingClientRect();
         const targetX = leftBlock.offsetLeft + leftBlock.offsetWidth - HORIZONTAL_SNAP_OFFSET;
-        const targetY = leftBlock.offsetTop; // יישור אנכי לקצה העליון של המטרה
+        const targetY = leftBlock.offsetTop;
 
         rightBlock.style.left = `${targetX}px`;
         rightBlock.style.top = `${targetY}px`;
 
-        // *** חשוב: עדכון קבוצת הגרירה כרגע לא מטפל בשרשור אופקי! ***
-        // updateHorizontalDragGroupPosition(targetX, targetY); // נצטרך פונקציה כזו אם רוצים תנועה קבוצתית אופקית
+        // updateHorizontalDragGroupPosition(targetX, targetY); // עדיין לא ממומש
 
         console.log(`Linked HORIZONTALLY ${leftBlock.id} -> ${rightBlock.id} at pos (${targetX}, ${targetY})`);
     }
 
     // ========================================================================
-    // Public API (ללא שינוי)
+    // Public API
     // ========================================================================
-    window.registerNewBlockForLinkage = function(newBlockElement) { /* ... קוד זהה ... */
+    window.registerNewBlockForLinkage = function(newBlockElement) {
          if (ENABLE_DETAILED_SNAP_LOGGING) console.log("Executing registerNewBlockForLinkage...", newBlockElement);
          if (!newBlockElement) { console.error("registerNewBlockForLinkage called with null"); return; }
          if (!newBlockElement.id) { newBlockElement.id = generateUniqueBlockId(); if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`Assigned new ID...`); }
@@ -324,4 +311,4 @@
 
 
 })(); // IIFE to encapsulate scope
-console.log("linkageimproved.js script finished execution (Horizontal Snap Detection).");
+console.log("linkageimproved.js script finished execution (Horizontal Snap - Highlight Dragged Only).");
