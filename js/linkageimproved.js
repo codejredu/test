@@ -1,130 +1,133 @@
 // --- START OF FILE linkageimproved.js ---
-// מימוש משופר - גרסה משולבת (הצמדה, הילה, שמע) v3.2 - תיקון קפיצה
+// מימוש משופר - v3.4 - ניסיון נוסף לתיקון קפיצה + הילה + שמע
 
 (function() {
-  // משתנים גלובליים במודול
-  let currentDraggedBlock = null;    // הבלוק הנגרר כרגע
-  let potentialSnapTarget = null;  // הבלוק שאליו ייתכן ונתחבר
-  let snapDirection = null;        // כיוון ההצמדה האפשרי ('left' או 'right')
-  let isDraggingBlock = false;       // האם מתבצעת גרירה של בלוק מתוך אזור התכנות
-  let dragOffset = { x: 0, y: 0 }; // ההיסט של העכבר מפינת הבלוק הנגרר
-  let futureIndicator = null;      // אלמנט המלבן הכחול המקווקו
-  let snapSound = null; // אודיו לצליל הצמדה
-  let audioEnabled = false; // האם השמע פעיל (בעקבות אינטראקציית משתמש)
-  let soundInitialized = false; // האם בוצע ניסיון אתחול לשמע
-
-  // קונפיגורציה - פרמטרים שניתן להתאים
+  // ----------------------------------------------------------------------
+  // Configuration
+  // ----------------------------------------------------------------------
   const CONFIG = {
-    PIN_WIDTH: 5,             // רוחב/עומק הפין/שקע בפיקסלים (לצורך זיהוי קרבה)
-    CONNECT_THRESHOLD: 30,    // מרחק אופקי מקסימלי בפיקסלים לזיהוי הצמדה (בין נקודות החיבור)
+    PIN_WIDTH: 5,             // רוחב/עומק פין/שקע לצורך זיהוי קרבה (פיקסלים)
+    CONNECT_THRESHOLD: 15,    // מרחק אופקי מקסימלי (בין פין לשקע) לזיהוי (פיקסלים)
     VERTICAL_ALIGN_THRESHOLD: 30, // הפרש אנכי מקסימלי מותר (בין top-ים)
-    BLOCK_GAP: 0,             // רווח בין בלוקים מחוברים (0 = צמודים)
-    PLAY_SOUND: true,         // האם להשמיע צליל בעת הצמדה
-    SOUND_VOLUME: 0.5,        // עוצמת הצליל (בין 0 ל-1) - נוריד מעט את העוצמה
-    DEBUG: true               // האם להציג לוגים מפורטים לדיבוג
+    BLOCK_GAP: 0,             // רווח סופי בין בלוקים מחוברים
+    PLAY_SOUND: true,
+    SOUND_VOLUME: 0.7,
+    DEBUG: true
   };
 
-  // ========================================================================
-  // אתחול המערכת
-  // ========================================================================
-  document.addEventListener('DOMContentLoaded', function() {
-    addHighlightStyles(); // הוסף סגנונות CSS
-    initProgrammingAreaListeners();
-    observeNewBlocks();
-    initExistingBlocks();
-    initGlobalMouseListeners();
-    initAudio(); // אתחול שמע
-    addSoundTestButton(); // הוסף כפתור בדיקה
+  // ----------------------------------------------------------------------
+  // Global State Variables
+  // ----------------------------------------------------------------------
+  let currentDraggedBlock = null;    // הבלוק הנגרר כרגע
+  let potentialSnapTarget = null;  // הבלוק הפוטנציאלי להצמדה
+  let snapDirection = null;        // כיוון ההצמדה ('left' או 'right' יחסית ליעד)
+  let isDraggingBlock = false;       // האם מתבצעת גרירה
+  let dragOffset = { x: 0, y: 0 }; // היסט העכבר מהפינה השמאלית-עליונה של הבלוק
+  let futureIndicator = null;      // אלמנט המלבן הכחול
+  let snapSound = null;            // אלמנט האודיו לצליל הצמדה
+  let audioEnabled = false;        // האם המשתמש אפשר שמע
+  let soundInitialized = false;    // האם בוצע ניסיון אתחול לשמע
 
-    if (CONFIG.DEBUG) console.log(`Block linkage system initialized (v3.2 - Fix Snap+Highlight+Sound)`);
-    if (CONFIG.DEBUG) console.log(`Config: PIN_WIDTH=${CONFIG.PIN_WIDTH}, CONNECT_THRESHOLD=${CONFIG.CONNECT_THRESHOLD}, VERTICAL_ALIGN_THRESHOLD=${CONFIG.VERTICAL_ALIGN_THRESHOLD}, PLAY_SOUND=${CONFIG.PLAY_SOUND}`);
+  // ========================================================================
+  // Initialization
+  // ========================================================================
+  document.addEventListener('DOMContentLoaded', () => {
+    addHighlightStyles();           // הוסף סגנונות CSS
+    initProgrammingAreaListeners(); // מאזינים לאזור התכנות הראשי
+    observeNewBlocks();             // צפה בבלוקים חדשים
+    initExistingBlocks();           // אתחל בלוקים קיימים
+    initGlobalMouseListeners();     // מאזינים גלובליים לעכבר
+    initAudio();                    // אתחל מערכת שמע
+    addSoundTestButton();           // הוסף כפתור בדיקת שמע
+
+    if (CONFIG.DEBUG) console.log(`Block linkage system initialized (v3.4)`);
+    if (CONFIG.DEBUG) console.log(`Config:`, JSON.stringify(CONFIG));
   });
 
   // ========================================================================
-  // אתחול מערכת השמע (מהקוד שסופק)
+  // Audio Handling (Using provided code)
   // ========================================================================
-  function initAudio() {
+   function initAudio() {
     if (!CONFIG.PLAY_SOUND || soundInitialized) return;
-    soundInitialized = true; // סמן שבוצע ניסיון אתחול
+    soundInitialized = true;
 
     try {
       snapSound = document.createElement('audio');
       snapSound.id = 'snap-sound';
-
       const source = document.createElement('source');
-      // Base64 encoded short click sound (WAV) - קצר יותר
-      source.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
-      source.type = 'audio/wav';
-      snapSound.appendChild(source);
-
-      snapSound.volume = CONFIG.SOUND_VOLUME;
-      snapSound.preload = 'auto';
-
-      document.body.appendChild(snapSound);
-
-      // הפעלה ראשונית ריקה עם אינטראקציית משתמש
-      const enableAudioHandler = () => {
-          if (!audioEnabled) { // הפעל רק אם עדיין לא הופעל
-              const playPromise = snapSound.play();
-              if (playPromise !== undefined) {
-                  playPromise.then(() => {
-                      snapSound.pause();
-                      snapSound.currentTime = 0;
-                      audioEnabled = true;
-                      console.log('Audio context unlocked by user interaction.');
-                  }).catch(error => {
-                      console.warn('Audio play() was interrupted or failed on first interaction:', error);
-                      // נסיונות חוזרים עשויים להיות חסומים עד לאינטראקציה אמיתית
-                  });
-              }
-          }
-          // הסר את המאזין אחרי הפעם הראשונה
-          document.removeEventListener('click', enableAudioHandler, true);
-          document.removeEventListener('touchstart', enableAudioHandler, true);
-      };
-
-      document.addEventListener('click', enableAudioHandler, { capture: true, once: true });
-      document.addEventListener('touchstart', enableAudioHandler, { capture: true, once: true }); // גם למגע
-
-      console.log('Snap sound initialized. Waiting for user interaction to enable.');
-
+      // Base64 encoded short click sound (WAV)
+      source.src = 'data:audio/wav;base64,UklGRjQnAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YRAnAACAgICAgICAgICAgICAgICAgICAgICAgICBgYGBgYGBgoKCgoKCg4ODg4ODhISEhISEhYWFhYWFhoaGhoaGh4eHh4eHiIiIiIiIiYmJiYmJioqKioqKi4uLi4uLjIyMjIyMjY2NjY2Njo6Ojo6Oj4+Pj4+PkJCQkJCQkZGRkZGRkpKSkpKSk5OTk5OTlJSUlJSUlZWVlZWVlpaWlpaWl5eXl5eXmJiYmJiYmZmZmZmZmpqampqam5ubm5ubnJycnJycnZ2dnZ2dnp6enp6en5+fn5+foKCgoKCgoaGhoaGhoqKioqKio6Ojo6Ojvb29u7u7ubm5t7e3tbW1s7OzsbGxr6+vrq6urKysqqqqqKiop6enpKSkpKSkpaWlpaWlpqamp6enqKioqampqqqqqqqqqampp6ennp6elZWVjIyMg4ODe3t7c3NzbW1taWlpZmZmZWVlZGRkZGRkY2NjYmJiYWFhYGBgX19fXl5eXV1dXFxcW1tbWlpaWVlZWFhYV1dXVlZWVVVVVFRUU1NTUlJSUVFRUFBQT09PTk5OTU1NTExMS0tLSkpKSUlJSEhIR0dHRkZGRUVFREREQ0NDQkJCQUFBQEBAQEBAQUFBQkJCQ0NDRERERUVFRkZGR0dHSEhISUlJSkpKS0tLTExMTU1NTk5OT09PUFBQUVFRUlJSU1NTVFRUVVVVVlZWV1dXWFhYWVlZWlpaW1tbXFxcXV1dXl5eX19fYGBgYWFhYmJiY2NjZGRkZWVlZmZmaWlpbW1tc3Nze3t7g4ODjIyMlZWVnp6ep6enqampqqqqqqqqqqqqq6urq6urrKysrKysra2tra2trq6urq6ur6+vr6+vsLCwsLCwsbGxsbGxs7Oztra2uLi4ubm5u7u7vb29v7+/wMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwDAwMAwMDAsOwAwAdMAwAAABgAAAA=';
+      snapSound.src = source.src; // הגדר את המקור שנוצר
+      document.body.appendChild(snapSound); // הוסף את הבלוק לדף (נדרש בחלק מהדפדפנים)
+      if (CONFIG.DEBUG) console.log('Audio element created and added to body');
     } catch (err) {
-      console.error('Error initializing audio:', err);
-      CONFIG.PLAY_SOUND = false; // בטל שמע אם האתחול נכשל
-      snapSound = null;
+      console.error('Error creating audio element:', err);
     }
   }
 
+  // אתחול השמע בעת אינטראקציה ראשונה (לחיצה או מגע)
+  const enableAudioHandler = () => {
+    if (!audioEnabled && snapSound) {
+      snapSound.play().then(() => {
+        snapSound.pause(); // עצור מיד אחרי הפעלה ראשונית
+        snapSound.currentTime = 0;
+        audioEnabled = true;
+        if (CONFIG.DEBUG) console.log('Audio context unlocked by user interaction.');
+      }).catch(err => {
+        // שגיאה צפויה אם לא היתה אינטראקציה, נמשיך ללא שמע
+        if (CONFIG.DEBUG) console.warn('Audio context not yet unlocked by user interaction:', err.name);
+      }).finally(() => {
+        // הסר את המאזינים אחרי הניסיון הראשון
+        document.removeEventListener('click', enableAudioHandler, true);
+        document.removeEventListener('touchstart', enableAudioHandler, true);
+      });
+    }
+  };
+
+  // האזן לאירועים שיכולים לאפשר הפעלת אודיו אוטומטית
+  document.addEventListener('click', enableAudioHandler, { capture: true, once: true });
+  document.addEventListener('touchstart', enableAudioHandler, { capture: true, once: true });
+
+
   // ========================================================================
-  // השמעת צליל הצמדה (מהקוד שסופק)
+  // השמעת צליל הצמדה
   // ========================================================================
   function playSnapSound() {
-    if (!CONFIG.PLAY_SOUND || !audioEnabled || !snapSound) {
-        if (CONFIG.DEBUG && CONFIG.PLAY_SOUND && !audioEnabled) {
-            console.warn("Snap sound cannot play yet: Audio not enabled by user interaction.");
-        } else if (CONFIG.DEBUG && CONFIG.PLAY_SOUND && !snapSound) {
-             console.warn("Snap sound cannot play: Audio element not initialized.");
+    if (!CONFIG.PLAY_SOUND || !snapSound) {
+        if (CONFIG.DEBUG && CONFIG.PLAY_SOUND && !snapSound) {
+             console.warn("[PlaySound] Audio element not initialized.");
         }
+        return; // לא ניתן להשמיע אם השמע כבוי או לא אותחל
+    }
+
+    // בדוק אם השמע כבר הופעל על ידי המשתמש
+    if (!audioEnabled) {
+        if (CONFIG.DEBUG) console.warn("[PlaySound] Audio context not yet unlocked. Please click/tap the screen first.");
+        // אופציונלי: נסה להפעיל שוב, למקרה שהיה עיכוב באינטראקציה
+        snapSound.play().then(() => {
+            snapSound.pause();
+            snapSound.currentTime = 0;
+            audioEnabled = true;
+            console.log("[PlaySound] Audio context unlocked now, retrying play...");
+            playSnapSound(); // נסה שוב עכשיו שההקשר פעיל
+        }).catch(() => {
+            // עדיין לא ניתן להפעיל
+        });
         return;
     }
 
+    // אם השמע מאופשר ואותחל, נגן
     try {
-      // אסטרטגיה: שחק מאפס, אל תחכה לסיום קודם
-      snapSound.currentTime = 0;
-      const playPromise = snapSound.play();
-
-      if (playPromise !== undefined) {
-        playPromise.then(() => {
-          if (CONFIG.DEBUG) console.log('Snap sound played.');
-        }).catch(error => {
-          // שגיאות נפוצות: פעולה נקטעה על ידי קריאה נוספת ל-play, או שהמשתמש לא לחץ עדיין.
-          if (error.name !== 'AbortError') { // התעלם משגיאות AbortError
-             console.warn('Error playing snap sound:', error);
-          }
+        snapSound.currentTime = 0; // התחל מההתחלה
+        snapSound.play().catch(error => {
+            // התעלם משגיאות AbortError שקורות אם קוראים ל-play מהר מדי ברצף
+            if (error.name !== 'AbortError' && CONFIG.DEBUG) {
+               console.warn('Error playing snap sound:', error);
+            }
         });
-      }
+         if (CONFIG.DEBUG) console.log('Attempted to play snap sound.');
     } catch (err) {
-      console.error('Exception in playSnapSound:', err);
+      console.error('[PlaySound] Exception:', err);
     }
   }
 
@@ -132,55 +135,69 @@
   // הוספת כפתור בדיקת שמע (מהקוד שסופק)
   // ========================================================================
   function addSoundTestButton() {
-    if (!CONFIG.PLAY_SOUND) return; // אל תוסיף אם השמע כבוי בקונפיגורציה
+    if (!CONFIG.PLAY_SOUND) return;
 
     try {
-        if (document.getElementById('sound-test-button')) return; // אל תוסיף אם כבר קיים
+        if (document.getElementById('sound-test-button')) return;
 
         const button = document.createElement('button');
         button.id = 'sound-test-button';
-        button.textContent = 'בדוק צליל'; // טקסט ראשוני
-        button.title = 'לחץ להפעלת צליל ההצמדה';
+        button.textContent = 'בדוק צליל';
+        button.title = 'לחץ כדי לאפשר ולהשמיע את צליל ההצמדה';
         Object.assign(button.style, {
             position: 'fixed', bottom: '15px', right: '15px', zIndex: '9999',
             padding: '8px 12px', backgroundColor: '#f0ad4e', /* Orange */
             color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer',
             boxShadow: '0 2px 5px rgba(0,0,0,0.2)', fontFamily: 'Arial, sans-serif',
-            fontSize: '13px', fontWeight: 'bold', opacity: '1', transition: 'opacity 0.5s ease-out'
+            fontSize: '13px', fontWeight: 'bold', opacity: '1',
+            transition: 'opacity 0.5s ease-out, background-color 0.3s ease'
         });
 
-        button.onmouseover = function() { this.style.backgroundColor = '#ec971f'; };
-        button.onmouseout = function() { this.style.backgroundColor = '#f0ad4e'; };
+        button.onmouseover = function() { if (!this.disabled) this.style.backgroundColor = '#ec971f'; };
+        button.onmouseout = function() { if (!this.disabled) this.style.backgroundColor = '#f0ad4e'; };
 
         button.addEventListener('click', function() {
-            if (audioEnabled && snapSound) {
-                playSnapSound(); // השתמש בפונקציה הקיימת
-                button.textContent = 'צליל עובד ✓';
-                button.style.backgroundColor = '#5cb85c'; // Green
-                button.disabled = true; // מנע לחיצות נוספות
-                setTimeout(() => { button.style.opacity = '0'; setTimeout(() => button.remove(), 500); }, 2000);
+            if (CONFIG.DEBUG) console.log("[Sound Test] Button clicked. Audio enabled:", audioEnabled, "Sound Initialized:", soundInitialized);
+
+            if (!soundInitialized) {
+                 console.warn("[Sound Test] Audio not initialized yet.");
+                 button.textContent = 'שגיאת אתחול';
+                 button.style.backgroundColor = '#d9534f'; // Red
+                 button.disabled = true;
+                 return;
+            }
+
+            // נסה להפעיל ישירות את אובייקט ה-snapSound
+            if (snapSound) {
+                const playPromise = snapSound.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        snapSound.pause(); // עצור מיד אחרי הבדיקה
+                        snapSound.currentTime = 0;
+                        audioEnabled = true; // ודא שהדגל מוגדר
+                        button.textContent = 'צליל תקין ✓';
+                        button.classList.add('success');
+                        button.style.backgroundColor = '#5cb85c'; // Green
+                        button.onmouseover = null; // הסר אירועי ריחוף מיותרים
+                        button.onmouseout = null;
+                        button.disabled = true;
+                        setTimeout(() => { button.style.opacity = '0'; setTimeout(() => button.remove(), 500); }, 2000);
+                    }).catch(error => {
+                        console.warn('[Sound Test] Playback failed:', error);
+                        button.textContent = 'שמע נכשל/חסום';
+                        button.style.backgroundColor = '#d9534f'; // Red
+                        button.classList.add('fail');
+                        button.title = 'לא ניתן להפעיל שמע. לחץ במקום אחר בדף ונסה שוב.';
+                    });
+                } else {
+                    console.warn('[Sound Test] snapSound.play() did not return a promise.');
+                    button.textContent = 'שגיאת שמע (Promise)';
+                    button.style.backgroundColor = '#d9534f'; // Red
+                }
             } else {
-                // נסה להפעיל אודיו אם לא הופעל עדיין
-                initAudio(); // נסה לאתחל שוב אם לא הצליח
-                // נסה להשמיע צליל זמני כדי לעורר את הדפדפן
-                const tempSound = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
-                 tempSound.play().then(() => {
-                     audioEnabled = true; // סמן שהצלחנו
-                     if(snapSound) { // אם האתחול הצליח בינתיים
-                         snapSound.play().catch(()=>{}); // השמע את הצליל האמיתי
-                         snapSound.pause();
-                         snapSound.currentTime = 0;
-                     }
-                     button.textContent = 'השמע מופעל!';
-                     button.style.backgroundColor = '#5cb85c';
-                     button.disabled = true;
-                     setTimeout(() => { button.style.opacity = '0'; setTimeout(() => button.remove(), 500); }, 2000);
-                 }).catch(err => {
-                     console.warn('Manual sound test failed:', err);
-                     button.textContent = 'שמע חסום';
-                     button.style.backgroundColor = '#d9534f'; // Red
-                     button.title = 'ייתכן שהדפדפן חוסם שמע אוטומטי. נסה ללחוץ במקום אחר בדף.';
-                 });
+                console.error("[Sound Test] snapSound object is null.");
+                button.textContent = 'שגיאת שמע (Null)';
+                button.style.backgroundColor = '#d9534f'; // Red
             }
         });
 
@@ -191,51 +208,74 @@
     }
 }
 
+
   // ========================================================================
   // אתחול מאזינים באזור התכנות
   // ========================================================================
   function initProgrammingAreaListeners() {
     const programmingArea = document.getElementById('program-blocks');
     if (!programmingArea) {
-        console.error('Programming area (#program-blocks) not found!');
-        return;
+      console.error('Programming area (#program-blocks) not found!');
+      return;
     }
-    programmingArea.addEventListener('dragover', function(e) {
-        e.preventDefault(); // Allow drops
-        // Optional: Add visual feedback for dropping area
-        // programmingArea.classList.add('drag-over');
+
+    // Allow dropping elements from the palette onto the programming area
+    programmingArea.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move"; // Indicate it's a move operation
+        // Optional visual feedback while dragging over
+        if (!programmingArea.classList.contains('drag-over-active')) {
+            programmingArea.classList.add('drag-over-active');
+        }
     });
-    // programmingArea.addEventListener('dragleave', () => {
-    //     programmingArea.classList.remove('drag-over');
-    // });
-    // programmingArea.addEventListener('drop', () => {
-    //     programmingArea.classList.remove('drag-over');
-    // });
+
+    programmingArea.addEventListener('dragleave', (event) => {
+        // Remove visual feedback if not dragging over a child element
+        if (!programmingArea.contains(event.relatedTarget)) {
+            programmingArea.classList.remove('drag-over-active');
+        }
+    });
+
+     programmingArea.addEventListener('drop', (event) => {
+        // This drop handler is primarily for blocks coming *from* the palette,
+        // handled by script.js. We just remove the visual feedback here.
+        programmingArea.classList.remove('drag-over-active');
+        // The actual positioning and adding logic is in script.js's handleDrop
+    });
 
 
-    // Prevent default dragstart for blocks already inside the area
-    programmingArea.addEventListener('dragstart', function(e) {
-        if (e.target.classList.contains('block-container')) {
-            if (CONFIG.DEBUG) console.log("Preventing default dragstart for internal block.");
-            e.preventDefault();
+    // Prevent default HTML5 drag and drop for blocks *within* the area
+    // to avoid conflicts with our custom mouse listeners.
+    programmingArea.addEventListener('dragstart', (event) => {
+        if (event.target.classList.contains('block-container')) {
+            if (CONFIG.DEBUG) console.log("[Programming Area] Preventing default dragstart on internal block.");
+            event.preventDefault();
         }
     });
   }
 
+
   // ========================================================================
-  // האזנה לבלוקים חדשים
+  // הוספת מאזינים לבלוקים (קיימים וחדשים)
   // ========================================================================
   function observeNewBlocks() {
     const programmingArea = document.getElementById('program-blocks');
     if (!programmingArea) return;
-    const observer = new MutationObserver(function(mutations) {
-      mutations.forEach(function(mutation) {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
         if (mutation.type === 'childList') {
-          mutation.addedNodes.forEach(function(node) {
-            if (node.nodeType === 1 && node.classList.contains('block-container') && node.closest('#program-blocks')) {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === 1 && node.classList.contains('block-container')) {
               if (!node.id) generateUniqueId(node);
               addBlockDragListeners(node);
-              if (CONFIG.DEBUG) console.log('New block observed and listeners added:', node.id);
+              if (CONFIG.DEBUG) console.log(`[Observer] Listeners added to new block: ${node.id}`);
+            }
+          });
+          // Optional: Handle removed nodes if needed (e.g., cleanup)
+          mutation.removedNodes.forEach((node) => {
+            if (node.nodeType === 1 && node.classList.contains('block-container')) {
+                 if (CONFIG.DEBUG) console.log(`[Observer] Block removed: ${node.id}`);
+                 // Perform any cleanup related to the removed block if necessary
             }
           });
         }
@@ -244,9 +284,6 @@
     observer.observe(programmingArea, { childList: true });
   }
 
-  // ========================================================================
-  // הוספת מאזינים לבלוקים קיימים
-  // ========================================================================
   function initExistingBlocks() {
       const programmingArea = document.getElementById('program-blocks');
       if (!programmingArea) return;
@@ -254,13 +291,10 @@
           if (!block.id) generateUniqueId(block);
           addBlockDragListeners(block);
       });
-      if (CONFIG.DEBUG) console.log("Listeners added to existing blocks.");
+      if (CONFIG.DEBUG) console.log("[Init] Listeners added to existing blocks.");
   }
 
-   // ========================================================================
-  // הוספת מאזיני גרירה וקליק ימני לבלוק
-  // ========================================================================
-   function addBlockDragListeners(block) {
+  function addBlockDragListeners(block) {
       // Ensure only one listener of each type
       block.removeEventListener('mousedown', handleMouseDown);
       block.addEventListener('mousedown', handleMouseDown);
@@ -270,23 +304,24 @@
 
 
   // ========================================================================
-  // טיפול בלחיצת עכבר על בלוק
+  // לוגיקת גרירה (MouseDown, MouseMove, MouseUp)
   // ========================================================================
+
   function handleMouseDown(e) {
-      if (e.button !== 0 || !e.target.closest('.block-container')) return; // Only left click on block
+      if (e.button !== 0 || !e.target.closest('.block-container')) return; // Left click only
 
       const block = e.target.closest('.block-container');
       if (!block.id) generateUniqueId(block);
 
-      // Prevent browser's default drag-and-drop
+      // Prevent default drag and text selection
       block.draggable = false;
-      e.preventDefault(); // Prevent text selection and other defaults
+      e.preventDefault();
 
-      if (CONFIG.DEBUG) console.log(`[MouseDown] Started for block: ${block.id}`);
+      if (CONFIG.DEBUG) console.log(`[MouseDown] ${block.id}`);
 
-      // Detach if currently connected
+      // --- Detach if connected ---
       if (block.hasAttribute('data-connected-to')) {
-          if (CONFIG.DEBUG) console.log(`[MouseDown] Block ${block.id} was connected, detaching...`);
+          if (CONFIG.DEBUG) console.log(`  [MouseDown] Detaching ${block.id} before drag.`);
           detachBlock(block, false); // Detach without animation/sound
       }
 
@@ -294,157 +329,135 @@
       isDraggingBlock = true;
 
       const rect = block.getBoundingClientRect();
-      const parentElement = block.offsetParent || document.body; // Fallback to body
+      const parentElement = block.offsetParent || document.body;
       const parentRect = parentElement.getBoundingClientRect();
 
-      // Calculate offset relative to the block's top-left corner
+      // Calculate offset from the block's top-left corner
       dragOffset.x = e.clientX - rect.left;
       dragOffset.y = e.clientY - rect.top;
 
-      // Ensure absolute positioning and set initial position correctly
-      // relative to the offset parent, considering scroll
+      // Prepare for dragging
       block.style.position = 'absolute';
+      // Recalculate initial position in case it wasn't absolute before
       block.style.left = (rect.left - parentRect.left + parentElement.scrollLeft) + 'px';
       block.style.top = (rect.top - parentRect.top + parentElement.scrollTop) + 'px';
       block.style.zIndex = '1001'; // Bring to front
-      block.classList.add('snap-source'); // Style for dragging
-      document.body.classList.add('user-select-none'); // Prevent text selection during drag
+      block.classList.add('snap-source');
+      document.body.classList.add('user-select-none'); // Prevent text selection globally
 
-      if (CONFIG.DEBUG) console.log(`[MouseDown] Initial Style set: left=${block.style.left}, top=${block.style.top}`);
+      if (CONFIG.DEBUG) console.log(`  [MouseDown] Initial pos: L=${block.style.left}, T=${block.style.top}. Offset: X=${dragOffset.x.toFixed(1)}, Y=${dragOffset.y.toFixed(1)}`);
   }
 
-   // ========================================================================
-  // טיפול בקליק ימני על בלוק
-  // ========================================================================
-    function handleContextMenu(e) {
-        e.preventDefault(); // Prevent default context menu
-        const block = e.target.closest('.block-container');
-        if (block && block.hasAttribute('data-connected-to')) {
-            showDetachMenu(e.clientX, e.clientY, block);
-        }
-    }
-
-  // ========================================================================
-  // מאזינים גלובליים
-  // ========================================================================
-  function initGlobalMouseListeners() {
-    // Use capture phase for mousemove/mouseup to catch events even if over other elements
-    document.addEventListener('mousemove', handleMouseMove, true);
-    document.addEventListener('mouseup', handleMouseUp, true);
-    // Mouseleave on the window/document is a good fallback
-    window.addEventListener('mouseleave', handleMouseLeave);
-  }
-
-  // ========================================================================
-  // טיפול בתנועת העכבר
-  // ========================================================================
   function handleMouseMove(e) {
     if (!isDraggingBlock || !currentDraggedBlock) return;
 
-    // Prevent default behavior during drag to avoid issues
+    // Prevent default actions during drag
     e.preventDefault();
     e.stopPropagation();
 
     const parentElement = currentDraggedBlock.offsetParent || document.body;
     const parentRect = parentElement.getBoundingClientRect();
 
-    // Calculate new position relative to the offset parent, considering scroll
+    // Calculate new position relative to the offset parent's viewport origin, considering scroll
     let newLeft = e.clientX - parentRect.left - dragOffset.x + parentElement.scrollLeft;
     let newTop = e.clientY - parentRect.top - dragOffset.y + parentElement.scrollTop;
 
-    // Optional: Constrain to parent bounds if the parent is the programming area
+    // Constrain to parent bounds if the parent is the programming area
     if (parentElement.id === 'program-blocks') {
         const blockWidth = currentDraggedBlock.offsetWidth;
         const blockHeight = currentDraggedBlock.offsetHeight;
-        // Use scrollWidth/Height for containment within the scrollable area
         const maxLeft = Math.max(0, parentElement.scrollWidth - blockWidth);
         const maxTop = Math.max(0, parentElement.scrollHeight - blockHeight);
         newLeft = Math.max(0, Math.min(newLeft, maxLeft));
         newTop = Math.max(0, Math.min(newTop, maxTop));
     }
 
-    // Update block position *directly*
+    // Update block position visually
     currentDraggedBlock.style.left = newLeft + 'px';
     currentDraggedBlock.style.top = newTop + 'px';
 
-    // Check for snap possibility based on the new position
+    // Check for snap possibility and update highlights/indicator
     checkAndHighlightSnapPossibility();
   }
 
-  // ========================================================================
-  // טיפול בשחרור העכבר (הפשוט ביותר)
-  // ========================================================================
   function handleMouseUp(e) {
-    if (!isDraggingBlock || !currentDraggedBlock) return;
+    if (!isDraggingBlock || !currentDraggedBlock) {
+      // If we somehow get a mouseup without dragging, ensure cleanup
+      if(isDraggingBlock || currentDraggedBlock) cleanupAfterDragState();
+      return;
+    }
 
-    // Prevent default behavior for the mouseup event
+    // Prevent default actions for mouseup
     e.preventDefault();
     e.stopPropagation();
 
-    const blockReleased = currentDraggedBlock; // Keep a reference
-    console.log(`[MouseUp] ----- Start MouseUp for ${blockReleased.id} -----`);
-    const currentStylePos = { left: blockReleased.style.left, top: blockReleased.style.top };
-    console.log(`[MouseUp] Position BEFORE snap check: ${currentStylePos.left}, ${currentStylePos.top}`);
-
-    // --- Capture Snap State ---
+    const blockReleased = currentDraggedBlock;
     const targetToSnap = potentialSnapTarget;
     const directionToSnap = snapDirection;
-    console.log(`[MouseUp] Snap State: Target=${targetToSnap?.id || 'none'}, Direction=${directionToSnap || 'none'}`);
 
-    // --- Reset Global State Immediately ---
-    // This prevents race conditions if another action starts quickly
-    const wasDragging = isDraggingBlock; // Store the state before resetting
-    currentDraggedBlock = null;
-    potentialSnapTarget = null;
-    snapDirection = null;
-    isDraggingBlock = false;
+    if (CONFIG.DEBUG) console.log(`[MouseUp] ----- Start MouseUp for ${blockReleased.id} -----`);
+    if (CONFIG.DEBUG) console.log(`[MouseUp] Target=${targetToSnap?.id || 'none'}, Direction=${directionToSnap || 'none'}`);
 
-    // --- Perform Snap (if applicable) ---
-    // We use the captured target and direction
+    // --- Perform Snap Action (if applicable) ---
+    // The actual position change happens here
     if (targetToSnap && directionToSnap) {
-      console.log(`%c[MouseUp] SNAP Action: Snapping ${blockReleased.id} to ${targetToSnap.id} (${directionToSnap})`, 'color: green; font-weight: bold;');
       performBlockSnap(blockReleased, targetToSnap, directionToSnap);
-      const finalStylePos = { left: blockReleased.style.left, top: blockReleased.style.top };
-      console.log(`[MouseUp] Position AFTER snap action: ${finalStylePos.left}, ${finalStylePos.top}`);
     } else {
-      console.log(`%c[MouseUp] NO SNAP Action: Block ${blockReleased.id} dropped freely.`, 'color: orange;');
-      // Position is already set by the last mousemove
+       if (CONFIG.DEBUG) console.log(`[MouseUp] No snap target found.`);
+       // Block remains at its last position from mousemove
+       blockReleased.draggable = true; // Still need to make it draggable again
     }
 
-    // --- Cleanup Visuals ---
-    document.body.classList.remove('user-select-none');
-    if(blockReleased) { // Ensure blockReleased is still valid
-        blockReleased.style.zIndex = '';
-        blockReleased.classList.remove('snap-source');
-        blockReleased.draggable = true; // Re-enable default drag if needed elsewhere
-    }
-    document.querySelectorAll('.snap-target, .snap-left, .snap-right').forEach(el => {
-      el.classList.remove('snap-target', 'snap-left', 'snap-right');
-    });
-    removeFuturePositionIndicator();
-    console.log("[MouseUp] Cleanup visuals completed.");
-
-    console.log(`[MouseUp] ----- End MouseUp for ${blockReleased.id} -----`);
+    // --- Cleanup ---
+    // Reset state variables and remove visual cues AFTER snap logic
+    cleanupAfterDragState();
+    if (CONFIG.DEBUG) console.log(`[MouseUp] ----- End MouseUp for ${blockReleased.id} -----`);
   }
 
-
-  // ========================================================================
-  // טיפול בעזיבת החלון
-  // ========================================================================
   function handleMouseLeave(e) {
-      // Check if dragging and mouse is leaving the window (not just moving over another element)
       if (isDraggingBlock && (!e.relatedTarget || e.relatedTarget.nodeName === 'HTML')) {
-          console.warn("Mouse left window during drag, treating as mouseup.");
-          handleMouseUp(e); // Trigger mouseup logic to cancel drag/snap
+          if (CONFIG.DEBUG) console.warn("Mouse left window during drag, treating as mouseup.");
+          handleMouseUp(e);
       }
   }
 
   // ========================================================================
-  // בדיקת הצמדה והדגשה (עם לוגים מפורטים להילה)
+  // ניקוי מצב אחרי גרירה
+  // ========================================================================
+  function cleanupAfterDragState() {
+      if (CONFIG.DEBUG) console.log("[Cleanup] Cleaning up drag state and visuals...");
+
+      document.body.classList.remove('user-select-none'); // Allow text selection again
+
+      // Clean up the block that was being dragged
+      if (currentDraggedBlock) {
+          currentDraggedBlock.style.zIndex = ''; // Reset z-index
+          currentDraggedBlock.classList.remove('snap-source');
+          currentDraggedBlock.draggable = true; // Restore default draggable behavior if needed
+           // console.log(`[Cleanup] Cleaned up dragged block: ${currentDraggedBlock.id}`);
+      }
+
+      // Remove highlights from all potential targets
+      document.querySelectorAll('.snap-target, .snap-left, .snap-right').forEach(el => {
+          el.classList.remove('snap-target', 'snap-left', 'snap-right');
+      });
+       // console.log("[Cleanup] Removed target highlights.");
+
+      removeFuturePositionIndicator(); // Hide the blue indicator
+
+      // Reset global state variables
+      currentDraggedBlock = null;
+      potentialSnapTarget = null;
+      snapDirection = null;
+      isDraggingBlock = false;
+      // console.log("[Cleanup] Reset global state variables.");
+  }
+
+  // ========================================================================
+  // בדיקת הצמדה והדגשה (עם לוגים להילה)
   // ========================================================================
   function checkAndHighlightSnapPossibility() {
-    if (!currentDraggedBlock) return;
-    // if (CONFIG.DEBUG) console.log("[Highlight Check] Running check...");
+    if (!currentDraggedBlock || !isDraggingBlock) return; // Only check if dragging
 
     const programmingArea = document.getElementById('program-blocks');
     if (!programmingArea) return;
@@ -454,97 +467,111 @@
 
     let bestTarget = null;
     let bestDirection = null;
+    let minDistance = CONFIG.CONNECT_THRESHOLD + 1; // Start above threshold
 
-    // שמור את היעד הפוטנציאלי הקודם כדי לנקות הדגשות ישנות
-    const previousPotentialTarget = potentialSnapTarget;
-    let currentTargetIsHighlighted = false; // עקוב אם היעד הנוכחי כבר מודגש
-
-    // חפש את הבלוק המתאים ביותר להצמדה
+    // Find the closest valid snap target
     for (const targetBlock of allBlocks) {
-      if (targetBlock === currentDraggedBlock) continue;
-      if (!targetBlock.id) generateUniqueId(targetBlock);
+      if (targetBlock === currentDraggedBlock) continue; // Skip self
+      if (!targetBlock.id) generateUniqueId(targetBlock); // Ensure ID
 
       const targetRect = targetBlock.getBoundingClientRect();
-      const direction = calculateSnapDirection(sourceRect, targetRect); // בדוק אם אפשר להצמיד בכיוון כלשהו
+      // Calculate potential snap based on geometry and threshold
+      const snapInfo = calculateSnapInfo(sourceRect, targetRect);
 
-      if (direction) {
-          // מצאנו יעד אפשרי!
-          bestTarget = targetBlock;
-          bestDirection = direction;
-          // if (CONFIG.DEBUG) console.log(`[Highlight Check] Found potential target: ${bestTarget.id}, direction: ${bestDirection}`);
-          break; // מספיק למצוא את הראשון שמתאים
+      if (snapInfo && snapInfo.distance < minDistance) {
+          // Check vertical alignment more strictly here if needed
+           const verticalDiff = Math.abs(sourceRect.top - targetRect.top);
+           if (verticalDiff <= CONFIG.VERTICAL_ALIGN_THRESHOLD) {
+                minDistance = snapInfo.distance;
+                bestTarget = targetBlock;
+                bestDirection = snapInfo.direction;
+                 // if (CONFIG.DEBUG) console.log(`[Highlight Check] Found potential target: ${bestTarget.id}, dir: ${bestDirection}, dist: ${minDistance.toFixed(1)}`);
+           } else {
+                 // if (CONFIG.DEBUG) console.log(`[Highlight Check] Target ${targetBlock.id} failed vertical alignment (diff: ${verticalDiff.toFixed(1)})`);
+           }
       }
     }
 
-    // --- עדכן את המצב הגלובלי ואת ההדגשות ---
+    // --- Update Highlights and Global State ---
 
-    potentialSnapTarget = bestTarget; // עדכן את היעד הפוטנציאלי (יכול להיות null)
-    snapDirection = bestDirection;   // עדכן את הכיוון (יכול להיות null)
-
-    // 1. נקה הדגשה מהיעד הקודם אם הוא שונה מהנוכחי או אם אין יעד נוכחי
-    if (previousPotentialTarget && previousPotentialTarget !== bestTarget) {
-      if (CONFIG.DEBUG) console.log(`%c[Highlight] De-highlighting PREVIOUS target: ${previousPotentialTarget.id}`, 'color: #aaa;');
-      previousPotentialTarget.classList.remove('snap-target', 'snap-left', 'snap-right');
-    }
-
-    // 2. אם יש יעד נוכחי, הדגש אותו
-    if (bestTarget) {
-      if (!bestTarget.classList.contains('snap-target')) {
-        if (CONFIG.DEBUG) console.log(`%c[Highlight] Highlighting NEW target: ${bestTarget.id}`, 'color: orange; font-weight: bold;');
-        bestTarget.classList.add('snap-target');
-      }
-      // עדכן תמיד את סימון הכיוון
-      bestTarget.classList.remove('snap-left', 'snap-right');
-      bestTarget.classList.add(snapDirection === 'left' ? 'snap-left' : 'snap-right');
-      currentTargetIsHighlighted = true; // סמן שהיעד הנוכחי מודגש
-
-      // הצג/עדכן את המלבן הכחול
-      const programRect = programmingArea.getBoundingClientRect();
-      updateFuturePositionIndicator(currentDraggedBlock, bestTarget, bestDirection, programRect);
+    // If no target found this cycle, clear previous highlight and indicator
+    if (!bestTarget) {
+        if (potentialSnapTarget) { // If there *was* a target before
+            if (CONFIG.DEBUG) console.log(`%c[Highlight] De-highlighting OLD target: ${potentialSnapTarget.id}`, 'color: #aaa;');
+            potentialSnapTarget.classList.remove('snap-target', 'snap-left', 'snap-right');
+        }
+        removeFuturePositionIndicator();
+        potentialSnapTarget = null;
+        snapDirection = null;
     } else {
-      // 3. אם אין יעד נוכחי, ודא שאין מלבן כחול
-      removeFuturePositionIndicator();
-      // ההדגשה מהיעד הקודם כבר הוסרה בשלב 1 אם הוא היה קיים
+        // A target was found (could be the same or different from previous)
+        // If the target is different from the previous one, clear the old highlight
+        if (potentialSnapTarget && potentialSnapTarget !== bestTarget) {
+            if (CONFIG.DEBUG) console.log(`%c[Highlight] De-highlighting PREVIOUS target: ${potentialSnapTarget.id}`, 'color: #aaa;');
+            potentialSnapTarget.classList.remove('snap-target', 'snap-left', 'snap-right');
+        }
+
+        // Update global state
+        potentialSnapTarget = bestTarget;
+        snapDirection = bestDirection;
+
+        // Add highlight to the *current* best target
+        if (!potentialSnapTarget.classList.contains('snap-target')) {
+            if (CONFIG.DEBUG) console.log(`%c[Highlight] Highlighting NEW target: ${potentialSnapTarget.id}`, 'color: orange; font-weight: bold;');
+            potentialSnapTarget.classList.add('snap-target');
+        }
+        // Always update direction class
+        potentialSnapTarget.classList.remove('snap-left', 'snap-right');
+        potentialSnapTarget.classList.add(snapDirection === 'left' ? 'snap-left' : 'snap-right');
+
+        // Update the future position indicator
+        const programRect = programmingArea.getBoundingClientRect();
+        updateFuturePositionIndicator(currentDraggedBlock, potentialSnapTarget, snapDirection, programRect);
     }
-    // if (CONFIG.DEBUG) console.log("[Highlight Check] Finished check.");
+     // console.log("[Highlight Check] Finished. Current Target:", potentialSnapTarget?.id);
   }
 
 
   // ========================================================================
-  // חישוב כיוון הצמדה אפשרי (עם PIN_SOCKET_DEPTH לזיהוי)
+  // חישוב כיוון הצמדה (בודק קרבה של פין/שקע)
   // ========================================================================
   function calculateSnapDirection(sourceRect, targetRect) {
-    // בדוק חפיפה אנכית ראשונית
+    // 1. בדיקת חפיפה אנכית גסה
+    if (sourceRect.bottom < targetRect.top || sourceRect.top > targetRect.bottom) {
+        return null; // אין חפיפה אנכית כלל
+    }
+
+    // 2. בדיקת הפרש אנכי בין מרכזים או קצוות עליונים
     const verticalDiff = Math.abs(sourceRect.top - targetRect.top);
     if (verticalDiff > CONFIG.VERTICAL_ALIGN_THRESHOLD) {
-      return null; // רחוקים מדי אנכית
+      // if (CONFIG.DEBUG) console.log(` -> Vertical diff too large: ${verticalDiff.toFixed(1)} > ${CONFIG.VERTICAL_ALIGN_THRESHOLD}`);
+      return null;
     }
 
-    // בדוק קרבה אופקית בין נקודות החיבור
-    const sourceRightPinCenter = sourceRect.right - (CONFIG.PIN_WIDTH / 2);
-    const targetLeftSocketCenter = targetRect.left + (CONFIG.PIN_WIDTH / 2);
-    const rightToLeftDist = Math.abs(sourceRightPinCenter - targetSocketCenter);
+    // 3. חישוב מרחק אופקי בין נקודות החיבור הפוטנציאליות
+    // נקודת החיבור היא מרכז הפין/שקע
+    const sourceRightConnectX = sourceRect.right - CONFIG.PIN_WIDTH / 2;
+    const targetLeftConnectX = targetRect.left + CONFIG.PIN_WIDTH / 2;
+    const rightToLeftDist = Math.abs(sourceRightConnectX - targetLeftConnectPoint);
 
-    const sourceLeftSocketCenter = sourceRect.left + (CONFIG.PIN_WIDTH / 2);
-    const targetRightPinCenter = targetRect.right - (CONFIG.PIN_WIDTH / 2);
-    const leftToRightDist = Math.abs(sourceLeftSocketCenter - targetRightPinCenter);
+    const sourceLeftConnectX = sourceRect.left + CONFIG.PIN_WIDTH / 2;
+    const targetRightConnectX = targetRect.right - CONFIG.PIN_WIDTH / 2;
+    const leftToRightDist = Math.abs(sourceLeftConnectX - targetRightConnectX);
 
-    // קבע את הכיוון הסביר ביותר לפי מרכז הבלוקים
+    // 4. קביעת הכיוון המועדף ובדיקת סף הקרבה
     const isSourceLikelyLeft = (sourceRect.left + sourceRect.width / 2) < (targetRect.left + targetRect.width / 2);
 
-    // בדוק התאמה לכיוון 'left' (מקור משמאל ליעד)
     if (isSourceLikelyLeft && rightToLeftDist <= CONFIG.CONNECT_THRESHOLD) {
       // if (CONFIG.DEBUG) console.log(` -> Possible snap 'left' (dist=${rightToLeftDist.toFixed(1)})`);
-      return 'left';
+      return 'left'; // המקור משמאל ליעד
     }
 
-    // בדוק התאמה לכיוון 'right' (מקור מימין ליעד)
     if (!isSourceLikelyLeft && leftToRightDist <= CONFIG.CONNECT_THRESHOLD) {
       // if (CONFIG.DEBUG) console.log(` -> Possible snap 'right' (dist=${leftToRightDist.toFixed(1)})`);
-      return 'right';
+      return 'right'; // המקור מימין ליעד
     }
 
-    return null; // אין התאמה קרובה מספיק
+    return null; // רחוק מדי
   }
 
 
@@ -553,64 +580,68 @@
   // ========================================================================
   function performBlockSnap(sourceBlock, targetBlock, direction) {
     if (!sourceBlock || !targetBlock) {
-        console.error("[performBlockSnap] Invalid blocks provided.");
+        console.error("[Perform Snap] Invalid blocks provided.");
         return;
     }
-    console.log(`%c[Perform Snap] Snapping ${sourceBlock.id} to ${targetBlock.id} (${direction})`, 'color: blue; font-weight: bold;');
+    if (CONFIG.DEBUG) console.log(`%c[Perform Snap] Snapping ${sourceBlock.id} to ${targetBlock.id} (${direction})`, 'color: blue; font-weight: bold;');
 
     try {
-        const sourceRect = sourceBlock.getBoundingClientRect();
-        const targetRect = targetBlock.getBoundingClientRect();
-        const parentElement = sourceBlock.offsetParent || document.body; // Fallback
+        const sourceRect = sourceBlock.getBoundingClientRect(); // Get current dimensions
+        const targetRect = targetBlock.getBoundingClientRect(); // Get target position
+
+        const parentElement = sourceBlock.offsetParent || document.body;
+        if (!parentElement) throw new Error("Cannot find offsetParent for positioning.");
         const parentRect = parentElement.getBoundingClientRect();
 
-        // חישוב מיקום אנכי: יישור לפי החלק העליון של היעד
-        let desiredViewportTop = targetRect.top;
-
-        // חישוב מיקום אופקי רצוי ב-viewport (קצה לקצה)
+        // Calculate desired *viewport* position (edge-to-edge alignment)
+        let desiredViewportTop = targetRect.top; // Align tops
         let desiredViewportLeft;
         if (direction === 'left') {
-            // המקור משמאל ליעד, הצמד את הקצה הימני של המקור לשמאלי של היעד
+            // Source block is to the LEFT of the target block
+            // Align source's right edge with target's left edge
             desiredViewportLeft = targetRect.left - sourceRect.width - CONFIG.BLOCK_GAP;
-        } else { // 'right'
-            // המקור מימין ליעד, הצמד את הקצה השמאלי של המקור לימני של היעד
+        } else { // direction === 'right'
+            // Source block is to the RIGHT of the target block
+            // Align source's left edge with target's right edge
             desiredViewportLeft = targetRect.right + CONFIG.BLOCK_GAP;
         }
-        // console.log(`[Perform Snap] Desired Viewport Pos: Left=${desiredViewportLeft.toFixed(1)}, Top=${desiredViewportTop.toFixed(1)}`);
+        if (CONFIG.DEBUG) console.log(`[Perform Snap] Desired Viewport Pos: Left=${desiredViewportLeft.toFixed(1)}, Top=${desiredViewportTop.toFixed(1)}`);
 
-        // המרה ל-style (יחסי ל-offsetParent, כולל scroll)
+        // Convert viewport position to style values relative to offset parent
         let styleLeft = desiredViewportLeft - parentRect.left + parentElement.scrollLeft;
         let styleTop = desiredViewportTop - parentRect.top + parentElement.scrollTop;
-        // console.log(`[Perform Snap] Calculated Style (Raw): left=${styleLeft.toFixed(1)}, top=${styleTop.toFixed(1)}`);
+        if (CONFIG.DEBUG) console.log(`[Perform Snap] Calculated Style (Raw): left=${styleLeft.toFixed(1)}, top=${styleTop.toFixed(1)}`);
 
-        // הגבלת גבולות (אם ההורה הוא אזור התכנות)
-         if (parentElement.id === 'program-blocks') {
-             const maxLeft = Math.max(0, parentElement.scrollWidth - sourceRect.width);
-             const maxTop = Math.max(0, parentElement.scrollHeight - sourceRect.height);
-             styleLeft = Math.max(0, Math.min(styleLeft, maxLeft));
-             styleTop = Math.max(0, Math.min(styleTop, maxTop));
-         }
+        // Constrain within parent if necessary
+        if (parentElement.id === 'program-blocks') {
+            const maxLeft = Math.max(0, parentElement.scrollWidth - sourceRect.width);
+            const maxTop = Math.max(0, parentElement.scrollHeight - sourceRect.height);
+            styleLeft = Math.max(0, Math.min(styleLeft, maxLeft));
+            styleTop = Math.max(0, Math.min(styleTop, maxTop));
+        }
 
-        // החל את המיקום הסופי המחושב
-        const finalLeftPx = Math.round(styleLeft) + 'px'; // עדיף לעגל למספר שלם
+        // Apply the final calculated position (rounding might help consistency)
+        const finalLeftPx = Math.round(styleLeft) + 'px';
         const finalTopPx = Math.round(styleTop) + 'px';
         console.log(`%c[Perform Snap] Applying final style: left=${finalLeftPx}, top=${finalTopPx}`, 'color: green; font-weight: bold;');
         sourceBlock.style.left = finalLeftPx;
         sourceBlock.style.top = finalTopPx;
 
-        // עדכן מאפייני חיבור
+        // Update connection attributes
         sourceBlock.setAttribute('data-connected-to', targetBlock.id);
         sourceBlock.setAttribute('data-connection-direction', direction);
-        targetBlock.setAttribute(direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right', sourceBlock.id);
+        const targetAttr = direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right';
+        targetBlock.setAttribute(targetAttr, sourceBlock.id);
         sourceBlock.classList.add('connected-block');
         targetBlock.classList.add('has-connected-block');
-        // console.log("[Perform Snap] Connection attributes updated.");
+        if (CONFIG.DEBUG) console.log("[Perform Snap] Connection attributes updated.");
 
-        playSnapSound(); // השמע צליל
-        addSnapEffectAnimation(sourceBlock); // הפעל אנימציה
+        // Play sound and animation
+        playSnapSound();
+        addSnapEffectAnimation(sourceBlock);
 
     } catch (err) {
-        console.error('[performBlockSnap] Error:', err);
+        console.error('[Perform Snap] Error:', err);
     } finally {
         // console.log(`[Perform Snap] ----- End Snap for ${sourceBlock.id} -----`);
     }
@@ -618,9 +649,9 @@
 
 
   // ========================================================================
-  // עדכון מחוון מיקום עתידי (המלבן הכחול)
+  // עדכון מחוון מיקום עתידי (ללא PIN_SOCKET_DEPTH)
   // ========================================================================
-  function updateFuturePositionIndicator(sourceBlock, targetBlock, direction, programRect) { // programRect is viewport rect of #program-blocks
+  function updateFuturePositionIndicator(sourceBlock, targetBlock, direction, programRect) {
       const programmingArea = document.getElementById('program-blocks');
       if (!programmingArea || !sourceBlock || !targetBlock) return;
 
@@ -635,9 +666,9 @@
           const sourceStyle = window.getComputedStyle(sourceBlock);
           const sourceWidth = parseFloat(sourceStyle.width);
           const sourceHeight = parseFloat(sourceStyle.height);
-          const targetRect = targetBlock.getBoundingClientRect(); // Target's viewport position
+          const targetRect = targetBlock.getBoundingClientRect();
 
-          // Calculate desired viewport position (edge-to-edge)
+          // Calculate desired viewport position (edge-to-edge, same as snapBlocks)
           let desiredViewportLeft, desiredViewportTop;
           desiredViewportTop = targetRect.top;
           if (direction === 'left') {
@@ -651,7 +682,7 @@
           let indicatorLeft = desiredViewportLeft - parentRect.left + programmingArea.scrollLeft;
           let indicatorTop = desiredViewportTop - parentRect.top + programmingArea.scrollTop;
 
-          // Constrain within bounds (optional for indicator)
+          // Constrain (optional)
           indicatorLeft = Math.max(0, indicatorLeft);
           indicatorTop = Math.max(0, indicatorTop);
 
@@ -688,30 +719,27 @@
     style.textContent = `
       /* בלוק נגרר */
       .snap-source {
-         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4) !important; /* Increased shadow */
+         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4) !important;
+         transition: box-shadow 0.15s ease-out;
          cursor: grabbing !important;
-         z-index: 1001 !important; /* Ensure it's on top */
-         opacity: 0.9; /* Slightly transparent while dragging */
+         z-index: 1001 !important;
+         opacity: 0.9;
       }
 
       /* הילה צהובה סביב יעד פוטנציאלי - **מודגשת** */
       .snap-target {
-        outline: 4px solid #FFEB3B !important; /* Brighter yellow */
+        outline: 4px solid #FFEB3B !important; /* צהוב בהיר יותר */
         outline-offset: 4px;
-        box-shadow: 0 0 20px 8px rgba(255, 235, 59, 0.75) !important; /* Stronger glow */
+        box-shadow: 0 0 20px 8px rgba(255, 235, 59, 0.75) !important;
         transition: outline 0.1s ease-out, box-shadow 0.1s ease-out;
         z-index: 999 !important;
       }
 
       /* מלבן כחול מקווקו למיקום עתידי */
       .future-position-indicator {
-        position: absolute;
-        border: 2px dashed #03A9F4; /* Light blue dash */
-        border-radius: 5px;
-        background-color: rgba(3, 169, 244, 0.1);
-        pointer-events: none;
-        z-index: 998;
-        opacity: 0;
+        position: absolute; border: 2px dashed #03A9F4; border-radius: 5px;
+        background-color: rgba(3, 169, 244, 0.1); pointer-events: none;
+        z-index: 998; opacity: 0;
         transition: opacity 0.15s ease-out, left 0.05s linear, top 0.05s linear;
         display: none;
       }
@@ -739,7 +767,7 @@
 
       /* כללי: מניעת בחירת טקסט */
        body.user-select-none { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; }
-       /* סימון בלוקים מחוברים - מוסתר כברירת מחדל */
+       /* סימון בלוקים מחוברים - מוסתר */
       .connected-block::after, .has-connected-block::before { display: none; }
 
       /* כפתור בדיקת שמע */
@@ -748,204 +776,174 @@
         padding: 8px 12px; background-color: #f0ad4e; /* Default: Orange */
         color: white; border: none; border-radius: 4px; cursor: pointer;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2); font-family: Arial, sans-serif;
-        font-size: 13px; font-weight: bold; opacity: 1; transition: opacity 0.5s ease-out, background-color 0.3s ease;
+        fontSize: '13px', fontWeight: 'bold', opacity: '1',
+        transition: opacity 0.5s ease-out, background-color 0.3s ease;
       }
-      #sound-test-button:hover { background-color: #ec971f; }
+      #sound-test-button:hover:not(:disabled) { background-color: #ec971f; }
       #sound-test-button.success { background-color: #5cb85c; }
-      #sound-test-button.success:hover { background-color: #4cae4c; }
-      #sound-test-button.fail { background-color: #d9534f; cursor: not-allowed;}
-      #sound-test-button.fail:hover { background-color: #d43f3a; }
+      #sound-test-button.fail { background-color: #d9534f; cursor: default; }
     `;
     document.head.appendChild(style);
-    console.log('Highlighting and animation styles added/verified.');
+    if (CONFIG.DEBUG) console.log('Highlighting and animation styles added.');
   }
 
+   // ========================================================================
+  // הוספת כפתור בדיקת שמע (מהקוד שסופק, עם שיפורים קלים)
   // ========================================================================
-  // הוספת כפתור בדיקת שמע (מהקוד שסופק)
-  // ========================================================================
-    function addSoundTestButton() {
-        if (!CONFIG.PLAY_SOUND) return; // Only add if sound is configured to play
+  function addSoundTestButton() {
+    if (!CONFIG.PLAY_SOUND) return;
 
-        try {
-            if (document.getElementById('sound-test-button')) return; // Don't add if already exists
+    try {
+        if (document.getElementById('sound-test-button')) return;
 
-            const button = document.createElement('button');
-            button.id = 'sound-test-button';
-            button.textContent = 'אפשר/בדוק צליל'; // Initial text
-            button.title = 'לחץ כאן כדי לאפשר ולהפעיל את צליל ההצמדה';
+        const button = document.createElement('button');
+        button.id = 'sound-test-button';
+        button.textContent = 'אפשר/בדוק צליל';
+        button.title = 'לחץ כאן כדי לאפשר ולהשמיע את צליל ההצמדה';
+        Object.assign(button.style, {
+            position: 'fixed', bottom: '15px', right: '15px', zIndex: '9999',
+            padding: '8px 12px', backgroundColor: '#f0ad4e', /* Orange */
+            color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.2)', fontFamily: 'Arial, sans-serif',
+            fontSize: '13px', fontWeight: 'bold', opacity: '1',
+            transition: 'opacity 0.5s ease-out, background-color 0.3s ease'
+        });
 
-            // Apply styles using Object.assign for cleaner code
-            Object.assign(button.style, {
-                position: 'fixed', bottom: '15px', right: '15px', zIndex: '9999',
-                padding: '8px 12px', backgroundColor: '#f0ad4e', /* Orange - Initial state */
-                color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer',
-                boxShadow: '0 2px 5px rgba(0,0,0,0.2)', fontFamily: 'Arial, sans-serif',
-                fontSize: '13px', fontWeight: 'bold', opacity: '1',
-                transition: 'opacity 0.5s ease-out, background-color 0.3s ease'
-            });
+         button.onmouseover = function() { if (!this.disabled) this.style.backgroundColor = '#ec971f'; };
+         button.onmouseout = function() { if (!this.disabled && !this.classList.contains('success') && !this.classList.contains('fail')) this.style.backgroundColor = '#f0ad4e'; };
 
-             // Hover effect (can be done in CSS too)
-            button.onmouseover = function() { if (!this.disabled) this.style.backgroundColor = '#ec971f'; };
-            button.onmouseout = function() { if (!this.disabled) this.style.backgroundColor = '#f0ad4e'; };
+        button.addEventListener('click', function() {
+            if (CONFIG.DEBUG) console.log("[Sound Test] Button clicked. Audio initialized:", soundInitialized, "Audio enabled:", audioEnabled);
 
-            button.addEventListener('click', function() {
-                console.log("[Sound Test] Button clicked. Audio enabled:", audioEnabled);
-                if (!soundInitialized) {
-                     console.warn("[Sound Test] Audio not initialized yet.");
-                     // Optionally try initializing again, though it should happen on DOMContentLoaded
-                     // initAudio();
-                     button.textContent = 'שגיאת אתחול';
-                     button.style.backgroundColor = '#d9534f'; // Red
-                     button.disabled = true;
-                     return;
-                }
-
-                if (audioEnabled) {
-                    // If already enabled, just play the sound
-                    playSnapSound(); // Use the existing function
-                    button.textContent = 'צליל תקין ✓';
-                    button.classList.add('success');
-                     button.onmouseover = function() { this.style.backgroundColor = '#45a049'; };
-                     button.onmouseout = function() { this.style.backgroundColor = '#5cb85c'; };
-                    button.disabled = true;
-                    setTimeout(() => { button.style.opacity = '0'; setTimeout(() => button.remove(), 500); }, 2000);
-                } else {
-                    // Attempt to enable audio context by playing
-                    console.log("[Sound Test] Attempting to unlock audio context...");
-                    if (snapSound) {
-                       const playPromise = snapSound.play();
-                        if (playPromise !== undefined) {
-                            playPromise.then(() => {
-                                console.log("[Sound Test] Audio context unlocked!");
-                                snapSound.pause(); // Stop immediately after unlocking
-                                snapSound.currentTime = 0;
-                                audioEnabled = true;
-                                button.textContent = 'שמע הופעל ✓';
-                                button.classList.add('success');
-                                button.style.backgroundColor = '#5cb85c'; // Green
-                                button.onmouseover = function() { this.style.backgroundColor = '#45a049'; };
-                                button.onmouseout = function() { this.style.backgroundColor = '#5cb85c'; };
-                                button.disabled = true;
-                                setTimeout(() => { button.style.opacity = '0'; setTimeout(() => button.remove(), 500); }, 2000);
-                            }).catch(error => {
-                                console.warn('[Sound Test] Audio unlock/play failed:', error);
-                                button.textContent = 'שמע נכשל/חסום';
-                                button.style.backgroundColor = '#d9534f'; // Red
-                                button.classList.add('fail');
-                                button.title = 'לא ניתן להפעיל שמע. נסה לרענן או לבדוק הגדרות דפדפן.';
-                                // Don't disable the button, maybe user interaction later will work
-                            });
-                        } else {
-                             console.warn('[Sound Test] snapSound.play() did not return a promise.');
-                              button.textContent = 'שגיאת שמע';
-                             button.style.backgroundColor = '#d9534f'; // Red
-                        }
-                    } else {
-                         console.error("[Sound Test] snapSound object is null.");
-                         button.textContent = 'שגיאת שמע';
-                         button.style.backgroundColor = '#d9534f'; // Red
-                    }
-                }
-            });
-
-            document.body.appendChild(button);
-            if (CONFIG.DEBUG) console.log('Sound test button added.');
-        } catch (err) {
-            console.error('Error adding sound test button:', err);
-        }
-    }
-
-    // ========================================================================
-    // השמעת צליל הצמדה (מהקוד שסופק)
-    // ========================================================================
-    function playSnapSound() {
-        if (!CONFIG.PLAY_SOUND) return; // Check config first
-
-        if (!audioEnabled || !snapSound) {
-            if (CONFIG.DEBUG) {
-                if (!soundInitialized) console.warn("[PlaySound] Audio not initialized yet.");
-                else if (!audioEnabled) console.warn("[PlaySound] Cannot play sound: Audio context not yet unlocked by user interaction.");
-                else if (!snapSound) console.warn("[PlaySound] Cannot play sound: Audio element missing.");
+            if (!soundInitialized || !snapSound) {
+                 console.warn("[Sound Test] Audio not initialized.");
+                 button.textContent = 'שגיאת אתחול';
+                 button.style.backgroundColor = '#d9534f'; button.classList.add('fail');
+                 button.disabled = true;
+                 return;
             }
-             // Maybe briefly show the test button again?
-            // addSoundTestButton();
-            return;
-        }
 
-        try {
-            // Reset and play
-            snapSound.currentTime = 0;
+            // ניסיון להפעיל את האודיו כדי לקבל אישור מהדפדפן
             const playPromise = snapSound.play();
-
             if (playPromise !== undefined) {
                 playPromise.then(() => {
-                    // Success - do nothing or log if needed
-                    // if (CONFIG.DEBUG) console.log('Snap sound played.');
-                }).catch(error => {
-                    // Ignore AbortError which happens if played again quickly
-                    if (error.name !== 'AbortError' && CONFIG.DEBUG) {
-                       console.warn('Error playing snap sound:', error);
+                    snapSound.pause(); // עצור מיד
+                    snapSound.currentTime = 0;
+                    if (!audioEnabled) {
+                         console.log("[Sound Test] Audio context unlocked!");
+                         audioEnabled = true;
                     }
+                    button.textContent = 'צליל תקין ✓';
+                    button.style.backgroundColor = '#5cb85c'; button.classList.add('success');
+                    button.disabled = true;
+                    // השמע את הצליל שוב לבדיקה סופית
+                    playSnapSound();
+                    setTimeout(() => { button.style.opacity = '0'; setTimeout(() => button.remove(), 500); }, 2500);
+                }).catch(error => {
+                    console.warn('[Sound Test] Audio unlock/play failed:', error.name, error.message);
+                    button.textContent = 'שמע נכשל/חסום';
+                    button.style.backgroundColor = '#d9534f'; button.classList.add('fail');
+                    button.title = 'לא ניתן להפעיל שמע. נסה לרענן או לבדוק הגדרות דפדפן.';
+                    // אל תסיר את הכפתור, אולי לחיצה אחרת תעבוד
                 });
-            }
-        } catch (err) {
-            console.error('[PlaySound] Exception:', err);
-        }
+            } else {
+                console.warn('[Sound Test] snapSound.play() did not return a promise. Audio might be blocked.');
+                button.textContent = 'שגיאת שמע';
+                button.style.backgroundColor = '#d9534f'; button.classList.add('fail');
+             }
+        });
+
+        document.body.appendChild(button);
+        if (CONFIG.DEBUG) console.log('Sound test button added.');
+    } catch (err) {
+        console.error('Error adding sound test button:', err);
     }
+}
+
+  // ========================================================================
+  // השמעת צליל הצמדה
+  // ========================================================================
+  function playSnapSound() {
+    if (!CONFIG.PLAY_SOUND) return; // בדיקה ראשונית
+
+    if (!snapSound || !soundInitialized) {
+        if (CONFIG.DEBUG) console.warn("[PlaySound] Sound not initialized.");
+        return;
+    }
+    if (!audioEnabled) {
+        if (CONFIG.DEBUG) console.warn("[PlaySound] Audio context not unlocked. Click the test button or interact with the page.");
+        // אולי נציג שוב את כפתור הבדיקה אם הוא הוסר
+         if (!document.getElementById('sound-test-button')) addSoundTestButton();
+        return;
+    }
+
+    try {
+      snapSound.currentTime = 0; // אפס תמיד לפני הפעלה
+      const playPromise = snapSound.play();
+
+      if (playPromise !== undefined) {
+        playPromise.catch(error => {
+          // נפוץ: AbortError אם לוחצים מהר מדי. נתעלם ממנו.
+          if (error.name !== 'AbortError' && CONFIG.DEBUG) {
+             console.warn('[PlaySound] Error playing sound:', error);
+          }
+        });
+      }
+    } catch (err) {
+      console.error('[PlaySound] Exception:', err);
+    }
+  }
 
 
   // ========================================================================
   // פונקציות עזר לניתוק בלוקים
   // ========================================================================
   function showDetachMenu(x, y, block) {
-      removeDetachMenu(); // Clean up previous menus
+      removeDetachMenu(); // נקה תפריט קודם
 
       const menu = document.createElement('div');
       menu.id = 'detach-menu';
-      // Position menu near the click, ensuring it stays within viewport
-      const menuWidth = 120; // Estimated width
-      const menuHeight = 40; // Estimated height
+      // מיקום חכם יותר
+      const menuWidth = 120;
+      const menuHeight = 40;
       menu.style.left = Math.min(x, window.innerWidth - menuWidth - 10) + 'px';
       menu.style.top = Math.min(y, window.innerHeight - menuHeight - 10) + 'px';
 
       const detachOption = document.createElement('div');
-      detachOption.textContent = 'נתק בלוק'; // Or "Detach Block"
+      detachOption.textContent = 'נתק בלוק';
       detachOption.onclick = (e) => {
-          e.stopPropagation(); // Prevent click from closing menu immediately
-          detachBlock(block); // Detach the block (with animation/sound)
-          removeDetachMenu(); // Close the menu
+          e.stopPropagation();
+          detachBlock(block, true); // נתק עם אנימציה
+          removeDetachMenu();
       };
 
       menu.appendChild(detachOption);
-      document.body.appendChild(menu); // Append to body to ensure visibility
+      document.body.appendChild(menu);
 
-      // Add listener to close menu when clicking outside
-      // Use setTimeout to avoid capturing the same click that opened the menu
+      // סגירה בלחיצה מחוץ לתפריט
       setTimeout(() => {
           document.addEventListener('click', closeMenuOutside, { capture: true, once: true });
-          document.addEventListener('contextmenu', closeMenuOutside, { capture: true, once: true }); // Close on another right-click too
+          document.addEventListener('contextmenu', closeMenuOutside, { capture: true, once: true });
       }, 50);
   }
 
   function closeMenuOutside(e) {
       const menu = document.getElementById('detach-menu');
-      if (menu && !menu.contains(e.target)) { // Only close if click is outside
+      if (menu && !menu.contains(e.target)) {
           removeDetachMenu();
-      } else if (menu && e.type === 'click') {
-           // If click was inside, re-attach the listener because 'once: true' removed it
-           document.addEventListener('click', closeMenuOutside, { capture: true, once: true });
-           document.addEventListener('contextmenu', closeMenuOutside, { capture: true, once: true });
-      } else if (menu && e.type === 'contextmenu') {
-           // If right-click was inside, also re-attach
-           document.addEventListener('click', closeMenuOutside, { capture: true, once: true });
-           document.addEventListener('contextmenu', closeMenuOutside, { capture: true, once: true });
+      } else if (menu) { // אם הקליק היה בתוך התפריט, צריך להאזין שוב
+           document.removeEventListener('click', closeMenuOutside, { capture: true });
+           document.removeEventListener('contextmenu', closeMenuOutside, { capture: true });
+           setTimeout(() => { // הוסף מחדש את המאזינים
+               document.addEventListener('click', closeMenuOutside, { capture: true, once: true });
+               document.addEventListener('contextmenu', closeMenuOutside, { capture: true, once: true });
+           }, 0);
       }
   }
 
   function removeDetachMenu() {
       const menu = document.getElementById('detach-menu');
       if (menu) {
-          // Remove global listeners when menu is removed
           document.removeEventListener('click', closeMenuOutside, { capture: true });
           document.removeEventListener('contextmenu', closeMenuOutside, { capture: true });
           menu.remove();
@@ -954,15 +952,15 @@
 
   function detachBlock(blockToDetach, animate = true) {
     if (!blockToDetach || !blockToDetach.hasAttribute('data-connected-to')) {
-        if(CONFIG.DEBUG) console.log("[Detach] Block not connected or invalid.");
-        return; // Not connected
+        if(CONFIG.DEBUG) console.log(`[Detach] Block ${blockToDetach?.id} not connected or invalid.`);
+        return;
     }
 
     const targetId = blockToDetach.getAttribute('data-connected-to');
-    const connectionDirection = blockToDetach.getAttribute('data-connection-direction'); // How source connected to target ('left' or 'right')
+    const connectionDirection = blockToDetach.getAttribute('data-connection-direction'); // How source was connected to target
     const connectedBlock = document.getElementById(targetId);
 
-    if(CONFIG.DEBUG) console.log(`[Detach] Detaching ${blockToDetach.id} from ${targetId} (direction=${connectionDirection})`);
+    if(CONFIG.DEBUG) console.log(`[Detach] Detaching ${blockToDetach.id} from ${targetId || 'unknown target'} (direction=${connectionDirection})`);
 
     // Remove connection attributes from the source block
     blockToDetach.removeAttribute('data-connected-to');
@@ -971,67 +969,67 @@
 
     // Remove connection attributes from the target block
     if (connectedBlock) {
+        // Determine which attribute to remove based on how source was connected
         const attributeToRemove = connectionDirection === 'left' ? 'data-connected-from-left' : 'data-connected-from-right';
         connectedBlock.removeAttribute(attributeToRemove);
-        // Check if the target block still has any connections before removing the general class
+        // Check if the target block still has any connections
         if (!connectedBlock.hasAttribute('data-connected-from-left') && !connectedBlock.hasAttribute('data-connected-from-right')) {
             connectedBlock.classList.remove('has-connected-block');
         }
          if(CONFIG.DEBUG) console.log(`[Detach] Removed connection attribute '${attributeToRemove}' from target ${targetId}`);
     } else {
-        if(CONFIG.DEBUG) console.warn(`[Detach] Target block with ID ${targetId} not found.`);
+        if(CONFIG.DEBUG) console.warn(`[Detach] Target block with ID ${targetId} not found during detach.`);
     }
 
-    // Optional: Apply detach animation and sound
     if (animate) {
         addDetachEffectAnimation(blockToDetach);
-        // playDetachSound(); // Add if you have a detach sound
+        // playDetachSound(); // הפעל צליל ניתוק אם קיים
     }
 
-    removeDetachMenu(); // Close context menu if open
+    removeDetachMenu(); // סגור תפריט אם פתוח
   }
-
 
   // ========================================================================
   // פונקציות עזר לאנימציה
   // ========================================================================
   function addSnapEffectAnimation(block) {
-      block.classList.remove('snap-animation'); // Remove first to reset
-      void block.offsetWidth; // Force reflow to restart animation
+      if (!block) return;
+      block.classList.remove('snap-animation');
+      void block.offsetWidth; // Force reflow
       block.classList.add('snap-animation');
       // Remove class after animation duration (match CSS)
       setTimeout(() => {
-          block.classList.remove('snap-animation');
-      }, 250); // Duration of snapEffect animation in CSS
+          if(block) block.classList.remove('snap-animation');
+      }, 250); // Match animation duration in CSS
   }
 
   function addDetachEffectAnimation(block) {
+      if (!block) return;
       block.classList.remove('detach-animation');
       void block.offsetWidth;
       block.classList.add('detach-animation');
       setTimeout(() => {
-          block.classList.remove('detach-animation');
-      }, 300); // Duration of detachEffect animation in CSS
+         if (block) block.classList.remove('detach-animation');
+      }, 300); // Match animation duration in CSS
   }
 
   // ========================================================================
   // יצירת ID ייחודי
   // ========================================================================
   function generateUniqueId(block) {
-      if (block.id) return block.id; // Don't overwrite existing ID
+      if (block && block.id) return block.id;
       let prefix = 'block';
-      // Basic type detection (can be expanded)
-      if (block.dataset.category === 'triggering') prefix = 'trig';
-      else if (block.dataset.category === 'motion') prefix = 'mot';
-      else if (block.dataset.category === 'looks') prefix = 'look';
-      else if (block.dataset.category === 'sound') prefix = 'snd';
-      else if (block.dataset.category === 'control') prefix = 'ctrl';
-      else if (block.dataset.category === 'end') prefix = 'end';
-
-      let newId = `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 7)}`;
-      block.id = newId;
-      // console.log(`Generated unique ID: ${block.id}`);
-      return block.id;
+      if (block && block.dataset.category) {
+          prefix = block.dataset.category.substring(0, 4);
+      }
+      // Use crypto.randomUUID if available, otherwise fallback
+      let randomPart = window.crypto && window.crypto.randomUUID ?
+                       crypto.randomUUID().split('-')[0] : // Use first part of UUID
+                       Math.random().toString(36).substring(2, 9);
+      let newId = `${prefix}-${randomPart}`;
+      if(block) block.id = newId; // Set the ID on the element
+      // if (CONFIG.DEBUG) console.log(`Generated unique ID: ${newId}`);
+      return newId;
   }
 
 })();
