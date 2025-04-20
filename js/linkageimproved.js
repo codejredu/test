@@ -139,17 +139,23 @@
   let isDraggingBlock = false;
   let dragOffset = { x: 0, y: 0 };
   let futureIndicator = null;
+  let snapSound = null; // אודיו לצליל הצמדה
 
-  // קונפיגורציה - פרמטרים מותאמים
+  // קונפיגורציה - פרמטרים שניתן להתאים
   const CONFIG = {
     PIN_SOCKET_DEPTH: 5,       // עומק/רוחב הפין/שקע 
     CONNECT_THRESHOLD: 6,      // מרחק מקסימלי בפיקסלים לזיהוי אפשרות חיבור - שונה ל-6 בדיוק
     VERTICAL_OVERLAP_REQ: 0.5, // אחוז החפיפה האנכית הנדרש (50%)
     BLOCK_GAP: 0,              // רווח בין בלוקים מחוברים (0 = צמוד)
+    PLAY_SOUND: true,          // האם להשמיע צליל בעת הצמדה
+    SOUND_VOLUME: 0.7,         // עוצמת הצליל (בין 0 ל-1)
     DEBUG: true                // האם להציג לוגים מפורטים לדיבוג
   };
 
   // ========================================================================
+  // אתחול המערכת
+  // ========================================================================
+    // ========================================================================
   // אתחול המערכת
   // ========================================================================
   document.addEventListener('DOMContentLoaded', function() {
@@ -158,8 +164,38 @@
     observeNewBlocks();
     initExistingBlocks();
     initGlobalMouseListeners();
-    console.log(`Block linkage system initialized (Version 2.0).`);
+    initSnapSound(); // אתחול צליל ההצמדה
+    console.log(`Block linkage system initialized (Version 2.1 - Fixed Snap with Sound)`);
+    console.log(`Configuration: Snap threshold=${CONFIG.CONNECT_THRESHOLD}px, Sound=${CONFIG.PLAY_SOUND}`);
   });
+  
+  // ========================================================================
+  // אתחול צליל הצמדה
+  // ========================================================================
+  function initSnapSound() {
+    if (!CONFIG.PLAY_SOUND) return;
+    
+    try {
+      snapSound = new Audio();
+      
+      // צליל ברירת מחדל מובנה בבסיס64
+      const defaultSnapSoundBase64 = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAAFRgDh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAVXAAAAAAAABUa7cbQXAAAAAAD/+9DEAAAIwAN59BEABPpBLT80YAEYImG0I23Ix9AQ2XvYa5Tz4HHDTx8fwQsHhZwuHvH4IAgOBwM+XH4fLvBAYHA7/Lgfggf/EPBDwQ8P/BDwQ//4gcEAfB8oCmDkfjinAxjGMfwfggCDopo5UPH8Hh5//+sH/4IeDwQ8EDgVTqWWIis5LVtZl4wucRbMbGrE8eTGpyOoizGLMospkRXLiiRlRsVe5aWlliLy0smNTG5aW8X/uSTLPk6nIi2XXf/uT//9yYq8v///8BNt1FsMmJH/+9LEAwAIBAKZnoGAAQCAUy/QMADwpLnKxq93///96RJNHRSM////////+SZ0mfJWzppmf//////+TXXXQyY8mJpnN1O2Zzqs+pLFddTczNZl0v/xt//////0R6I3qi6I6P////////aIZvVE2n////////9NUW6aXQtDXZm5nQ/s0dP////////////qndlT6mWj////////////1M9lVb////////////jD7v////////////jGGyPcAAIAEgANi5BYZbpKVQKd0+R8zY';
+      
+      // נסה לטעון את הצליל המובנה
+      snapSound.src = defaultSnapSoundBase64;
+      
+      // הגדר עוצמת קול
+      snapSound.volume = CONFIG.SOUND_VOLUME;
+      
+      // טען את הצליל מראש
+      snapSound.load();
+      
+      console.log('Snap sound initialized');
+    } catch (err) {
+      console.error('Error initializing snap sound:', err);
+      snapSound = null;
+    }
+  }
 
   // ========================================================================
   // אתחול מאזינים באזור התכנות
@@ -404,7 +440,7 @@
   }
 
   // ========================================================================
-  // ביצוע הצמדת בלוקים - גרסה סופית עם מנגנון הצמדה מהיר
+  // ביצוע הצמדת בלוקים - הגרסה הסופית עם צליל הצמדה
   // ========================================================================
   function performBlockSnap(sourceBlock, targetBlock, direction) {
     console.log(`[performBlockSnap] Snapping ${sourceBlock.id} to ${targetBlock.id} in direction ${direction}`);
@@ -448,6 +484,9 @@
       sourceBlock.classList.add('connected-block');
       targetBlock.classList.add('has-connected-block');
       
+      // השמע צליל הצמדה
+      playSnapSound();
+      
       // אנימציית הצמדה
       addSnapEffectAnimation(sourceBlock);
       
@@ -460,6 +499,26 @@
       console.error(`[performBlockSnap] Error:`, err);
       sourceBlock.draggable = true;
       return false;
+    }
+  }
+  
+  // ========================================================================
+  // השמעת צליל הצמדה
+  // ========================================================================
+  function playSnapSound() {
+    if (!CONFIG.PLAY_SOUND || !snapSound) return;
+    
+    try {
+      // אפס את הצליל למקרה שעדיין מתנגן
+      snapSound.pause();
+      snapSound.currentTime = 0;
+      
+      // הפעל את הצליל
+      snapSound.play().catch(err => {
+        console.warn('Could not play snap sound:', err);
+      });
+    } catch (err) {
+      console.error('Error playing snap sound:', err);
     }
   }
 
@@ -905,9 +964,21 @@
     // הוסף אנימציית ניתוק אם נדרש
     if (animate) {
         addDetachEffectAnimation(blockToDetach);
+        
+        // השמע צליל ניתוק (אם יש)
+        playDetachSound();
     }
     
     console.log(`Block ${blockToDetach.id} detached from ${targetId}`);
+  }
+  
+  // ========================================================================
+  // השמעת צליל ניתוק (אופציונלי)
+  // ========================================================================
+  function playDetachSound() {
+    // בשלב זה אין צליל ניתוק, אבל אפשר להוסיף בעתיד
+    // אם רוצים להוסיף צליל ניתוק, צריך ליצור משתנה נוסף detachSound
+    // ולאתחל אותו בפונקציית initSnapSound
   }
 
   // ========================================================================
