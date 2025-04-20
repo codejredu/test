@@ -1,5 +1,6 @@
 // ========================================================================
 // Improved Block Linkage System (linkageimproved.js)
+// Version: Cleaned and Verified
 // ========================================================================
 
 (function() {
@@ -25,9 +26,10 @@
     // ========================================================================
 
     function initializeLinkageSystem() {
+        console.log("Attempting to initialize Linkage System..."); // Added log
         programmingArea = document.getElementById("program-blocks");
         if (!programmingArea) {
-            console.error("Linkage System Error: Programming area 'program-blocks' not found.");
+            console.error("Linkage System Error: Programming area 'program-blocks' not found. Cannot initialize.");
             return;
         }
 
@@ -56,14 +58,18 @@
          console.log(`Prepared ${blocksInArea.length} existing blocks.`);
     }
 
-    // Call initialization when the DOM is ready (or potentially after script.js runs)
-    // Assuming script.js might create the programming area or initial blocks
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializeLinkageSystem);
-    } else {
-        // DOMContentLoaded has already fired
-        initializeLinkageSystem();
+    // Call initialization when the DOM is ready
+    // Use a more robust check for DOM readiness
+    function runInitialization() {
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeLinkageSystem);
+        } else {
+            // DOMContentLoaded has already fired
+            initializeLinkageSystem();
+        }
     }
+    runInitialization(); // Execute the readiness check
+
 
     // ========================================================================
     // Unique ID Generation
@@ -80,7 +86,7 @@
     function handleMouseDown(event) {
         // Only trigger drag for direct clicks on block-containers within the programming area
         const targetBlock = event.target.closest('.block-container');
-        if (!targetBlock || !programmingArea.contains(targetBlock)) {
+        if (!targetBlock || !programmingArea || !programmingArea.contains(targetBlock)) { // Added null check for programmingArea
             return;
         }
 
@@ -93,6 +99,7 @@
         // Ensure the block has an ID
         if (!draggedElement.id) {
             draggedElement.id = generateUniqueBlockId();
+            console.log(`Assigned new ID during mousedown: ${draggedElement.id}`); // Log ID assignment
         }
 
         // --- Detaching Logic ---
@@ -111,7 +118,7 @@
 
         // --- Positioning & Offset ---
         const rect = draggedElement.getBoundingClientRect();
-        const areaRect = programmingArea.getBoundingClientRect();
+        // const areaRect = programmingArea.getBoundingClientRect(); // Not strictly needed here
 
         initialMouseX = event.clientX;
         initialMouseY = event.clientY;
@@ -157,36 +164,47 @@
     }
 
     function handleMouseUp(event) {
-        if (!isDragging) return;
+        if (!isDragging || !draggedElement) return;
 
-        console.log(`Stop dragging block: ${draggedElement.id}`);
+        // Ensure potentialSnapTarget is valid before using it
+        const isValidSnapTarget = potentialSnapTarget && programmingArea.contains(potentialSnapTarget);
+
+        console.log(`Stop dragging block: ${draggedElement.id}. Potential target: ${potentialSnapTarget ? potentialSnapTarget.id : 'None'}`);
 
         // --- Apply Snapping ---
-        if (potentialSnapTarget) {
+        if (isValidSnapTarget) {
+            console.log(`Attempting to link ${potentialSnapTarget.id} -> ${draggedElement.id}`); // Log before linking
             linkBlocks(potentialSnapTarget, draggedElement);
             // Position is finalized within linkBlocks
-            clearSnapHighlighting(); // Clear visual cues from the target
         } else {
              // Optional: Check for overlaps or boundary constraints if not snapping
-             const areaRect = programmingArea.getBoundingClientRect();
-             const elemRect = draggedElement.getBoundingClientRect();
-             let finalX = draggedElement.offsetLeft;
-             let finalY = draggedElement.offsetTop;
+             if (programmingArea && draggedElement) { // Add checks before accessing properties
+                 const areaRect = programmingArea.getBoundingClientRect();
+                 const elemRect = draggedElement.getBoundingClientRect();
+                 let finalX = draggedElement.offsetLeft;
+                 let finalY = draggedElement.offsetTop;
 
-             // Basic boundary check (optional)
-             finalX = Math.max(0, Math.min(finalX, areaRect.width - elemRect.width));
-             finalY = Math.max(0, Math.min(finalY, areaRect.height - elemRect.height));
+                 // Basic boundary check (optional)
+                 finalX = Math.max(0, Math.min(finalX, areaRect.width - elemRect.width));
+                 finalY = Math.max(0, Math.min(finalY, areaRect.height - elemRect.height));
 
-             draggedElement.style.left = `${finalX}px`;
-             draggedElement.style.top = `${finalY}px`;
-             updateDragGroupPosition(finalX, finalY); // Ensure group is aligned
+                 draggedElement.style.left = `${finalX}px`;
+                 draggedElement.style.top = `${finalY}px`;
+                 updateDragGroupPosition(finalX, finalY); // Ensure group is aligned
+                 console.log(`Placed block ${draggedElement.id} at ${finalX}, ${finalY} (no snap)`);
+             }
         }
 
-
         // --- Cleanup ---
+        // Clear highlighting regardless of whether snap occurred
+        clearSnapHighlighting();
+
+        // Reset styles and remove listeners
         dragGroup.forEach(block => {
-            block.style.zIndex = ''; // Reset z-index
-            block.style.cursor = ''; // Reset cursor
+            if (block) { // Ensure block exists before trying to style it
+                block.style.zIndex = ''; // Reset z-index
+                block.style.cursor = ''; // Reset cursor
+            }
         });
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
@@ -195,16 +213,16 @@
         isDragging = false;
         draggedElement = null;
         dragGroup = [];
-        potentialSnapTarget = null;
-        clearSnapHighlighting(); // Ensure any residual highlighting is gone
+        potentialSnapTarget = null; // Reset potential target explicitly here too
+        console.log("Dragging ended, state reset.");
     }
 
     // Handle case where mouse leaves the window during drag
     function handleMouseLeave(event) {
          if (isDragging) {
-             console.log("Mouse left window during drag, cancelling.");
+             console.warn("Mouse left window during drag, cancelling drag and snap."); // Use warn
               // Treat it like a mouse up without snapping
-             handleMouseUp(event);
+             handleMouseUp(event); // This will handle cleanup
          }
     }
 
@@ -217,17 +235,20 @@
         const group = [startBlock];
         let currentBlock = startBlock;
         while (currentBlock && currentBlock.dataset.nextBlockId) {
-            const nextBlock = document.getElementById(currentBlock.dataset.nextBlockId);
-            if (nextBlock && programmingArea.contains(nextBlock)) {
+            const nextId = currentBlock.dataset.nextBlockId;
+            const nextBlock = document.getElementById(nextId);
+            // Extra check: ensure nextBlock exists and is inside the programming area
+            if (nextBlock && programmingArea && programmingArea.contains(nextBlock)) {
                 group.push(nextBlock);
                 currentBlock = nextBlock;
             } else {
                 // Link is broken or points outside the area, stop iteration
-                if (currentBlock.dataset.nextBlockId) {
-                     console.warn(`Broken link detected: ${currentBlock.id} -> ${currentBlock.dataset.nextBlockId}`);
+                if (nextId) { // Only warn if there was an ID
+                     console.warn(`Broken link detected or block outside area: ${currentBlock.id} -> ${nextId}. Stopping group traversal.`);
+                     // Optionally remove the broken link
                      delete currentBlock.dataset.nextBlockId;
                 }
-                break;
+                break; // Exit loop
             }
         }
         return group;
@@ -242,15 +263,19 @@
 
         for (let i = 0; i < dragGroup.length; i++) {
             const block = dragGroup[i];
+            if (!block) continue; // Skip if block is somehow null/undefined in the group
+
             const blockHeight = block.offsetHeight; // Get actual height
 
              if (i === 0) { // The leader block, already positioned
-                 currentTop += blockHeight - VERTICAL_SNAP_OFFSET; // Adjust for next block based on *leader's* height
+                 // Adjust currentTop for the *next* block based on the leader's height
+                 currentTop += blockHeight - VERTICAL_SNAP_OFFSET;
              } else {
                 // Follower block
                 block.style.left = `${currentLeft}px`; // Align horizontally with leader
                 block.style.top = `${currentTop}px`;
-                currentTop += blockHeight - VERTICAL_SNAP_OFFSET; // Position next block below current one
+                // Adjust currentTop for the block after *this* one
+                currentTop += blockHeight - VERTICAL_SNAP_OFFSET;
             }
         }
     }
@@ -261,10 +286,10 @@
     // ========================================================================
 
     function findAndHighlightSnapTarget() {
-        clearSnapHighlighting(); // Clear previous highlighting
+        clearSnapHighlighting(); // Clear previous highlighting first
         potentialSnapTarget = null; // Reset potential target
 
-        if (!draggedElement) return;
+        if (!isDragging || !draggedElement || !programmingArea) return; // Check programmingArea too
 
         const dragRect = draggedElement.getBoundingClientRect();
         // Calculate the connection point for the top of the dragged block
@@ -289,6 +314,12 @@
                 return;
             }
 
+            // Can only snap if the target block doesn't have a previous block (i.e., it's a top-level block or start of a stack)
+            // This prevents snapping in the middle of a stack, although detachment handles this mostly. Can be relaxed if needed.
+            // if (block.dataset.prevBlockId) {
+            //     return;
+            // }
+
             const targetRect = block.getBoundingClientRect();
             // Calculate the connection point for the bottom of the potential target block
             const targetBottomConnector = {
@@ -301,13 +332,10 @@
             const dy = dragTopConnector.y - targetBottomConnector.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
 
-            if (distance < closestDistance) {
-                 // Check if the target block is *above* the dragged block generally
-                 // This prevents snapping upwards which can be confusing
-                 if (targetRect.bottom < dragRect.top + (dragRect.height / 2) ) {
-                    closestDistance = distance;
-                    bestTarget = block;
-                 }
+            // Check distance and vertical position (target must be above)
+            if (distance < closestDistance && targetRect.bottom < dragRect.top + (dragRect.height / 2)) {
+                closestDistance = distance;
+                bestTarget = block;
             }
         });
 
@@ -315,25 +343,34 @@
             potentialSnapTarget = bestTarget;
             highlightSnapTarget(potentialSnapTarget, true); // Highlight the target
             highlightSnapTarget(draggedElement, true); // Highlight the dragged block too
-             console.log(`Potential snap target: ${bestTarget.id} (Distance: ${closestDistance.toFixed(1)})`);
+            // console.log(`Potential snap target: ${bestTarget.id} (Distance: ${closestDistance.toFixed(1)})`); // Keep log minimal unless debugging
         }
     }
 
     function highlightSnapTarget(block, shouldHighlight) {
         if (block) {
-             if (shouldHighlight) {
-                 block.classList.add('snap-highlight'); // Define this class in your CSS
-             } else {
-                 block.classList.remove('snap-highlight');
+             try { // Add try-catch for safety
+                 if (shouldHighlight) {
+                     block.classList.add('snap-highlight'); // Define this class in your CSS
+                 } else {
+                     block.classList.remove('snap-highlight');
+                 }
+             } catch (e) {
+                 console.error("Error applying/removing highlight class:", e, block);
              }
         }
     }
 
      function clearSnapHighlighting() {
+         if (!programmingArea) return;
          const highlighted = programmingArea.querySelectorAll('.snap-highlight');
-         highlighted.forEach(el => el.classList.remove('snap-highlight'));
-          // Also clear the stored potential target
-         // potentialSnapTarget = null; // Done in findAndHighlightSnapTarget start and mouseUp
+         highlighted.forEach(el => {
+             try {
+                 el.classList.remove('snap-highlight');
+             } catch(e) {
+                  console.error("Error removing highlight class:", e, el);
+             }
+         });
      }
 
 
@@ -342,18 +379,18 @@
     // ========================================================================
 
     function linkBlocks(topBlock, bottomBlock) {
-        if (!topBlock || !bottomBlock || topBlock === bottomBlock) return;
+        if (!topBlock || !bottomBlock || topBlock === bottomBlock || !programmingArea) return;
 
-        // Check if topBlock already has a next block (should be prevented by findAndHighlightSnapTarget, but double-check)
-         if (topBlock.dataset.nextBlockId) {
-             console.warn(`Attempted to link to ${topBlock.id} which already has a next block (${topBlock.dataset.nextBlockId})`);
+        // Double-check conditions before linking
+        if (topBlock.dataset.nextBlockId) {
+             console.warn(`Link aborted: Target ${topBlock.id} already has next block (${topBlock.dataset.nextBlockId})`);
              return;
-         }
-         // Check if bottomBlock already has a prev block (should be prevented by detaching on mousedown, but double-check)
-         if (bottomBlock.dataset.prevBlockId) {
-              console.warn(`Attempted to link ${bottomBlock.id} which already has a prev block (${bottomBlock.dataset.prevBlockId})`);
+        }
+        if (bottomBlock.dataset.prevBlockId) {
+              console.warn(`Link aborted: Source ${bottomBlock.id} already has prev block (${bottomBlock.dataset.prevBlockId})`);
+              // This should ideally be cleared on mousedown, but check again.
               return;
-         }
+        }
 
         // --- Update Data Attributes ---
         topBlock.dataset.nextBlockId = bottomBlock.id;
@@ -361,56 +398,57 @@
 
         // --- Final Positioning ---
         const topRect = topBlock.getBoundingClientRect();
-        // Calculate target position relative to programming area
-        const targetX = topBlock.offsetLeft; // Align horizontally with the top block's position relative to the area
-        const targetY = topBlock.offsetTop + topRect.height - VERTICAL_SNAP_OFFSET; // Position directly below, adjusted by offset
+        // Calculate target position relative to programming area using offsetLeft/Top
+        const targetX = topBlock.offsetLeft;
+        const targetY = topBlock.offsetTop + topRect.height - VERTICAL_SNAP_OFFSET;
 
-        // Apply final position to the bottom block (which is the leader of the drag group)
+        // Apply final position to the bottom block (leader of the drag group)
         bottomBlock.style.left = `${targetX}px`;
         bottomBlock.style.top = `${targetY}px`;
 
         // Recalculate and apply positions for the rest of the group based on the new snapped position
+        // Need to pass the correct leader's NEW coordinates
         updateDragGroupPosition(targetX, targetY);
 
-        console.log(`Linked ${topBlock.id} -> ${bottomBlock.id}`);
+        console.log(`Linked ${topBlock.id} -> ${bottomBlock.id} at pos (${targetX}, ${targetY})`);
     }
 
     // ========================================================================
-    // Public API (This section is confirmed correct)
+    // Public API (for interaction from script.js)
     // ========================================================================
 
     // Function to be called by script.js AFTER a block is created from the palette
     window.registerNewBlockForLinkage = function(newBlockElement) {
-         if (!newBlockElement) return;
-
-          // 1. Assign Unique ID
-         if (!newBlockElement.id) {
-             newBlockElement.id = generateUniqueBlockId();
+         console.log("Executing registerNewBlockForLinkage for element:", newBlockElement); // Log entry
+         if (!newBlockElement) {
+             console.error("registerNewBlockForLinkage called with null element.");
+             return;
          }
 
-          // 2. Ensure Position Absolute (might be already set by script.js drop)
-         newBlockElement.style.position = 'absolute';
+         // 1. Assign Unique ID if it doesn't have one
+         if (!newBlockElement.id) {
+             newBlockElement.id = generateUniqueBlockId();
+             console.log(`Assigned new ID via registration: ${newBlockElement.id}`);
+         } else {
+             console.log(`Element already had ID: ${newBlockElement.id}`);
+         }
 
-         // 3. Make sure it's draggable via our system (mousedown listener is delegated)
-         console.log(`Registered new block ${newBlockElement.id} for linkage.`);
+         // 2. Ensure Position Absolute (might be already set by script.js drop)
+         console.log("Setting position to absolute for", newBlockElement.id); // Log before setting style
+         try {
+            newBlockElement.style.position = 'absolute'; // This is line ~403 where the error occurred
+         } catch (e) {
+             console.error("!!! CRITICAL ERROR setting style.position:", e, newBlockElement);
+         }
+         console.log("Finished setting position for", newBlockElement.id); // Log after setting style
+
+
+         // 3. Log successful registration
+         console.log(`Successfully registered block ${newBlockElement.id} for linkage.`);
 
          // Note: No need to add mousedown listener here directly due to event delegation
     };
 
 
 })(); // IIFE to encapsulate scope
-
---- END OF FILE linkageimproved.js ---
-
-**פעולות נדרשות:**
-
-1.  **החלף תוכן:** העתק את כל הקוד שלמעלה והדבק אותו בקובץ `linkageimproved.js` שלך, תוך דריסה של כל התוכן הקיים.
-2.  **שמור** את הקובץ.
-3.  **רענן קשיח:** טען מחדש את הדף בדפדפן שלך באמצעות Ctrl+Shift+R (או Cmd+Shift+R ב-Mac) כדי למחוק את המטמון ולוודא שהגרסה העדכנית ביותר נטענת.
-4.  **בדוק קונסול:** ודא שאין יותר שגיאות `SyntaxError` בקונסול של המפתחים.
-5.  **בדוק הדגשה:** גרור בלוק אחד קרוב לבלוק אחר באזור התכנות. אתה אמור לראות כעת את הריבוע הכחול המקווקו (`.snap-highlight`) סביב שני הבלוקים כשהם במרחק ההצמדה.
-
-אם ההדגשה *עדיין* לא מופיעה אחרי תיקון השגיאה:
-
-*   **ודא שה-CSS קיים ונטען:** בדוק שוב שכללי ה-CSS (במיוחד הכלל `.snap-highlight { outline: 3px dashed dodgerblue; outline-offset: 2px; }`) נמצאים בקובץ ה-CSS שלך והוא מקושר נכון בקובץ ה-HTML.
-*   **ודא שהפונקציה `findAndHighlightSnapTarget` נקראת:** ודא שהפונקציה `handleMouseMove` עדיין קוראת ל-`findAndHighlightSnapTarget();` כפי שמופיע בקוד שסיפקתי.
+console.log("linkageimproved.js script finished execution."); // Log end of script
