@@ -1,213 +1,680 @@
-// --- START OF FILE linkageimproved.js ---
-// מימוש משופר - v3.4 - ניסיון נוסף לתיקון קפיצה + הילה + שמע
-
-(function() {
-  // ----------------------------------------------------------------------
-  // Configuration
-  // ----------------------------------------------------------------------
-  const CONFIG = {
-    PIN_WIDTH: 5,             // רוחב/עומק פין/שקע לצורך זיהוי קרבה (פיקסלים)
-    CONNECT_THRESHOLD: 15,    // מרחק אופקי מקסימלי (בין פין לשקע) לזיהוי (פיקסלים)
-    VERTICAL_ALIGN_THRESHOLD: 30, // הפרש אנכי מקסימלי מותר (בין top-ים)
-    BLOCK_GAP: 0,             // רווח סופי בין בלוקים מחוברים
-    PLAY_SOUND: true,
-    SOUND_VOLUME: 0.7,
-    DEBUG: true
-  };
-
-  // ----------------------------------------------------------------------
-  // Global State Variables
-  // ----------------------------------------------------------------------
-  let currentDraggedBlock = null;    // הבלוק הנגרר כרגע
-  let potentialSnapTarget = null;  // הבלוק הפוטנציאלי להצמדה
-  let snapDirection = null;        // כיוון ההצמדה ('left' או 'right' יחסית ליעד)
-  let isDraggingBlock = false;       // האם מתבצעת גרירה
-  let dragOffset = { x: 0, y: 0 }; // היסט העכבר מהפינה השמאלית-עליונה של הבלוק
-  let futureIndicator = null;      // אלמנט המלבן הכחול
-  let snapSound = null;            // אלמנט האודיו לצליל הצמדה
-  let audioEnabled = false;        // האם המשתמש אפשר שמע
-  let soundInitialized = false;    // האם בוצע ניסיון אתחול לשמע
-
-  // ========================================================================
-  // Initialization
-  // ========================================================================
-  document.addEventListener('DOMContentLoaded', () => {
-    addHighlightStyles();           // הוסף סגנונות CSS
-    initProgrammingAreaListeners(); // מאזינים לאזור התכנות הראשי
-    observeNewBlocks();             // צפה בבלוקים חדשים
-    initExistingBlocks();           // אתחל בלוקים קיימים
-    initGlobalMouseListeners();     // מאזינים גלובליים לעכבר
-    initAudio();                    // אתחל מערכת שמע
-    addSoundTestButton();           // הוסף כפתור בדיקת שמע
-
-    if (CONFIG.DEBUG) console.log(`Block linkage system initialized (v3.4)`);
-    if (CONFIG.DEBUG) console.log(`Config:`, JSON.stringify(CONFIG));
-  });
-
-  // ========================================================================
-  // Audio Handling (Using provided code)
-  // ========================================================================
-   function initAudio() {
-    if (!CONFIG.PLAY_SOUND || soundInitialized) return;
-    soundInitialized = true;
-
-    try {
-      snapSound = document.createElement('audio');
-      snapSound.id = 'snap-sound';
-      const source = document.createElement('source');
-      // Base64 encoded short click sound (WAV)
-      source.src = 'data:audio/wav;base64,UklGRjQnAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YRAnAACAgICAgICAgICAgICAgICAgICAgICAgICBgYGBgYGBgoKCgoKCg4ODg4ODhISEhISEhYWFhYWFhoaGhoaGh4eHh4eHiIiIiIiIiYmJiYmJioqKioqKi4uLi4uLjIyMjIyMjY2NjY2Njo6Ojo6Oj4+Pj4+PkJCQkJCQkZGRkZGRkpKSkpKSk5OTk5OTlJSUlJSUlZWVlZWVlpaWlpaWl5eXl5eXmJiYmJiYmZmZmZmZmpqampqam5ubm5ubnJycnJycnZ2dnZ2dnp6enp6en5+fn5+foKCgoKCgoaGhoaGhoqKioqKio6Ojo6Ojvb29u7u7ubm5t7e3tbW1s7OzsbGxr6+vrq6urKysqqqqqKiop6enpKSkpKSkpaWlpaWlpqamp6enqKioqampqqqqqqqqqampp6ennp6elZWVjIyMg4ODe3t7c3NzbW1taWlpZmZmZWVlZGRkZGRkY2NjYmJiYWFhYGBgX19fXl5eXV1dXFxcW1tbWlpaWVlZWFhYV1dXVlZWVVVVVFRUU1NTUlJSUVFRUFBQT09PTk5OTU1NTExMS0tLSkpKSUlJSEhIR0dHRkZGRUVFREREQ0NDQkJCQUFBQEBAQEBAQUFBQkJCQ0NDRERERUVFRkZGR0dHSEhISUlJSkpKS0tLTExMTU1NTk5OT09PUFBQUVFRUlJSU1NTVFRUVVVVVlZWV1dXWFhYWVlZWlpaW1tbXFxcXV1dXl5eX19fYGBgYWFhYmJiY2NjZGRkZWVlZmZmaWlpbW1tc3Nze3t7g4ODjIyMlZWVnp6ep6enqampqqqqqqqqqqqqq6urq6urrKysrKysra2tra2trq6urq6ur6+vr6+vsLCwsLCwsbGxsbGxs7Oztra2uLi4ubm5u7u7vb29v7+/wMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwDAwMAwMDAsOwAwAdMAwAAABgAAAA=';
-      snapSound.src = source.src; // הגדר את המקור שנוצר
-      document.body.appendChild(snapSound); // הוסף את הבלוק לדף (נדרש בחלק מהדפדפנים)
-      if (CONFIG.DEBUG) console.log('Audio element created and added to body');
-    } catch (err) {
-      console.error('Error creating audio element:', err);
-    }
-  }
-
-  // אתחול השמע בעת אינטראקציה ראשונה (לחיצה או מגע)
-  const enableAudioHandler = () => {
-    if (!audioEnabled && snapSound) {
-      snapSound.play().then(() => {
-        snapSound.pause(); // עצור מיד אחרי הפעלה ראשונית
-        snapSound.currentTime = 0;
-        audioEnabled = true;
-        if (CONFIG.DEBUG) console.log('Audio context unlocked by user interaction.');
-      }).catch(err => {
-        // שגיאה צפויה אם לא היתה אינטראקציה, נמשיך ללא שמע
-        if (CONFIG.DEBUG) console.warn('Audio context not yet unlocked by user interaction:', err.name);
-      }).finally(() => {
-        // הסר את המאזינים אחרי הניסיון הראשון
-        document.removeEventListener('click', enableAudioHandler, true);
-        document.removeEventListener('touchstart', enableAudioHandler, true);
-      });
-    }
-  };
-
-  // האזן לאירועים שיכולים לאפשר הפעלת אודיו אוטומטית
-  document.addEventListener('click', enableAudioHandler, { capture: true, once: true });
-  document.addEventListener('touchstart', enableAudioHandler, { capture: true, once: true });
-
-
-  // ========================================================================
-  // השמעת צליל הצמדה
-  // ========================================================================
-  function playSnapSound() {
-    if (!CONFIG.PLAY_SOUND || !snapSound) {
-        if (CONFIG.DEBUG && CONFIG.PLAY_SOUND && !snapSound) {
-             console.warn("[PlaySound] Audio element not initialized.");
-        }
-        return; // לא ניתן להשמיע אם השמע כבוי או לא אותחל
-    }
-
-    // בדוק אם השמע כבר הופעל על ידי המשתמש
-    if (!audioEnabled) {
-        if (CONFIG.DEBUG) console.warn("[PlaySound] Audio context not yet unlocked. Please click/tap the screen first.");
-        // אופציונלי: נסה להפעיל שוב, למקרה שהיה עיכוב באינטראקציה
-        snapSound.play().then(() => {
-            snapSound.pause();
-            snapSound.currentTime = 0;
-            audioEnabled = true;
-            console.log("[PlaySound] Audio context unlocked now, retrying play...");
-            playSnapSound(); // נסה שוב עכשיו שההקשר פעיל
-        }).catch(() => {
-            // עדיין לא ניתן להפעיל
-        });
-        return;
-    }
-
-    // אם השמע מאופשר ואותחל, נגן
-    try {
-        snapSound.currentTime = 0; // התחל מההתחלה
-        snapSound.play().catch(error => {
-            // התעלם משגיאות AbortError שקורות אם קוראים ל-play מהר מדי ברצף
-            if (error.name !== 'AbortError' && CONFIG.DEBUG) {
-               console.warn('Error playing snap sound:', error);
-            }
-        });
-         if (CONFIG.DEBUG) console.log('Attempted to play snap sound.');
-    } catch (err) {
-      console.error('[PlaySound] Exception:', err);
-    }
-  }
-
-  // ========================================================================
-  // הוספת כפתור בדיקת שמע (מהקוד שסופק)
+// ========================================================================
+  // הוספת כפתור בדיקת שמע - גרסה משופרת ומהימנה יותר
   // ========================================================================
   function addSoundTestButton() {
     if (!CONFIG.PLAY_SOUND) return;
-
+    
     try {
-        if (document.getElementById('sound-test-button')) return;
-
-        const button = document.createElement('button');
-        button.id = 'sound-test-button';
-        button.textContent = 'בדוק צליל';
-        button.title = 'לחץ כדי לאפשר ולהשמיע את צליל ההצמדה';
-        Object.assign(button.style, {
-            position: 'fixed', bottom: '15px', right: '15px', zIndex: '9999',
-            padding: '8px 12px', backgroundColor: '#f0ad4e', /* Orange */
-            color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer',
-            boxShadow: '0 2px 5px rgba(0,0,0,0.2)', fontFamily: 'Arial, sans-serif',
-            fontSize: '13px', fontWeight: 'bold', opacity: '1',
-            transition: 'opacity 0.5s ease-out, background-color 0.3s ease'
+      // הסר כפתור קודם אם קיים
+      const existingButton = document.getElementById('sound-test-button');
+      if (existingButton) existingButton.remove();
+      
+      // צור כפתור בדיקת שמע חדש
+      const button = document.createElement('button');
+      button.id = 'sound-test-button';
+      button.textContent = 'הפעל צליל חיבור';
+      button.title = 'לחץ כאן כדי להפעיל את צליל ההצמדה';
+      
+      // עיצוב הכפתור
+      button.style.position = 'fixed';
+      button.style.bottom = '15px';
+      button.style.right = '15px';
+      button.style.zIndex = '9999';
+      button.style.padding = '8px 12px';
+      button.style.backgroundColor = '#2196F3';
+      button.style.color = 'white';
+      button.style.border = 'none';
+      button.style.borderRadius = '4px';
+      button.style.cursor = 'pointer';
+      button.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+      button.style.fontFamily = 'Arial, sans-serif';
+      button.style.fontSize = '14px';
+      button.style.fontWeight = 'bold';
+      
+      // אפקט מעבר עכבר
+      button.onmouseover = function() {
+        this.style.backgroundColor = '#0b7dda';
+      };
+      
+      button.onmouseout = function() {
+        this.style.backgroundColor = '#2196F3';
+      };
+      
+      // הוסף מאזין לחיצה - עם צליל שבוודאות יעבוד
+      button.addEventListener('click', function() {
+        // בדוק אם אפשר להפעיל שמע
+        const shortBeep = new Audio('data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAAFAAAKhgBISEhISEhISEhISEiHh4eHh4eHh4eHh4eHwMDAwMDAwMDAwMDAwP//////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA');
+        shortBeep.volume = 1.0;
+        
+        shortBeep.play().then(() => {
+          console.log('Sound test successful!');
+          button.textContent = 'הצליל מופעל! ✓';
+          button.style.backgroundColor = '#4CAF50'; // ירוק
+          audioEnabled = true;
+          
+          // העלם את הכפתור אחרי 3 שניות
+          setTimeout(() => {
+            button.style.opacity = '0';
+            button.style.transition = 'opacity 0.5s ease-out';
+            
+            setTimeout(() => {
+              button.remove();
+            }, 500); // אחרי שהמעבר הסתיים
+            
+          }, 3000);
+          
+        }).catch(err => {
+          console.warn('Sound test failed:', err);
+          button.textContent = 'נסה שוב...';
+          button.style.backgroundColor = '#f44336'; // אדום
         });
-
-        button.onmouseover = function() { if (!this.disabled) this.style.backgroundColor = '#ec971f'; };
-        button.onmouseout = function() { if (!this.disabled) this.style.backgroundColor = '#f0ad4e'; };
-
-        button.addEventListener('click', function() {
-            if (CONFIG.DEBUG) console.log("[Sound Test] Button clicked. Audio enabled:", audioEnabled, "Sound Initialized:", soundInitialized);
-
-            if (!soundInitialized) {
-                 console.warn("[Sound Test] Audio not initialized yet.");
-                 button.textContent = 'שגיאת אתחול';
-                 button.style.backgroundColor = '#d9534f'; // Red
-                 button.disabled = true;
-                 return;
-            }
-
-            // נסה להפעיל ישירות את אובייקט ה-snapSound
-            if (snapSound) {
-                const playPromise = snapSound.play();
-                if (playPromise !== undefined) {
-                    playPromise.then(() => {
-                        snapSound.pause(); // עצור מיד אחרי הבדיקה
-                        snapSound.currentTime = 0;
-                        audioEnabled = true; // ודא שהדגל מוגדר
-                        button.textContent = 'צליל תקין ✓';
-                        button.classList.add('success');
-                        button.style.backgroundColor = '#5cb85c'; // Green
-                        button.onmouseover = null; // הסר אירועי ריחוף מיותרים
-                        button.onmouseout = null;
-                        button.disabled = true;
-                        setTimeout(() => { button.style.opacity = '0'; setTimeout(() => button.remove(), 500); }, 2000);
-                    }).catch(error => {
-                        console.warn('[Sound Test] Playback failed:', error);
-                        button.textContent = 'שמע נכשל/חסום';
-                        button.style.backgroundColor = '#d9534f'; // Red
-                        button.classList.add('fail');
-                        button.title = 'לא ניתן להפעיל שמע. לחץ במקום אחר בדף ונסה שוב.';
-                    });
-                } else {
-                    console.warn('[Sound Test] snapSound.play() did not return a promise.');
-                    button.textContent = 'שגיאת שמע (Promise)';
-                    button.style.backgroundColor = '#d9534f'; // Red
-                }
-            } else {
-                console.error("[Sound Test] snapSound object is null.");
-                button.textContent = 'שגיאת שמע (Null)';
-                button.style.backgroundColor = '#d9534f'; // Red
-            }
-        });
-
-        document.body.appendChild(button);
-        if (CONFIG.DEBUG) console.log('Sound test button added.');
+      });
+      
+      // הוסף את הכפתור לעמוד
+      document.body.appendChild(button);
+      console.log('Sound test button added to page');
     } catch (err) {
-        console.error('Error adding sound test button:', err);
+      console.error('Error adding sound test button:', err);
     }
-}
+  }  // ========================================================================
+  // השמעת צליל הצמדה - גרסה חדשה עם צליל ישיר
+  // ========================================================================
+  function playSnapSound() {
+    if (!CONFIG.PLAY_SOUND) return;
+    
+    // גרסה פשוטה שעובדת בכל מקרה - ללא תלות באובייקט האודיו
+    try {
+      // יצירת אובייקט אודיו חדש בכל פעם - מבטיח שהצליל תמיד יושמע
+      const tempSound = new Audio('data:audio/mp3;base64,SUQzAwAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjM2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAUAAAiSAANDQ0NDRoaGhoaKCgoKCg1NTU1NUNDQ0NDUFBQUFBeXl5eXmtra2trd3d3d3eEhISEhJKSkpKSn5+fn5+tra2traioqKiotbW1tbXDw8PDw9DQ0NDQ3d3d3d3q6urq6vj4+Pj4//8AAAAATGF2YzU2LjQxAAAAAAAAAAAAAAAAJAAAAAAAAAAAIkgZuk9gAAAAAAAAAAAAAAAAAAAA//NEAAAU7GVDkMMTDQAJu0AAuBlLT8aCYqUQP7d34f9LFNKS9CCmEgABg/wMP8C/Ax/4QBFzP///EYPwQf0JwyE/4eeAQ8CABAnDCw8g+CAPH3ggD7/hAD/hCCOGrx0/CCMh4D4YBA');
+      
+      // הגדר עוצמת שמע גבוהה ונסה להשמיע
+      tempSound.volume = 1.0;
+      
+      // נסה להשמיע את הצליל
+      tempSound.play().then(() => {
+        console.log('Snap sound played successfully');
+      }).catch(err => {
+        console.warn('Could not play snap sound:', err);
+        
+        // אם נכשל, נסה אופציה אחרת
+        try {
+          // אם יש אלמנט שמע מוגדר, נסה להשתמש בו
+          if (snapSound) {
+            snapSound.currentTime = 0;
+            snapSound.play();
+          }
+        } catch (innerErr) {
+          console.error('All sound playback methods failed', innerErr);
+        }
+      });
+    } catch (err) {
+      console.error('Error playing snap sound:', err);
+    }
+  }
 
+  // ========================================================================
+  // הוספת סגנונות CSS - גרסה משופרת עם הילה יותר בולטת
+  // ========================================================================
+  function addHighlightStyles() {
+    if (document.getElementById('block-connection-styles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'block-connection-styles';
+    style.textContent = `
+      /* בלוק נגרר - הופכים עליון ומדגישים */
+      .snap-source {
+         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+         transition: box-shadow 0.15s ease-out;
+         cursor: grabbing !important;
+         z-index: 1001 !important;
+      }
+
+      /* הילה צהובה סביב בלוק יעד פוטנציאלי - מודגשת מאוד */
+      .snap-target {
+        outline: 6px solid #FFC107 !important; /* צהוב בולט */
+        outline-offset: 4px;
+        box-shadow: 0 0 20px 8px rgba(255, 193, 7, 0.8) !important;
+        transition: outline 0.1s ease-out, box-shadow 0.1s ease-out;
+        z-index: 999 !important; /* חשוב שיהיה מתחת לנגרר */
+      }
+
+      /* מלבן כחול מקווקו לציון מיקום עתידי - יותר בולט */
+      .future-position-indicator {
+        position: absolute; 
+        border: 3px dashed rgba(0, 120, 255, 0.95);
+        border-radius: 5px; 
+        background-color: rgba(0, 120, 255, 0.15);
+        pointer-events: none; 
+        z-index: 998; 
+        opacity: 0;
+        transition: opacity 0.15s ease-out, left 0.05s linear, top 0.05s linear;
+        display: none;
+      }
+      .future-position-indicator[style*="display: block"] { 
+        opacity: 0.9; 
+      }
+
+      /* סימון כיוון (פס צהוב בצד ימין/שמאל) - יותר בולט */
+      .snap-left::before {
+        content: ''; 
+        position: absolute; 
+        left: -8px; 
+        top: 15%; 
+        bottom: 15%; 
+        width: 8px;
+        background-color: #FFC107; 
+        border-radius: 2px; 
+        z-index: 1000;
+        box-shadow: 0 0 10px 2px rgba(255, 193, 7, 0.8); 
+        transition: all 0.1s ease-out;
+      }
+      .snap-right::after {
+        content: ''; 
+        position: absolute; 
+        right: -8px; 
+        top: 15%; 
+        bottom: 15%; 
+        width: 8px;
+        background-color: #FFC107; 
+        border-radius: 2px; 
+        z-index: 1000;
+        box-shadow: 0 0 10px 2px rgba(255, 193, 7, 0.8); 
+        transition: all 0.1s ease-out;
+      }
+
+      /* אנימציות משופרות */
+      @keyframes snapEffect { 
+        0% { transform: scale(1); } 
+        35% { transform: scale(1.05); } 
+        70% { transform: scale(0.98); }
+        100% { transform: scale(1); } 
+      }
+      .snap-animation { 
+        animation: snapEffect 0.3s ease-out; 
+      }
+      
+      @keyframes detachEffect { 
+        0% { transform: translate(0, 0) rotate(0); } 
+        30% { transform: translate(3px, 1px) rotate(0.8deg); } 
+        60% { transform: translate(-2px, 2px) rotate(-0.5deg); }
+        100% { transform: translate(0, 0) rotate(0); } 
+      }
+      .detach-animation { 
+        animation: detachEffect 0.3s ease-in-out; 
+      }
+
+      /* תפריט ניתוק */
+      #detach-menu { 
+        position: absolute; 
+        background-color: white; 
+        border: 1px solid #ccc; 
+        border-radius: 4px; 
+        box-shadow: 0 3px 8px rgba(0,0,0,0.2); 
+        z-index: 1100; 
+        padding: 5px; 
+        font-size: 14px; 
+        min-width: 100px; 
+      }
+      #detach-menu div { 
+        padding: 6px 12px; 
+        cursor: pointer; 
+        border-radius: 3px; 
+      }
+      #detach-menu div:hover { 
+        background-color: #eee; 
+      }
+
+      /* כללי: מניעת בחירת טקסט בזמן גרירה */
+      body.user-select-none { 
+        user-select: none; 
+        -webkit-user-select: none; 
+        -moz-user-select: none; 
+        -ms-user-select: none; 
+      }
+      
+      /* בלוקים מחוברים - אופציונלי להוספת אינדיקציה חזותית */
+      .connected-block {
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+      }
+      .has-connected-block {
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+      }
+      
+      /* כפתור בדיקת שמע - יופיע אם הצליל לא פועל */
+      #sound-test-button {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        padding: 6px 12px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        z-index: 9999;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      }
+      #sound-test-button:hover {
+        background-color: #45a049;
+      }
+    `;
+    document.head.appendChild(style);
+    console.log('Highlighting and animation styles added/verified.');
+  }  // ========================================================================
+  // אתחול השמע (גרסה פשוטה יותר שעובדת בכל הדפדפנים)
+  // ========================================================================
+  function initAudio() {
+    if (!CONFIG.PLAY_SOUND) return;
+    
+    try {
+      // צור אלמנט שמע בסיסי
+      const audioElement = document.createElement('audio');
+      audioElement.id = 'snap-sound';
+      
+      // צור שני מקורות שמע - עבור דפדפנים שונים
+      const mp3Source = document.createElement('source');
+      mp3Source.type = 'audio/mp3';
+      mp3Source.src = 'data:audio/mp3;base64,SUQzAwAAAAAAJlRQRTEAAAAcAAAAU291bmRKYXkuY29tIFNvdW5kIEVmZmVjdHMAVENPTgAAAAwAAABTRlggLSBDbGlja3NUSVRMAAAAIAAAAER1bGwgTWVjaGFuaWNhbCBDbGljayAwMSAoU2luZ2xlKVRZRVIAAAAFAAAAMjAyMVRDT04AAAAPAAAAU291bmQgRWZmZWN0c1BMRUMAAAAPAAAAUG9wIGFuZCBDbGlja3NUUEUBAAAAGAAAAFB1YmxpYyBEb21haW4gTWFya2VkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/+2DEAAAMogAKMwAAJORpJ/mwADIhL5qYJoAiQmLCEfCeAYPGfWYOBhkhQSgQeICQ9iP/+CIhABBi1DDpI0qJp2aGnIeASgxfnEcPEwxBTUUzLjk5VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjk5VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+1DEBACKsIahtJAAAAAVsUAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=';
+      
+      const wavSource = document.createElement('source');
+      wavSource.type = 'audio/wav';
+      wavSource.src = 'data:audio/wav;base64,UklGRigBAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQBAABpAFgATwBpAKEA0QDUALQAkAB8AHgAkAC2AN8A+QD+AN4AuwCUAHQAZQBuAIcApgDEANQA1gDMALQAkwBxAF0AWQBpAIQAngC0AMQA0QDPAMEApwCJAG4AWwBXAF8AfQCZALYAzQDZANsA0QC9AKIAhABrAF0AWQBkAHwAmACxAMUA0wDXAM8AxACrAI0AcgBeAFgAYAB0AIwApwDAANAA1gDWAMwAuACaAH8AagBbAFgAYAB2AIkAogC5AMsA0wDTAMkAtgCbAIEAbQBcAFkAYQB0AIQAmQCvAMEAygDNAMUAsQCWAH0AbABfAF0AZgB5AIwAoACyAL8AxQDFAL4AqwCQAHsAbQBiAGAAZwB6AIwAnwCvALwAwQDCALsAqgCRAH0AcABnAGcAcAB/';
+      
+      // הוסף את המקורות לאלמנט השמע
+      audioElement.appendChild(mp3Source);
+      audioElement.appendChild(wavSource);
+      
+      // קבע הגדרות נוספות
+      audioElement.volume = CONFIG.SOUND_VOLUME;
+      audioElement.preload = 'auto';
+      
+      // הוסף לעמוד
+      document.body.appendChild(audioElement);
+      
+      // שמור את אלמנט השמע
+      snapSound = audioElement;
+      soundInitialized = true;
+      
+      console.log('Audio element created and added to the page.');
+      
+      // הפעל צליל ריק כדי "לפתוח" את השמע בדפדפנים שדורשים אינטראקציה
+      document.addEventListener('click', function enableSound() {
+        console.log('Attempting to enable sound on first click');
+        
+        try {
+          // נסה להפעיל את השמע
+          snapSound.play().then(() => {
+            console.log('Sound enabled successfully');
+            audioEnabled = true;
+            snapSound.pause();
+            snapSound.currentTime = 0;
+          }).catch(err => {
+            console.warn('Initial sound enablement failed:', err);
+          });
+        } catch (err) {
+          console.error('Error in click handler:', err);
+        }
+        
+        // הסר את המאזין אחרי השימוש הראשון
+        document.removeEventListener('click', enableSound);
+      });
+      
+    } catch(err) {
+      console.error('Error initializing audio:', err);
+      CONFIG.PLAY_SOUND = false;
+      snapSound = null;
+    }
+  }  // ========================================================================
+  // אתחול המערכת
+  // ========================================================================
+    // ========================================================================
+  // אתחול המערכת
+  // ========================================================================
+  document.addEventListener('DOMContentLoaded', function() {
+    addHighlightStyles(); // הוסף סגנונות CSS
+    initProgrammingAreaListeners();
+    observeNewBlocks();
+    initExistingBlocks();
+    initGlobalMouseListeners();
+    initAudio(); // אתחול שמע
+    
+    // הוסף את כפתור בדיקת השמע עם השהייה קלה
+    setTimeout(function() {
+      addSoundTestButton();
+    }, 1000);
+    
+    console.log(`Block linkage system initialized (Version 3.0)`);
+    console.log(`Configuration: Pin threshold=${CONFIG.CONNECT_THRESHOLD}px, Sound=${CONFIG.PLAY_SOUND}`);
+  });
+  
+  // ========================================================================
+  // הוספת כפתור בדיקת שמע
+  // ========================================================================
+  function addSoundTestButton() {
+    if (!CONFIG.PLAY_SOUND) return;
+    
+    try {
+      // בדוק אם הכפתור כבר קיים
+      if (document.getElementById('sound-test-button')) return;
+      
+      // צור כפתור בדיקת שמע
+      const button = document.createElement('button');
+      button.id = 'sound-test-button';
+      button.textContent = 'אפשר צליל הצמדה';
+      button.style.position = 'fixed';
+      button.style.bottom = '10px';
+      button.style.right = '10px';
+      button.style.zIndex = '9999';
+      button.style.padding = '5px 10px';
+      button.style.backgroundColor = '#4CAF50';
+      button.style.color = 'white';
+      button.style.border = 'none';
+      button.style.borderRadius = '4px';
+      button.style.cursor = 'pointer';
+      
+      // הוסף מאזין לחיצה
+      button.addEventListener('click', function() {
+        // נסה להפעיל את השמע
+        if (snapSound) {
+          snapSound.play().then(() => {
+            audioEnabled = true;
+            button.textContent = 'השמע מופעל!';
+            button.style.backgroundColor = '#2196F3';
+            snapSound.pause();
+            snapSound.currentTime = 0;
+            
+            // הסר את הכפתור אחרי 2 שניות
+            setTimeout(() => {
+              button.remove();
+            }, 2000);
+          }).catch(err => {
+            console.warn('Could not enable audio:', err);
+            button.textContent = 'נסה שוב...';
+            button.style.backgroundColor = '#f44336';
+          });
+        } else {
+          // צור אלמנט שמע זמני
+          const tempSound = new Audio();
+          tempSound.src = 'data:audio/wav;base64,UklGRjQnAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YRAnAACAgICAgICAgICAgICAgICAgICAgICAgICBgYGBgYGBgoKCgoKCg4ODg4ODhISEhISEhYWFhYWFhoaGhoaGh4eHh4eHiIiIiIiIiYmJiYmJioqKioqKi4uLi4uLjIyMjIyMjY2NjY2Njo6Ojo6Oj4+Pj4+PkJCQkJCQkZGRkZGRkpKSkpKSk5OTk5OTlJSUlJSUlZWVlZWVlpaWlpaWl5eXl5eXmJiYmJiYmZmZmZmZmpqampqam5ubm5ubnJycnJycnZ2dnZ2dnp6enp6en5+fn5+foKCgoKCgoaGhoaGhoqKioqKio6Ojo6Ojvb29u7u7ubm5t7e3tbW1s7OzsbGxr6+vrq6urKysqqqqqKiop6enpKSkpKSkpaWlpaWlpqamp6enqKioqampqqqqqqqqqampp6ennp6elZWVjIyMg4ODe3t7c3NzbW1taWlpZmZmZWVlZGRkZGRkY2NjYmJiYWFhYGBgX19fXl5eXV1dXFxcW1tbWlpaWVlZWFhYV1dXVlZWVVVVVFRUU1NTUlJSUVFRUFBQT09PTk5OTU1NTExMS0tLSkpKSUlJSEhIR0dHRkZGRUVFREREQ0NDQkJCQUFBQEBAQEBAQUFBQkJCQ0NDRERERUVFRkZGR0dHSEhISUlJSkpKS0tLTExMTU1NTk5OT09PUFBQUVFRUlJSU1NTVFRUVVVVVlZWV1dXWFhYWVlZWlpaW1tbXFxcXV1dXl5eX19fYGBgYWFhYmJiY2NjZGRkZWVlZmZmaWlpbW1tc3Nze3t7g4ODjIyMlZWVnp6ep6enqampqqqqqqqqqqqqq6urq6urrKysrKysra2tra2trq6urq6ur6+vr6+vsLCwsLCwsbGxsbGxs7Oztra2uLi4ubm5u7u7vb29v7+/wMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM  // ========================================================================
+  // אתחול המערכת
+  // ========================================================================
+  document.addEventListener('DOMContentLoaded', function() {
+    addHighlightStyles(); // הוסף סגנונות CSS
+    initProgrammingAreaListeners();
+    observeNewBlocks();
+    initExistingBlocks();
+    initGlobalMouseListeners();
+    initAudio(); // אתחול שמע
+    console.log(`Block linkage system initialized (Version 2.2 - Fixed Snap with Sound)`);
+    console.log(`Configuration: Snap threshold=${CONFIG.CONNECT_THRESHOLD}px, Sound=${CONFIG.PLAY_SOUND}`);
+  });
+  
+  // ========================================================================
+  // אתחול מערכת השמע
+  // ========================================================================
+  function initAudio() {
+    // יצירת אלמנט אודיו גלובלי
+    if (!CONFIG.PLAY_SOUND) return;
+    
+    try {
+      // יצירת אלמנט אודיו
+      snapSound = document.createElement('audio');
+      snapSound.id = 'snap-sound';
+      
+      // הוספת מקור לצליל מוטמע - צליל קצר וברור של קליק
+      const source = document.createElement('source');
+      source.src = 'data:audio/wav;base64,UklGRjQnAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YRAnAACAgICAgICAgICAgICAgICAgICAgICAgICBgYGBgYGBgoKCgoKCg4ODg4ODhISEhISEhYWFhYWFhoaGhoaGh4eHh4eHiIiIiIiIiYmJiYmJioqKioqKi4uLi4uLjIyMjIyMjY2NjY2Njo6Ojo6Oj4+Pj4+PkJCQkJCQkZGRkZGRkpKSkpKSk5OTk5OTlJSUlJSUlZWVlZWVlpaWlpaWl5eXl5eXmJiYmJiYmZmZmZmZmpqampqam5ubm5ubnJycnJycnZ2dnZ2dnp6enp6en5+fn5+foKCgoKCgoaGhoaGhoqKioqKio6Ojo6Ojvb29u7u7ubm5t7e3tbW1s7OzsbGxr6+vrq6urKysqqqqqKiop6enpKSkpKSkpaWlpaWlpqamp6enqKioqampqqqqqqqqqampp6ennp6elZWVjIyMg4ODe3t7c3NzbW1taWlpZmZmZWVlZGRkZGRkY2NjYmJiYWFhYGBgX19fXl5eXV1dXFxcW1tbWlpaWVlZWFhYV1dXVlZWVVVVVFRUU1NTUlJSUVFRUFBQT09PTk5OTU1NTExMS0tLSkpKSUlJSEhIR0dHRkZGRUVFREREQ0NDQkJCQUFBQEBAQEBAQUFBQkJCQ0NDRERERUVFRkZGR0dHSEhISUlJSkpKS0tLTExMTU1NTk5OT09PUFBQUVFRUlJSU1NTVFRUVVVVVlZWV1dXWFhYWVlZWlpaW1tbXFxcXV1dXl5eX19fYGBgYWFhYmJiY2NjZGRkZWVlZmZmaWlpbW1tc3Nze3t7g4ODjIyMlZWVnp6ep6enqampqqqqqqqqqqqqq6urq6urrKysrKysra2tra2trq6urq6ur6+vr6+vsLCwsLCwsbGxsbGxs7Oztra2uLi4ubm5u7u7vb29v7+/wMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM';
+      source.type = 'audio/wav';
+      snapSound.appendChild(source);
+      
+      // הגדרת אפשרויות השמע
+      snapSound.volume = CONFIG.SOUND_VOLUME;
+      snapSound.preload = 'auto';
+      
+      // הוסף את אלמנט האודיו לעמוד
+      document.body.appendChild(snapSound);
+      
+      // הפעלה ראשונית עם אינטראקציית משתמש (חובה בדפדפנים מסוימים)
+      document.addEventListener('click', function enableAudio() {
+        try {
+          // נסה להפעיל את הצליל
+          snapSound.play().then(() => {
+            audioEnabled = true;
+            console.log('Audio enabled successfully');
+            snapSound.pause();
+            snapSound.currentTime = 0;
+          }).catch(err => {
+            console.warn('Could not enable audio:', err);
+          });
+          
+          // הסר את המאזין אחרי שימוש ראשון
+          document.removeEventListener('click', enableAudio);
+        } catch (err) {
+          console.error('Error in click handler:', err);
+        }
+      }, { once: false });
+      
+      console.log('Snap sound initialized, waiting for user interaction');
+    } catch (err) {
+      console.error('Error initializing audio:', err);
+      CONFIG.PLAY_SOUND = false;
+    }
+  }DAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM  // ========================================================================
+  // הוספת סגנונות CSS - משופר לפי התמונה, הגדלת בולטות ההילה הצהובה
+  // ========================================================================
+  function addHighlightStyles() {
+    if (document.getElementById('block-connection-styles')) return;
+    
+    const style = document.createElement('style');
+    style.id = 'block-connection-styles';
+    style.textContent = `
+      /* בלוק נגרר - הופכים עליון ומדגישים */
+      .snap-source {
+         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+         transition: box-shadow 0.15s ease-out;
+         cursor: grabbing !important;
+         z-index: 1001 !important;
+      }
+
+      /* הילה צהובה סביב בלוק יעד פוטנציאלי - מודגשת יותר */
+      .snap-target {
+        outline: 4px solid rgb(255, 210, 0) !important; /* צהוב בולט יותר */
+        outline-offset: 3px;
+        box-shadow: 0 0 18px 6px rgba(255, 210, 0, 0.7) !important;
+        transition: outline 0.1s ease-out, box-shadow 0.1s ease-out;
+        z-index: 999 !important; /* חשוב שיהיה מתחת לנגרר */
+      }
+
+      /* מלבן כחול מקווקו לציון מיקום עתידי - יותר בולט */
+      .future-position-indicator {
+        position: absolute; 
+        border: 3px dashed rgba(0, 136, 255, 0.95);
+        border-radius: 5px; 
+        background-color: rgba(0, 136, 255, 0.1);
+        pointer-events: none; 
+        z-index: 998; 
+        opacity: 0;
+        transition: opacity 0.15s ease-out, left 0.05s linear, top 0.05s linear;
+        display: none;
+      }
+      .future-position-indicator[style*="display: block"] { 
+        opacity: 0.85; 
+      }
+
+      /* סימון כיוון (פס צהוב בצד ימין/שמאל) - יותר בולט */
+      .snap-left::before {
+        content: ''; 
+        position: absolute; 
+        left: -6px; 
+        top: 15%; 
+        bottom: 15%; 
+        width: 5px;
+        background-color: rgba(255, 210, 0, 0.95); 
+        border-radius: 2px; 
+        z-index: 1000;
+        box-shadow: 0 0 8px 2px rgba(255, 210, 0, 0.7); 
+        transition: all 0.1s ease-out;
+      }
+      .snap-right::after {
+        content: ''; 
+        position: absolute; 
+        right: -6px; 
+        top: 15%; 
+        bottom: 15%; 
+        width: 5px;
+        background-color: rgba(255, 210, 0, 0.95); 
+        border-radius: 2px; 
+        z-index: 1000;
+        box-shadow: 0 0 8px 2px rgba(255, 210, 0, 0.7); 
+        transition: all 0.1s ease-out;
+      }
+
+      /* אנימציות משופרות */
+      @keyframes snapEffect { 
+        0% { transform: scale(1); } 
+        35% { transform: scale(1.04); } 
+        70% { transform: scale(0.98); }
+        100% { transform: scale(1); } 
+      }
+      .snap-animation { 
+        animation: snapEffect 0.25s ease-out; 
+      }
+      
+      @keyframes detachEffect { 
+        0% { transform: translate(0, 0) rotate(0); } 
+        30% { transform: translate(3px, 1px) rotate(0.8deg); } 
+        60% { transform: translate(-2px, 2px) rotate(-0.5deg); }
+        100% { transform: translate(0, 0) rotate(0); } 
+      }
+      .detach-animation { 
+        animation: detachEffect 0.3s ease-in-out; 
+      }
+
+      /* תפריט ניתוק */
+      #detach-menu { 
+        position: absolute; 
+        background-color: white; 
+        border: 1px solid #ccc; 
+        border-radius: 4px; 
+        box-shadow: 0 3px 8px rgba(0,0,0,0.2); 
+        z-index: 1100; 
+        padding: 5px; 
+        font-size: 14px; 
+        min-width: 100px; 
+      }
+      #detach-menu div { 
+        padding: 6px 12px; 
+        cursor: pointer; 
+        border-radius: 3px; 
+      }
+      #detach-menu div:hover { 
+        background-color: #eee; 
+      }
+
+      /* כללי: מניעת בחירת טקסט בזמן גרירה */
+      body.user-select-none { 
+        user-select: none; 
+        -webkit-user-select: none; 
+        -moz-user-select: none; 
+        -ms-user-select: none; 
+      }
+      
+      /* בלוקים מחוברים - אופציונלי להוספת אינדיקציה חזותית */
+      .connected-block {
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+      }
+      .has-connected-block {
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+      }
+    `;
+    document.head.appendChild(style);
+    console.log('Highlighting and animation styles added/verified.');
+  }// --- START OF FILE linkageimproved2.js ---
+// מימוש משופר - תיקון קפיצה אחורה בהצמדה וחיבור בהתאם לתמונה
+
+(function() {
+  // משתנים גלובליים במודול
+  let currentDraggedBlock = null;
+  let potentialSnapTarget = null;
+  let snapDirection = null; // 'left' (source to left of target) or 'right' (source to right of target)
+  let isDraggingBlock = false;
+  let dragOffset = { x: 0, y: 0 };
+  let futureIndicator = null;
+  let snapSound = null; // אודיו לצליל הצמדה
+  let audioEnabled = false; // האם השמע פעיל
+  let soundInitialized = false; // האם השמע אותחל
+
+  // קונפיגורציה - פרמטרים שניתן להתאים
+  const CONFIG = {
+    PIN_WIDTH: 5,            // רוחב הפין בפיקסלים
+    CONNECT_THRESHOLD: 10,   // מרחק מקסימלי בפיקסלים לזיהוי הצמדה - הגדלנו ל-10 לשיפור הזיהוי
+    VERTICAL_ALIGN_THRESHOLD: 20, // מרחק אנכי מקסימלי לזיהוי הצמדה
+    BLOCK_GAP: 0,            // רווח בין בלוקים מחוברים (0 = צמוד)
+    PLAY_SOUND: true,        // האם להשמיע צליל בעת הצמדה
+    SOUND_VOLUME: 1.0,       // עוצמת הצליל (בין 0 ל-1) - עוצמה מלאה
+    DEBUG: true              // האם להציג לוגים מפורטים לדיבוג
+  };
+
+  // ========================================================================
+  // אתחול המערכת
+  // ========================================================================
+    // ========================================================================
+  // אתחול המערכת
+  // ========================================================================
+  document.addEventListener('DOMContentLoaded', function() {
+    addHighlightStyles(); // הוסף סגנונות CSS
+    initProgrammingAreaListeners();
+    observeNewBlocks();
+    initExistingBlocks();
+    initGlobalMouseListeners();
+    initSnapSound(); // אתחול צליל ההצמדה
+    console.log(`Block linkage system initialized (Version 2.1 - Fixed Snap with Sound)`);
+    console.log(`Configuration: Snap threshold=${CONFIG.CONNECT_THRESHOLD}px, Sound=${CONFIG.PLAY_SOUND}`);
+  });
+  
+  // ========================================================================
+  // אתחול צליל הצמדה - גרסה מתוקנת
+  // ========================================================================
+  function initSnapSound() {
+    if (!CONFIG.PLAY_SOUND) return;
+    
+    try {
+      // צליל ברירת מחדל (קצר וברור יותר)
+      const snapSoundURL = 'data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+      
+      // יצירת אלמנט האודיו
+      snapSound = new Audio(snapSoundURL);
+      
+      // הגדרות למהירות טעינה והפעלה
+      snapSound.volume = CONFIG.SOUND_VOLUME;
+      snapSound.preload = 'auto';
+      
+      // טען את הצליל מראש
+      snapSound.load();
+      
+      // בדיקת הצליל עם השמעת הצליל פעם אחת לאחר טעינה (במיוחד חשוב בדפדפנים מסוימים)
+      document.addEventListener('click', function firstClick() {
+        if (snapSound) {
+          snapSound.play().then(() => {
+            snapSound.pause();
+            snapSound.currentTime = 0;
+            console.log('Snap sound initialized successfully');
+          }).catch(err => {
+            console.warn('Initial sound test failed:', err);
+          });
+          document.removeEventListener('click', firstClick);
+        }
+      }, { once: true });
+      
+      console.log('Snap sound prepared, waiting for user interaction to test');
+    } catch (err) {
+      console.error('Error initializing snap sound:', err);
+      CONFIG.PLAY_SOUND = false;
+      snapSound = null;
+    }
+  }
 
   // ========================================================================
   // אתחול מאזינים באזור התכנות
@@ -215,249 +682,348 @@
   function initProgrammingAreaListeners() {
     const programmingArea = document.getElementById('program-blocks');
     if (!programmingArea) {
-      console.error('Programming area (#program-blocks) not found!');
-      return;
+        console.error('Programming area (#program-blocks) not found!');
+        return;
     }
-
-    // Allow dropping elements from the palette onto the programming area
-    programmingArea.addEventListener('dragover', (event) => {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = "move"; // Indicate it's a move operation
-        // Optional visual feedback while dragging over
-        if (!programmingArea.classList.contains('drag-over-active')) {
-            programmingArea.classList.add('drag-over-active');
-        }
+    programmingArea.addEventListener('dragover', function(e) {
+      e.preventDefault(); // Allow drops from palette
     });
-
-    programmingArea.addEventListener('dragleave', (event) => {
-        // Remove visual feedback if not dragging over a child element
-        if (!programmingArea.contains(event.relatedTarget)) {
-            programmingArea.classList.remove('drag-over-active');
-        }
-    });
-
-     programmingArea.addEventListener('drop', (event) => {
-        // This drop handler is primarily for blocks coming *from* the palette,
-        // handled by script.js. We just remove the visual feedback here.
-        programmingArea.classList.remove('drag-over-active');
-        // The actual positioning and adding logic is in script.js's handleDrop
-    });
-
-
-    // Prevent default HTML5 drag and drop for blocks *within* the area
-    // to avoid conflicts with our custom mouse listeners.
-    programmingArea.addEventListener('dragstart', (event) => {
-        if (event.target.classList.contains('block-container')) {
-            if (CONFIG.DEBUG) console.log("[Programming Area] Preventing default dragstart on internal block.");
-            event.preventDefault();
+    
+    // מנע התנהגות גרירה מובנית באזור התכנות עצמו
+    // כדי למנוע התנגשויות עם הלוגיקה המותאמת שלנו
+    programmingArea.addEventListener('dragstart', function(e) {
+        // אם האלמנט הנגרר הוא בלוק *בתוך* אזור התכנות
+        if (e.target && e.target.closest && e.target.closest('#program-blocks .block-container')) {
+            console.log("Preventing default dragstart for internal block.");
+            e.preventDefault();
         }
     });
   }
 
-
   // ========================================================================
-  // הוספת מאזינים לבלוקים (קיימים וחדשים)
+  // האזנה לבלוקים חדשים
   // ========================================================================
   function observeNewBlocks() {
     const programmingArea = document.getElementById('program-blocks');
     if (!programmingArea) return;
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
+    
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
         if (mutation.type === 'childList') {
-          mutation.addedNodes.forEach((node) => {
-            if (node.nodeType === 1 && node.classList.contains('block-container')) {
+          mutation.addedNodes.forEach(function(node) {
+            if (node.nodeType === 1 && node.classList.contains('block-container') && node.closest('#program-blocks')) {
               if (!node.id) generateUniqueId(node);
               addBlockDragListeners(node);
-              if (CONFIG.DEBUG) console.log(`[Observer] Listeners added to new block: ${node.id}`);
-            }
-          });
-          // Optional: Handle removed nodes if needed (e.g., cleanup)
-          mutation.removedNodes.forEach((node) => {
-            if (node.nodeType === 1 && node.classList.contains('block-container')) {
-                 if (CONFIG.DEBUG) console.log(`[Observer] Block removed: ${node.id}`);
-                 // Perform any cleanup related to the removed block if necessary
             }
           });
         }
       });
     });
-    observer.observe(programmingArea, { childList: true });
+    
+    observer.observe(programmingArea, { childList: true, subtree: true });
   }
 
+  // ========================================================================
+  // הוספת מאזינים לבלוקים קיימים
+  // ========================================================================
   function initExistingBlocks() {
       const programmingArea = document.getElementById('program-blocks');
       if (!programmingArea) return;
+      
       programmingArea.querySelectorAll('.block-container').forEach(block => {
           if (!block.id) generateUniqueId(block);
           addBlockDragListeners(block);
       });
-      if (CONFIG.DEBUG) console.log("[Init] Listeners added to existing blocks.");
+      
+      console.log("Listeners added to existing blocks.");
   }
 
+  // ========================================================================
+  // הוספת מאזיני גרירה וקליק ימני לבלוק
+  // ========================================================================
   function addBlockDragListeners(block) {
-      // Ensure only one listener of each type
       block.removeEventListener('mousedown', handleMouseDown);
       block.addEventListener('mousedown', handleMouseDown);
       block.removeEventListener('contextmenu', handleContextMenu);
       block.addEventListener('contextmenu', handleContextMenu);
   }
 
-
   // ========================================================================
-  // לוגיקת גרירה (MouseDown, MouseMove, MouseUp)
+  // טיפול בלחיצת עכבר על בלוק
   // ========================================================================
-
   function handleMouseDown(e) {
-      if (e.button !== 0 || !e.target.closest('.block-container')) return; // Left click only
+      if (e.button !== 0 || !e.target.closest('.block-container')) return;
 
       const block = e.target.closest('.block-container');
       if (!block.id) generateUniqueId(block);
 
-      // Prevent default drag and text selection
+      // בטל את התנהגות הגרירה המובנית של הדפדפן לאלמנט זה *מיד*
       block.draggable = false;
-      e.preventDefault();
 
-      if (CONFIG.DEBUG) console.log(`[MouseDown] ${block.id}`);
+      console.log(`[MouseDown] Started for block: ${block.id}`);
 
-      // --- Detach if connected ---
+      // ניתוק אוטומטי אם גוררים בלוק מחובר
       if (block.hasAttribute('data-connected-to')) {
-          if (CONFIG.DEBUG) console.log(`  [MouseDown] Detaching ${block.id} before drag.`);
-          detachBlock(block, false); // Detach without animation/sound
+          console.log(`[MouseDown] Block ${block.id} was connected, detaching...`);
+          detachBlock(block, false); // נתק בלי אנימציה
       }
 
       currentDraggedBlock = block;
       isDraggingBlock = true;
 
       const rect = block.getBoundingClientRect();
-      const parentElement = block.offsetParent || document.body;
+      const parentElement = block.offsetParent || document.getElementById('program-blocks') || document.body;
       const parentRect = parentElement.getBoundingClientRect();
 
-      // Calculate offset from the block's top-left corner
+      // חשב את ההיסט בין מיקום העכבר לפינה השמאלית העליונה של הבלוק
       dragOffset.x = e.clientX - rect.left;
       dragOffset.y = e.clientY - rect.top;
 
-      // Prepare for dragging
+      // הגדר מיקום אבסולוטי וסגנון
       block.style.position = 'absolute';
-      // Recalculate initial position in case it wasn't absolute before
+      // ודא שהמיקום ההתחלתי מוגדר נכון ביחס להורה
       block.style.left = (rect.left - parentRect.left + parentElement.scrollLeft) + 'px';
       block.style.top = (rect.top - parentRect.top + parentElement.scrollTop) + 'px';
-      block.style.zIndex = '1001'; // Bring to front
+      block.style.zIndex = '1001';
       block.classList.add('snap-source');
-      document.body.classList.add('user-select-none'); // Prevent text selection globally
+      document.body.classList.add('user-select-none');
 
-      if (CONFIG.DEBUG) console.log(`  [MouseDown] Initial pos: L=${block.style.left}, T=${block.style.top}. Offset: X=${dragOffset.x.toFixed(1)}, Y=${dragOffset.y.toFixed(1)}`);
+      console.log(`[MouseDown] Initial Style: left=${block.style.left}, top=${block.style.top}`);
+      e.preventDefault(); // מנע בחירת טקסט וכו'
   }
 
+  // ========================================================================
+  // טיפול בקליק ימני על בלוק
+  // ========================================================================
+  function handleContextMenu(e) {
+      e.preventDefault();
+      const block = e.target.closest('.block-container');
+      // הצג תפריט רק אם הבלוק כרגע מחובר *ל*משהו
+      if (block && block.hasAttribute('data-connected-to')) {
+          showDetachMenu(e.clientX, e.clientY, block);
+      }
+  }
+
+  // ========================================================================
+  // מאזינים גלובליים
+  // ========================================================================
+  function initGlobalMouseListeners() {
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.body.addEventListener('mouseleave', handleMouseLeave);
+  }
+
+  // ========================================================================
+  // טיפול בתנועת העכבר
+  // ========================================================================
   function handleMouseMove(e) {
     if (!isDraggingBlock || !currentDraggedBlock) return;
 
-    // Prevent default actions during drag
-    e.preventDefault();
-    e.stopPropagation();
-
-    const parentElement = currentDraggedBlock.offsetParent || document.body;
+    const parentElement = currentDraggedBlock.offsetParent || document.getElementById('program-blocks') || document.body;
     const parentRect = parentElement.getBoundingClientRect();
 
-    // Calculate new position relative to the offset parent's viewport origin, considering scroll
+    // מיקום חדש יחסי לפינה השמאלית-עליונה של ה-offsetParent, כולל התחשבות בגלילה שלו
     let newLeft = e.clientX - parentRect.left - dragOffset.x + parentElement.scrollLeft;
     let newTop = e.clientY - parentRect.top - dragOffset.y + parentElement.scrollTop;
 
-    // Constrain to parent bounds if the parent is the programming area
+    // הגבלת גבולות (אם ההורה הוא אזור התכנות)
     if (parentElement.id === 'program-blocks') {
         const blockWidth = currentDraggedBlock.offsetWidth;
         const blockHeight = currentDraggedBlock.offsetHeight;
+        // השתמש ב-scrollWidth/Height כדי לקבל את הגודל המלא כולל התוכן שנגלל החוצה
         const maxLeft = Math.max(0, parentElement.scrollWidth - blockWidth);
         const maxTop = Math.max(0, parentElement.scrollHeight - blockHeight);
         newLeft = Math.max(0, Math.min(newLeft, maxLeft));
         newTop = Math.max(0, Math.min(newTop, maxTop));
     }
 
-    // Update block position visually
+    // עדכן את מיקום הבלוק הנגרר
     currentDraggedBlock.style.left = newLeft + 'px';
     currentDraggedBlock.style.top = newTop + 'px';
 
-    // Check for snap possibility and update highlights/indicator
+    // בדוק אפשרות הצמדה בכל עדכון מיקום
     checkAndHighlightSnapPossibility();
   }
 
+  // ========================================================================
+  // טיפול בשחרור העכבר (גרסה מתוקנת)
+  // ========================================================================
   function handleMouseUp(e) {
+    // אם לא היינו בתהליך גרירה, אל תעשה כלום
     if (!isDraggingBlock || !currentDraggedBlock) {
-      // If we somehow get a mouseup without dragging, ensure cleanup
-      if(isDraggingBlock || currentDraggedBlock) cleanupAfterDragState();
+      if (isDraggingBlock || currentDraggedBlock) cleanupAfterDrag(); // נקה אם המצב לא תקין
       return;
     }
 
-    // Prevent default actions for mouseup
-    e.preventDefault();
-    e.stopPropagation();
+    const blockReleased = currentDraggedBlock; // שמור הפניה
+    const initialPosition = { 
+      left: blockReleased.style.left, 
+      top: blockReleased.style.top 
+    };
+    
+    console.log(`[MouseUp] ----- Start MouseUp for ${blockReleased.id} -----`);
+    console.log(`[MouseUp] Initial position: left=${initialPosition.left}, top=${initialPosition.top}`);
 
-    const blockReleased = currentDraggedBlock;
+    // שמור את היעד והכיוון לפני הניקוי
     const targetToSnap = potentialSnapTarget;
     const directionToSnap = snapDirection;
+    console.log(`[MouseUp] Snap target: ${targetToSnap?.id || 'none'}, direction: ${directionToSnap || 'none'}`);
 
-    if (CONFIG.DEBUG) console.log(`[MouseUp] ----- Start MouseUp for ${blockReleased.id} -----`);
-    if (CONFIG.DEBUG) console.log(`[MouseUp] Target=${targetToSnap?.id || 'none'}, Direction=${directionToSnap || 'none'}`);
-
-    // --- Perform Snap Action (if applicable) ---
-    // The actual position change happens here
+    // אפס את משתני המצב הגלובליים (אבל השאר הפניות מקומיות)
+    currentDraggedBlock = null;
+    potentialSnapTarget = null;
+    snapDirection = null;
+    isDraggingBlock = false;
+    
+    // הסר סגנונות ומחלקות תצוגה
+    document.body.classList.remove('user-select-none');
+    blockReleased.style.zIndex = '';
+    blockReleased.classList.remove('snap-source');
+    
+    // הסר הדגשות מכל הבלוקים 
+    document.querySelectorAll('.snap-target, .snap-left, .snap-right').forEach(el => {
+      el.classList.remove('snap-target', 'snap-left', 'snap-right');
+    });
+    
+    removeFuturePositionIndicator(); // הסר מלבן כחול
+    
+    // בצע הצמדה אם יש יעד ודירקציה תקפים
     if (targetToSnap && directionToSnap) {
+      console.log(`[MouseUp] Performing snap operation`);
+      // בצע את ההצמדה בהתאם לתמונה - שים לב לסדר הפעולות!
       performBlockSnap(blockReleased, targetToSnap, directionToSnap);
     } else {
-       if (CONFIG.DEBUG) console.log(`[MouseUp] No snap target found.`);
-       // Block remains at its last position from mousemove
-       blockReleased.draggable = true; // Still need to make it draggable again
+      console.log(`[MouseUp] No snap target, keeping block at current position`);
+      blockReleased.draggable = true; // אפשר גרירה מובנית מחדש
     }
-
-    // --- Cleanup ---
-    // Reset state variables and remove visual cues AFTER snap logic
-    cleanupAfterDragState();
-    if (CONFIG.DEBUG) console.log(`[MouseUp] ----- End MouseUp for ${blockReleased.id} -----`);
+    
+    console.log(`[MouseUp] ----- End MouseUp -----`);
   }
 
+  // ========================================================================
+  // טיפול בעזיבת החלון
+  // ========================================================================
   function handleMouseLeave(e) {
       if (isDraggingBlock && (!e.relatedTarget || e.relatedTarget.nodeName === 'HTML')) {
-          if (CONFIG.DEBUG) console.warn("Mouse left window during drag, treating as mouseup.");
+          console.warn("Mouse left window during drag, treating as mouseup.");
           handleMouseUp(e);
       }
   }
 
   // ========================================================================
-  // ניקוי מצב אחרי גרירה
+  // ניקוי אחרי גרירה - פונקציה מבוטלת, הלוגיקה הועברה לפונקציית handleMouseUp
   // ========================================================================
-  function cleanupAfterDragState() {
-      if (CONFIG.DEBUG) console.log("[Cleanup] Cleaning up drag state and visuals...");
-
-      document.body.classList.remove('user-select-none'); // Allow text selection again
-
-      // Clean up the block that was being dragged
-      if (currentDraggedBlock) {
-          currentDraggedBlock.style.zIndex = ''; // Reset z-index
-          currentDraggedBlock.classList.remove('snap-source');
-          currentDraggedBlock.draggable = true; // Restore default draggable behavior if needed
-           // console.log(`[Cleanup] Cleaned up dragged block: ${currentDraggedBlock.id}`);
-      }
-
-      // Remove highlights from all potential targets
-      document.querySelectorAll('.snap-target, .snap-left, .snap-right').forEach(el => {
-          el.classList.remove('snap-target', 'snap-left', 'snap-right');
-      });
-       // console.log("[Cleanup] Removed target highlights.");
-
-      removeFuturePositionIndicator(); // Hide the blue indicator
-
-      // Reset global state variables
-      currentDraggedBlock = null;
-      potentialSnapTarget = null;
-      snapDirection = null;
-      isDraggingBlock = false;
-      // console.log("[Cleanup] Reset global state variables.");
+  function cleanupAfterDrag() {
+    // פונקציה זו מבוטלת - הלוגיקה הועברה ל-handleMouseUp
+    console.log("[cleanupAfterDrag] This function is deprecated and should not be called directly.");
   }
 
   // ========================================================================
-  // בדיקת הצמדה והדגשה (עם לוגים להילה)
+  // ביצוע הצמדת בלוקים - הגרסה הסופית עם צליל הצמדה
+  // ========================================================================
+  function performBlockSnap(sourceBlock, targetBlock, direction) {
+    console.log(`[performBlockSnap] Snapping ${sourceBlock.id} to ${targetBlock.id} in direction ${direction}`);
+    
+    try {
+      if (!sourceBlock || !targetBlock) throw new Error("Invalid block(s).");
+      
+      // מדידות מיקום
+      const sourceRect = sourceBlock.getBoundingClientRect();
+      const targetRect = targetBlock.getBoundingClientRect();
+      const parentElement = sourceBlock.offsetParent || document.getElementById('program-blocks') || document.body;
+      const parentRect = parentElement.getBoundingClientRect();
+      
+      // יישור אנכי - יישר לפי חלק עליון
+      const newTop = targetRect.top - parentRect.top + parentElement.scrollTop;
+      
+      // יישור אופקי - הצמדה מדויקת מותאמת לפינים/שקעים
+      let newLeft;
+      if (direction === 'left') {
+        // המקור משמאל ליעד - צד ימין של המקור לצד שמאל של היעד
+        newLeft = targetRect.left - sourceRect.width - parentRect.left + parentElement.scrollLeft;
+      } else { // direction === 'right'
+        // המקור מימין ליעד - צד שמאל של המקור לצד ימין של היעד
+        newLeft = targetRect.right - parentRect.left + parentElement.scrollLeft;
+      }
+      
+      // עיגול למספרים שלמים למניעת בעיות עיגול
+      newLeft = Math.round(newLeft);
+      newTop = Math.round(newTop);
+      
+      // קביעת פוזיציה ללא עיכוב
+      sourceBlock.style.left = `${newLeft}px`;
+      sourceBlock.style.top = `${newTop}px`;
+      
+      // שמירת קשר בין הבלוקים
+      sourceBlock.setAttribute('data-connected-to', targetBlock.id);
+      sourceBlock.setAttribute('data-connection-direction', direction);
+      targetBlock.setAttribute(direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right', sourceBlock.id);
+      
+      // סימון חזותי
+      sourceBlock.classList.add('connected-block');
+      targetBlock.classList.add('has-connected-block');
+      
+      // השמע צליל הצמדה
+      playSnapSound();
+      
+      // אנימציית הצמדה
+      addSnapEffectAnimation(sourceBlock);
+      
+      // החזרת יכולת גרירה
+      sourceBlock.draggable = true;
+      
+      console.log(`[performBlockSnap] Snap complete - Block positioned at left=${newLeft}px, top=${newTop}px`);
+      return true;
+    } catch (err) {
+      console.error(`[performBlockSnap] Error:`, err);
+      sourceBlock.draggable = true;
+      return false;
+    }
+  }
+  
+  // ========================================================================
+  // השמעת צליל הצמדה - גרסה מתוקנת לעבודה בכל הדפדפנים
+  // ========================================================================
+  function playSnapSound() {
+    if (!CONFIG.PLAY_SOUND) return;
+    
+    try {
+      // אם אין אלמנט אודיו או לא הופעל - צור חדש
+      if (!snapSound || !audioEnabled) {
+        // נסה להשמיע צליל עם API חלופי
+        const tempSound = new Audio();
+        tempSound.src = 'data:audio/wav;base64,UklGRjQnAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YRAnAACAgICAgICAgICAgICAgICAgICAgICAgICBgYGBgYGBgoKCgoKCg4ODg4ODhISEhISEhYWFhYWFhoaGhoaGh4eHh4eHiIiIiIiIiYmJiYmJioqKioqKi4uLi4uLjIyMjIyMjY2NjY2Njo6Ojo6Oj4+Pj4+PkJCQkJCQkZGRkZGRkpKSkpKSk5OTk5OTlJSUlJSUlZWVlZWVlpaWlpaWl5eXl5eXmJiYmJiYmZmZmZmZmpqampqam5ubm5ubnJycnJycnZ2dnZ2dnp6enp6en5+fn5+foKCgoKCgoaGhoaGhoqKioqKio6Ojo6Ojvb29u7u7ubm5t7e3tbW1s7OzsbGxr6+vrq6urKysqqqqqKiop6enpKSkpKSkpaWlpaWlpqamp6enqKioqampqqqqqqqqqampp6ennp6elZWVjIyMg4ODe3t7c3NzbW1taWlpZmZmZWVlZGRkZGRkY2NjYmJiYWFhYGBgX19fXl5eXV1dXFxcW1tbWlpaWVlZWFhYV1dXVlZWVVVVVFRUU1NTUlJSUVFRUFBQT09PTk5OTU1NTExMS0tLSkpKSUlJSEhIR0dHRkZGRUVFREREQ0NDQkJCQUFBQEBAQEBAQUFBQkJCQ0NDRERERUVFRkZGR0dHSEhISUlJSkpKS0tLTExMTU1NTk5OT09PUFBQUVFRUlJSU1NTVFRUVVVVVlZWV1dXWFhYWVlZWlpaW1tbXFxcXV1dXl5eX19fYGBgYWFhYmJiY2NjZGRkZWVlZmZmaWlpbW1tc3Nze3t7g4ODjIyMlZWVnp6ep6enqampqqqqqqqqqqqqq6urq6urrKysrKysra2tra2trq6urq6ur6+vr6+vsLCwsLCwsbGxsbGxs7Oztra2uLi4ubm5u7u7vb29v7+/wMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM';
+        tempSound.volume = CONFIG.SOUND_VOLUME;
+        
+        // נסה להשמיע (אפילו אם לא אותחל השמע)
+        tempSound.play().then(() => {
+          console.log('Played snap sound with temp object');
+        }).catch(err => {
+          console.warn('Could not play temp sound:', err);
+        });
+        
+        return;
+      }
+      
+      // השמעת הצליל הרגיל (אם השמע כבר אותחל)
+      snapSound.pause();
+      snapSound.currentTime = 0;
+      snapSound.play().then(() => {
+        console.log('Played snap sound successfully');
+      }).catch(err => {
+        console.warn('Error playing snap sound:', err);
+      });
+      
+    } catch (err) {
+      console.error('Error in playSnapSound:', err);
+    }
+  }
+
+  // ========================================================================
+  // בדיקת הצמדה והדגשה - גרסה פשוטה שמדגישה כשהפין נוגע בבלוק אחר
   // ========================================================================
   function checkAndHighlightSnapPossibility() {
-    if (!currentDraggedBlock || !isDraggingBlock) return; // Only check if dragging
+    if (!currentDraggedBlock) return;
 
     const programmingArea = document.getElementById('program-blocks');
     if (!programmingArea) return;
@@ -467,194 +1033,174 @@
 
     let bestTarget = null;
     let bestDirection = null;
-    let minDistance = CONFIG.CONNECT_THRESHOLD + 1; // Start above threshold
+    let bestDistance = Infinity;
+    
+    // הסר כל הדגשה קודמת 
+    document.querySelectorAll('.snap-target, .snap-left, .snap-right').forEach(el => {
+      el.classList.remove('snap-target', 'snap-left', 'snap-right');
+    });
+    
+    removeFuturePositionIndicator(); // הסר מלבן כחול
+    
+    // איפוס יעד ההצמדה הפוטנציאלי
+    potentialSnapTarget = null;
+    snapDirection = null;
 
-    // Find the closest valid snap target
+    // חיפוש הבלוק הקרוב ביותר שמתאים לחיבור
     for (const targetBlock of allBlocks) {
-      if (targetBlock === currentDraggedBlock) continue; // Skip self
-      if (!targetBlock.id) generateUniqueId(targetBlock); // Ensure ID
+      if (targetBlock === currentDraggedBlock) continue; // לא לבדוק התאמה לעצמו
+      if (!targetBlock.id) generateUniqueId(targetBlock); // ודא שיש מזהה לבלוק
 
       const targetRect = targetBlock.getBoundingClientRect();
-      // Calculate potential snap based on geometry and threshold
+      
+      // בדוק אם יש התאמת הצמדה
       const snapInfo = calculateSnapInfo(sourceRect, targetRect);
-
-      if (snapInfo && snapInfo.distance < minDistance) {
-          // Check vertical alignment more strictly here if needed
-           const verticalDiff = Math.abs(sourceRect.top - targetRect.top);
-           if (verticalDiff <= CONFIG.VERTICAL_ALIGN_THRESHOLD) {
-                minDistance = snapInfo.distance;
-                bestTarget = targetBlock;
-                bestDirection = snapInfo.direction;
-                 // if (CONFIG.DEBUG) console.log(`[Highlight Check] Found potential target: ${bestTarget.id}, dir: ${bestDirection}, dist: ${minDistance.toFixed(1)}`);
-           } else {
-                 // if (CONFIG.DEBUG) console.log(`[Highlight Check] Target ${targetBlock.id} failed vertical alignment (diff: ${verticalDiff.toFixed(1)})`);
-           }
+      
+      if (snapInfo && snapInfo.distance < bestDistance) {
+        bestTarget = targetBlock;
+        bestDirection = snapInfo.direction;
+        bestDistance = snapInfo.distance;
       }
     }
 
-    // --- Update Highlights and Global State ---
+    // אם נמצא יעד מתאים, עדכן את ההדגשה וה-indicators
+    if (bestTarget) {
+      console.log(`[Highlight] Found target ${bestTarget.id} with direction ${bestDirection}, distance=${bestDistance.toFixed(1)}px`);
+      
+      // עדכן משתנים גלובליים
+      potentialSnapTarget = bestTarget;
+      snapDirection = bestDirection;
 
-    // If no target found this cycle, clear previous highlight and indicator
-    if (!bestTarget) {
-        if (potentialSnapTarget) { // If there *was* a target before
-            if (CONFIG.DEBUG) console.log(`%c[Highlight] De-highlighting OLD target: ${potentialSnapTarget.id}`, 'color: #aaa;');
-            potentialSnapTarget.classList.remove('snap-target', 'snap-left', 'snap-right');
-        }
-        removeFuturePositionIndicator();
-        potentialSnapTarget = null;
-        snapDirection = null;
-    } else {
-        // A target was found (could be the same or different from previous)
-        // If the target is different from the previous one, clear the old highlight
-        if (potentialSnapTarget && potentialSnapTarget !== bestTarget) {
-            if (CONFIG.DEBUG) console.log(`%c[Highlight] De-highlighting PREVIOUS target: ${potentialSnapTarget.id}`, 'color: #aaa;');
-            potentialSnapTarget.classList.remove('snap-target', 'snap-left', 'snap-right');
-        }
-
-        // Update global state
-        potentialSnapTarget = bestTarget;
-        snapDirection = bestDirection;
-
-        // Add highlight to the *current* best target
-        if (!potentialSnapTarget.classList.contains('snap-target')) {
-            if (CONFIG.DEBUG) console.log(`%c[Highlight] Highlighting NEW target: ${potentialSnapTarget.id}`, 'color: orange; font-weight: bold;');
-            potentialSnapTarget.classList.add('snap-target');
-        }
-        // Always update direction class
-        potentialSnapTarget.classList.remove('snap-left', 'snap-right');
-        potentialSnapTarget.classList.add(snapDirection === 'left' ? 'snap-left' : 'snap-right');
-
-        // Update the future position indicator
-        const programRect = programmingArea.getBoundingClientRect();
-        updateFuturePositionIndicator(currentDraggedBlock, potentialSnapTarget, snapDirection, programRect);
+      // הוסף הדגשה ליעד
+      bestTarget.classList.add('snap-target');
+      bestTarget.classList.add(bestDirection === 'left' ? 'snap-left' : 'snap-right');
+      
+      // עדכן את מחוון המיקום העתידי
+      const programRect = programmingArea.getBoundingClientRect();
+      updateFuturePositionIndicator(currentDraggedBlock, potentialSnapTarget, snapDirection, programRect);
     }
-     // console.log("[Highlight Check] Finished. Current Target:", potentialSnapTarget?.id);
   }
 
-
   // ========================================================================
-  // חישוב כיוון הצמדה (בודק קרבה של פין/שקע)
+  // חישוב מידע על הצמדה אפשרית - גרסה מתוקנת מותאמת לסף 6 פיקסלים
   // ========================================================================
-  function calculateSnapDirection(sourceRect, targetRect) {
-    // 1. בדיקת חפיפה אנכית גסה
-    if (sourceRect.bottom < targetRect.top || sourceRect.top > targetRect.bottom) {
-        return null; // אין חפיפה אנכית כלל
-    }
+  function calculateSnapInfo(sourceRect, targetRect) {
+    // בדוק חפיפה אנכית - קריטית להצמדה תקינה
+    const minHeight = Math.min(sourceRect.height, targetRect.height);
+    const requiredVerticalOverlap = minHeight * CONFIG.VERTICAL_OVERLAP_REQ; // החפיפה הנדרשת
+    const verticalOverlap = Math.max(0, Math.min(sourceRect.bottom, targetRect.bottom) - Math.max(sourceRect.top, targetRect.top));
 
-    // 2. בדיקת הפרש אנכי בין מרכזים או קצוות עליונים
-    const verticalDiff = Math.abs(sourceRect.top - targetRect.top);
-    if (verticalDiff > CONFIG.VERTICAL_ALIGN_THRESHOLD) {
-      // if (CONFIG.DEBUG) console.log(` -> Vertical diff too large: ${verticalDiff.toFixed(1)} > ${CONFIG.VERTICAL_ALIGN_THRESHOLD}`);
+    // אם אין מספיק חפיפה אנכית, אין אפשרות הצמדה
+    if (verticalOverlap < requiredVerticalOverlap) {
       return null;
     }
 
-    // 3. חישוב מרחק אופקי בין נקודות החיבור הפוטנציאליות
-    // נקודת החיבור היא מרכז הפין/שקע
-    const sourceRightConnectX = sourceRect.right - CONFIG.PIN_WIDTH / 2;
-    const targetLeftConnectX = targetRect.left + CONFIG.PIN_WIDTH / 2;
-    const rightToLeftDist = Math.abs(sourceRightConnectX - targetLeftConnectPoint);
-
-    const sourceLeftConnectX = sourceRect.left + CONFIG.PIN_WIDTH / 2;
-    const targetRightConnectX = targetRect.right - CONFIG.PIN_WIDTH / 2;
-    const leftToRightDist = Math.abs(sourceLeftConnectX - targetRightConnectX);
-
-    // 4. קביעת הכיוון המועדף ובדיקת סף הקרבה
-    const isSourceLikelyLeft = (sourceRect.left + sourceRect.width / 2) < (targetRect.left + targetRect.width / 2);
-
-    if (isSourceLikelyLeft && rightToLeftDist <= CONFIG.CONNECT_THRESHOLD) {
-      // if (CONFIG.DEBUG) console.log(` -> Possible snap 'left' (dist=${rightToLeftDist.toFixed(1)})`);
-      return 'left'; // המקור משמאל ליעד
+    // בדוק מיקום יחסי של הבלוקים - האם המקור משמאל או מימין ליעד
+    const sourceCenter = sourceRect.left + sourceRect.width / 2;
+    const targetCenter = targetRect.left + targetRect.width / 2;
+    const isSourceLeftOfTarget = sourceCenter < targetCenter;
+    
+    // מדוד מרחקים בדיוק בין קצוות הבלוקים - מתאים לסף 6 פיקסלים
+    let distance;
+    let direction;
+    
+    if (isSourceLeftOfTarget) {
+      // המקור משמאל ליעד - החיבור הוא ימין-שמאל
+      const rightEdgeSource = sourceRect.right;
+      const leftEdgeTarget = targetRect.left;
+      distance = Math.abs(rightEdgeSource - leftEdgeTarget);
+      direction = 'left'; // המקור משמאל ליעד
+    } else {
+      // המקור מימין ליעד - החיבור הוא שמאל-ימין
+      const leftEdgeSource = sourceRect.left;
+      const rightEdgeTarget = targetRect.right;
+      distance = Math.abs(leftEdgeSource - rightEdgeTarget);
+      direction = 'right'; // המקור מימין ליעד
     }
-
-    if (!isSourceLikelyLeft && leftToRightDist <= CONFIG.CONNECT_THRESHOLD) {
-      // if (CONFIG.DEBUG) console.log(` -> Possible snap 'right' (dist=${leftToRightDist.toFixed(1)})`);
-      return 'right'; // המקור מימין ליעד
+    
+    // החזר מידע על הצמדה רק אם המרחק קטן או שווה לסף (6 פיקסלים)
+    if (distance <= CONFIG.CONNECT_THRESHOLD) {
+      if (CONFIG.DEBUG) console.log(`[calculateSnapInfo] Found possible connection: direction=${direction}, distance=${distance.toFixed(2)}px`);
+      return { direction, distance };
     }
-
-    return null; // רחוק מדי
+    
+    // אין אפשרות הצמדה - המרחק גדול מ-6 פיקסלים
+    return null;
   }
 
-
   // ========================================================================
-  // ביצוע ההצמדה הפיזית (חישוב מיקום *ללא* PIN_SOCKET_DEPTH)
+  // ביצוע ההצמדה הפיזית - מותאם לתמונה
   // ========================================================================
-  function performBlockSnap(sourceBlock, targetBlock, direction) {
-    if (!sourceBlock || !targetBlock) {
-        console.error("[Perform Snap] Invalid blocks provided.");
-        return;
-    }
-    if (CONFIG.DEBUG) console.log(`%c[Perform Snap] Snapping ${sourceBlock.id} to ${targetBlock.id} (${direction})`, 'color: blue; font-weight: bold;');
-
+  function snapBlocks(sourceBlock, targetBlock, direction) {
+    console.log(`[SnapBlocks] ----- Start Snap for ${sourceBlock.id} to ${targetBlock.id} (${direction}) -----`);
     try {
-        const sourceRect = sourceBlock.getBoundingClientRect(); // Get current dimensions
-        const targetRect = targetBlock.getBoundingClientRect(); // Get target position
+      if (!sourceBlock || !targetBlock) throw new Error("Invalid block(s).");
 
-        const parentElement = sourceBlock.offsetParent || document.body;
-        if (!parentElement) throw new Error("Cannot find offsetParent for positioning.");
-        const parentRect = parentElement.getBoundingClientRect();
+      const sourceRect = sourceBlock.getBoundingClientRect();
+      const targetRect = targetBlock.getBoundingClientRect();
 
-        // Calculate desired *viewport* position (edge-to-edge alignment)
-        let desiredViewportTop = targetRect.top; // Align tops
-        let desiredViewportLeft;
-        if (direction === 'left') {
-            // Source block is to the LEFT of the target block
-            // Align source's right edge with target's left edge
-            desiredViewportLeft = targetRect.left - sourceRect.width - CONFIG.BLOCK_GAP;
-        } else { // direction === 'right'
-            // Source block is to the RIGHT of the target block
-            // Align source's left edge with target's right edge
-            desiredViewportLeft = targetRect.right + CONFIG.BLOCK_GAP;
-        }
-        if (CONFIG.DEBUG) console.log(`[Perform Snap] Desired Viewport Pos: Left=${desiredViewportLeft.toFixed(1)}, Top=${desiredViewportTop.toFixed(1)}`);
+      // מציאת ההורה למיקום יחסי
+      const parentElement = sourceBlock.offsetParent || document.getElementById('program-blocks');
+      if (!parentElement) throw new Error("Cannot find offsetParent.");
+      const parentRect = parentElement.getBoundingClientRect();
 
-        // Convert viewport position to style values relative to offset parent
-        let styleLeft = desiredViewportLeft - parentRect.left + parentElement.scrollLeft;
-        let styleTop = desiredViewportTop - parentRect.top + parentElement.scrollTop;
-        if (CONFIG.DEBUG) console.log(`[Perform Snap] Calculated Style (Raw): left=${styleLeft.toFixed(1)}, top=${styleTop.toFixed(1)}`);
+      // חישוב מיקום רצוי לפי התמונה - הצמדה מצד לצד
+      let desiredViewportLeft, desiredViewportTop;
+      
+      // יישור אנכי - יישר את חלקו העליון של המקור עם היעד
+      desiredViewportTop = targetRect.top;
+      
+      // יישור אופקי - בהתאם לכיוון
+      if (direction === 'left') {
+        // המקור צריך להיות משמאל ליעד, עם רווח (אם מוגדר)
+        desiredViewportLeft = targetRect.left - sourceRect.width - CONFIG.BLOCK_GAP;
+      } else { // 'right'
+        // המקור צריך להיות מימין ליעד, עם רווח (אם מוגדר)
+        desiredViewportLeft = targetRect.right + CONFIG.BLOCK_GAP;
+      }
 
-        // Constrain within parent if necessary
-        if (parentElement.id === 'program-blocks') {
-            const maxLeft = Math.max(0, parentElement.scrollWidth - sourceRect.width);
-            const maxTop = Math.max(0, parentElement.scrollHeight - sourceRect.height);
-            styleLeft = Math.max(0, Math.min(styleLeft, maxLeft));
-            styleTop = Math.max(0, Math.min(styleTop, maxTop));
-        }
+      // המרה לערכי style יחסיים להורה
+      let newLeft = desiredViewportLeft - parentRect.left + parentElement.scrollLeft;
+      let newTop = desiredViewportTop - parentRect.top + parentElement.scrollTop;
 
-        // Apply the final calculated position (rounding might help consistency)
-        const finalLeftPx = Math.round(styleLeft) + 'px';
-        const finalTopPx = Math.round(styleTop) + 'px';
-        console.log(`%c[Perform Snap] Applying final style: left=${finalLeftPx}, top=${finalTopPx}`, 'color: green; font-weight: bold;');
-        sourceBlock.style.left = finalLeftPx;
-        sourceBlock.style.top = finalTopPx;
+      // הגבלת גבולות אם ההורה הוא אזור התכנות
+      if (parentElement.id === 'program-blocks') {
+          const maxLeft = Math.max(0, parentElement.scrollWidth - sourceRect.width);
+          const maxTop = Math.max(0, parentElement.scrollHeight - sourceRect.height);
+          newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+          newTop = Math.max(0, Math.min(newTop, maxTop));
+      }
 
-        // Update connection attributes
-        sourceBlock.setAttribute('data-connected-to', targetBlock.id);
-        sourceBlock.setAttribute('data-connection-direction', direction);
-        const targetAttr = direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right';
-        targetBlock.setAttribute(targetAttr, sourceBlock.id);
-        sourceBlock.classList.add('connected-block');
-        targetBlock.classList.add('has-connected-block');
-        if (CONFIG.DEBUG) console.log("[Perform Snap] Connection attributes updated.");
+      // החלת המיקום הסופי
+      const finalLeftPx = newLeft.toFixed(1) + 'px';
+      const finalTopPx = newTop.toFixed(1) + 'px';
+      console.log(`[SnapBlocks] Applying final style: left=${finalLeftPx}, top=${finalTopPx}`);
+      sourceBlock.style.left = finalLeftPx;
+      sourceBlock.style.top = finalTopPx;
 
-        // Play sound and animation
-        playSnapSound();
-        addSnapEffectAnimation(sourceBlock);
+      // עדכון מאפיינים המציינים קשר
+      sourceBlock.setAttribute('data-connected-to', targetBlock.id);
+      sourceBlock.setAttribute('data-connection-direction', direction);
+      targetBlock.setAttribute(direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right', sourceBlock.id);
+      sourceBlock.classList.add('connected-block');
+      targetBlock.classList.add('has-connected-block');
+      
+      // הוסף אנימציית הצמדה
+      addSnapEffectAnimation(sourceBlock);
 
     } catch (err) {
-        console.error('[Perform Snap] Error:', err);
-    } finally {
-        // console.log(`[Perform Snap] ----- End Snap for ${sourceBlock.id} -----`);
+      console.error('[SnapBlocks] Error during execution:', err);
     }
-}
-
+  }
 
   // ========================================================================
-  // עדכון מחוון מיקום עתידי (ללא PIN_SOCKET_DEPTH)
+  // עדכון מחוון מיקום עתידי (המלבן הכחול)
   // ========================================================================
   function updateFuturePositionIndicator(sourceBlock, targetBlock, direction, programRect) {
       const programmingArea = document.getElementById('program-blocks');
-      if (!programmingArea || !sourceBlock || !targetBlock) return;
+      if (!programmingArea) return;
 
+      // צור את מחוון המיקום העתידי אם צריך
       if (!futureIndicator) {
           futureIndicator = document.createElement('div');
           futureIndicator.id = 'future-position-indicator';
@@ -663,35 +1209,35 @@
       }
 
       try {
-          const sourceStyle = window.getComputedStyle(sourceBlock);
-          const sourceWidth = parseFloat(sourceStyle.width);
-          const sourceHeight = parseFloat(sourceStyle.height);
+          // קבל מימדי מקור נוכחיים
+          const sourceRect = sourceBlock.getBoundingClientRect();
           const targetRect = targetBlock.getBoundingClientRect();
 
-          // Calculate desired viewport position (edge-to-edge, same as snapBlocks)
+          // חשב מיקום עתידי (כמו בפונקציית snapBlocks)
           let desiredViewportLeft, desiredViewportTop;
           desiredViewportTop = targetRect.top;
+          
           if (direction === 'left') {
-              desiredViewportLeft = targetRect.left - sourceWidth - CONFIG.BLOCK_GAP;
+              desiredViewportLeft = targetRect.left - sourceRect.width - CONFIG.BLOCK_GAP;
           } else { // direction === 'right'
               desiredViewportLeft = targetRect.right + CONFIG.BLOCK_GAP;
           }
 
-          // Convert to position relative to programmingArea
+          // המר למיקום יחסי לאזור התכנות
           const parentRect = programmingArea.getBoundingClientRect();
           let indicatorLeft = desiredViewportLeft - parentRect.left + programmingArea.scrollLeft;
           let indicatorTop = desiredViewportTop - parentRect.top + programmingArea.scrollTop;
 
-          // Constrain (optional)
+          // הגבל למסגרת אזור התכנות
           indicatorLeft = Math.max(0, indicatorLeft);
           indicatorTop = Math.max(0, indicatorTop);
 
-          // Update indicator style
+          // עדכן את סגנון המחוון
           futureIndicator.style.position = 'absolute';
           futureIndicator.style.left = indicatorLeft + 'px';
           futureIndicator.style.top = indicatorTop + 'px';
-          futureIndicator.style.width = sourceWidth + 'px';
-          futureIndicator.style.height = sourceHeight + 'px';
+          futureIndicator.style.width = sourceRect.width + 'px';
+          futureIndicator.style.height = sourceRect.height + 'px';
           futureIndicator.style.display = 'block';
 
       } catch (err) {
@@ -710,327 +1256,274 @@
   }
 
   // ========================================================================
-  // הוספת סגנונות CSS (מהקוד שסופק)
+  // הוספת סגנונות CSS - משופר לפי התמונה
   // ========================================================================
   function addHighlightStyles() {
     if (document.getElementById('block-connection-styles')) return;
+    
     const style = document.createElement('style');
     style.id = 'block-connection-styles';
     style.textContent = `
-      /* בלוק נגרר */
+      /* בלוק נגרר - הופכים עליון ומדגישים */
       .snap-source {
-         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4) !important;
+         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
          transition: box-shadow 0.15s ease-out;
          cursor: grabbing !important;
-         z-index: 1001 !important;
-         opacity: 0.9;
       }
 
-      /* הילה צהובה סביב יעד פוטנציאלי - **מודגשת** */
+      /* הילה צהובה סביב בלוק יעד פוטנציאלי */
       .snap-target {
-        outline: 4px solid #FFEB3B !important; /* צהוב בהיר יותר */
-        outline-offset: 4px;
-        box-shadow: 0 0 20px 8px rgba(255, 235, 59, 0.75) !important;
+        outline: 3px solid rgb(255, 210, 0) !important; /* צהוב ברור */
+        outline-offset: 3px;
+        box-shadow: 0 0 15px 5px rgba(255, 210, 0, 0.6) !important;
         transition: outline 0.1s ease-out, box-shadow 0.1s ease-out;
-        z-index: 999 !important;
+        z-index: 999 !important; /* חשוב שיהיה מתחת לנגרר */
       }
 
-      /* מלבן כחול מקווקו למיקום עתידי */
+      /* מלבן כחול מקווקו לציון מיקום עתידי */
       .future-position-indicator {
-        position: absolute; border: 2px dashed #03A9F4; border-radius: 5px;
-        background-color: rgba(3, 169, 244, 0.1); pointer-events: none;
-        z-index: 998; opacity: 0;
-        transition: opacity 0.15s ease-out, left 0.05s linear, top 0.05s linear;
+        position: absolute; 
+        border: 2px dashed rgba(0, 136, 255, 0.9);
+        border-radius: 5px; 
+        background-color: rgba(0, 136, 255, 0.08);
+        pointer-events: none; 
+        z-index: 998; 
+        opacity: 0;
+        transition: opacity 0.1s ease-out, left 0.05s linear, top 0.05s linear;
         display: none;
       }
-      .future-position-indicator[style*="display: block"] { opacity: 0.85; }
-
-      /* סימון כיוון (פס צד) - מודגש */
-      .snap-left::before, .snap-right::after {
-        content: ''; position: absolute; top: 15%; bottom: 15%; width: 6px;
-        background-color: #FFEB3B; border-radius: 3px; z-index: 1000;
-        box-shadow: 0 0 8px 2px rgba(255, 235, 59, 0.7); transition: all 0.1s ease-out;
+      .future-position-indicator[style*="display: block"] { 
+        opacity: 0.8; 
       }
-      .snap-left::before { left: -7px; }
-      .snap-right::after { right: -7px; }
+
+      /* סימון כיוון (פס צהוב בצד ימין/שמאל) */
+      .snap-left::before {
+        content: ''; 
+        position: absolute; 
+        left: -6px; 
+        top: 15%; 
+        bottom: 15%; 
+        width: 4px;
+        background-color: rgba(255, 210, 0, 0.9); 
+        border-radius: 2px; 
+        z-index: 1000;
+        box-shadow: 0 0 5px 1px rgba(255, 210, 0, 0.6); 
+        transition: all 0.1s ease-out;
+      }
+      .snap-right::after {
+        content: ''; 
+        position: absolute; 
+        right: -6px; 
+        top: 15%; 
+        bottom: 15%; 
+        width: 4px;
+        background-color: rgba(255, 210, 0, 0.9); 
+        border-radius: 2px; 
+        z-index: 1000;
+        box-shadow: 0 0 5px 1px rgba(255, 210, 0, 0.6); 
+        transition: all 0.1s ease-out;
+      }
 
       /* אנימציות */
-      @keyframes snapEffect { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
-      .snap-animation { animation: snapEffect 0.2s ease-out; }
-      @keyframes detachEffect { 0% { transform: translate(0, 0) rotate(0); } 50% { transform: translate(2px, 2px) rotate(0.5deg); } 100% { transform: translate(0, 0) rotate(0); } }
-      .detach-animation { animation: detachEffect 0.2s ease-in-out; }
+      @keyframes snapEffect { 
+        0% { transform: scale(1); } 
+        50% { transform: scale(1.03); } 
+        100% { transform: scale(1); } 
+      }
+      .snap-animation { 
+        animation: snapEffect 0.2s ease-out; 
+      }
+      
+      @keyframes detachEffect { 
+        0% { transform: translate(0, 0) rotate(0); } 
+        50% { transform: translate(2px, 2px) rotate(0.5deg); } 
+        100% { transform: translate(0, 0) rotate(0); } 
+      }
+      .detach-animation { 
+        animation: detachEffect 0.2s ease-in-out; 
+      }
 
       /* תפריט ניתוק */
-      #detach-menu { position: absolute; background-color: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 3px 8px rgba(0,0,0,0.2); z-index: 1100; padding: 5px; font-size: 14px; min-width: 100px; }
-      #detach-menu div { padding: 6px 12px; cursor: pointer; border-radius: 3px; }
-      #detach-menu div:hover { background-color: #eee; }
-
-      /* כללי: מניעת בחירת טקסט */
-       body.user-select-none { user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; }
-       /* סימון בלוקים מחוברים - מוסתר */
-      .connected-block::after, .has-connected-block::before { display: none; }
-
-      /* כפתור בדיקת שמע */
-      #sound-test-button {
-        position: fixed; bottom: 15px; right: 15px; z-index: 9999;
-        padding: 8px 12px; background-color: #f0ad4e; /* Default: Orange */
-        color: white; border: none; border-radius: 4px; cursor: pointer;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2); font-family: Arial, sans-serif;
-        fontSize: '13px', fontWeight: 'bold', opacity: '1',
-        transition: opacity 0.5s ease-out, background-color 0.3s ease;
+      #detach-menu { 
+        position: absolute; 
+        background-color: white; 
+        border: 1px solid #ccc; 
+        border-radius: 4px; 
+        box-shadow: 0 3px 8px rgba(0,0,0,0.2); 
+        z-index: 1100; 
+        padding: 5px; 
+        font-size: 14px; 
+        min-width: 100px; 
       }
-      #sound-test-button:hover:not(:disabled) { background-color: #ec971f; }
-      #sound-test-button.success { background-color: #5cb85c; }
-      #sound-test-button.fail { background-color: #d9534f; cursor: default; }
+      #detach-menu div { 
+        padding: 6px 12px; 
+        cursor: pointer; 
+        border-radius: 3px; 
+      }
+      #detach-menu div:hover { 
+        background-color: #eee; 
+      }
+
+      /* כללי: מניעת בחירת טקסט בזמן גרירה */
+      body.user-select-none { 
+        user-select: none; 
+        -webkit-user-select: none; 
+        -moz-user-select: none; 
+        -ms-user-select: none; 
+      }
     `;
     document.head.appendChild(style);
-    if (CONFIG.DEBUG) console.log('Highlighting and animation styles added.');
+    console.log('Highlighting and animation styles added/verified.');
   }
-
-   // ========================================================================
-  // הוספת כפתור בדיקת שמע (מהקוד שסופק, עם שיפורים קלים)
-  // ========================================================================
-  function addSoundTestButton() {
-    if (!CONFIG.PLAY_SOUND) return;
-
-    try {
-        if (document.getElementById('sound-test-button')) return;
-
-        const button = document.createElement('button');
-        button.id = 'sound-test-button';
-        button.textContent = 'אפשר/בדוק צליל';
-        button.title = 'לחץ כאן כדי לאפשר ולהשמיע את צליל ההצמדה';
-        Object.assign(button.style, {
-            position: 'fixed', bottom: '15px', right: '15px', zIndex: '9999',
-            padding: '8px 12px', backgroundColor: '#f0ad4e', /* Orange */
-            color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer',
-            boxShadow: '0 2px 5px rgba(0,0,0,0.2)', fontFamily: 'Arial, sans-serif',
-            fontSize: '13px', fontWeight: 'bold', opacity: '1',
-            transition: 'opacity 0.5s ease-out, background-color 0.3s ease'
-        });
-
-         button.onmouseover = function() { if (!this.disabled) this.style.backgroundColor = '#ec971f'; };
-         button.onmouseout = function() { if (!this.disabled && !this.classList.contains('success') && !this.classList.contains('fail')) this.style.backgroundColor = '#f0ad4e'; };
-
-        button.addEventListener('click', function() {
-            if (CONFIG.DEBUG) console.log("[Sound Test] Button clicked. Audio initialized:", soundInitialized, "Audio enabled:", audioEnabled);
-
-            if (!soundInitialized || !snapSound) {
-                 console.warn("[Sound Test] Audio not initialized.");
-                 button.textContent = 'שגיאת אתחול';
-                 button.style.backgroundColor = '#d9534f'; button.classList.add('fail');
-                 button.disabled = true;
-                 return;
-            }
-
-            // ניסיון להפעיל את האודיו כדי לקבל אישור מהדפדפן
-            const playPromise = snapSound.play();
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                    snapSound.pause(); // עצור מיד
-                    snapSound.currentTime = 0;
-                    if (!audioEnabled) {
-                         console.log("[Sound Test] Audio context unlocked!");
-                         audioEnabled = true;
-                    }
-                    button.textContent = 'צליל תקין ✓';
-                    button.style.backgroundColor = '#5cb85c'; button.classList.add('success');
-                    button.disabled = true;
-                    // השמע את הצליל שוב לבדיקה סופית
-                    playSnapSound();
-                    setTimeout(() => { button.style.opacity = '0'; setTimeout(() => button.remove(), 500); }, 2500);
-                }).catch(error => {
-                    console.warn('[Sound Test] Audio unlock/play failed:', error.name, error.message);
-                    button.textContent = 'שמע נכשל/חסום';
-                    button.style.backgroundColor = '#d9534f'; button.classList.add('fail');
-                    button.title = 'לא ניתן להפעיל שמע. נסה לרענן או לבדוק הגדרות דפדפן.';
-                    // אל תסיר את הכפתור, אולי לחיצה אחרת תעבוד
-                });
-            } else {
-                console.warn('[Sound Test] snapSound.play() did not return a promise. Audio might be blocked.');
-                button.textContent = 'שגיאת שמע';
-                button.style.backgroundColor = '#d9534f'; button.classList.add('fail');
-             }
-        });
-
-        document.body.appendChild(button);
-        if (CONFIG.DEBUG) console.log('Sound test button added.');
-    } catch (err) {
-        console.error('Error adding sound test button:', err);
-    }
-}
-
-  // ========================================================================
-  // השמעת צליל הצמדה
-  // ========================================================================
-  function playSnapSound() {
-    if (!CONFIG.PLAY_SOUND) return; // בדיקה ראשונית
-
-    if (!snapSound || !soundInitialized) {
-        if (CONFIG.DEBUG) console.warn("[PlaySound] Sound not initialized.");
-        return;
-    }
-    if (!audioEnabled) {
-        if (CONFIG.DEBUG) console.warn("[PlaySound] Audio context not unlocked. Click the test button or interact with the page.");
-        // אולי נציג שוב את כפתור הבדיקה אם הוא הוסר
-         if (!document.getElementById('sound-test-button')) addSoundTestButton();
-        return;
-    }
-
-    try {
-      snapSound.currentTime = 0; // אפס תמיד לפני הפעלה
-      const playPromise = snapSound.play();
-
-      if (playPromise !== undefined) {
-        playPromise.catch(error => {
-          // נפוץ: AbortError אם לוחצים מהר מדי. נתעלם ממנו.
-          if (error.name !== 'AbortError' && CONFIG.DEBUG) {
-             console.warn('[PlaySound] Error playing sound:', error);
-          }
-        });
-      }
-    } catch (err) {
-      console.error('[PlaySound] Exception:', err);
-    }
-  }
-
 
   // ========================================================================
   // פונקציות עזר לניתוק בלוקים
   // ========================================================================
   function showDetachMenu(x, y, block) {
-      removeDetachMenu(); // נקה תפריט קודם
-
-      const menu = document.createElement('div');
-      menu.id = 'detach-menu';
-      // מיקום חכם יותר
-      const menuWidth = 120;
-      const menuHeight = 40;
-      menu.style.left = Math.min(x, window.innerWidth - menuWidth - 10) + 'px';
-      menu.style.top = Math.min(y, window.innerHeight - menuHeight - 10) + 'px';
-
-      const detachOption = document.createElement('div');
-      detachOption.textContent = 'נתק בלוק';
-      detachOption.onclick = (e) => {
-          e.stopPropagation();
-          detachBlock(block, true); // נתק עם אנימציה
-          removeDetachMenu();
-      };
-
-      menu.appendChild(detachOption);
-      document.body.appendChild(menu);
-
-      // סגירה בלחיצה מחוץ לתפריט
-      setTimeout(() => {
-          document.addEventListener('click', closeMenuOutside, { capture: true, once: true });
-          document.addEventListener('contextmenu', closeMenuOutside, { capture: true, once: true });
-      }, 50);
+    removeDetachMenu(); // הסר תפריט קודם אם קיים
+    
+    const menu = document.createElement('div');
+    menu.id = 'detach-menu';
+    menu.style.left = x + 'px';
+    menu.style.top = y + 'px';
+    
+    const detachOption = document.createElement('div');
+    detachOption.textContent = 'נתק בלוק';
+    detachOption.onclick = function() {
+        detachBlock(block, true);
+        removeDetachMenu();
+    };
+    
+    menu.appendChild(detachOption);
+    document.body.appendChild(menu);
+    
+    // סגור את התפריט בלחיצה מחוץ לתפריט
+    setTimeout(() => {
+        document.addEventListener('click', closeMenuOutside);
+    }, 0);
   }
-
+  
   function closeMenuOutside(e) {
-      const menu = document.getElementById('detach-menu');
-      if (menu && !menu.contains(e.target)) {
-          removeDetachMenu();
-      } else if (menu) { // אם הקליק היה בתוך התפריט, צריך להאזין שוב
-           document.removeEventListener('click', closeMenuOutside, { capture: true });
-           document.removeEventListener('contextmenu', closeMenuOutside, { capture: true });
-           setTimeout(() => { // הוסף מחדש את המאזינים
-               document.addEventListener('click', closeMenuOutside, { capture: true, once: true });
-               document.addEventListener('contextmenu', closeMenuOutside, { capture: true, once: true });
-           }, 0);
-      }
-  }
-
-  function removeDetachMenu() {
-      const menu = document.getElementById('detach-menu');
-      if (menu) {
-          document.removeEventListener('click', closeMenuOutside, { capture: true });
-          document.removeEventListener('contextmenu', closeMenuOutside, { capture: true });
-          menu.remove();
-      }
-  }
-
-  function detachBlock(blockToDetach, animate = true) {
-    if (!blockToDetach || !blockToDetach.hasAttribute('data-connected-to')) {
-        if(CONFIG.DEBUG) console.log(`[Detach] Block ${blockToDetach?.id} not connected or invalid.`);
-        return;
+    const menu = document.getElementById('detach-menu');
+    if (menu && !menu.contains(e.target)) {
+        removeDetachMenu();
     }
-
+  }
+  
+  function removeDetachMenu() {
+    const menu = document.getElementById('detach-menu');
+    if (menu) {
+        document.removeEventListener('click', closeMenuOutside);
+        menu.remove();
+    }
+  }
+  
+  function detachBlock(blockToDetach, animate = true) {
+    if (!blockToDetach) return;
+    
+    // קבל מידע על החיבור
     const targetId = blockToDetach.getAttribute('data-connected-to');
-    const connectionDirection = blockToDetach.getAttribute('data-connection-direction'); // How source was connected to target
-    const connectedBlock = document.getElementById(targetId);
-
-    if(CONFIG.DEBUG) console.log(`[Detach] Detaching ${blockToDetach.id} from ${targetId || 'unknown target'} (direction=${connectionDirection})`);
-
-    // Remove connection attributes from the source block
+    const direction = blockToDetach.getAttribute('data-connection-direction');
+    
+    if (!targetId || !direction) return;
+    
+    // מצא את הבלוק המטרה
+    const targetBlock = document.getElementById(targetId);
+    
+    // הסר את המאפיינים מהבלוק הנוכחי
     blockToDetach.removeAttribute('data-connected-to');
     blockToDetach.removeAttribute('data-connection-direction');
     blockToDetach.classList.remove('connected-block');
-
-    // Remove connection attributes from the target block
-    if (connectedBlock) {
-        // Determine which attribute to remove based on how source was connected
-        const attributeToRemove = connectionDirection === 'left' ? 'data-connected-from-left' : 'data-connected-from-right';
-        connectedBlock.removeAttribute(attributeToRemove);
-        // Check if the target block still has any connections
-        if (!connectedBlock.hasAttribute('data-connected-from-left') && !connectedBlock.hasAttribute('data-connected-from-right')) {
-            connectedBlock.classList.remove('has-connected-block');
+    
+    // הסר את המאפיינים מבלוק המטרה אם הוא קיים
+    if (targetBlock) {
+        targetBlock.removeAttribute(`data-connected-from-${direction}`);
+        
+        // בדוק אם יש עדיין בלוקים מחוברים לבלוק המטרה
+        const stillHasConnections = 
+            targetBlock.hasAttribute('data-connected-from-left') ||
+            targetBlock.hasAttribute('data-connected-from-right') ||
+            targetBlock.hasAttribute('data-connected-to');
+            
+        if (!stillHasConnections) {
+            targetBlock.classList.remove('has-connected-block');
         }
-         if(CONFIG.DEBUG) console.log(`[Detach] Removed connection attribute '${attributeToRemove}' from target ${targetId}`);
-    } else {
-        if(CONFIG.DEBUG) console.warn(`[Detach] Target block with ID ${targetId} not found during detach.`);
     }
-
+    
+    // הוסף אנימציית ניתוק אם נדרש
     if (animate) {
         addDetachEffectAnimation(blockToDetach);
-        // playDetachSound(); // הפעל צליל ניתוק אם קיים
+        
+        // השמע צליל ניתוק (אם יש)
+        playDetachSound();
     }
-
-    removeDetachMenu(); // סגור תפריט אם פתוח
+    
+    console.log(`Block ${blockToDetach.id} detached from ${targetId}`);
+  }
+  
+  // ========================================================================
+  // השמעת צליל ניתוק (אופציונלי)
+  // ========================================================================
+  function playDetachSound() {
+    // בשלב זה אין צליל ניתוק, אבל אפשר להוסיף בעתיד
+    // אם רוצים להוסיף צליל ניתוק, צריך ליצור משתנה נוסף detachSound
+    // ולאתחל אותו בפונקציית initSnapSound
   }
 
   // ========================================================================
   // פונקציות עזר לאנימציה
   // ========================================================================
   function addSnapEffectAnimation(block) {
-      if (!block) return;
-      block.classList.remove('snap-animation');
-      void block.offsetWidth; // Force reflow
-      block.classList.add('snap-animation');
-      // Remove class after animation duration (match CSS)
-      setTimeout(() => {
-          if(block) block.classList.remove('snap-animation');
-      }, 250); // Match animation duration in CSS
+    block.classList.remove('snap-animation');
+    // אילוץ reflow כדי שהאנימציה תופעל מחדש
+    void block.offsetWidth;
+    block.classList.add('snap-animation');
+    
+    // הסר את המחלקה אחרי סיום האנימציה
+    setTimeout(() => {
+        if (block && block.classList) {
+            block.classList.remove('snap-animation');
+        }
+    }, 300);
   }
-
+  
   function addDetachEffectAnimation(block) {
-      if (!block) return;
-      block.classList.remove('detach-animation');
-      void block.offsetWidth;
-      block.classList.add('detach-animation');
-      setTimeout(() => {
-         if (block) block.classList.remove('detach-animation');
-      }, 300); // Match animation duration in CSS
+    block.classList.remove('detach-animation');
+    void block.offsetWidth;
+    block.classList.add('detach-animation');
+    
+    setTimeout(() => {
+        if (block && block.classList) {
+            block.classList.remove('detach-animation');
+        }
+    }, 300);
   }
 
   // ========================================================================
   // יצירת ID ייחודי
   // ========================================================================
   function generateUniqueId(block) {
-      if (block && block.id) return block.id;
-      let prefix = 'block';
-      if (block && block.dataset.category) {
-          prefix = block.dataset.category.substring(0, 4);
-      }
-      // Use crypto.randomUUID if available, otherwise fallback
-      let randomPart = window.crypto && window.crypto.randomUUID ?
-                       crypto.randomUUID().split('-')[0] : // Use first part of UUID
-                       Math.random().toString(36).substring(2, 9);
-      let newId = `${prefix}-${randomPart}`;
-      if(block) block.id = newId; // Set the ID on the element
-      // if (CONFIG.DEBUG) console.log(`Generated unique ID: ${newId}`);
-      return newId;
+    // בדוק אם יש כבר מזהה
+    if (block.id) return block.id;
+    
+    // הגדר פרפיקס בהתבסס על סוג הבלוק
+    let prefix = 'block';
+    if (block.classList.contains('control-block')) {
+        prefix = 'ctrl';
+    } else if (block.classList.contains('action-block')) {
+        prefix = 'act';
+    } else if (block.classList.contains('condition-block')) {
+        prefix = 'cond';
+    }
+    
+    // צור מזהה ייחודי עם חותמת זמן
+    const timestamp = new Date().getTime();
+    const randomPart = Math.floor(Math.random() * 1000);
+    const uniqueId = `${prefix}-${timestamp}-${randomPart}`;
+    
+    block.id = uniqueId;
+    return uniqueId;
   }
 
 })();
-// --- END OF FILE linkageimproved.js ---
+// --- END OF FILE linkageimproved2.js ---
