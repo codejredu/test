@@ -1,5 +1,5 @@
 // ========================================================================
-// linkageimproved.js - שיפור גרסה
+// linkageimproved.js - גרסה מינימלית שלא פוגעת בגרירה
 // ========================================================================
 console.log('[Linkage] Script start.');
 (function() {
@@ -8,6 +8,7 @@ console.log('[Linkage] Script start.');
     let nextBlockId = 1;
     let initialized = false;
     let registrationQueue = []; // תור לרישום בלוקים לפני אתחול
+    let blockRegistry = {}; // מאגר בלוקים רשומים
     
     function generateUniqueBlockId() {
         return `block-${Date.now()}-${nextBlockId++}`;
@@ -19,15 +20,15 @@ console.log('[Linkage] Script start.');
             programmingArea = document.getElementById("program-blocks");
             if (!programmingArea) {
                 console.warn("[Linkage] WARNING: #program-blocks not found! Will retry later.");
-                // הגדרת ניסיון חוזר אחרי חצי שנייה
                 setTimeout(initializeLinkageSystem, 500);
                 return false;
             } 
             
             console.log("[Linkage] #program-blocks FOUND.");
-            programmingArea.style.outline = '2px solid green';
+            // שימוש ב-data attribute במקום שינוי ויזואלי
+            programmingArea.dataset.linkageActive = "true";
             
-            // עיבוד כל הבלוקים שנרשמו לפני האתחול
+            // עיבוד בלוקים שנרשמו לפני האתחול
             if (registrationQueue.length > 0) {
                 console.log(`[Linkage] Processing ${registrationQueue.length} queued blocks`);
                 registrationQueue.forEach(element => {
@@ -60,57 +61,40 @@ console.log('[Linkage] Script start.');
                 console.log(`[Linkage] Element has ID: ${blockElement.id}`);
             }
             
-            // כאן תוסיף את הלוגיקה של הלינקג'
-            console.log(`[Linkage] Successfully registered ${blockElement.id}`);
+            // שמירת הבלוק במאגר במקום שינוי ויזואלי
+            blockRegistry[blockElement.id] = {
+                element: blockElement,
+                type: blockElement.dataset.type,
+                category: blockElement.dataset.category,
+                registered: new Date().toISOString()
+            };
             
-            // עיצוב ויזואלי כדי לראות שהרישום הצליח
-            blockElement.style.boxShadow = '0 0 5px blue';
+            // סימון שהבלוק רשום באמצעות data attribute (לא משנה CSS)
+            blockElement.dataset.linkageRegistered = "true";
+            
+            console.log(`[Linkage] Successfully registered ${blockElement.id}`);
         } catch (e) {
             console.error(`[Linkage] ERROR during registration:`, e);
         }
     }
     
-    // האתחול - עם MutationObserver כגיבוי
+    // האתחול - גרסה פשוטה יותר
     function runInitialization() {
         console.log(`[Linkage] Starting initialization. readyState: ${document.readyState}`);
         
-        // ניסיון ראשון בהתאם למצב הדף
         if (document.readyState === 'loading') {
             console.log('[Linkage] Adding DOMContentLoaded listener.');
             document.addEventListener('DOMContentLoaded', function() {
-                // נסה להתחיל, ואם נכשל, תגדיר MutationObserver
-                if (!initializeLinkageSystem()) {
-                    setupMutationObserver();
-                }
+                // עיכוב קל כדי לוודא שscript.js סיים
+                setTimeout(initializeLinkageSystem, 100);
             });
         } else {
-            // נסה מיד, אם נכשל תגדיר MutationObserver
-            setTimeout(function() {
-                if (!initializeLinkageSystem()) {
-                    setupMutationObserver();
-                }
-            }, 100);
+            // עיכוב קל גם כאן
+            setTimeout(initializeLinkageSystem, 100);
         }
     }
     
-    // MutationObserver לזיהוי מתי האלמנט מופיע בדף
-    function setupMutationObserver() {
-        console.log('[Linkage] Setting up MutationObserver to watch for #program-blocks');
-        const observer = new MutationObserver(function(mutations) {
-            if (document.getElementById('program-blocks')) {
-                console.log('[Linkage] #program-blocks found by MutationObserver!');
-                observer.disconnect();
-                initializeLinkageSystem();
-            }
-        });
-        
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-    }
-    
-    // API פומבי לרישום בלוקים
+    // API פומבי לרישום בלוקים - גרסה פשוטה יותר
     window.registerNewBlockForLinkage = function(newBlockElement) {
         console.log('[Linkage] registerNewBlockForLinkage called:', newBlockElement);
         
@@ -127,7 +111,11 @@ console.log('[Linkage] Script start.');
         }
     };
     
-    // נסה להתחיל מיד
+    // לצורך דיבוג - גישה למאגר הבלוקים
+    window.getLinkageRegistry = function() {
+        return blockRegistry;
+    };
+    
     runInitialization();
     
     console.log('[Linkage] IIFE completed. System ready.');
