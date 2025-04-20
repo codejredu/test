@@ -1,178 +1,119 @@
+ // ========================================================================
+// הגדרת בלוקים (Blocks) עם שמות הקבצים המדויקים
 // ========================================================================
-// Improved Block Linkage System (linkageimproved.js)
-// Version: Horizontal Snap - Using ONLY Left/Top - Stable Syntax + Link Logs
+
+const blocks = { /* ... תוכן זהה ... */
+    triggering: [ { name: "Green Flag", type: "startOnGreenFlag", svgFile: "Start on Green Flag.svg" }, { name: "Tap", type: "startOnTap", svgFile: "Start on Tap.svg" }, { name: "Bump", type: "startOnBump", svgFile: "Start on Bump.svg" }, { name: "Send Message", type: "sendMessage", svgFile: "Send Message blue.svg" }, { name: "Receive Message", type: "startOnMessage", svgFile: "Send Message orange.svg" }, ], motion: [ { name: "Move Right", type: "moveRight", svgFile: "Move Right.svg" }, { name: "Move Left", type: "moveLeft", svgFile: "Move Left.svg" }, { name: "Move Up", type: "moveUp", svgFile: "Move Up.svg" }, { name: "Move Down", type: "moveDown", svgFile: "Move Down.svg" }, { name: "Turn Right", type: "turnRight", svgFile: "Turn Right.svg" }, { name: "Turn Left", type: "turnLeft", svgFile: "Turn Left.svg" }, { name: "Hop", type: "hop", svgFile: "Hop.svg" }, { name: "Go Home", type: "goHome", svgFile: "Go home.svg" }, ], looks: [ { name: "Say", type: "say", svgFile: "say.svg" }, { name: "Grow", type: "grow", svgFile: "reset-size.svg" }, { name: "Shrink", type: "shrink", svgFile: "Shrink.svg" }, { name: "Reset Size", type: "resetSize", svgFile: "reset-size.svg" }, { name: "Hide", type: "hide", svgFile: "hide.svg" }, { name: "Show", type: "show", svgFile: "show.svg" }, ], sound: [ { name: "Play Sound", type: "popSound", svgFile: "pop.svg" }, { name: "Play Recorded Sound", type: "playRecordedSound", svgFile: "Play Recorded Sound.svg" }, ], control: [ { name: "Stop", type: "stop", svgFile: "Stop.svg" }, { name: "Wait", type: "wait", svgFile: "Wait.svg" }, { name: "Set Speed", type: "setSpeed", svgFile: "Set Speed.svg" }, { name: "Repeat", type: "repeat", svgFile: "repeat.svg", isSpecial: true }, ], end: [ { name: "End", type: "end", svgFile: "end.svg" }, { name: "Repeat Forever", type: "repeatForever", svgFile: "repeat-forever.svg" }, { name: "Go To Page", type: "goToPage", svgFile: "Go to page.svg" }, ],
+ };
+
 // ========================================================================
+// פונקציה ליצירת אלמנט בלוק (מהפלטה)
+// ========================================================================
+function createBlockElement(block, category) { /* ... תוכן זהה ... */
+    const blockContainer = document.createElement("div"); blockContainer.classList.add("block-container"); blockContainer.dataset.type = block.type; blockContainer.dataset.category = category; const blockImage = document.createElement("img"); blockImage.src = `assets/block/${block.svgFile}`; blockImage.alt = block.name; blockImage.classList.add("block-svg-image"); blockImage.draggable = false; blockImage.onerror = function() { console.warn(`SVG image not found: assets/block/${block.svgFile}`); blockContainer.textContent = block.name; blockContainer.style.border = "1px dashed red"; blockContainer.style.backgroundColor = "#ffeeee"; blockContainer.style.padding = "5px"; blockContainer.style.display = 'inline-block'; }; blockContainer.appendChild(blockImage); blockContainer.draggable = true; blockContainer.addEventListener("dragstart", (event) => { try { const dataToSend = JSON.stringify({ type: block.type, category: category, name: block.name, svgFile: block.svgFile }); event.dataTransfer.setData("text/plain", dataToSend); event.dataTransfer.effectAllowed = "copy"; } catch (e) { console.error("Error setting drag data:", e); } }); return blockContainer;
+}
 
-(function() {
-    // Configuration
-    const HORIZONTAL_SNAP_DISTANCE = 40;
-    const VERTICAL_ALIGNMENT_TOLERANCE = 30;
-    const HORIZONTAL_SNAP_OFFSET = 0; // *** משאירים 0 כרגע ***
-    const ENABLE_DETAILED_SNAP_LOGGING = false; // כבוי כברירת מחדל
+// ========================================================================
+// פונקציה למילוי הקטגוריה בבלוקים
+// ========================================================================
+function populateBlockPalette(category) { /* ... תוכן זהה ... */
+    const categoryDiv = document.getElementById(`${category}-blocks`); if (!categoryDiv) { console.error(`Category div not found for ${category}`); return; } categoryDiv.innerHTML = ""; if (!blocks[category] || blocks[category].length === 0) { console.warn(`No blocks defined for category ${category}`); return; } blocks[category].forEach(block => { const blockElement = createBlockElement(block, category); categoryDiv.appendChild(blockElement); });
+}
 
-    // State Variables
-    let isDragging = false; let draggedElement = null;
-    let potentialSnapTarget = null; let initialMouseX = 0; let initialMouseY = 0;
-    let initialElementX = 0; let initialElementY = 0; let programmingArea = null;
-    let nextBlockId = 1;
+// ========================================================================
+// פונקציה לטיפול בשינוי קטגוריה עם עדכון צבע הרקע
+// ========================================================================
+function handleCategoryChange(category) { /* ... תוכן זהה ... */
+    const categoryTabs = document.querySelectorAll(".category-tab"); const blockCategories = document.querySelectorAll(".block-category"); blockCategories.forEach(element => element.classList.remove("active")); categoryTabs.forEach(tab => tab.classList.remove("active")); const tab = document.querySelector(`.category-tab[data-category="${category}"]`); const categoryDiv = document.getElementById(`${category}-blocks`); if (tab) { tab.classList.add("active"); } else { console.warn(`Tab not found for category: ${category}`); } if (categoryDiv) { categoryDiv.classList.add("active"); const blockPalette = document.getElementById("block-palette"); if (blockPalette) { blockPalette.style.borderColor = getCategoryColor(category); } populateBlockPalette(category); } else { console.warn(`Block category container not found for: ${category}`); }
+}
 
-    // ========================================================================
-    // Initialization
-    // ========================================================================
-    function initializeLinkageSystem() {
-        console.log("[Linkage] Attempting Init...");
-        programmingArea = document.getElementById("program-blocks");
-        if (!programmingArea) { console.error("[Linkage] ERROR: #program-blocks not found!"); return; }
-        const currentPosition = window.getComputedStyle(programmingArea).position;
-        if (currentPosition !== 'relative' && currentPosition !== 'absolute' && currentPosition !== 'fixed') {
-             console.warn(`[Linkage] WARN: #program-blocks position is ${currentPosition}. Consider 'relative'.`);
-        }
-        programmingArea.addEventListener('mousedown', handleMouseDown);
-        console.log("[Linkage] Mousedown listener ATTACHED.");
-        console.log("[Linkage] System Initialized.");
-        prepareExistingBlocks();
-    }
-    function prepareExistingBlocks() {
-        const blocksInArea = programmingArea.querySelectorAll('.block-container');
-        blocksInArea.forEach(block => {
-            if (!block.id) { block.id = generateUniqueBlockId(); }
-             if (!block.style.position || block.style.position === 'static') { block.style.position = 'absolute'; }
-        });
-        if(blocksInArea.length > 0) console.log(`[Linkage] Prepared ${blocksInArea.length} existing blocks.`);
-    }
-    function runInitialization() {
-        if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initializeLinkageSystem); }
-        else { initializeLinkageSystem(); }
-    }
-    runInitialization();
+// ========================================================================
+// פונקציית עזר לקבלת הצבע המתאים לקטגוריה
+// ========================================================================
+function getCategoryColor(category) { /* ... תוכן זהה ... */
+    try { switch(category) { case 'triggering': return getComputedStyle(document.documentElement).getPropertyValue('--triggering-color').trim(); case 'motion': return getComputedStyle(document.documentElement).getPropertyValue('--motion-color').trim(); case 'looks': return getComputedStyle(document.documentElement).getPropertyValue('--looks-color').trim(); case 'sound': return getComputedStyle(document.documentElement).getPropertyValue('--sound-color').trim(); case 'control': return getComputedStyle(document.documentElement).getPropertyValue('--control-color').trim(); case 'end': return getComputedStyle(document.documentElement).getPropertyValue('--end-color').trim(); default: return '#DDDDDD'; } } catch (e) { console.error("Error getting category color:", e); return '#CCCCCC'; }
+}
 
-    // ========================================================================
-    // Unique ID Generation
-    // ========================================================================
-    function generateUniqueBlockId() { return `block-${Date.now()}-${nextBlockId++}`; }
+// ========================================================================
+// פונקציה לטיפול בהשמטת בלוק באזור התכנות ( *** מתוקנת *** )
+// ========================================================================
+function handleDrop(event) {
+    event.preventDefault();
+    const programmingArea = document.getElementById("program-blocks");
+    if (!programmingArea) { console.error("Programming area not found in handleDrop!"); return; }
 
-    // ========================================================================
-    // Event Handlers
-    // ========================================================================
-    function handleMouseDown(event) {
-        // if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`>>> handleMouseDown triggered!`);
-        const targetBlock = event.target.closest('.block-container');
-        if (!targetBlock || !programmingArea || !programmingArea.contains(targetBlock)) return;
-        event.preventDefault(); isDragging = true; draggedElement = targetBlock;
-        if (!draggedElement.id) { draggedElement.id = generateUniqueBlockId(); }
-        // if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`   Dragging single block: ${draggedElement.id}`);
-
-        const prevBlockId = draggedElement.dataset.prevBlockId;
-        if (prevBlockId) { const pb = document.getElementById(prevBlockId); if (pb) delete pb.dataset.nextBlockId; delete draggedElement.dataset.prevBlockId; }
-        const leftBlockId = draggedElement.dataset.leftBlockId;
-        if (leftBlockId) { const lb = document.getElementById(leftBlockId); if (lb) delete lb.dataset.rightBlockId; delete draggedElement.dataset.leftBlockId; }
-
-        initialMouseX = event.clientX; initialMouseY = event.clientY;
-        initialElementX = draggedElement.offsetLeft; initialElementY = draggedElement.offsetTop;
-        draggedElement.style.zIndex = 1000; draggedElement.style.cursor = 'grabbing';
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
-        document.addEventListener('mouseleave', handleMouseLeave);
-        // if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`--- Drag Start: ${draggedElement.id} ---`);
+    // --- *** התיקון: נטפל רק בנתונים שמגיעים מהפלטה (JSON) *** ---
+    const dataString = event.dataTransfer.getData("text/plain");
+    let data;
+    try {
+        data = JSON.parse(dataString);
+    } catch (e) {
+        // אם זה לא JSON תקין, זה *לא* מהפלטה.
+        // נניח שזו גרירה פנימית והקוד ב-linkageimproved.js יטפל בה ב-mouseup.
+        // לכן, פשוט יוצאים מהפונקציה הזו ולא עושים כלום.
+        console.log("handleDrop ignored: Not valid JSON data (likely internal drag).");
+        return;
     }
 
-    function handleMouseMove(event) {
-        if (!isDragging || !draggedElement) return;
-        const deltaX = event.clientX - initialMouseX; const deltaY = event.clientY - initialMouseY;
-        const newX = initialElementX + deltaX; const newY = initialElementY + deltaY;
-        draggedElement.style.left = `${newX}px`; draggedElement.style.top = `${newY}px`;
-        findAndHighlightSnapTarget();
+    // --- המשך טיפול רק אם הנתונים תקינים מהפלטה ---
+    if (!data || !data.type || !data.category || !data.name || !data.svgFile) {
+        console.warn("handleDrop ignored: Dropped data missing required fields.", data);
+        return;
     }
 
-    function handleMouseUp(event) {
-        if (!isDragging || !draggedElement) return;
-        const currentDraggedElement = draggedElement;
-        const currentTarget = potentialSnapTarget;
-        const isValidSnapTarget = currentTarget && programmingArea && programmingArea.contains(currentTarget);
+    console.log("handleDrop: Processing drop from palette:", data);
 
-        // הסר מאזינים גלובליים מיד
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-        document.removeEventListener('mouseleave', handleMouseLeave);
+    try {
+        const blockCategory = data.category;
+        const blockDefinition = blocks[blockCategory]?.find(b => b.type === data.type);
+        if (!blockDefinition) { console.error("Could not find block definition for dropped block:", data); return; }
 
-        // אפס מצב גרירה
-        isDragging = false;
-        draggedElement = null;
-        potentialSnapTarget = null;
+        const newBlock = createProgrammingBlockElement(blockDefinition, blockCategory);
+        programmingArea.appendChild(newBlock);
 
-        // בצע הצמדה או מיקום סופי
-        if (isValidSnapTarget) {
-            linkBlocksHorizontally(currentTarget, currentDraggedElement);
+        const rect = programmingArea.getBoundingClientRect();
+        newBlock.style.position = "absolute";
+        // קבל מידות *אחרי* הוספה ל-DOM
+        const blockWidth = newBlock.offsetWidth || 100;
+        const blockHeight = newBlock.offsetHeight || 40;
+        let dropX = event.clientX - rect.left - (blockWidth / 2);
+        let dropY = event.clientY - rect.top - (blockHeight / 2);
+        dropX = Math.max(0, Math.min(dropX, rect.width - blockWidth));
+        dropY = Math.max(0, Math.min(dropY, rect.height - blockHeight));
+        newBlock.style.left = `${dropX}px`;
+        newBlock.style.top = `${dropY}px`;
+        console.log(`Positioned new block at: x=${dropX.toFixed(0)}, y=${dropY.toFixed(0)}`);
+
+        if (window.registerNewBlockForLinkage) {
+            console.log(">>> Calling registerNewBlockForLinkage for:", newBlock.id || 'new block (no id yet!)');
+            window.registerNewBlockForLinkage(newBlock);
         } else {
-            // אין הצמדה - המיקום האחרון מ-mousemove נשאר
-            if (ENABLE_DETAILED_SNAP_LOGGING && currentDraggedElement) {
-                 console.log(`Placed single block ${currentDraggedElement.id} (no snap)`);
-            }
+            console.error("!!! Linkage system function 'registerNewBlockForLinkage' not found.");
         }
 
-        // ניקוי סופי
-        clearSnapHighlighting();
-        if(currentDraggedElement) {
-             currentDraggedElement.style.zIndex = '';
-             currentDraggedElement.style.cursor = '';
-        }
-        console.log("--- MouseUp Finished ---");
-    }
+    } catch (e) { console.error("Error processing dropped block:", e); }
+}
 
-    function handleMouseLeave(event) { if (isDragging) { handleMouseUp(event); } }
+// ========================================================================
+// פונקציה ייעודית ליצירת אלמנט בלוק *באזור התכנות*
+// ========================================================================
+function createProgrammingBlockElement(block, category) { /* ... תוכן זהה ... */
+    const blockContainer = document.createElement("div"); blockContainer.classList.add("block-container"); blockContainer.dataset.type = block.type; blockContainer.dataset.category = category; const blockImage = document.createElement("img"); blockImage.src = `assets/block/${block.svgFile}`; blockImage.alt = block.name; blockImage.classList.add("block-svg-image"); blockImage.draggable = false; blockImage.onerror = function() { console.warn(`(Prog Area) SVG image not found: assets/block/${block.svgFile}`); blockContainer.textContent = block.name; blockContainer.style.border = "1px dashed orange"; blockContainer.style.backgroundColor = "#fff5e6"; blockContainer.style.padding = "5px"; blockContainer.style.display = 'inline-block'; blockContainer.style.minWidth = '50px'; }; blockContainer.appendChild(blockImage); return blockContainer;
+}
 
-    // Drag Group Management (Not Used) ...
 
-    // ========================================================================
-    // Snapping Logic (Horizontal - Highlight Dragged Only)
-    // ========================================================================
-    function findAndHighlightSnapTarget(){ const shouldLog = ENABLE_DETAILED_SNAP_LOGGING && isDragging && draggedElement; clearSnapHighlighting(); potentialSnapTarget = null; if (!isDragging || !draggedElement || !programmingArea) return; const dragRect = draggedElement.getBoundingClientRect(); if (dragRect.height <= 0 || dragRect.width <= 0) return; const dragLeftConnector = { x: dragRect.left, y: dragRect.top + dragRect.height / 2 }; let closestDistance = HORIZONTAL_SNAP_DISTANCE; let bestTarget = null; const allBlocks = programmingArea.querySelectorAll('.block-container'); allBlocks.forEach(block => { if (block === draggedElement || block.dataset.rightBlockId) return; const targetRect = block.getBoundingClientRect(); if (targetRect.height <= 0 || targetRect.width <= 0) return; const targetRightConnector = { x: targetRect.right - HORIZONTAL_SNAP_OFFSET, y: targetRect.top + targetRect.height / 2 }; const dx = dragLeftConnector.x - targetRightConnector.x; const dy = dragLeftConnector.y - targetRightConnector.y; const horizontalDistance = Math.abs(dx); const verticalDistance = Math.abs(dy); if (horizontalDistance < closestDistance && verticalDistance < VERTICAL_ALIGNMENT_TOLERANCE) { closestDistance = horizontalDistance; bestTarget = block; } }); if (bestTarget) { potentialSnapTarget = bestTarget; highlightSnapTarget(draggedElement, true); if (shouldLog) console.log(`--- Best H target: ${bestTarget.id}. Highlighting dragged ONLY. ---`); } else { highlightSnapTarget(draggedElement, false); if (shouldLog) console.log(`--- No H target found. ---`); } }
-    function highlightSnapTarget(block, shouldHighlight){ if (block) { try { if (shouldHighlight) { block.classList.add('snap-highlight'); } else { block.classList.remove('snap-highlight'); } } catch (e) { /* ignore */ } } }
-    function clearSnapHighlighting(){ if (!programmingArea) return; const highlighted = programmingArea.querySelectorAll('.snap-highlight'); highlighted.forEach(el => { try { el.classList.remove('snap-highlight'); } catch(e) { /* ignore */ } }); }
-
-    // ========================================================================
-    // Linking Logic (Horizontal - Using ONLY Left/Top)
-    // ========================================================================
-    function linkBlocksHorizontally(leftBlock, rightBlock) {
-        if (!leftBlock || !rightBlock || leftBlock === rightBlock || !programmingArea) return;
-        if (leftBlock.dataset.rightBlockId || rightBlock.dataset.leftBlockId) return;
-
-        console.log(`[Linkage] Linking ${leftBlock.id} -> ${rightBlock.id} (Using Left/Top)`);
-        console.log(`[Linkage]   Before - Left [${leftBlock.id}]: L=${leftBlock.offsetLeft}, T=${leftBlock.offsetTop}, W=${leftBlock.offsetWidth}`);
-        console.log(`[Linkage]   Before - Right [${rightBlock.id}]: L=${rightBlock.offsetLeft}, T=${rightBlock.offsetTop}`);
-
-        leftBlock.dataset.rightBlockId = rightBlock.id; rightBlock.dataset.leftBlockId = rightBlock.id;
-        const leftWidth = leftBlock.offsetWidth;
-        const targetX = leftBlock.offsetLeft + leftWidth - HORIZONTAL_SNAP_OFFSET;
-        const targetY = leftBlock.offsetTop;
-        console.log(`[Linkage]   Calculated Target: X=${targetX.toFixed(0)}, Y=${targetY.toFixed(0)} (Offset: ${HORIZONTAL_SNAP_OFFSET})`);
-
-        rightBlock.style.left = `${targetX}px`;
-        rightBlock.style.top = `${targetY}px`;
-        console.log(`[Linkage]   Set Left/Top Style for ${rightBlock.id}`);
-
-        setTimeout(() => {
-            const finalLeft = rightBlock.offsetLeft;
-            const finalTop = rightBlock.offsetTop;
-            console.log(`[Linkage]   After Link (async) - Right [${rightBlock.id}]: FINAL L=${finalLeft}, FINAL T=${finalTop}`);
-            if (Math.abs(finalLeft - targetX) > 1 || Math.abs(finalTop - targetY) > 1) {
-                 console.warn(`[Linkage] Position discrepancy STILL detected for ${rightBlock.id}! Expected (${targetX.toFixed(0)}, ${targetY.toFixed(0)}), Got (${finalLeft}, ${finalTop})`);
-            }
-        }, 50);
-
-        console.log(`[Linkage] Linked HORIZONTALLY ${leftBlock.id} -> ${rightBlock.id}.`);
-    }
-
-    // ========================================================================
-    // Public API
-    // ========================================================================
-    window.registerNewBlockForLinkage = function(newBlockElement){
-         // console.log("[Linkage] Registering block:", newBlockElement); // לוג מופחת
-         if (!newBlockElement) return;
-         if (!newBlockElement.id) { newBlockElement.id = generateUniqueBlockId(); }
-         try { newBlockElement.style.position = 'absolute'; } catch (e) { console.error("Reg Error", e); }
-         // console.log(`[Linkage] Registered block ${newBlockElement.id}.`); // לוג מופחת
-    };
-
-})();
-console.log("linkageimproved.js script finished execution (Using ONLY Left/Top - Stable Syntax + Link Logs).");
+// ========================================================================
+// אתחול כללי - מופעל כשה-DOM נטען
+// ========================================================================
+document.addEventListener('DOMContentLoaded', function() { /* ... תוכן זהה עם קריאה תקינה ל-handleCategoryChange בסוף ... */
+    console.log("DOM fully loaded");
+    const programmingArea = document.getElementById("program-blocks");
+    if (programmingArea) { programmingArea.addEventListener("dragover", (event) => { if (event.dataTransfer.types.includes("text/plain")) { event.preventDefault(); event.dataTransfer.dropEffect = "copy"; } else { event.dataTransfer.dropEffect = "none"; } }); programmingArea.addEventListener("drop", handleDrop); console.log("Programming area drag listeners initialized (for palette drops)"); } else { console.error("Programming area element not found!"); }
+    const categoryTabs = document.querySelectorAll(".category-tab");
+    if (categoryTabs.length > 0) { categoryTabs.forEach(tab => { tab.addEventListener("click", () => { handleCategoryChange(tab.getAttribute('data-category')); }); }); console.log(`${categoryTabs.length} category tabs initialized`); } else { console.error("No category tabs found!"); }
+    const gridToggle = document.getElementById("grid-toggle"); const stage = document.getElementById("stage"); if (gridToggle && stage) { gridToggle.addEventListener("click", () => { stage.classList.toggle("show-grid"); }); }
+    const clearAllButton = document.getElementById("clear-all"); if (clearAllButton && programmingArea) { clearAllButton.addEventListener("click", () => { programmingArea.innerHTML = ""; console.log("Programming area cleared"); }); }
+    const character = document.getElementById('character'); const stageElement = document.getElementById('stage'); if (character && stageElement) { function centerCharacter() { character.style.transform = 'none'; character.style.transition = 'none'; const stageRect = stageElement.getBoundingClientRect(); const charRect = character.getBoundingClientRect(); const centerX = (stageRect.width - charRect.width) / 2; const centerY = (stageRect.height - charRect.height) / 2; character.style.position = 'absolute'; character.style.left = centerX + 'px'; character.style.top = centerY + 'px'; } setTimeout(centerCharacter, 100); let isCharDragging = false; let charOffsetX, charOffsetY; character.addEventListener('dragstart', (e) => {e.preventDefault(); return false;}); character.addEventListener('mousedown', function(e) { if (e.target !== character) return; e.preventDefault(); const charRect = character.getBoundingClientRect(); charOffsetX = e.clientX - charRect.left; charOffsetY = e.clientY - charRect.top; isCharDragging = true; character.style.cursor = 'grabbing'; character.style.transition = 'none'; document.addEventListener('mousemove', handleCharacterMove); document.addEventListener('mouseup', handleCharacterUp); }); function handleCharacterMove(e) { if (!isCharDragging) return; character.style.transform = 'none'; const stageRect = stageElement.getBoundingClientRect(); let newLeft = e.clientX - stageRect.left - charOffsetX; let newTop = e.clientY - stageRect.top - charOffsetY; const charRect = character.getBoundingClientRect(); const maxLeft = stageRect.width - charRect.width; const maxTop = stageRect.height - charRect.height; newLeft = Math.max(0, Math.min(newLeft, maxLeft)); newTop = Math.max(0, Math.min(newTop, maxTop)); character.style.left = newLeft + 'px'; character.style.top = newTop + 'px'; } function handleCharacterUp() { if (isCharDragging) { isCharDragging = false; character.style.cursor = 'grab'; document.removeEventListener('mousemove', handleCharacterMove); document.removeEventListener('mouseup', handleCharacterUp); } } }
+    let initialCategory = 'triggering'; const activeTab = document.querySelector(".category-tab.active"); if (activeTab && activeTab.getAttribute('data-category')) { initialCategory = activeTab.getAttribute('data-category'); handleCategoryChange(initialCategory); } else { const triggeringTab = document.querySelector('.category-tab[data-category="triggering"]'); if (triggeringTab) { handleCategoryChange(initialCategory); } else { const firstTab = document.querySelector(".category-tab"); if (firstTab) { initialCategory = firstTab.getAttribute('data-category'); handleCategoryChange(initialCategory); } else { console.warn("No category tabs found to initialize."); } } }
+    console.log("Initialization complete.");
+});
