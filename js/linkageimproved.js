@@ -1,16 +1,14 @@
 // ========================================================================
 // Improved Block Linkage System (linkageimproved.js)
-// Version: Simplified Snapping Logic Attempt
+// Version: Checking Initial MouseDown Trigger
 // ========================================================================
 
 (function() {
-    // Configuration
-    const SNAP_DISTANCE = 80; // *** הגדלה משמעותית של טווח ההצמדה ***
+    // ... (Configuration and State variables remain the same) ...
+    const SNAP_DISTANCE = 80;
     const VERTICAL_SNAP_OFFSET = 5;
     const CONNECTOR_OFFSET_X_PERCENT = 0;
-    const ENABLE_DETAILED_SNAP_LOGGING = true; // השאר לוגים פעילים בינתיים
-
-    // ... (שאר משתני המצב נשארים זהים) ...
+    const ENABLE_DETAILED_SNAP_LOGGING = true;
     let isDragging = false;
     let draggedElement = null;
     let dragGroup = [];
@@ -21,6 +19,7 @@
     let initialElementY = 0;
     let programmingArea = null;
     let nextBlockId = 1;
+
 
     // ========================================================================
     // Initialization (נשאר זהה)
@@ -36,76 +35,119 @@
         if (currentPosition !== 'relative' && currentPosition !== 'absolute' && currentPosition !== 'fixed') {
             console.warn(`Programming area (#program-blocks) has position: ${currentPosition}. Consider setting it to 'relative' for consistent child positioning.`);
         }
+        // *** הדבקת המאזין - לוודא שזה קורה ***
         programmingArea.addEventListener('mousedown', handleMouseDown);
+        console.log("Mousedown listener attached to #program-blocks."); // הוספנו אישור
         console.log("Linkage System Initialized for #program-blocks");
         prepareExistingBlocks();
     }
-    function prepareExistingBlocks() {
+    function prepareExistingBlocks() { /* ... קוד זהה ... */
         const blocksInArea = programmingArea.querySelectorAll('.block-container');
         blocksInArea.forEach(block => {
-            if (!block.id) {
-                block.id = generateUniqueBlockId();
-            }
+            if (!block.id) { block.id = generateUniqueBlockId(); }
              if (!block.style.position || block.style.position === 'static') {
                  block.style.position = 'absolute';
              }
         });
          console.log(`Prepared ${blocksInArea.length} existing blocks.`);
     }
-    function runInitialization() {
+    function runInitialization() { /* ... קוד זהה ... */
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initializeLinkageSystem);
-        } else {
-            initializeLinkageSystem();
-        }
+        } else { initializeLinkageSystem(); }
     }
     runInitialization();
 
     // ========================================================================
     // Unique ID Generation (נשאר זהה)
     // ========================================================================
-    function generateUniqueBlockId() {
-        return `block-${Date.now()}-${nextBlockId++}`;
-    }
+    function generateUniqueBlockId() { return `block-${Date.now()}-${nextBlockId++}`; }
 
     // ========================================================================
-    // Event Handlers (ללא שינוי מהותי בפונקציות אלו)
+    // Event Handlers
     // ========================================================================
-    function handleMouseDown(event) { /* ... קוד זהה ... */
+
+    function handleMouseDown(event) {
+        // *** הוספנו לוג ממש בתחילת הפונקציה ***
+        console.log(`>>> handleMouseDown triggered! Target:`, event.target);
+
+        // Only trigger drag for direct clicks on block-containers within the programming area
         const targetBlock = event.target.closest('.block-container');
+        console.log(`   Closest block-container found:`, targetBlock); // בדוק מה נמצא
+
         if (!targetBlock || !programmingArea || !programmingArea.contains(targetBlock)) {
-            return;
+            console.log(`   MouseDown ignored: Not on a valid block inside programming area.`);
+            return; // סיים אם לא מדובר בלחיצה על בלוק תקין באזור
         }
+
+        // Prevent default text selection or image dragging behavior
         event.preventDefault();
+        console.log(`   Prevented default behavior.`);
+
         isDragging = true;
         draggedElement = targetBlock;
+        console.log(`   Set isDragging=true, draggedElement=`, draggedElement);
+
+
+        // Ensure the block has an ID
         if (!draggedElement.id) {
             draggedElement.id = generateUniqueBlockId();
-             if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`Assigned new ID during mousedown: ${draggedElement.id}`);
+            console.log(`   Assigned new ID during mousedown: ${draggedElement.id}`);
         }
+
+        // --- Detaching Logic ---
         const prevBlockId = draggedElement.dataset.prevBlockId;
         if (prevBlockId) {
             const prevBlock = document.getElementById(prevBlockId);
-            if (prevBlock) delete prevBlock.dataset.nextBlockId;
-            delete draggedElement.dataset.prevBlockId;
-             if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`Detached ${draggedElement.id} from ${prevBlockId}`);
+            if (prevBlock) {
+                delete prevBlock.dataset.nextBlockId; // Remove link from parent
+            }
+            delete draggedElement.dataset.prevBlockId; // Remove link from child
+            console.log(`   Detached ${draggedElement.id} from ${prevBlockId}`);
+        } else {
+             console.log(`   Block ${draggedElement.id} has no previous block to detach from.`);
         }
+
+        // --- Grouping Logic ---
         dragGroup = getBlockGroup(draggedElement);
+        console.log(`   Calculated drag group (size ${dragGroup.length}):`, dragGroup);
+
+
+        // --- Positioning & Offset ---
+        // const rect = draggedElement.getBoundingClientRect(); // לא הכרחי כאן
         initialMouseX = event.clientX;
         initialMouseY = event.clientY;
         initialElementX = draggedElement.offsetLeft;
         initialElementY = draggedElement.offsetTop;
+        console.log(`   Recorded initial positions: Mouse(${initialMouseX},${initialMouseY}), Element(${initialElementX},${initialElementY})`);
+
+
+        // Bring the entire group to the front
         dragGroup.forEach((block, index) => {
             block.style.zIndex = 1000 + index;
             block.style.cursor = 'grabbing';
         });
+        console.log(`   Set z-index and cursor for drag group.`);
+
+
+        // Add listeners to the whole document for move and up events
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
         document.addEventListener('mouseleave', handleMouseLeave);
+        console.log(`   Added mousemove, mouseup, mouseleave listeners to document.`);
+
+
+        // Log drag start consistent with previous logging
         if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`--- Drag Start: ${draggedElement.id} ---`);
+        console.log(`>>> handleMouseDown finished processing.`); // סוף הפונקציה
     }
 
-    function handleMouseMove(event) { /* ... קוד זהה ... */
+    // --- שאר הפונקציות (handleMouseMove, handleMouseUp, handleMouseLeave, getBlockGroup, updateDragGroupPosition, findAndHighlightSnapTarget, highlightSnapTarget, clearSnapHighlighting, linkBlocks, registerNewBlockForLinkage) נשארות כפי שהיו בגרסה הקודמת (עם הלוגים המפורטים ב-findAndHighlightSnapTarget ועם הלוגיקה הפשוטה של הסנאפ) ---
+    // ... (העתק את שאר הפונקציות מהגרסה הקודמת לכאן אם אתה רוצה קובץ מלא) ...
+    // ... או פשוט החלף את הקובץ כולו בזה ...
+    // (מכיוון שביקשת קובץ מלא, אני מוסיף את השאר)
+
+    function handleMouseMove(event) { /* ... קוד זהה לגרסה הקודמת ... */
         if (!isDragging || !draggedElement) return;
         const currentMouseX = event.clientX;
         const currentMouseY = event.clientY;
@@ -116,10 +158,10 @@
         draggedElement.style.left = `${newX}px`;
         draggedElement.style.top = `${newY}px`;
         updateDragGroupPosition(newX, newY);
-        findAndHighlightSnapTarget(); // החשוב הוא השינוי בתוך פונקציה זו
+        findAndHighlightSnapTarget();
     }
 
-    function handleMouseUp(event) { /* ... קוד זהה ... */
+    function handleMouseUp(event) { /* ... קוד זהה לגרסה הקודמת ... */
         if (!isDragging || !draggedElement) return;
         const isValidSnapTarget = potentialSnapTarget && programmingArea && programmingArea.contains(potentialSnapTarget);
         if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`--- Drag End: ${draggedElement.id}. Potential target: ${potentialSnapTarget ? potentialSnapTarget.id : 'None'} ---`);
@@ -153,17 +195,14 @@
         potentialSnapTarget = null;
     }
 
-    function handleMouseLeave(event) { /* ... קוד זהה ... */
+    function handleMouseLeave(event) { /* ... קוד זהה לגרסה הקודמת ... */
          if (isDragging) {
              console.warn("Mouse left window during drag, cancelling drag and snap.");
              handleMouseUp(event);
          }
     }
 
-    // ========================================================================
-    // Drag Group Management (נשאר זהה)
-    // ========================================================================
-    function getBlockGroup(startBlock) { /* ... קוד זהה ... */
+    function getBlockGroup(startBlock) { /* ... קוד זהה לגרסה הקודמת ... */
         const group = [startBlock];
         let currentBlock = startBlock;
         while (currentBlock && currentBlock.dataset.nextBlockId) {
@@ -182,7 +221,7 @@
         }
         return group;
     }
-    function updateDragGroupPosition(leaderX, leaderY) { /* ... קוד זהה ... */
+    function updateDragGroupPosition(leaderX, leaderY) { /* ... קוד זהה לגרסה הקודמת ... */
         if (dragGroup.length <= 1) return;
         let currentTop = leaderY;
         let currentLeft = leaderX;
@@ -200,11 +239,7 @@
         }
     }
 
-
-    // ========================================================================
-    // Snapping Logic ( *** עם שינויים *** )
-    // ========================================================================
-    function findAndHighlightSnapTarget() {
+    function findAndHighlightSnapTarget() { /* ... קוד זהה לגרסה הקודמת (עם הלוגים והסנאפ הפשוט) ... */
         const shouldLog = ENABLE_DETAILED_SNAP_LOGGING && isDragging && draggedElement;
         if (shouldLog) console.log(`--- findAndHighlightSnapTarget (${draggedElement.id}) ---`);
 
@@ -223,52 +258,34 @@
         };
         if (shouldLog) console.log(`Dragged Top Connector: X:${dragTopConnector.x.toFixed(0)} Y:${dragTopConnector.y.toFixed(0)}`);
 
-
-        let closestDistance = SNAP_DISTANCE; // עכשיו הערך הוא 80
+        let closestDistance = SNAP_DISTANCE;
         let bestTarget = null;
 
         const allBlocks = programmingArea.querySelectorAll('.block-container');
-        if (shouldLog) console.log(`Checking against ${allBlocks.length} blocks in the area. SNAP_DISTANCE = ${SNAP_DISTANCE}`); // הודע מה הטווח
+        if (shouldLog) console.log(`Checking against ${allBlocks.length} blocks in the area. SNAP_DISTANCE = ${SNAP_DISTANCE}`);
 
         allBlocks.forEach(block => {
             const targetId = block.id || 'no-id';
             if (shouldLog) console.log(`\nChecking target: ${targetId}`);
-
-            // Condition 1: Don't snap to self or group members
             if (dragGroup.includes(block)) {
-                if (shouldLog) console.log(` -> Skip ${targetId}: Part of drag group.`);
-                return;
+                if (shouldLog) console.log(` -> Skip ${targetId}: Part of drag group.`); return;
             }
-
-            // Condition 2: Can only snap to blocks that DON'T already have a block below them
             if (block.dataset.nextBlockId) {
-                if (shouldLog) console.log(` -> Skip ${targetId}: Already has nextBlockId (${block.dataset.nextBlockId}).`);
-                return;
+                if (shouldLog) console.log(` -> Skip ${targetId}: Already has nextBlockId (${block.dataset.nextBlockId}).`); return;
             }
-
             const targetRect = block.getBoundingClientRect();
             if (shouldLog) console.log(` -> Target (${targetId}): Rect T:${targetRect.top.toFixed(0)} L:${targetRect.left.toFixed(0)} W:${targetRect.width.toFixed(0)} H:${targetRect.height.toFixed(0)}`);
             if (targetRect.height <= 0 && shouldLog) console.warn(`Target block ${targetId} has height <= 0!`);
-
             const targetBottomConnector = {
                 x: targetRect.left + targetRect.width / 2 + (targetRect.width * CONNECTOR_OFFSET_X_PERCENT / 200),
                 y: targetRect.bottom - VERTICAL_SNAP_OFFSET
             };
              if (shouldLog) console.log(` -> Target Bottom Connector: X:${targetBottomConnector.x.toFixed(0)} Y:${targetBottomConnector.y.toFixed(0)}`);
-
-            // Condition 3: Distance calculation (אותו חישוב, אבל SNAP_DISTANCE גדל)
             const dx = dragTopConnector.x - targetBottomConnector.x;
             const dy = dragTopConnector.y - targetBottomConnector.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             if (shouldLog) console.log(` -> Distance: ${distance.toFixed(1)} (Need < ${closestDistance})`);
-
-            // Condition 4: Vertical Position check ( *** הוסר זמנית! *** )
-            // const verticalCheckValue = dragRect.top + (dragRect.height / 2);
-            // const isVerticallyCorrect = targetRect.bottom < verticalCheckValue;
-            // if (shouldLog) console.log(` -> Vertical Check: TargetBottom (${targetRect.bottom.toFixed(0)}) < DragMidPoint (${verticalCheckValue.toFixed(0)})? ${isVerticallyCorrect}`);
-
-            // Final Check ( *** ללא הבדיקה הוורטיקלית *** )
-            if (distance < closestDistance /* && isVerticallyCorrect */ ) { // הסרנו את הבדיקה הוורטיקלית
+            if (distance < closestDistance) {
                  if (shouldLog) console.log(` ==> Potential Match Found (Distance Check Only): ${targetId} is close enough (${distance.toFixed(1)}).`);
                 closestDistance = distance;
                 bestTarget = block;
@@ -304,19 +321,10 @@
          });
      }
 
-    // ========================================================================
-    // Linking Logic (נשאר זהה)
-    // ========================================================================
     function linkBlocks(topBlock, bottomBlock) { /* ... קוד זהה ... */
         if (!topBlock || !bottomBlock || topBlock === bottomBlock || !programmingArea) return;
-        if (topBlock.dataset.nextBlockId) {
-             console.warn(`Link aborted: Target ${topBlock.id} already has next block (${topBlock.dataset.nextBlockId})`);
-             return;
-        }
-        if (bottomBlock.dataset.prevBlockId) {
-              console.warn(`Link aborted: Source ${bottomBlock.id} already has prev block (${bottomBlock.dataset.prevBlockId})`);
-              return;
-        }
+        if (topBlock.dataset.nextBlockId) { console.warn(`Link aborted: Target ${topBlock.id} already has next block (${topBlock.dataset.nextBlockId})`); return; }
+        if (bottomBlock.dataset.prevBlockId) { console.warn(`Link aborted: Source ${bottomBlock.id} already has prev block (${bottomBlock.dataset.prevBlockId})`); return; }
         topBlock.dataset.nextBlockId = bottomBlock.id;
         bottomBlock.dataset.prevBlockId = topBlock.id;
         const topRect = topBlock.getBoundingClientRect();
@@ -328,9 +336,6 @@
         console.log(`Linked ${topBlock.id} -> ${bottomBlock.id} at pos (${targetX}, ${targetY})`);
     }
 
-    // ========================================================================
-    // Public API (נשאר זהה)
-    // ========================================================================
     window.registerNewBlockForLinkage = function(newBlockElement) { /* ... קוד זהה ... */
          if (ENABLE_DETAILED_SNAP_LOGGING) console.log("Executing registerNewBlockForLinkage for element:", newBlockElement);
          if (!newBlockElement) { console.error("registerNewBlockForLinkage called with null element."); return; }
@@ -343,5 +348,6 @@
           if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`Successfully registered block ${newBlockElement.id} for linkage.`);
     };
 
-})();
-console.log("linkageimproved.js script finished execution (Simplified Snap Logic).");
+
+})(); // IIFE to encapsulate scope
+console.log("linkageimproved.js script finished execution (MouseDown Check).");
