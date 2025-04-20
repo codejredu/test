@@ -1,5 +1,5 @@
 // --- START OF FILE linkageimproved.js ---
-// --- Version 3.2: Using external MP3 sound file ---
+// --- Version 3.3: Adjusted Snap Thresholds ---
 
 (function() {
   // משתנים גלובליים במודול
@@ -16,14 +16,14 @@
   // קונפיגורציה - פרמטרים שניתן להתאים
   const CONFIG = {
     PIN_WIDTH: 5,
-    CONNECT_THRESHOLD: 15, // הגדלנו מעט את הסף כדי שיהיה קל יותר להצמיד
-    VERTICAL_ALIGN_THRESHOLD: 20, // עדיין קיים, אך החפיפה חשובה יותר
-    VERTICAL_OVERLAP_REQ: 0.4, // דרישה ל-40% חפיפה אנכית לפחות
+    CONNECT_THRESHOLD: 20, // *** שונה: הוגדל מ-15 ל-20 ***
+    VERTICAL_ALIGN_THRESHOLD: 20, // (לא בשימוש ישיר בהצמדה כרגע, אבל נשאר)
+    VERTICAL_OVERLAP_REQ: 0.3, // *** שונה: הוקטן מ-0.4 ל-0.3 (30%) ***
     BLOCK_GAP: 0,
     PLAY_SOUND: true,
-    SOUND_VOLUME: 0.8, // עוצמה מעט מופחתת כדי לא להבהיל
-    SOUND_PATH: 'assets/sound/link.mp3', // **** נתיב לקובץ השמע ****
-    DEBUG: true
+    SOUND_VOLUME: 0.8,
+    SOUND_PATH: 'assets/sound/link.mp3', // נתיב לקובץ השמע
+    DEBUG: true // הגדר ל-false בייצור
   };
 
   // ========================================================================
@@ -37,7 +37,7 @@
     style.textContent = `
       /* בלוק נגרר - הופכים עליון ומדגישים */
       .snap-source {
-         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4) !important; /* הוספנו !important ליתר ביטחון */
+         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4) !important;
          transition: box-shadow 0.15s ease-out;
          cursor: grabbing !important;
          z-index: 1001 !important;
@@ -46,10 +46,10 @@
       /* הילה צהובה סביב בלוק יעד פוטנציאלי - מודגשת מאוד */
       .snap-target {
         outline: 6px solid #FFC107 !important; /* צהוב בולט */
-        outline-offset: 4px; /* הגדלת המרווח */
-        box-shadow: 0 0 20px 8px rgba(255, 193, 7, 0.8) !important; /* צל מוגבר */
+        outline-offset: 4px;
+        box-shadow: 0 0 20px 8px rgba(255, 193, 7, 0.8) !important;
         transition: outline 0.1s ease-out, box-shadow 0.1s ease-out;
-        z-index: 999 !important; /* חשוב שיהיה מתחת לנגרר */
+        z-index: 999 !important;
       }
 
       /* מלבן כחול מקווקו לציון מיקום עתידי - יותר בולט */
@@ -64,18 +64,17 @@
         transition: opacity 0.15s ease-out, left 0.05s linear, top 0.05s linear;
         display: none; /* Start hidden */
       }
-      /* Show with opacity when display is block */
-       .future-position-indicator.visible {
+      .future-position-indicator.visible {
         display: block;
         opacity: 0.9;
       }
 
       /* סימון כיוון (פס צהוב בצד ימין/שמאל) - יותר בולט */
-      .snap-target.snap-left::before { /* Target specific */
+      .snap-target.snap-left::before {
         content: '';
         position: absolute;
-        left: -10px; /* הזזה החוצה */
-        top: 10%; /* התאמה אנכית */
+        left: -10px;
+        top: 10%;
         bottom: 10%;
         width: 8px;
         background-color: #FFC107;
@@ -84,11 +83,11 @@
         box-shadow: 0 0 10px 2px rgba(255, 193, 7, 0.8);
         transition: all 0.1s ease-out;
       }
-      .snap-target.snap-right::after { /* Target specific */
+      .snap-target.snap-right::after {
         content: '';
         position: absolute;
-        right: -10px; /* הזזה החוצה */
-        top: 10%; /* התאמה אנכית */
+        right: -10px;
+        top: 10%;
         bottom: 10%;
         width: 8px;
         background-color: #FFC107;
@@ -148,10 +147,9 @@
         -ms-user-select: none;
       }
 
-      /* בלוקים מחוברים - אופציונלי להוספת אינדיקציה חזותית */
+      /* בלוקים מחוברים */
       .connected-block, .has-connected-block {
-        /* Optional: Add subtle indicator for connected state if needed */
-        /* box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); */
+        /* Optional styling */
       }
 
       /* כפתור בדיקת שמע */
@@ -173,7 +171,7 @@
         transition: background-color 0.2s, opacity 0.5s ease-out;
         opacity: 1;
       }
-      #sound-test-button:hover {
+      #sound-test-button:hover:not(:disabled) {
         background-color: #0b7dda;
       }
       #sound-test-button.success {
@@ -182,13 +180,13 @@
       #sound-test-button.error {
           background-color: #f44336; /* Red */
       }
-       #sound-test-button.loading {
+      #sound-test-button.loading {
           background-color: #ff9800; /* Orange */
           cursor: wait;
       }
       #sound-test-button.hidden {
         opacity: 0;
-        pointer-events: none; /* Prevent clicks during fade out */
+        pointer-events: none;
       }
     `;
     document.head.appendChild(style);
@@ -200,71 +198,72 @@
   // ========================================================================
   function initAudio() {
     if (!CONFIG.PLAY_SOUND) return;
-    if (soundInitialized) return; // אל תאתחל שוב
+    if (soundInitialized && snapSound && document.body.contains(snapSound)) {
+        if (CONFIG.DEBUG) console.log("Audio already initialized.");
+        return; // אל תאתחל שוב אם כבר קיים ותקין
+    }
+
+    soundInitialized = false; // Reset status before trying again
 
     try {
-      // בדוק אם כבר קיים אלמנט (למקרה של ריצה חוזרת)
+      // הסר אלמנט קודם אם קיים אבל לא תקין או נמחק מה-DOM
       const existingAudio = document.getElementById('snap-sound-element');
       if (existingAudio) {
-          snapSound = existingAudio;
-          soundInitialized = true;
-          if (CONFIG.DEBUG) console.log('Audio element already exists and reused.');
-          // ודא שהמקור הנכון טעון
-          if (!snapSound.querySelector(`source[src="${CONFIG.SOUND_PATH}"]`)) {
-               if (CONFIG.DEBUG) console.log('Audio element exists but needs updated source.');
-               snapSound.innerHTML = ''; // נקה מקורות קודמים
-               const source = document.createElement('source');
-               source.src = CONFIG.SOUND_PATH;
-               source.type = 'audio/mpeg';
-               snapSound.appendChild(source);
-               snapSound.load(); // טען מחדש
-          }
-          return;
+          if (CONFIG.DEBUG) console.log("Removing previous audio element before re-initialization.");
+          existingAudio.remove();
+          snapSound = null;
       }
 
       // צור אלמנט אודיו גלובלי חדש
       snapSound = document.createElement('audio');
       snapSound.id = 'snap-sound-element';
-      snapSound.preload = 'auto'; // בקש מהדפדפן לטעון מראש
+      snapSound.preload = 'auto';
       snapSound.volume = CONFIG.SOUND_VOLUME;
 
       // הוסף מקור MP3 חיצוני
       const source = document.createElement('source');
       source.src = CONFIG.SOUND_PATH;
-      source.type = 'audio/mpeg'; // MIME type for MP3
+      source.type = 'audio/mpeg';
       snapSound.appendChild(source);
 
-      // הוסף הודעה למשתמש אם הקובץ לא נטען
+      // מאזין לשגיאות טעינה
       snapSound.addEventListener('error', (e) => {
-        console.error(`Error loading audio file: ${CONFIG.SOUND_PATH}`, e);
-        // עדכן כפתור בדיקה אם קיים
+        console.error(`Error loading audio file: ${CONFIG.SOUND_PATH}`, e.target.error);
         const button = document.getElementById('sound-test-button');
         if (button) {
             button.textContent = 'שגיאה בטעינת קובץ';
             button.classList.remove('success', 'loading');
             button.classList.add('error');
             button.style.backgroundColor = '#f44336';
-            button.disabled = true; // נטרל את הכפתור
+            button.disabled = true;
         }
-        // נטרל השמעת צלילים
-        CONFIG.PLAY_SOUND = false;
-        snapSound = null; // שחרר את האובייקט הלא תקין
-        soundInitialized = false; // סמן כשלון באתחול
+        CONFIG.PLAY_SOUND = false; // Disable sound globally on error
+        snapSound = null;
+        soundInitialized = false;
       });
 
-       // אירוע המציין שהדפדפן יכול להתחיל לנגן (לא בהכרח כל הקובץ נטען)
+      // מאזין לאירוע המציין שניתן לנגן (או לפחות חלק משמעותי נטען)
       snapSound.addEventListener('canplaythrough', () => {
-          soundInitialized = true; // סמן שהשמע מוכן
-          if (CONFIG.DEBUG) console.log('Audio element initialized and ready to play.');
-          // עדכן כפתור בדיקה אם קיים והוא במצב טעינה
-          const button = document.getElementById('sound-test-button');
-          if (button && button.classList.contains('loading')) {
-              button.textContent = 'בדוק צליל הצמדה';
-              button.classList.remove('loading');
-              button.disabled = false;
-              button.style.backgroundColor = '#2196F3'; // החזר לצבע ברירת מחדל
+          if (!soundInitialized) { // Prevent multiple logs if event fires again
+              soundInitialized = true;
+              if (CONFIG.DEBUG) console.log('Audio element initialized and ready to play.');
+              const button = document.getElementById('sound-test-button');
+              if (button && button.classList.contains('loading')) {
+                  button.textContent = 'בדוק צליל הצמדה';
+                  button.classList.remove('loading');
+                  button.disabled = false;
+                  button.style.backgroundColor = '#2196F3';
+              }
           }
       });
+
+       // מאזין לאירוע שמעיד שאין אפשרות לנגן (למשל, קובץ פגום או פורמט לא נתמך)
+       snapSound.addEventListener('stalled', () => {
+            if (!soundInitialized) { // Only if not already playing/ready
+                console.warn('Audio loading stalled. Check network or file integrity.');
+                // Optionally update button state here too
+            }
+       });
 
 
       // הוסף לעמוד (מוסתר)
@@ -283,38 +282,39 @@
 
 
   // ========================================================================
-  // הוספת כפתור בדיקת שמע - מעודכן לטפל במצב טעינה
+  // הוספת כפתור בדיקת שמע - מעודכן לטפל במצב טעינה ושגיאה
   // ========================================================================
   function addSoundTestButton() {
     if (!CONFIG.PLAY_SOUND) return;
 
     try {
       const existingButton = document.getElementById('sound-test-button');
-      if (existingButton) existingButton.remove();
+      if (existingButton) existingButton.remove(); // Remove previous if exists
 
       const button = document.createElement('button');
       button.id = 'sound-test-button';
       button.title = 'לחץ כאן כדי לבדוק את צליל ההצמדה';
       button.className = '';
 
-      // קבע מצב התחלתי בהתאם למצב האתחול
-      if (!snapSound) {
+      // Set initial state based on audio status
+      if (!snapSound && !soundInitialized && CONFIG.PLAY_SOUND) {
+          // If initAudio failed completely before even creating the element
           button.textContent = 'אתחול שמע נכשל';
           button.classList.add('error');
-          button.style.backgroundColor = '#f44336'; // אדום
+          button.style.backgroundColor = '#f44336';
           button.disabled = true;
       } else if (!soundInitialized) {
           button.textContent = 'טוען צליל...';
           button.classList.add('loading');
-          button.style.backgroundColor = '#ff9800'; // כתום
-          button.disabled = true; // יהפוך לזמין ב-canplaythrough
+          button.style.backgroundColor = '#ff9800';
+          button.disabled = true; // Enabled by 'canplaythrough' listener
       } else {
           button.textContent = 'בדוק צליל הצמדה';
-          button.style.backgroundColor = '#2196F3'; // כחול התחלתי
+          button.style.backgroundColor = '#2196F3';
           button.disabled = false;
       }
 
-      // סגנונות נוספים (כמו קודם)
+      // Common styles
       button.style.position = 'fixed';
       button.style.bottom = '15px';
       button.style.right = '15px';
@@ -331,7 +331,7 @@
       button.style.transition = 'background-color 0.2s, opacity 0.5s ease-out';
       button.style.opacity = '1';
 
-      // אפקט מעבר עכבר
+      // Hover effect
       button.onmouseover = function() {
         if (!this.disabled && !this.classList.contains('success') && !this.classList.contains('error')) {
              this.style.backgroundColor = '#0b7dda';
@@ -343,52 +343,50 @@
          }
       };
 
-      // מאזין לחיצה
+      // Click listener
       button.addEventListener('click', function() {
         if (this.disabled || !snapSound || !soundInitialized) {
             console.warn('Sound test clicked but audio not ready or disabled.');
             return;
         }
 
-        // נסה להפעיל את הצליל הגלובלי
+        // Attempt to play the global sound
         snapSound.play().then(() => {
           if (CONFIG.DEBUG) console.log('Sound test successful!');
           button.textContent = 'הצליל פועל ✓';
           button.classList.remove('error', 'loading');
           button.classList.add('success');
-          button.style.backgroundColor = '#4CAF50'; // ירוק
-          audioContextAllowed = true; // סמן אינטראקציה
+          button.style.backgroundColor = '#4CAF50'; // Green
+          audioContextAllowed = true; // Mark interaction
 
-          // העלם כפתור
+          // Fade out and remove the button
           setTimeout(() => {
             button.classList.add('hidden');
             setTimeout(() => {
-              button.remove();
+              if (button.parentNode) button.remove(); // Remove only if still exists
             }, 500);
           }, 3000);
 
-          // החזר את הצליל להתחלה
-          if(snapSound) { // Check again in case it became null due to an error
+          // Reset sound for potential immediate use
+          if(snapSound) {
             snapSound.pause();
             snapSound.currentTime = 0;
           }
 
         }).catch(err => {
           console.warn('Sound test failed:', err);
-          // אם השגיאה היא NotAllowedError, המשתמש צריך ללחוץ שוב
           if (err.name === 'NotAllowedError') {
               button.textContent = 'שמע חסום - לחץ שוב';
               button.classList.remove('success', 'loading');
               button.classList.add('error');
-              button.style.backgroundColor = '#f44336'; // אדום
-              audioContextAllowed = false; // נשאר לא מאופשר
+              button.style.backgroundColor = '#f44336';
+              audioContextAllowed = false;
           } else {
-              // שגיאה אחרת (למשל, קובץ פגום שהצליח להיטען חלקית)
               button.textContent = 'שגיאת נגינה';
               button.classList.remove('success', 'loading');
               button.classList.add('error');
-              button.style.backgroundColor = '#f44336'; // אדום
-              button.disabled = true; // נטרל במקרה של שגיאה לא צפויה
+              button.style.backgroundColor = '#f44336';
+              button.disabled = true; // Disable on unexpected play error
           }
         });
       });
@@ -405,7 +403,6 @@
   // השמעת צליל הצמדה - משתמש ב-snapSound הגלובלי
   // ========================================================================
   function playSnapSound() {
-    // בדוק אם השמע מופעל, מאותחל, והאלמנט קיים
     if (!CONFIG.PLAY_SOUND || !snapSound || !soundInitialized) {
       if (CONFIG.DEBUG && CONFIG.PLAY_SOUND && (!snapSound || !soundInitialized)) {
           console.log(`Snap sound skipped: audio enabled but not ready (snapSound: ${!!snapSound}, initialized: ${soundInitialized})`);
@@ -413,52 +410,42 @@
       return;
     }
 
-    // אזהרה אם מנסים לנגן לפני אינטראקציה (הבדיקה עשויה להיות מיותרת אם הכפתור הצליח)
     if (!audioContextAllowed) {
         if (CONFIG.DEBUG) console.warn('Attempting to play sound before confirmed user interaction. Might be blocked.');
+        // We still try, as interaction might have happened elsewhere
     }
 
     try {
-      // ודא שאנחנו לא מנסים לנגן אם עדיין טוען או במצב שגיאה
-      if (snapSound.readyState < 3) { // HAVE_FUTURE_DATA or more is needed
-          if (CONFIG.DEBUG) console.log('Snap sound skipped: audio data not yet available.');
+      // Check ready state again, just in case
+      if (snapSound.readyState < 3) { // HAVE_FUTURE_DATA or more
+          if (CONFIG.DEBUG) console.log('Snap sound skipped: audio data not sufficiently available (readyState=' + snapSound.readyState + ').');
           return;
       }
 
       snapSound.pause();
-      // השימוש ב-currentTime = 0 עובד טוב יותר אחרי שהקובץ נטען במלואו או חלקית
-      // אם הקובץ עדיין זורם, זה עלול לא לעבוד כצפוי, אבל preload='auto' אמור לעזור
-      snapSound.currentTime = 0;
+      snapSound.currentTime = 0; // Rewind
 
-      // הפעלת הצליל מחזירה Promise
       const playPromise = snapSound.play();
 
       if (playPromise !== undefined) {
         playPromise.then(() => {
-          // הצליל נוגן בהצלחה
-          audioContextAllowed = true; // אשר אינטראקציה מוצלחת
-          if (CONFIG.DEBUG > 1) console.log('Snap sound played.'); // פחות מפורט
+          audioContextAllowed = true; // Confirm interaction worked
+          if (CONFIG.DEBUG > 1) console.log('Snap sound played.');
         }).catch(err => {
-          // טיפול בשגיאות נפוצות
           if (err.name === 'NotAllowedError') {
-            // הכי סביר - דרושה אינטראקציה מהמשתמש
             console.warn('Snap sound blocked by browser policy. User interaction needed.');
-            audioContextAllowed = false; // נשאר לא מאופשר
-            // אפשר לנסות להציג שוב את כפתור הבדיקה אם הוא הוסר
+            audioContextAllowed = false;
              if (!document.getElementById('sound-test-button')) {
-                addSoundTestButton();
+                addSoundTestButton(); // Re-add test button if user needs to click it
              }
           } else if (err.name === 'AbortError') {
-            // קריאה מהירה נוספת ל-play קטעה את הקודמת - לא בהכרח שגיאה
             if (CONFIG.DEBUG > 1) console.log('Snap sound playback aborted (likely due to rapid interaction).');
           } else {
-            // שגיאה אחרת
             console.error('Error playing snap sound:', err);
           }
         });
       }
     } catch (err) {
-      // שגיאה סינכרונית (פחות סביר עם <audio>, יותר רלוונטי ל-Web Audio API)
       console.error('Unexpected error trying to play snap sound:', err);
     }
   }
@@ -472,12 +459,9 @@
         console.error('Programming area (#program-blocks) not found!');
         return;
     }
-    // אפשר גרירה לתוך האזור (עבור בלוקים מהפאנל)
     programmingArea.addEventListener('dragover', (e) => {
-      e.preventDefault(); // Allow dropping onto the area
+      e.preventDefault(); // Allow dropping
     });
-
-    // מנע את התנהגות הגרירה המובנית של הדפדפן עבור בלוקים שכבר באזור
     programmingArea.addEventListener('dragstart', (e) => {
         if (e.target && e.target.closest && e.target.closest('#program-blocks .block-container')) {
             if (CONFIG.DEBUG) console.log("Preventing default dragstart for internal block.");
@@ -497,13 +481,11 @@
       mutations.forEach(function(mutation) {
         if (mutation.type === 'childList') {
           mutation.addedNodes.forEach(function(node) {
-            // בדוק אם זה אלמנט בלוק ישירות או בתוך קונטיינר
-            if (node.nodeType === 1) {
+            if (node.nodeType === 1) { // Check if it's an element node
                 let block = null;
                 if (node.classList && node.classList.contains('block-container')) {
                     block = node;
                 } else if (node.querySelector && node.querySelector('.block-container')) {
-                    // Sometimes blocks might be added wrapped in another div
                     block = node.querySelector('.block-container');
                 }
 
@@ -528,12 +510,10 @@
   function initExistingBlocks() {
       const programmingArea = document.getElementById('program-blocks');
       if (!programmingArea) return;
-
       programmingArea.querySelectorAll('.block-container').forEach(block => {
           if (!block.id) generateUniqueId(block);
           addBlockDragListeners(block);
       });
-
       if (CONFIG.DEBUG) console.log("Listeners added to existing blocks.");
   }
 
@@ -541,7 +521,7 @@
   // הוספת מאזיני גרירה וקליק ימני לבלוק
   // ========================================================================
   function addBlockDragListeners(block) {
-      // ודא שאין מאזינים כפולים - חשוב לא להכפיל
+      // Ensure no duplicate listeners
       block.removeEventListener('mousedown', handleMouseDown);
       block.addEventListener('mousedown', handleMouseDown);
       block.removeEventListener('contextmenu', handleContextMenu);
@@ -552,86 +532,69 @@
   // טיפול בלחיצת עכבר על בלוק
   // ========================================================================
   function handleMouseDown(e) {
-      // רק לחיצה שמאלית, ורק על הבלוק עצמו או רכיב פנימי שלו (לא כפתור בתוכו למשל)
-      if (e.button !== 0 || !e.target.closest) return;
-       // המנע מגרירה אם לחצו על אלמנט אינטראקטיבי בתוך הבלוק (כמו input, button, select)
-      if (e.target.matches('input, button, select, textarea, a[href]')) {
-        if (CONFIG.DEBUG > 1) console.log("[MouseDown] Ignored on interactive element:", e.target.tagName);
-        return;
+      if (e.button !== 0 || !e.target.closest) return; // Left click only
+      if (e.target.matches('input, button, select, textarea, a[href], .no-drag')) {
+        if (CONFIG.DEBUG > 1) console.log("[MouseDown] Ignored on interactive or 'no-drag' element:", e.target.tagName);
+        return; // Ignore clicks on interactive elements or elements with 'no-drag' class
       }
 
       const block = e.target.closest('.block-container');
-      if (!block || !block.parentElement || block.parentElement.id !== 'program-blocks') return; // ודא שהבלוק באזור הנכון
+      const programmingArea = document.getElementById('program-blocks');
+      if (!block || !programmingArea || !programmingArea.contains(block)) return; // Ensure block is within the correct area
 
       if (!block.id) generateUniqueId(block);
 
-      // מנע התנהגות ברירת מחדל שעשויה להפריע (כמו גרירת טקסט)
-      e.preventDefault();
-      block.draggable = false; // נטרל גרירת דפדפן סטנדרטית למניעת התנגשות
+      e.preventDefault(); // Prevent text selection, etc.
+      block.draggable = false; // Disable native drag API during custom drag
 
       if (CONFIG.DEBUG) console.log(`[MouseDown] Started for block: ${block.id}`);
 
-      // אם הבלוק מחובר, נתק אותו לפני תחילת הגרירה
-      // בדוק אם הבלוק מחובר *לבלוק אחר* (כלומר, הוא ה"מקור" של חיבור)
+      // --- Detach block and any blocks attached TO it ---
+      // 1. Detach if this block is connected TO another
       if (block.hasAttribute('data-connected-to')) {
           if (CONFIG.DEBUG) console.log(`[MouseDown] Block ${block.id} was connected TO another block, detaching...`);
-          detachBlock(block, false); // נתק בלי אנימציה (מיידי)
+          detachBlock(block, false); // Detach without animation
       }
-      // בדוק אם בלוק אחר מחובר *אל* הבלוק הזה (הוא "יעד")
-      const connectedFromLeftId = block.getAttribute('data-connected-from-left');
-      if (connectedFromLeftId) {
-          const blockFromLeft = document.getElementById(connectedFromLeftId);
-          if (blockFromLeft) {
-              if (CONFIG.DEBUG) console.log(`[MouseDown] Block ${blockFromLeft.id} was connected FROM LEFT to ${block.id}, detaching ${blockFromLeft.id}...`);
-              detachBlock(blockFromLeft, false);
-          } else {
-              console.warn(`[MouseDown] Could not find connected block ${connectedFromLeftId} to detach from left of ${block.id}`);
-              block.removeAttribute('data-connected-from-left'); // Clean up dangling attribute
+      // 2. Detach blocks connected FROM the sides of this block
+      ['left', 'right'].forEach(side => {
+          const connectedFromAttr = `data-connected-from-${side}`;
+          const connectedBlockId = block.getAttribute(connectedFromAttr);
+          if (connectedBlockId) {
+              const connectedBlock = document.getElementById(connectedBlockId);
+              if (connectedBlock) {
+                  if (CONFIG.DEBUG) console.log(`[MouseDown] Block ${connectedBlock.id} was connected FROM ${side} to ${block.id}, detaching ${connectedBlock.id}...`);
+                  detachBlock(connectedBlock, false); // Detach the *other* block
+              } else {
+                  console.warn(`[MouseDown] Could not find connected block ${connectedBlockId} to detach from ${side} of ${block.id}`);
+                  block.removeAttribute(connectedFromAttr); // Clean up dangling attribute
+              }
           }
-      }
-      const connectedFromRightId = block.getAttribute('data-connected-from-right');
-      if (connectedFromRightId) {
-          const blockFromRight = document.getElementById(connectedFromRightId);
-           if (blockFromRight) {
-               if (CONFIG.DEBUG) console.log(`[MouseDown] Block ${blockFromRight.id} was connected FROM RIGHT to ${block.id}, detaching ${blockFromRight.id}...`);
-               detachBlock(blockFromRight, false);
-           } else {
-               console.warn(`[MouseDown] Could not find connected block ${connectedFromRightId} to detach from right of ${block.id}`);
-               block.removeAttribute('data-connected-from-right'); // Clean up dangling attribute
-           }
-      }
+      });
+      // --- End Detach ---
 
-      // --- כעת בטוח להתחיל גרירה של הבלוק הזה ---
       currentDraggedBlock = block;
       isDraggingBlock = true;
 
-      // חשב אופסט יחסית לבלוק עצמו
       const rect = block.getBoundingClientRect();
+      const parentRect = programmingArea.getBoundingClientRect();
       dragOffset.x = e.clientX - rect.left;
       dragOffset.y = e.clientY - rect.top;
 
-      // ודא שהבלוק ממוקם אבסולוטית *בתוך* אזור התכנות
-      const parentElement = document.getElementById('program-blocks');
-      const parentRect = parentElement.getBoundingClientRect();
-
-      // קבע מיקום אבסולוטי ראשוני מדויק בהתאם למיקום הנוכחי
-      // רק אם הוא לא כבר אבסולוטי (למשל, אם היה סטטי או relative)
+      // Ensure absolute positioning relative to the programming area
       if (window.getComputedStyle(block).position !== 'absolute') {
         block.style.position = 'absolute';
-        block.style.left = (rect.left - parentRect.left + parentElement.scrollLeft) + 'px';
-        block.style.top = (rect.top - parentRect.top + parentElement.scrollTop) + 'px';
-        block.style.margin = '0'; // נטרל margin אם היה קיים
-      } else {
-        // אם הוא כבר אבסולוטי, אין צורך לחשב מחדש את המיקום לפי ה-viewport,
-        // אבל כן כדאי לוודא שה-margin מאופס למקרה שסגנון אחר הוסיף אותו.
+        block.style.left = (rect.left - parentRect.left + programmingArea.scrollLeft) + 'px';
+        block.style.top = (rect.top - parentRect.top + programmingArea.scrollTop) + 'px';
         block.style.margin = '0';
+      } else {
+          // Already absolute, just ensure margin is zero
+          block.style.margin = '0';
       }
 
-
-      // סגנונות ויזואליים לגרירה
-      block.style.zIndex = '1001'; // מעל בלוקים אחרים
-      block.classList.add('snap-source'); // סגנון לבלוק נגרר
-      document.body.classList.add('user-select-none'); // מנע בחירת טקסט
+      // Visual styling for drag
+      block.style.zIndex = '1001';
+      block.classList.add('snap-source');
+      document.body.classList.add('user-select-none');
 
       if (CONFIG.DEBUG) console.log(`[MouseDown] Initial drag setup: left=${block.style.left}, top=${block.style.top}, zIndex=${block.style.zIndex}`);
   }
@@ -640,9 +603,9 @@
   // טיפול בקליק ימני על בלוק
   // ========================================================================
   function handleContextMenu(e) {
-      e.preventDefault(); // מנע תפריט הקשר רגיל
+      e.preventDefault();
       const block = e.target.closest('.block-container');
-      // הצג תפריט ניתוק רק אם הבלוק מחובר *לבלוק אחר*
+      // Show menu only if the block is connected TO another block
       if (block && block.hasAttribute('data-connected-to')) {
           showDetachMenu(e.clientX, e.clientY, block);
       }
@@ -652,25 +615,24 @@
   // מאזינים גלובליים לתנועה ושחרור עכבר
   // ========================================================================
   function initGlobalMouseListeners() {
-    // ודא שאין מאזינים כפולים מהפעלה קודמת
     document.removeEventListener('mousemove', handleMouseMove);
     document.removeEventListener('mouseup', handleMouseUp);
-    document.removeEventListener('mouseleave', handleMouseLeave);
+    document.removeEventListener('mouseleave', handleMouseLeave); // Use specific handler
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-    // טיפול בעזיבת חלון הדפדפן - חשוב לשחרור נכון
-    document.addEventListener('mouseleave', handleMouseLeave);
+    document.addEventListener('mouseleave', handleMouseLeave); // Use specific handler
   }
 
-  // פונקציה נפרדת לטיפול בעזיבת החלון
+  // Handler for mouse leaving the document boundaries
   function handleMouseLeave(e) {
-      // בדוק אם העכבר יצא מהחלון כולו (e.relatedTarget === null) בזמן גרירה
+      // Check if dragging and the mouse truly left the viewport
       if (isDraggingBlock && e.target === document.documentElement && !e.relatedTarget) {
           if (CONFIG.DEBUG) console.warn("Mouse left document during drag, treating as mouseup.");
-          handleMouseUp(e); // סיים את הגרירה כאילו שוחרר העכבר
+          handleMouseUp(e); // Trigger mouse up logic
       }
   }
+
 
   // ========================================================================
   // טיפול בתנועת העכבר בזמן גרירה
@@ -678,48 +640,33 @@
   function handleMouseMove(e) {
     if (!isDraggingBlock || !currentDraggedBlock) return;
 
-    // מנע התנהגות ברירת מחדל נוספת
     e.preventDefault();
 
     const parentElement = document.getElementById('program-blocks');
     if (!parentElement) {
-        console.error("Programming area not found during mouse move!");
-        handleMouseUp(e); // בטל גרירה אם ההורה נעלם
+        console.error("Programming area not found during mouse move! Cancelling drag.");
+        handleMouseUp(e); // Cancel drag if parent disappears
         return;
     }
 
     const parentRect = parentElement.getBoundingClientRect();
-
-    // חשב מיקום חדש יחסי לאזור התכנות, כולל גלילה
     let newLeft = e.clientX - parentRect.left - dragOffset.x + parentElement.scrollLeft;
     let newTop = e.clientY - parentRect.top - dragOffset.y + parentElement.scrollTop;
 
-    // הגבלת תנועה לגבולות אזור התכנות
+    // Boundary collision detection (within programming area)
     const blockWidth = currentDraggedBlock.offsetWidth;
     const blockHeight = currentDraggedBlock.offsetHeight;
-
-    // ודא שמימדי האזור מתחשבים בגלילה
     const scrollWidth = parentElement.scrollWidth;
     const scrollHeight = parentElement.scrollHeight;
 
-    // הגבל שמאל וימין
-    newLeft = Math.max(0, newLeft); // לא קטן מ-0
-    newLeft = Math.min(newLeft, scrollWidth - blockWidth); // לא גדול מרוחב הגלילה פחות רוחב הבלוק
+    newLeft = Math.max(0, Math.min(newLeft, scrollWidth - blockWidth));
+    newTop = Math.max(0, Math.min(newTop, scrollHeight - blockHeight));
 
-    // הגבל למעלה ולמטה
-    newTop = Math.max(0, newTop); // לא קטן מ-0
-    newTop = Math.min(newTop, scrollHeight - blockHeight); // לא גדול מגובה הגלילה פחות גובה הבלוק
+    // Update position
+    currentDraggedBlock.style.left = Math.round(newLeft) + 'px';
+    currentDraggedBlock.style.top = Math.round(newTop) + 'px';
 
-    // עיגול ליתר ביטחון למניעת שברי פיקסלים
-    newLeft = Math.round(newLeft);
-    newTop = Math.round(newTop);
-
-
-    // עדכן מיקום הבלוק
-    currentDraggedBlock.style.left = newLeft + 'px';
-    currentDraggedBlock.style.top = newTop + 'px';
-
-    // בדוק אפשרות הצמדה והצג הדגשות
+    // Check for snap possibilities
     checkAndHighlightSnapPossibility();
   }
 
@@ -729,49 +676,44 @@
   function handleMouseUp(e) {
     if (!isDraggingBlock || !currentDraggedBlock) return;
 
-    const blockReleased = currentDraggedBlock; // שמור הפניה לפני איפוס
-    const targetToSnap = potentialSnapTarget; // שמור יעד פוטנציאלי
-    const directionToSnap = snapDirection;   // שמור כיוון
+    const blockReleased = currentDraggedBlock;
+    const targetToSnap = potentialSnapTarget;
+    const directionToSnap = snapDirection;
 
     if (CONFIG.DEBUG) console.log(`[MouseUp] Releasing block ${blockReleased.id}. Potential target: ${targetToSnap?.id || 'none'}, direction: ${directionToSnap || 'none'}`);
 
-    // --- ניקוי מיידי של מצב הגרירה ---
+    // --- Immediate cleanup of dragging state ---
     isDraggingBlock = false;
     currentDraggedBlock = null;
     potentialSnapTarget = null;
     snapDirection = null;
     document.body.classList.remove('user-select-none');
     blockReleased.classList.remove('snap-source');
-    blockReleased.style.zIndex = ''; // חזור ל-z-index רגיל (או ברירת המחדל של CSS)
+    blockReleased.style.zIndex = ''; // Reset z-index
 
-    // אפשר גרירה מובנית שוב (רק אם לא הוצמד - יטופל בהמשך)
-    // blockReleased.draggable = true; // נעביר לתוך ההצמדה/אי-הצמדה
-
-    // הסר את כל ההדגשות והאינדיקטורים מכל הבלוקים
+    // Remove visual indicators
     document.querySelectorAll('.snap-target, .snap-left, .snap-right').forEach(el => {
       el.classList.remove('snap-target', 'snap-left', 'snap-right');
     });
     removeFuturePositionIndicator();
-    // --- סוף ניקוי ---
+    // --- End cleanup ---
 
-
-    // בצע הצמדה אם נמצא יעד מתאים
+    // Attempt snap if a valid target was found
     if (targetToSnap && directionToSnap) {
       if (CONFIG.DEBUG) console.log(`[MouseUp] Performing snap operation.`);
       const snapSuccess = performBlockSnap(blockReleased, targetToSnap, directionToSnap);
-      if (!snapSuccess) {
-          // אם ההצמדה נכשלה מסיבה כלשהי, ודא שהבלוק עדיין ניתן לגרירה
-           blockReleased.draggable = true;
-           if (CONFIG.DEBUG) console.log(`[MouseUp] Snap failed, ensuring block ${blockReleased.id} is draggable.`);
+      if (snapSuccess) {
+           // Snap succeeded, block is now connected, disable native drag
+           blockReleased.draggable = false;
+           if (CONFIG.DEBUG) console.log(`[MouseUp] Snap successful, setting draggable=false for ${blockReleased.id}.`);
       } else {
-          // ההצמדה הצליחה, אין צורך ב-draggable=true כרגע,
-          // כי אינטראקציה נוספת תתחיל מחדש את התהליך ותנתק אותו
-          blockReleased.draggable = false; // מנע גרירת דפדפן בטעות על בלוק צמוד
-          if (CONFIG.DEBUG) console.log(`[MouseUp] Snap successful, setting draggable=false for ${blockReleased.id}.`);
+          // Snap failed (e.g., target disappeared, target already connected), keep block draggable
+           blockReleased.draggable = true;
+           if (CONFIG.DEBUG) console.log(`[MouseUp] Snap failed, ensuring block ${blockReleased.id} remains draggable.`);
       }
     } else {
+      // No snap target, leave block at its current position, ensure it's draggable
       if (CONFIG.DEBUG) console.log(`[MouseUp] No snap target found, block ${blockReleased.id} left at final drag position.`);
-      // אין הצמדה, הבלוק נשאר חופשי, ודא שניתן לגרור אותו שוב
       blockReleased.draggable = true;
     }
 
@@ -779,7 +721,7 @@
   }
 
   // ========================================================================
-  // בדיקת הצמדה והדגשה - משופר
+  // בדיקת הצמדה והדגשה - כולל בדיקת חיבורים קיימים
   // ========================================================================
   function checkAndHighlightSnapPossibility() {
     if (!currentDraggedBlock) return;
@@ -788,46 +730,44 @@
     if (!programmingArea) return;
 
     const sourceRect = currentDraggedBlock.getBoundingClientRect();
-    // סנן בלוקים שאינם גלויים (למשל, display:none) או את הבלוק הנגרר עצמו
     const allVisibleBlocks = Array.from(programmingArea.querySelectorAll('.block-container:not(.snap-source)'))
-                                  .filter(block => block.offsetParent !== null);
+                                  .filter(block => block.offsetParent !== null); // Consider only visible blocks
 
     let bestTarget = null;
     let bestDirection = null;
-    let minDistance = CONFIG.CONNECT_THRESHOLD + 1; // התחל עם ערך גדול מהסף
+    let minDistance = CONFIG.CONNECT_THRESHOLD + 1; // Start above threshold
 
-    // איפוס הדגשות קודמות ויעד פוטנציאלי
+    // Reset previous highlights and potential target
     document.querySelectorAll('.snap-target').forEach(el => {
         el.classList.remove('snap-target', 'snap-left', 'snap-right');
     });
     potentialSnapTarget = null;
     snapDirection = null;
-    removeFuturePositionIndicator(); // הסתר מחוון כחול
+    removeFuturePositionIndicator();
 
     for (const targetBlock of allVisibleBlocks) {
-      if (!targetBlock.id) generateUniqueId(targetBlock);
+      if (!targetBlock.id) generateUniqueId(targetBlock); // Ensure target has ID
       const targetRect = targetBlock.getBoundingClientRect();
 
-      // חשוב: בדוק שהיעד עצמו אינו כבר מחובר *באותו צד* שאנחנו מנסים להתחבר אליו
-      // לדוגמה, אי אפשר לחבר שני בלוקים לצד ימין של אותו בלוק מטרה.
-      const targetAlreadyConnectedOnLeft = targetBlock.hasAttribute('data-connected-from-left');
-      const targetAlreadyConnectedOnRight = targetBlock.hasAttribute('data-connected-from-right');
+      // Check if the target slot is already occupied
+      const targetHasLeftConnection = targetBlock.hasAttribute('data-connected-from-left');
+      const targetHasRightConnection = targetBlock.hasAttribute('data-connected-from-right');
 
       const snapInfo = calculateSnapInfo(sourceRect, targetRect);
 
       if (snapInfo && snapInfo.distance < minDistance) {
-         // בדוק אם החיבור המוצע אפשרי מבחינת חיבורים קיימים של המטרה
+         // Check if the proposed connection direction is available on the target
          let connectionAllowed = true;
-         if (snapInfo.direction === 'left' && targetAlreadyConnectedOnLeft) {
-             connectionAllowed = false; // מנסים להתחבר משמאל למטרה שכבר מחוברת משמאל
+         if (snapInfo.direction === 'left' && targetHasLeftConnection) {
+             connectionAllowed = false;
              if (CONFIG.DEBUG > 1) console.log(`[Highlight] Snap to left of ${targetBlock.id} blocked: Target already has connection on left.`);
-         } else if (snapInfo.direction === 'right' && targetAlreadyConnectedOnRight) {
-             connectionAllowed = false; // מנסים להתחבר מימין למטרה שכבר מחוברת מימין
-              if (CONFIG.DEBUG > 1) console.log(`[Highlight] Snap to right of ${targetBlock.id} blocked: Target already has connection on right.`);
+         } else if (snapInfo.direction === 'right' && targetHasRightConnection) {
+             connectionAllowed = false;
+             if (CONFIG.DEBUG > 1) console.log(`[Highlight] Snap to right of ${targetBlock.id} blocked: Target already has connection on right.`);
          }
 
          if (connectionAllowed) {
-             // מצאנו התאמה טובה יותר ומותרת
+             // Found a closer, allowed potential snap
              minDistance = snapInfo.distance;
              bestTarget = targetBlock;
              bestDirection = snapInfo.direction;
@@ -835,19 +775,19 @@
       }
     }
 
-    // אם מצאנו יעד מתאים בטווח
+    // If a suitable target was found within range
     if (bestTarget) {
       if (CONFIG.DEBUG > 1) console.log(`[Highlight] Potential snap: ${currentDraggedBlock.id} -> ${bestTarget.id} (${bestDirection}), dist: ${minDistance.toFixed(1)}px`);
 
       potentialSnapTarget = bestTarget;
       snapDirection = bestDirection;
 
-      // הוסף הדגשה ליעד
+      // Highlight target and show direction indicator
       bestTarget.classList.add('snap-target');
-      bestTarget.classList.add(snapDirection === 'left' ? 'snap-left' : 'snap-right'); // הוסף מחלקת כיוון
+      bestTarget.classList.add(snapDirection === 'left' ? 'snap-left' : 'snap-right');
 
-      // הצג מחוון מיקום עתידי
-      const programRect = programmingArea.getBoundingClientRect();
+      // Show future position indicator
+      const programRect = programmingArea.getBoundingClientRect(); // Pass parent rect
       updateFuturePositionIndicator(currentDraggedBlock, bestTarget, bestDirection, programRect);
     }
   }
@@ -856,153 +796,132 @@
   // חישוב מידע על הצמדה אפשרית - כולל בדיקת חפיפה אנכית
   // ========================================================================
   function calculateSnapInfo(sourceRect, targetRect) {
-    // 1. בדיקת חפיפה אנכית מינימלית
+    // 1. Vertical Overlap Check
     const topOverlap = Math.max(sourceRect.top, targetRect.top);
     const bottomOverlap = Math.min(sourceRect.bottom, targetRect.bottom);
     const verticalOverlap = Math.max(0, bottomOverlap - topOverlap);
-
-    // דרישת חפיפה מבוססת על הגובה הקטן מבין השניים
     const minHeightForOverlapCheck = Math.min(sourceRect.height, targetRect.height) * CONFIG.VERTICAL_OVERLAP_REQ;
 
-    // ודא שיש חפיפה מספקת (ולא רק גובה 0)
     if (verticalOverlap < minHeightForOverlapCheck || verticalOverlap <= 0) {
       // if (CONFIG.DEBUG > 1) console.log(`[CalcSnap] No snap: Insufficient vertical overlap (${verticalOverlap.toFixed(1)}px < ${minHeightForOverlapCheck.toFixed(1)}px)`);
       return null;
     }
 
-    // 2. בדיקת מרחק אופקי בין הצדדים הרלוונטיים
+    // 2. Horizontal Distance Check
     let distance;
-    let direction;
+    let direction; // Direction indicates where the *source* will be relative to the *target*
 
-    // מרחק בין צד ימין של המקור לשמאל של היעד
+    // Distance: Source's right edge to Target's left edge
     const distRightToLeft = Math.abs(sourceRect.right - targetRect.left);
-    // מרחק בין צד שמאל של המקור לימין של היעד
+    // Distance: Source's left edge to Target's right edge
     const distLeftToRight = Math.abs(sourceRect.left - targetRect.right);
 
-    // בחר את הכיוון עם המרחק הקטן ביותר
+    // Choose the closer connection possibility
     if (distRightToLeft < distLeftToRight) {
-        // מקרה פוטנציאלי: המקור יתחבר משמאל ליעד
+        // Potential snap: Source on the left of the target
         distance = distRightToLeft;
-        direction = 'left'; // המקור יהיה משמאל ליעד (right of source -> left of target)
+        direction = 'left';
     } else {
-        // מקרה פוטנציאלי: המקור יתחבר מימין ליעד
+        // Potential snap: Source on the right of the target
         distance = distLeftToRight;
-        direction = 'right'; // המקור יהיה מימין ליעד (left of source -> right of target)
+        direction = 'right';
     }
 
-    // בדוק אם המרחק המינימלי בטווח ההצמדה המותר
+    // 3. Check if within threshold
     if (distance <= CONFIG.CONNECT_THRESHOLD) {
        if (CONFIG.DEBUG > 1) console.log(`[calculateSnapInfo] Possible connection: direction=${direction}, distance=${distance.toFixed(2)}px, vertical overlap=${verticalOverlap.toFixed(1)}px`);
-      // החזר את הכיוון (איפה המקור יהיה יחסית ליעד) ואת המרחק
-      return { direction, distance };
+      return { direction, distance }; // Return where source should go and the distance
     }
 
-    // אם לא נמצאה התאמה
     // if (CONFIG.DEBUG > 1) console.log(`[CalcSnap] No snap: Distance too large (${distance.toFixed(1)}px > ${CONFIG.CONNECT_THRESHOLD}px)`);
     return null;
   }
 
 
   // ========================================================================
-  // ביצוע ההצמדה הפיזית ועדכון מצב
+  // ביצוע ההצמדה הפיזית ועדכון מצב - עם בדיקות נוספות
   // ========================================================================
   function performBlockSnap(sourceBlock, targetBlock, direction) {
     if (!sourceBlock || !targetBlock) {
-      console.error("[performBlockSnap] Error: Invalid block(s) provided.");
+      console.error("[PerformSnap] Error: Invalid block(s) provided.");
       return false;
     }
-    // ודא שהיעד לא נעלם בינתיים
+    // Double-check target validity and availability before snapping
     if (!document.body.contains(targetBlock) || targetBlock.offsetParent === null) {
         console.warn(`[PerformSnap] Target block ${targetBlock.id} is no longer valid or visible. Snap cancelled.`);
         return false;
     }
-    // ודא שהיעד עדיין פנוי בצד הרלוונטי (מישהו אחר אולי הספיק להתחבר?)
-    if (direction === 'left' && targetBlock.hasAttribute('data-connected-from-left')) {
-        console.warn(`[PerformSnap] Snap cancelled: Target ${targetBlock.id} now has a connection on the left.`);
-        return false;
-    }
-    if (direction === 'right' && targetBlock.hasAttribute('data-connected-from-right')) {
-         console.warn(`[PerformSnap] Snap cancelled: Target ${targetBlock.id} now has a connection on the right.`);
+    const targetAttrToCheck = `data-connected-from-${direction}`; // e.g., data-connected-from-left
+    if (targetBlock.hasAttribute(targetAttrToCheck)) {
+        console.warn(`[PerformSnap] Snap cancelled: Target ${targetBlock.id} slot for direction '${direction}' is already occupied (possibly by another block simultaneously).`);
         return false;
     }
 
-
-    if (CONFIG.DEBUG) console.log(`[PerformSnap] Snapping ${sourceBlock.id} to ${targetBlock.id} (${direction})`);
+    if (CONFIG.DEBUG) console.log(`[PerformSnap] Snapping ${sourceBlock.id} to ${targetBlock.id} (source will be on the '${direction}' side of target)`);
 
     try {
-      // קבל מימדים עדכניים רגע לפני ההצמדה
-      const sourceRect = sourceBlock.getBoundingClientRect();
+      const sourceRect = sourceBlock.getBoundingClientRect(); // Use current source dimensions
       const targetRect = targetBlock.getBoundingClientRect();
       const parentElement = document.getElementById('program-blocks');
       const parentRect = parentElement.getBoundingClientRect();
 
-      // חישוב מיקום אופקי סופי (מדויק, ללא רווח)
-      let finalLeft;
-      if (direction === 'left') { // מקור משמאל ליעד
-        finalLeft = targetRect.left - sourceRect.width - CONFIG.BLOCK_GAP;
-      } else { // מקור מימין ליעד (direction === 'right')
-        finalLeft = targetRect.right + CONFIG.BLOCK_GAP;
+      // Calculate final *absolute* viewport positions
+      let finalViewportLeft;
+      const finalViewportTop = targetRect.top; // Align tops
+
+      if (direction === 'left') { // Source block goes to the left of target
+        finalViewportLeft = targetRect.left - sourceRect.width - CONFIG.BLOCK_GAP;
+      } else { // Source block goes to the right of target (direction === 'right')
+        finalViewportLeft = targetRect.right + CONFIG.BLOCK_GAP;
       }
 
-      // חישוב מיקום אנכי סופי (יישור לחלק העליון של היעד - ניתן לשנות אם רוצים יישור אחר)
-      const finalTop = targetRect.top;
+      // Convert to style values relative to the scrolled parent
+      let styleLeft = finalViewportLeft - parentRect.left + parentElement.scrollLeft;
+      let styleTop = finalViewportTop - parentRect.top + parentElement.scrollTop;
 
-      // המרה לערכי style יחסיים להורה (אזור התכנות) כולל גלילה
-      let styleLeft = finalLeft - parentRect.left + parentElement.scrollLeft;
-      let styleTop = finalTop - parentRect.top + parentElement.scrollTop;
+      // Apply final position (rounded)
+      sourceBlock.style.position = 'absolute';
+      sourceBlock.style.left = `${Math.round(styleLeft)}px`;
+      sourceBlock.style.top = `${Math.round(styleTop)}px`;
+      sourceBlock.style.margin = '0';
 
-      // עיגול למניעת שגיאות עיגול קטנות
-      styleLeft = Math.round(styleLeft);
-      styleTop = Math.round(styleTop);
+      // Update data attributes for connection tracking
+      sourceBlock.setAttribute('data-connected-to', targetBlock.id); // Source is connected TO target
+      sourceBlock.setAttribute('data-connection-direction', direction); // Source is on this side OF target
+      targetBlock.setAttribute(targetAttrToCheck, sourceBlock.id); // Target is connected FROM this side BY source
 
-      // החל את המיקום החדש על הבלוק הנגרר (המקור)
-      sourceBlock.style.position = 'absolute'; // ודא שזה נשאר אבסולוטי
-      sourceBlock.style.left = `${styleLeft}px`;
-      sourceBlock.style.top = `${styleTop}px`;
-      sourceBlock.style.margin = '0'; // אפס margin
-
-      // עדכן מאפייני נתונים לציון החיבור
-      // המקור מחובר אל היעד
-      sourceBlock.setAttribute('data-connected-to', targetBlock.id);
-      // המקור מחובר בכיוון מסוים יחסית ליעד (left=משמאל ליעד, right=מימין ליעד)
-      sourceBlock.setAttribute('data-connection-direction', direction);
-      // היעד מחובר *מ*כיוון מסוים *על ידי* המקור
-      targetBlock.setAttribute(direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right', sourceBlock.id);
-
-      // הוסף קלאסים לסימון ויזואלי (אופציונלי)
+      // Add visual classes (optional)
       sourceBlock.classList.add('connected-block');
       targetBlock.classList.add('has-connected-block');
 
-      // השמע צליל הצמדה
-      playSnapSound();
-
-      // הוסף אנימציית הצמדה ויזואלית
+      // Play sound and animation
+      playSnapSound(); // *** THIS IS WHERE THE SOUND PLAYS ***
       addSnapEffectAnimation(sourceBlock);
 
-      // מנע גרירה מובנית מהבלוק המחובר כעת
+      // Make the source block non-draggable via native HTML drag (our system handles it)
       sourceBlock.draggable = false;
 
-      if (CONFIG.DEBUG) console.log(`[PerformSnap] Snap successful. ${sourceBlock.id} positioned at left=${styleLeft}px, top=${styleTop}px`);
-      return true;
+      if (CONFIG.DEBUG) console.log(`[PerformSnap] Snap successful. ${sourceBlock.id} positioned at left=${Math.round(styleLeft)}px, top=${Math.round(styleTop)}px`);
+      return true; // Indicate success
 
     } catch (err) {
       console.error(`[PerformSnap] Error during snap operation for ${sourceBlock.id} -> ${targetBlock.id}:`, err);
-      // נסה להחזיר את הבלוק למצב לא מחובר אם הייתה שגיאה
+      // Attempt to clean up / revert state
       try {
-        detachBlock(sourceBlock, false); // נתק ללא אנימציה
+        detachBlock(sourceBlock, false); // Detach without animation on error
       } catch (detachErr) {
          console.error(`[PerformSnap] Error during cleanup detach:`, detachErr);
-         // נקה מאפיינים ידנית במקרה קיצון
+         // Manual cleanup as fallback
          sourceBlock.removeAttribute('data-connected-to');
          sourceBlock.removeAttribute('data-connection-direction');
          sourceBlock.classList.remove('connected-block');
          if (targetBlock) {
              targetBlock.removeAttribute(`data-connected-from-${direction}`);
-             // השארת has-connected-block עדיפה על הסרה שגויה
+             // Best not to remove 'has-connected-block' without certainty
          }
       }
-      sourceBlock.draggable = true; // אפשר גרירה מחדש
-      return false;
+      sourceBlock.draggable = true; // Ensure block is draggable after failed snap
+      return false; // Indicate failure
     }
   }
 
@@ -1017,42 +936,40 @@
     if (!futureIndicator) {
         futureIndicator = document.createElement('div');
         futureIndicator.id = 'future-position-indicator';
-        futureIndicator.className = 'future-position-indicator'; // Use class for styling
-        programmingArea.appendChild(futureIndicator);
+        futureIndicator.className = 'future-position-indicator';
+        programmingArea.appendChild(futureIndicator); // Append to programming area
         if (CONFIG.DEBUG > 1) console.log('Created future position indicator.');
     }
 
     try {
-        // קבל מימדים עדכניים של הבלוק הנגרר
-        const sourceRectNow = sourceBlock.getBoundingClientRect();
+        const sourceRectNow = sourceBlock.getBoundingClientRect(); // Current size of dragged block
         const targetRect = targetBlock.getBoundingClientRect();
-        const parentRect = programmingArea.getBoundingClientRect();
+        const parentRect = programRect; // Use the passed parent rectangle
 
-        // חשב מיקום עתידי תיאורטי (זהה לחישוב ב-performBlockSnap)
-        let desiredViewportLeft, desiredViewportTop;
-        desiredViewportTop = targetRect.top; // יישור עליון
+        // Calculate theoretical future position (same logic as performBlockSnap)
+        let desiredViewportLeft;
+        const desiredViewportTop = targetRect.top;
 
         if (direction === 'left') {
-            // חשוב להשתמש ברוחב *הנוכחי* של הבלוק הנגרר
             desiredViewportLeft = targetRect.left - sourceRectNow.width - CONFIG.BLOCK_GAP;
         } else { // direction === 'right'
             desiredViewportLeft = targetRect.right + CONFIG.BLOCK_GAP;
         }
 
-        // המר למיקום יחסי לאזור התכנות
+        // Convert to position relative to programming area parent
         let indicatorLeft = desiredViewportLeft - parentRect.left + programmingArea.scrollLeft;
         let indicatorTop = desiredViewportTop - parentRect.top + programmingArea.scrollTop;
 
-        // החל סגנונות על המחוון
+        // Apply styles to the indicator
         futureIndicator.style.left = Math.round(indicatorLeft) + 'px';
         futureIndicator.style.top = Math.round(indicatorTop) + 'px';
         futureIndicator.style.width = Math.round(sourceRectNow.width) + 'px';
         futureIndicator.style.height = Math.round(sourceRectNow.height) + 'px';
-        futureIndicator.classList.add('visible'); // Make it visible using CSS class
+        futureIndicator.classList.add('visible'); // Make it visible
 
     } catch (err) {
         console.error('Error updating future position indicator:', err);
-        removeFuturePositionIndicator(); // הסתר במקרה שגיאה
+        removeFuturePositionIndicator(); // Hide on error
     }
   }
 
@@ -1061,8 +978,8 @@
   // ========================================================================
   function removeFuturePositionIndicator() {
     if (futureIndicator) {
-        futureIndicator.classList.remove('visible'); // Hide using CSS class
-        // לא מסירים מה-DOM כדי לשמור על רפרנס, רק מסתירים
+        futureIndicator.classList.remove('visible'); // Hide using CSS
+        // Don't remove from DOM, just hide for performance
     }
   }
 
@@ -1071,7 +988,7 @@
   // פונקציות עזר לניתוק בלוקים (כולל תפריט קליק ימני)
   // ========================================================================
   function showDetachMenu(x, y, block) {
-    removeDetachMenu(); // הסר תפריט קודם אם קיים
+    removeDetachMenu(); // Ensure only one menu exists
 
     const menu = document.createElement('div');
     menu.id = 'detach-menu';
@@ -1079,43 +996,41 @@
     menu.style.top = `${y}px`;
 
     const detachOption = document.createElement('div');
-    detachOption.textContent = 'נתק בלוק'; // טקסט לתפריט
+    detachOption.textContent = 'נתק בלוק';
     detachOption.onclick = function(event) {
-        event.stopPropagation(); // מנע סגירה מיידית של התפריט
-        detachBlock(block, true); // נתק עם אנימציה
+        event.stopPropagation();
+        detachBlock(block, true); // Detach the block that was right-clicked
         removeDetachMenu();
     };
 
     menu.appendChild(detachOption);
     document.body.appendChild(menu);
 
-    // מאזין לסגירת התפריט בלחיצה מחוץ לו או גלילה
-    setTimeout(() => { // setTimeout למניעת סגירה מיידית מהקליק שפתח אותו
+    // Listeners to close the menu
+    setTimeout(() => { // Use timeout to prevent immediate closure
         document.addEventListener('click', closeMenuOutside, { capture: true, once: true });
-        window.addEventListener('scroll', removeDetachMenu, { capture: true, once: true }); // סגור גם בגלילה
+        window.addEventListener('scroll', removeDetachMenu, { capture: true, once: true }); // Close on scroll
     }, 0);
   }
 
   function closeMenuOutside(e) {
     const menu = document.getElementById('detach-menu');
-    // אם הקליק לא היה בתוך התפריט, הסר אותו
     if (menu && !menu.contains(e.target)) {
         removeDetachMenu();
     } else if (menu) {
-        // אם הקליק היה בתוך התפריט אבל לא על אופציה (נדיר), הוסף מחדש את המאזין
-        // כי ה-once:true הסיר אותו
+        // Click was inside menu but not on an option, re-add listener
          setTimeout(() => {
              document.addEventListener('click', closeMenuOutside, { capture: true, once: true });
          }, 0);
     }
-     // הסר את מאזין הגלילה אם התפריט נסגר או נשאר פתוח מהקליק
-     window.removeEventListener('scroll', removeDetachMenu, { capture: true });
+    // Always remove scroll listener if click occurred (handled or not)
+    window.removeEventListener('scroll', removeDetachMenu, { capture: true });
   }
 
   function removeDetachMenu() {
     const menu = document.getElementById('detach-menu');
     if (menu) {
-        // הסר את המאזינים שהוספנו
+        // Clean up listeners when menu is removed
         document.removeEventListener('click', closeMenuOutside, { capture: true });
         window.removeEventListener('scroll', removeDetachMenu, { capture: true });
         menu.remove();
@@ -1123,64 +1038,60 @@
   }
 
   function detachBlock(blockToDetach, animate = true) {
+    // Check if the block is actually connected *to* something
     if (!blockToDetach || !blockToDetach.hasAttribute('data-connected-to')) {
-        // This block is not the 'source' of a connection, nothing to detach *from* it.
-        // It might be a 'target', but detaching happens from the source block.
-        if (CONFIG.DEBUG > 1) console.log(`[Detach] Block ${blockToDetach?.id || 'unknown'} has no 'data-connected-to' attribute. No action needed.`);
-        return;
+        if (CONFIG.DEBUG > 1) console.log(`[Detach] Block ${blockToDetach?.id || 'unknown'} has no 'data-connected-to'. No detach action needed for this block.`);
+        // Make sure it's draggable if it's not connected
+        if (blockToDetach) blockToDetach.draggable = true;
+        return; // Not connected as a source block
     }
 
     const targetId = blockToDetach.getAttribute('data-connected-to');
-    const direction = blockToDetach.getAttribute('data-connection-direction'); // 'left' or 'right'
+    const direction = blockToDetach.getAttribute('data-connection-direction'); // 'left' or 'right' (where source WAS relative to target)
 
     if (!targetId || !direction) {
-        console.warn(`[Detach] Missing connection data ('data-connected-to' or 'data-connection-direction') on ${blockToDetach.id}. Attempting cleanup.`);
-        // נקה בכל מקרה את המאפיינים מהמקור
+        console.warn(`[Detach] Missing connection data on ${blockToDetach.id}. Cleaning up attributes.`);
         blockToDetach.removeAttribute('data-connected-to');
         blockToDetach.removeAttribute('data-connection-direction');
         blockToDetach.classList.remove('connected-block');
-        // אפשר גרירה מחדש כי הוא חופשי כעת
-        blockToDetach.draggable = true;
+        blockToDetach.draggable = true; // Make draggable since connection is broken
         return;
     }
 
-    if (CONFIG.DEBUG) console.log(`[Detach] Detaching ${blockToDetach.id} from target ${targetId} (direction: ${direction})`);
+    if (CONFIG.DEBUG) console.log(`[Detach] Detaching ${blockToDetach.id} from target ${targetId} (was connected on the '${direction}' side of target)`);
 
-    // הסר את המאפיינים מהבלוק המנותק (המקור)
+    // --- Clean up the block being detached (the source) ---
     blockToDetach.removeAttribute('data-connected-to');
     blockToDetach.removeAttribute('data-connection-direction');
     blockToDetach.classList.remove('connected-block');
-    // אפשר גרירה מחדש של הבלוק שזה עתה נותק
-    blockToDetach.draggable = true;
+    blockToDetach.draggable = true; // Make it draggable again
 
-
-    // מצא את בלוק המטרה ונקה את הצד הרלוונטי שלו
+    // --- Clean up the target block ---
     const targetBlock = document.getElementById(targetId);
     if (targetBlock) {
-        // נקה את המאפיין שמצביע חזרה למקור
-        targetBlock.removeAttribute(direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right');
+        // Remove the attribute pointing back to the source block
+        const targetAttrToRemove = `data-connected-from-${direction}`; // e.g., data-connected-from-left
+        targetBlock.removeAttribute(targetAttrToRemove);
 
-        // בדוק אם לבלוק המטרה נשארו חיבורים *כלשהם* (או שהוא מחובר בעצמו)
+        // Check if target still has any connections left
         const hasOtherConnections =
             targetBlock.hasAttribute('data-connected-from-left') ||
             targetBlock.hasAttribute('data-connected-from-right') ||
-            targetBlock.hasAttribute('data-connected-to'); // אולי הוא מחובר *ל*בלוק אחר
+            targetBlock.hasAttribute('data-connected-to'); // Is it connected TO another block?
 
         if (!hasOtherConnections) {
             targetBlock.classList.remove('has-connected-block');
-             if (CONFIG.DEBUG > 1) console.log(`[Detach] Target ${targetId} no longer has any connections, removing 'has-connected-block' class.`);
+            if (CONFIG.DEBUG > 1) console.log(`[Detach] Target ${targetId} no longer has any connections.`);
         } else {
-             if (CONFIG.DEBUG > 1) console.log(`[Detach] Target ${targetId} still has other connections.`);
+            if (CONFIG.DEBUG > 1) console.log(`[Detach] Target ${targetId} still has other connections.`);
         }
     } else {
-        // זה לא אמור לקרות בדרך כלל, אבל כדאי לטפל
-        console.warn(`[Detach] Target block ${targetId} for detached block ${blockToDetach.id} not found in the DOM.`);
+        console.warn(`[Detach] Target block ${targetId} for detached block ${blockToDetach.id} not found.`);
     }
 
-    // הוסף אנימציית ניתוק אם נדרש
+    // Add detach animation if requested
     if (animate) {
         addDetachEffectAnimation(blockToDetach);
-        // אפשר להוסיף כאן קריאה ל-playDetachSound() אם רוצים צליל ניתוק
     }
 
     if (CONFIG.DEBUG) console.log(`[Detach] Finished detaching ${blockToDetach.id}. Draggable: ${blockToDetach.draggable}`);
@@ -1190,10 +1101,9 @@
   // פונקציות עזר לאנימציה
   // ========================================================================
   function addSnapEffectAnimation(block) {
-    block.classList.remove('snap-animation'); // הסר קודם למקרה שהאנימציה הקודמת לא הסתיימה
-    void block.offsetWidth; // Trigger reflow/repaint - חשוב להפעלת אנימציה מחדש
+    block.classList.remove('snap-animation');
+    void block.offsetWidth; // Force reflow
     block.classList.add('snap-animation');
-    // נקה את המחלקה בסיום האנימציה כדי לאפשר הפעלה חוזרת
     block.addEventListener('animationend', () => {
       block.classList.remove('snap-animation');
     }, { once: true });
@@ -1201,7 +1111,7 @@
 
   function addDetachEffectAnimation(block) {
     block.classList.remove('detach-animation');
-    void block.offsetWidth; // Trigger reflow
+    void block.offsetWidth; // Force reflow
     block.classList.add('detach-animation');
      block.addEventListener('animationend', () => {
       block.classList.remove('detach-animation');
@@ -1212,22 +1122,19 @@
   // יצירת ID ייחודי לבלוקים ללא ID
   // ========================================================================
   function generateUniqueId(block) {
-    // אל תיצור ID אם כבר קיים אחד תקין
     if (block.id && typeof block.id === 'string' && block.id.trim() !== '') return block.id;
 
-    const prefix = block.dataset.type || 'block'; // השתמש ב-data-type אם קיים
-    // צור ID קצת יותר קריא ופחות אקראי מוחלט
-    const uniqueSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    const prefix = block.dataset.type || block.classList[0] || 'block'; // Use data-type, first class, or 'block' as prefix
+    let uniqueId = `${prefix}-${Math.random().toString(36).substring(2, 7)}`;
     let attempt = 0;
-    let uniqueId = `${prefix}-${uniqueSuffix}`;
-    // ודא שה-ID באמת ייחודי בדף (במקרה מאוד נדיר של התנגשות)
+    // Ensure uniqueness within the document
     while (document.getElementById(uniqueId) && attempt < 10) {
-        uniqueId = `${prefix}-${uniqueSuffix}-${attempt}`;
+        uniqueId = `${prefix}-${Math.random().toString(36).substring(2, 7)}-${attempt}`;
         attempt++;
     }
-    if (attempt >= 10) {
-       console.warn("Could not generate a guaranteed unique ID after 10 attempts for block, using timestamp fallback.");
-       uniqueId = `${prefix}-${Date.now()}`;
+     if (attempt >= 10) { // Fallback if random collisions persist
+       console.warn("Could not generate unique ID with random string after 10 attempts, using timestamp fallback.");
+       uniqueId = `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
     }
 
     block.id = uniqueId;
@@ -1239,37 +1146,37 @@
   // אתחול המערכת כולה
   // ========================================================================
   function initializeSystem() {
+    // Prevent multiple initializations
     if (window.blockLinkageInitialized) {
-        if (CONFIG.DEBUG) console.log("Block linkage system already initialized. Skipping re-initialization.");
+        if (CONFIG.DEBUG) console.log("Block linkage system already initialized. Skipping.");
         return;
     }
 
-    addHighlightStyles();           // הוסף סגנונות CSS
-    initAudio();                    // אתחול אלמנט השמע (יטפל בטעינת הקובץ)
-    initProgrammingAreaListeners(); // מאזינים לאזור הכללי
-    observeNewBlocks();             // מאזין לבלוקים שנוספים דינמית
-    initExistingBlocks();           // מאזינים לבלוקים שכבר קיימים בטעינה
-    initGlobalMouseListeners();     // מאזיני עכבר גלובליים
+    addHighlightStyles();           // Add CSS styles
+    initAudio();                    // Initialize audio element
+    initProgrammingAreaListeners(); // Add listeners to the main area
+    observeNewBlocks();             // Watch for dynamically added blocks
+    initExistingBlocks();           // Add listeners to blocks present on load
+    initGlobalMouseListeners();     // Add global mouse move/up/leave listeners
 
-    // הוסף כפתור בדיקת שמע (אם מופעל)
-    // יוצג במצב "טעינה" אם הקובץ עוד לא מוכן
+    // Add sound test button if enabled (will show loading/error state if needed)
     if (CONFIG.PLAY_SOUND) {
         addSoundTestButton();
     }
 
-    window.blockLinkageInitialized = true; // סמן שהאתחול בוצע
-    console.log(`Block linkage system initialized (Version 3.2 - External MP3)`);
+    window.blockLinkageInitialized = true; // Set flag to prevent re-init
+    console.log(`Block linkage system initialized (Version 3.3 - Adjusted Thresholds)`);
     console.log(`Configuration: Connect Threshold=${CONFIG.CONNECT_THRESHOLD}px, Vertical Overlap=${CONFIG.VERTICAL_OVERLAP_REQ*100}%, Sound=${CONFIG.PLAY_SOUND ? CONFIG.SOUND_PATH : 'Disabled'}`);
   }
 
-  // הפעל את האתחול כשה-DOM מוכן או מיידית אם כבר מוכן
+  // Run initialization when the DOM is ready
   if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initializeSystem);
   } else {
-      // DOMContentLoaded already fired
+      // DOMContentLoaded has already fired
       initializeSystem();
   }
 
-})(); // סוף IIFE
+})(); // End of IIFE
 
 // --- END OF FILE linkageimproved.js ---
