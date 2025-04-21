@@ -3,12 +3,12 @@
     'use strict';
 
     // ================= Configuration =================
-    const SNAP_THRESHOLD = 20;
-    const HORIZONTAL_OVERLAP_THRESHOLD = 0.4;
+    const SNAP_THRESHOLD = 20; // נשאיר 20 בינתיים, נראה אם זה עובד
+    const HORIZONTAL_OVERLAP_THRESHOLD = 0.4; // נשאיר 40% בינתיים
     const SNAP_GAP = 0;
     const LINK_SOUND_SRC = 'assets/sound/link.mp3';
-    const DEBUG = true; // השאר פעיל כדי לראות את הלוגים שיש
-    const INDICATOR_CLASS = 'snap-indicator';
+    const DEBUG = true;
+    const INDICATOR_CLASS = 'snap-indicator'; // הקלאס של הריבוע המקווקו
 
     // ================= State Variables =================
     let programmingArea = null;
@@ -18,7 +18,7 @@
     let isDragging = false;
     let linkSound = null;
     let programmingAreaRect = null;
-    let currentIndicatorTarget = null;
+    let currentIndicatorTarget = null; // ישמור את הבלוק שמסומן כרגע
     let observer = null;
 
     // ================= Logging Helper =================
@@ -38,8 +38,16 @@
         const styleId = 'linkage-styles';
         if (document.getElementById(styleId)) return;
         const css = `
-            .${INDICATOR_CLASS} { outline: 2px dashed #007bff !important; outline-offset: 2px; box-shadow: 0 0 10px rgba(0, 123, 255, 0.5); }
-            .block-dragging { opacity: 0.7; cursor: grabbing !important; pointer-events: none; }
+            .${INDICATOR_CLASS} {
+                outline: 2px dashed #007bff !important; /* קו מקווקו כחול */
+                outline-offset: 2px; /* ריווח קטן מהבלוק */
+                box-shadow: 0 0 8px rgba(0, 123, 255, 0.4); /* הצללה קלה (אופציונלי) */
+            }
+            .block-dragging { /* סגנון לבלוק הנגרר */
+                 opacity: 0.7;
+                 cursor: grabbing !important;
+                 pointer-events: none; /* חשוב למנוע הפרעה לאירועים מתחת */
+            }
         `;
         const style = document.createElement('style'); style.id = styleId; style.textContent = css;
         document.head.appendChild(style);
@@ -49,12 +57,12 @@
     // ================= Core Logic Functions =================
 
     function findSnapTarget(draggedBlock) {
+        // (הפונקציה הזו נשארת כפי שהייתה בגרסה הקודמת, כולל הלוגים שמושארים כהערות)
         let bestTarget = null;
         let minDistance = SNAP_THRESHOLD;
         const draggedRect = draggedBlock.getBoundingClientRect();
         if (!programmingAreaRect) programmingAreaRect = programmingArea.getBoundingClientRect();
         const potentialTargets = programmingArea.querySelectorAll('.block-container:not(.block-dragging)');
-        // לוגים מפורטים מושארים כהערות כרגע
         // log(`[findSnapTarget] Dragging ${draggedBlock.id} (${draggedRect.top.toFixed(0)}). Checking ${potentialTargets.length} targets.`);
 
         potentialTargets.forEach(potentialTarget => {
@@ -90,21 +98,33 @@
         log(`Snapped ${blockToSnap.id} to L:${newLeft.toFixed(0)}, T:${newTop.toFixed(0)} (under ${targetBlock.id})`);
     }
 
+    // *** הפונקציה שמנהלת את הוספה/הסרה של הקלאס מהמטרה ***
     function updateVisualIndicator(newTarget) {
-        if (newTarget === currentIndicatorTarget) return;
+        // אם המטרה זהה לקודמת, אין שינוי
+        if (newTarget === currentIndicatorTarget) {
+            return;
+        }
+
+        // אם הייתה מטרה קודמת, הסר ממנה את הסימון
         if (currentIndicatorTarget) {
+            // log(`[UpdateIndicator] Removing indicator from ${currentIndicatorTarget.id}`); // לוג להסרה
             currentIndicatorTarget.classList.remove(INDICATOR_CLASS);
         }
+
+        // אם יש מטרה חדשה, הוסף לה את הסימון
         if (newTarget) {
-            log(`[UpdateIndicator] Adding indicator to ${newTarget.id}`);
+            log(`[UpdateIndicator] Adding indicator to ${newTarget.id}`); // *** לוג חשוב! ***
             newTarget.classList.add(INDICATOR_CLASS);
         }
+
+        // עדכן את המשתנה שמחזיק את המטרה הנוכחית
         currentIndicatorTarget = newTarget;
     }
 
     // ================= Event Listener Setup =================
 
     function addBlockListeners(block) {
+        // (הפונקציה הזו נשארת כפי שהייתה בגרסה הקודמת)
         log(`   [addBlockListeners] Attempting to add listener to:`, block.id || block.dataset.type || block);
         try {
             if (!block || typeof block.addEventListener !== 'function') { console.warn("   [addBlockListeners] Invalid block element passed."); return; }
@@ -117,6 +137,7 @@
     }
 
     function addListenersToExistingBlocks() {
+        // (הפונקציה הזו נשארת כפי שהייתה בגרסה הקודמת)
         log("Running addListenersToExistingBlocks...");
         try {
             const existingBlocks = programmingArea.querySelectorAll('.block-container:not(.in-palette)');
@@ -129,6 +150,7 @@
     // ================= Event Handlers =================
 
     function handleMouseDown(event) {
+        // (הפונקציה הזו נשארת כפי שהייתה בגרסה הקודמת)
         log("[MouseDown] Event triggered on element:", event.target);
         if (event.button !== 0) return;
         const block = event.target.closest('.block-container');
@@ -147,7 +169,7 @@
 
     function handleMouseMove(event) {
         if (!isDragging || !currentlyDraggedBlock) return;
-        // log("[MouseMove] Event triggered."); // נשאיר כהערה כדי לא להציף
+        // log("[MouseMove] Event triggered."); // נשאיר כהערה כרגע
         try {
             if (!programmingAreaRect) { log("[MouseMove] Warning: programmingAreaRect missing, recalculating."); programmingAreaRect = programmingArea.getBoundingClientRect(); if (!programmingAreaRect) { console.error("Cannot get programming area bounds!"); return; } }
             let newLeft = event.clientX - programmingAreaRect.left - offsetX;
@@ -156,29 +178,41 @@
             const maxLeft = programmingAreaRect.width - blockWidth; const maxTop = programmingAreaRect.height - blockHeight;
             newLeft = Math.max(0, Math.min(newLeft, maxLeft)); newTop = Math.max(0, Math.min(newTop, maxTop));
             currentlyDraggedBlock.style.left = `${newLeft}px`; currentlyDraggedBlock.style.top = `${newTop}px`;
+
+            // --- מציאת מטרה ועדכון האינדיקטור ---
             const potentialTarget = findSnapTarget(currentlyDraggedBlock);
-            updateVisualIndicator(potentialTarget);
+            updateVisualIndicator(potentialTarget); // *** קריאה לפונקציה שמטפלת באינדיקטור ***
+
         } catch (error) { console.error("[LinkageImproved] Error in handleMouseMove:", error); }
     }
 
     function handleMouseUp(event) {
         if (!isDragging || !currentlyDraggedBlock) return;
         log(`[MouseUp] Releasing block ${currentlyDraggedBlock.id}. Checking for snap...`);
+
+        // --- ניקוי סגנונות ואינדיקטור ---
         currentlyDraggedBlock.style.zIndex = '';
         currentlyDraggedBlock.classList.remove('block-dragging');
-        updateVisualIndicator(null);
-        const snapTarget = findSnapTarget(currentlyDraggedBlock);
+        updateVisualIndicator(null); // *** קריאה לניקוי האינדיקטור בסיום הגרירה ***
+
+        // --- בדיקה סופית והצמדה אם נמצאה מטרה ---
+        const snapTarget = findSnapTarget(currentlyDraggedBlock); // בדיקה סופית
         if (snapTarget) {
             log(`[MouseUp] Found snap target: ${snapTarget.id}`);
-            snapBlocks(currentlyDraggedBlock, snapTarget);
+            snapBlocks(currentlyDraggedBlock, snapTarget); // בצע הצמדה
+            // השמע צליל
             if (linkSound && linkSound.readyState >= 4) { linkSound.currentTime = 0; linkSound.play().catch(e => console.warn("Audio play failed:", e)); log("Played link sound."); }
             else { log("Link sound not ready or not available."); }
         } else { log(`[MouseUp] No valid snap target found.`); }
+
         log(`[MouseUp] ----- End MouseUp for ${currentlyDraggedBlock.id} -----`);
+
+        // --- ניקוי מצב ---
         isDragging = false; currentlyDraggedBlock = null; programmingAreaRect = null;
     }
 
     function handleMutations(mutationsList, obs) {
+        // (הפונקציה הזו נשארת כפי שהייתה בגרסה הקודמת)
         log("[handleMutations] Callback triggered! Mutations count:", mutationsList.length);
         try {
             for (const mutation of mutationsList) {
@@ -196,8 +230,10 @@
         } catch (mutationError) { console.error("[LinkageImproved] Error inside handleMutations callback:", mutationError); }
     }
 
+
     // ================= Initialization Function =================
     function initialize() {
+        // (הפונקציה הזו נשארת כפי שהייתה בגרסה הקודמת)
         log("Attempting initialization...");
         try {
             programmingArea = document.getElementById("program-blocks");
@@ -213,9 +249,9 @@
             try { /* MutationObserver setup */ if (typeof handleMutations !== 'function') throw new Error("handleMutations is not defined!"); observer = new MutationObserver(handleMutations); observer.observe(programmingArea, { childList: true }); log("MutationObserver setup complete and actively watching."); }
             catch (observerError) { console.error("[LinkageImproved] CRITICAL: Failed to setup MutationObserver!", observerError); return; }
             addListenersToExistingBlocks();
-            log("Block linkage system initialized (Version - Checking Drag Restore)"); // שם גרסה מעודכן
+            log("Block linkage system initialized (Version - Indicator Enabled)");
             log(`Configuration: Snap Threshold=${SNAP_THRESHOLD}px, Overlap=${HORIZONTAL_OVERLAP_THRESHOLD*100}%, Gap=${SNAP_GAP}px`);
-            log("Initialization function finished successfully."); // *** לוג חדש לאישור סיום ***
+            log("Initialization function finished successfully.");
         } catch (initError) { console.error("[LinkageImproved] CRITICAL ERROR during initialization:", initError); }
     }
 
