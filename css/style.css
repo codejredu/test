@@ -354,3 +354,77 @@ main {
     box-shadow: 0 0 10px rgba(30, 144, 255, 0.7) !important;
     /* ודא שאין כאן בטעות משהו כמו display: none; או visibility: hidden; */
 }
+/* CSS לשיפור אפקט חיבור הפאזל */
+
+/* הוספת אפקט צל שמדגיש את החיבור */
+.connected-left {
+    box-shadow: -2px 0 0 2px rgba(52, 168, 83, 0.8) !important;
+}
+
+.connected-right {
+    box-shadow: 2px 0 0 2px rgba(66, 133, 244, 0.8) !important;
+}
+
+/* אינדיקטור חפיפת הפאזל - מראה את אזור החיבור */
+.overlap-indicator {
+    position: absolute;
+    width: 8px; /* רוחב זהה לקונפיגורציית PUZZLE_CONNECTOR_WIDTH */
+    height: 100%;
+    background-color: rgba(255, 193, 7, 0.4); /* צבע צהוב שקוף */
+    z-index: 100;
+    pointer-events: none;
+    border-radius: 3px;
+}
+
+/* אנימציית דופק בעת חיבור */
+@keyframes connect-pulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.9; transform: scale(1.03); box-shadow: 0 0 8px rgba(66, 133, 244, 0.7); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+.connection-animation {
+    animation: connect-pulse 0.4s ease-out;
+}
+
+/* התאמות לבלוקים מחוברים */
+.block-container.connected-left,
+.block-container.connected-right {
+    transition: all 0.3s ease-out;
+}
+
+/* שיפור הנראות של אזור הסימון בעת חיפוש יעד הצמדה */
+.snap-highlight {
+    outline: 2px dashed #4285f4 !important;
+    outline-offset: 2px;
+    box-shadow: 0 0 8px rgba(66, 133, 244, 0.5) !important;
+}
+
+.snap-target {
+    outline: 2px dashed #34a853 !important;
+    outline-offset: 2px;
+    box-shadow: 0 0 8px rgba(52, 168, 83, 0.5) !important;
+}
+
+/* שיפור המחוונים של כיוון החיבור */
+.snap-direction-left:before {
+    content: "◄";
+    position: absolute;
+    left: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #34a853;
+    font-size: 16px;
+    text-shadow: 0 0 3px rgba(255, 255, 255, 0.8);
+}
+
+.snap-direction-right:after {
+    content: "►";
+    position: absolute;
+    right: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #4285f4;
+    font-size: 16px;
+    text-shadow: 0 0 3px rgba(255, 255, 255, 0.8);
+}
