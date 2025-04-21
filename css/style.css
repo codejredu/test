@@ -7,7 +7,7 @@
     --sound-color: rgba(126, 217, 87, 0.25);     /* ירוק תפוח בהיר עם שקיפות גבוהה */
     --control-color: rgba(255, 189, 103, 0.25);   /* כתום אפרסק עם שקיפות גבוהה */
     --end-color: rgba(255, 107, 107, 0.25);       /* אדום קורל רך עם שקיפות גבוהה */
-    
+
     /* צבעים מלאים לאלמנטים אחרים שצריכים להיות פחות שקופים */
     --motion-color-solid: #66D2FF;
     --triggering-color-solid: #FFE866;
@@ -91,7 +91,7 @@ main {
     position: absolute;
     object-fit: contain;
     cursor: grab;
-    transition: all 0.1s ease-out;
+    /* transition: all 0.1s ease-out; */ /* נטרול transition לבדיקת התנגשויות */
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -164,14 +164,17 @@ main {
     margin-left: 0px;
     background-color: #f0f0f0;
     overflow-x: auto;
-    transition: background-color 0.3s ease;
+    /* transition: background-color 0.3s ease; */ /* נטרול transition לבדיקה */
 }
 
 .block-category.active {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap; /* שינוי ל-nowrap כדי שיהיו בשורה אחת */
     padding: 10px;
     border-radius: 0 10px 10px 0;
+    overflow-x: auto; /* לאפשר גלילה אופקית */
+    overflow-y: hidden; /* למנוע גלילה אנכית מיותרת */
+    align-items: center; /* יישור אנכי למרכז */
 }
 
 #programming-area {
@@ -182,6 +185,8 @@ main {
     border-radius: 10px;
     flex: 2;
     min-height: 200px;
+    position: relative; /* חשוב מאוד לאזור ההפלה והמיקום האבסולוטי */
+    overflow: auto;     /* לאפשר גלילה אם יש הרבה בלוקים */
 }
 
 .program-header {
@@ -198,13 +203,27 @@ main {
 
 #program-blocks {
     min-height: 180px;
-    border: 1px dashed #ccc;
-    padding: 10px;
-    position: relative;
+    /* border: 1px dashed #ccc; */ /* אפשר להסיר את המסגרת הזו */
+    padding: 0; /* אין צורך בפדינג פנימי אם הבלוקים אבסולוטיים */
+    position: relative; /* חשוב! */
+    width: 100%; /* לתפוס את כל הרוחב של האזור */
+    height: 100%; /* לתפוס את כל הגובה של האזור */
 }
 
+/* מיכל הבלוקים באזור התכנות - חייב להיות אבסולוטי */
 #program-blocks .block-container {
-    position: absolute;
+    position: absolute !important; /* ודא שזה אבסולוטי */
+    /* width/height יקבעו לפי התמונה או הגדרות מיוחדות */
+    margin: 0; /* הסר מרווחים */
+    cursor: grab;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    /* transition: none !important; */ /* נטרול כל אנימציית מעבר לבדיקה */
+}
+
+#program-blocks .block-container:active {
+    cursor: grabbing;
 }
 
 .logo {
@@ -215,95 +234,41 @@ main {
 }
 
 /* עיצוב לאזור האייקונים בכותרת */
-.header-icons {
-    display: flex;
-    align-items: center;
-}
+.header-icons { display: flex; align-items: center; }
+.icon { margin-left: 13px; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; cursor: pointer; border: none; outline: none; position: relative; background-color: transparent; box-shadow: none; }
+#grid-toggle { margin-left: 13px; width: 50px; height: 50px; border: none; outline: none; padding: 0; background-color: transparent; border-radius: 0; }
+.header-icon-img { width: 45px; height: 45px; object-fit: contain; border: none; outline: none; }
+.icon:hover { background-color: #f0f0f0; border-radius: 8px; }
+#grid-toggle:hover { background-color: #f0f0f0; border-radius: 8px; }
 
-/* עיצוב לכל אייקון בכותרת */
-.icon {
-    margin-left: 13px;
-    width: 50px;
-    height: 50px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    border: none;
-    outline: none;
-    position: relative;
-    background-color: transparent;
-    box-shadow: none;
-}
-
-/* עיצוב ספציפי לאייקון הרשת (grid) */
-#grid-toggle {
-    margin-left: 13px;
-    width: 50px;
-    height: 50px;
-    border: none;
-    outline: none;
-    padding: 0;
-    background-color: transparent;
-    border-radius: 0;
-}
-
-/* עיצוב לתמונות בתוך האייקונים */
-.header-icon-img {
-    width: 45px;
-    height: 45px;
-    object-fit: contain;
-    border: none;
-    outline: none;
-}
-
-/* עיצוב כשהעכבר מרחף מעל האייקון */
-.icon:hover {
-    background-color: #f0f0f0;
-    border-radius: 8px;
-}
-
-#grid-toggle:hover {
-    background-color: #f0f0f0;
-    border-radius: 8px;
-}
-
-/* סגנון לתמונות SVG של הבלוקים - הסרת רקע */
+/* סגנון לתמונות SVG של הבלוקים */
 .block-svg-image {
+    /* גודל התמונה יכול להישאר קבוע או להשתנות לפי סוג הבלוק */
     width: 100px;
     height: 80px;
     user-select: none;
     pointer-events: none;
     -webkit-user-drag: none;
     background-color: transparent !important;
+    display: block; /* למנוע רווחים מתחת לתמונה */
 }
 
-/* עדכון מיכל הבלוק - הסרת הרקע המלבני */
-#block-palette .block-container,
-#programming-area .block-container {
-    position: relative;
-    width: 100px;
-    height: 80px;
-    margin: 8px;
+/* עדכון מיכל הבלוק בפלטה - שיהיה לו גודל ברור */
+#block-palette .block-container {
+    position: relative; /* או static, תלוי איך הפלטה בנויה */
+    width: auto; /* רוחב אוטומטי לפי התוכן */
+    height: auto; /* גובה אוטומטי */
+    margin: 5px; /* מרווח קטן יותר בפלטה */
     cursor: grab;
-    background-color: transparent !important; /* רקע שקוף */
-    box-shadow: none !important; /* הסרת הצל */
-    border: none !important; /* הסרת מסגרת אם קיימת */
+    display: inline-block; /* להציג בשורה */
+    vertical-align: top;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
 }
 
-#block-palette .block-container:active,
-#programming-area .block-container:active {
-    cursor: grabbing;
-}
+#block-palette .block-container:active { cursor: grabbing; }
 
-/* הסרת רקעים נוספים שעלולים להיות */
-#block-palette .block-container::before,
-#block-palette .block-container::after,
-#programming-area .block-container::before,
-#programming-area .block-container::after {
-    display: none !important;
-    background: transparent !important;
-}
 
 /* סגנון מיוחד לבלוק repeat */
 #block-palette .block-container[data-type="repeat"] .block-svg-image,
@@ -311,47 +276,38 @@ main {
     width: 256px !important;
     height: 118px !important;
 }
-
 #block-palette .block-container[data-type="repeat"],
 #programming-area .block-container[data-type="repeat"] {
     width: 256px !important;
     height: 118px !important;
-    background-color: transparent !important;
 }
 
-/* צבעי רקע לקטגוריות השונות */
-.block-category[data-category="triggering"].active {
-    background-color: var(--triggering-color) !important;
+
+/* צבעי רקע לקטגוריות השונות בפלטה */
+.block-category[data-category="triggering"].active { background-color: var(--triggering-color) !important; }
+.block-category[data-category="motion"].active { background-color: var(--motion-color) !important; }
+.block-category[data-category="looks"].active { background-color: var(--looks-color) !important; }
+.block-category[data-category="sound"].active { background-color: var(--sound-color) !important; }
+.block-category[data-category="control"].active { background-color: var(--control-color) !important; }
+.block-category[data-category="end"].active { background-color: var(--end-color) !important; }
+
+.block-category.active { opacity: 1; }
+
+
+/* --- סגנונות ההצמדה --- */
+
+/* הילה כחולה ישנה (כרגע לא בשימוש ב-JS, אפשר למחוק או להשאיר) */
+.snap-highlight {
+    outline: 3px dashed dodgerblue !important;
+    outline-offset: 2px;
+    box-shadow: 0 0 10px rgba(30, 144, 255, 0.7) !important;
 }
 
-.block-category[data-category="motion"].active {
-    background-color: var(--motion-color) !important;
-}
-
-.block-category[data-category="looks"].active {
-    background-color: var(--looks-color) !important;
-}
-
-.block-category[data-category="sound"].active {
-    background-color: var(--sound-color) !important;
-}
-
-.block-category[data-category="control"].active {
-    background-color: var(--control-color) !important;
-}
-
-.block-category[data-category="end"].active {
-    background-color: var(--end-color) !important;
-}
-
-/* הסרת שקיפות נוספת שהייתה קיימת */
-.block-category.active {
-    opacity: 1; /* אין צורך בשקיפות נוספת כי הצבעים כבר מוגדרים עם שקיפות */
-}
-
-/* הדגשה צהובה לבלוק הנגרר בעת קרבה גבוהה */
+/* *** הכלל החדש להילה הצהובה השקופה *** */
 .snap-highlight-yellow {
-    /* ... outline ... */
-    box-shadow: 0 0 12px rgba(255, 215, 0, 0.9) !important; /* שקיפות נמוכה לצל */
-    background-color: rgba(255, 215, 0, 0.3) !important;  /* שקיפות בינונית לרקע */
+    outline: 3px dashed gold !important;        /* מסגרת צהובה מקווקוות */
+    outline-offset: 3px;                        /* הרחקה קלה של המסגרת */
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.8) !important; /* צל צהוב בולט */
+    background-color: rgba(255, 215, 0, 0.3) !important;   /* רקע צהוב עם 30% אטימות (יותר בולט) */
+    border-radius: 5px; /* עיגול פינות קל להילה */
 }
