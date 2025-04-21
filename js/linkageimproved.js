@@ -1,6 +1,6 @@
 // ========================================================================
-// Block Linkage System using Transform (Pixel Offset) - FIXED & IMPROVED
-// Version: TRANSFORM-BASED CONNECTION v2
+// Block Linkage System using Transform - FIXED DIRECTION
+// Version: TRANSFORM-BASED CONNECTION v3
 // ========================================================================
 (function() {
     // קונפיגורציה
@@ -19,31 +19,27 @@
     let initialElementY = 0;
     let programmingArea = null;
     let nextBlockId = 1;
-    let snapDirection = 'right';
-    
-    // מניעת תקיעה
-    let isProcessingConnection = false;
-    let lastConnectionTime = 0;
+    let snapDirection = 'none';
     
     // ========================================================================
     // אתחול המערכת
     // ========================================================================
-    function initImprovedTransformSystem() {
-        console.log("[Transform v2] אתחול מערכת חיבורים מבוססת Transform משופרת...");
+    function initFixedDirectionSystem() {
+        console.log("[FixedDirection] אתחול מערכת חיבורים מתוקנת...");
         
         // איתור אזור התכנות
         programmingArea = document.getElementById("program-blocks");
         if (!programmingArea) {
-            console.error("[Transform v2] שגיאה: לא נמצא אזור #program-blocks");
+            console.error("[FixedDirection] שגיאה: לא נמצא אזור #program-blocks");
             return;
         }
         
         // הוספת סגנונות
-        addImprovedTransformStyles();
+        addFixedDirectionStyles();
         
         // הגדרת מאזין ללחיצת עכבר
         programmingArea.addEventListener('mousedown', handleMouseDown);
-        console.log("[Transform v2] מאזין mousedown נוסף בהצלחה");
+        console.log("[FixedDirection] מאזין mousedown נוסף בהצלחה");
         
         // הכנת בלוקים קיימים
         prepareExistingBlocks();
@@ -55,15 +51,15 @@
             }
         });
         
-        console.log("[Transform v2] מערכת אותחלה בהצלחה");
+        console.log("[FixedDirection] מערכת אותחלה בהצלחה");
     }
     
-    // הוספת סגנונות CSS הנדרשים למערכת
-    function addImprovedTransformStyles() {
-        if (document.getElementById('transform-v2-styles')) return;
+    // הוספת סגנונות CSS
+    function addFixedDirectionStyles() {
+        if (document.getElementById('fixed-direction-styles')) return;
         
         const styleElement = document.createElement('style');
-        styleElement.id = 'transform-v2-styles';
+        styleElement.id = 'fixed-direction-styles';
         styleElement.textContent = `
             .snap-highlight {
                 box-shadow: 0 0 0 3px #4285f4 !important;
@@ -85,7 +81,7 @@
             
             .block-container {
                 cursor: grab;
-                transition: transform 0.25s ease-out;
+                transition: all 0.25s ease-out;
             }
             
             .block-container.dragging {
@@ -103,10 +99,30 @@
                 50% { opacity: 0.8; transform: scale(1.05); }
                 100% { opacity: 1; transform: scale(1); }
             }
+            
+            .snap-direction-left:before {
+                content: "◄";
+                position: absolute;
+                left: -15px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #34a853;
+                font-size: 14px;
+            }
+            
+            .snap-direction-right:after {
+                content: "►";
+                position: absolute;
+                right: -15px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: #4285f4;
+                font-size: 14px;
+            }
         `;
         
         document.head.appendChild(styleElement);
-        console.log("[Transform v2] סגנונות נוספו");
+        console.log("[FixedDirection] סגנונות נוספו");
     }
     
     // הכנת בלוקים קיימים
@@ -117,16 +133,13 @@
                 block.id = generateUniqueBlockId();
             }
             
-            // איפוס כל טרנספורם קיים
-            block.style.transform = '';
-            
             // וידוא שהבלוק במיקום אבסולוטי
             if (block.style.position !== 'absolute') {
                 block.style.position = 'absolute';
             }
         });
         
-        console.log(`[Transform v2] הוכנו ${blocks.length} בלוקים קיימים`);
+        console.log(`[FixedDirection] הוכנו ${blocks.length} בלוקים קיימים`);
     }
     
     // יצירת מזהה ייחודי לבלוק
@@ -136,13 +149,11 @@
     
     // פונקציית התאוששות ממצב תקוע
     function recoverFromStuckState() {
-        console.log("[Transform v2] מבצע ניקוי מצב תקוע...");
-        
-        isProcessingConnection = false;
+        console.log("[FixedDirection] מבצע ניקוי מצב תקוע...");
         
         // ניקוי הדגשות וסימונים
-        document.querySelectorAll('.snap-highlight, .snap-target, .dragging, .connection-animation').forEach(el => {
-            el.classList.remove('snap-highlight', 'snap-target', 'dragging', 'connection-animation');
+        document.querySelectorAll('.snap-highlight, .snap-target, .dragging, .connection-animation, .snap-direction-left, .snap-direction-right').forEach(el => {
+            el.classList.remove('snap-highlight', 'snap-target', 'dragging', 'connection-animation', 'snap-direction-left', 'snap-direction-right');
         });
         
         // ודא שאירועי העכבר כבר לא מאזינים
@@ -154,19 +165,13 @@
         draggedElement = null;
         potentialSnapTarget = null;
         
-        console.log("[Transform v2] ניקוי מצב הושלם");
+        console.log("[FixedDirection] ניקוי מצב הושלם");
     }
     
     // ========================================================================
     // טיפול באירועי עכבר
     // ========================================================================
     function handleMouseDown(event) {
-        // אם אנחנו באמצע עיבוד חיבור, יש לדלג
-        if (isProcessingConnection) {
-            console.log("[Transform v2] דילוג על אירוע mousedown כי מתבצע חיבור");
-            return;
-        }
-        
         const targetBlock = event.target.closest('.block-container');
         if (!targetBlock || !programmingArea) return;
         
@@ -190,27 +195,15 @@
         initialElementX = parseInt(computedStyle.left) || 0;
         initialElementY = parseInt(computedStyle.top) || 0;
         
-        // טפל בטרנספורם קיים אם יש
-        const currentTransform = computedStyle.transform;
-        if (currentTransform && currentTransform !== 'none') {
-            // איפוס טרנספורם
-            draggedElement.style.transform = '';
-            
-            // ניתוק קשרים קיימים
-            breakConnections(draggedElement);
-        }
-        
-        // וידוא שהבלוק במיקום אבסולוטי
-        if (draggedElement.style.position !== 'absolute') {
-            draggedElement.style.position = 'absolute';
-        }
+        // נתק קשרים קיימים
+        disconnectBlock(draggedElement);
         
         // הוספת מאזינים זמניים
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
         
         if (ENABLE_LOGGING) {
-            console.log(`[Transform v2] התחלת גרירה: ${draggedElement.id} ממיקום (${initialElementX}, ${initialElementY})`);
+            console.log(`[FixedDirection] התחלת גרירה: ${draggedElement.id} ממיקום (${initialElementX}, ${initialElementY})`);
         }
     }
     
@@ -244,21 +237,22 @@
         
         // הסרת מחלקת גרירה
         currentDraggedElement.classList.remove('dragging');
+        currentDraggedElement.classList.remove('snap-direction-left', 'snap-direction-right');
         
         // ניקוי הדגשות
         clearSnapHighlights();
         
         // בדיקה אם יש יעד הצמדה
-        if (currentTarget && programmingArea && programmingArea.contains(currentTarget)) {
+        if (currentTarget && programmingArea && programmingArea.contains(currentTarget) && currentDirection !== 'none') {
             if (ENABLE_LOGGING) {
-                console.log(`[Transform v2] ביצוע הצמדה - בלוק: ${currentDraggedElement.id}, יעד: ${currentTarget.id}, כיוון: ${currentDirection}`);
+                console.log(`[FixedDirection] ביצוע הצמדה - בלוק: ${currentDraggedElement.id}, יעד: ${currentTarget.id}, כיוון: ${currentDirection}`);
             }
             
-            // ביצוע חיבור עם טרנספורם
-            connectBlocksWithImprovedTransform(currentDraggedElement, currentTarget, currentDirection);
+            // ביצוע חיבור מתוקן
+            connectBlocksInCorrectDirection(currentDraggedElement, currentTarget, currentDirection);
         } else {
             if (ENABLE_LOGGING) {
-                console.log(`[Transform v2] אין יעד הצמדה - הבלוק נשאר במיקומו הנוכחי`);
+                console.log(`[FixedDirection] אין יעד הצמדה - הבלוק נשאר במיקומו הנוכחי`);
             }
         }
         
@@ -266,6 +260,7 @@
         isDragging = false;
         draggedElement = null;
         potentialSnapTarget = null;
+        snapDirection = 'none';
     }
     
     // ========================================================================
@@ -275,8 +270,12 @@
         // ניקוי הדגשות קודמות
         clearSnapHighlights();
         potentialSnapTarget = null;
+        snapDirection = 'none';
         
         if (!isDragging || !draggedElement || !programmingArea) return;
+        
+        // הסרת סימוני כיוון קודמים
+        draggedElement.classList.remove('snap-direction-left', 'snap-direction-right');
         
         const dragRect = draggedElement.getBoundingClientRect();
         const blocks = programmingArea.querySelectorAll('.block-container');
@@ -299,7 +298,7 @@
             if (distanceFromRight < closestDistance) {
                 closestDistance = distanceFromRight;
                 bestTarget = block;
-                snapDirection = 'right'; // הבלוק הנגרר יהיה מימין לבלוק היעד
+                snapDirection = 'toLeft';  // הבלוק הנגרר יזוז שמאלה אל הבלוק היעד
             }
             
             // בדיקת מרחק אופקי - האם הבלוק הנגרר קרוב משמאל לבלוק הנבדק
@@ -307,7 +306,7 @@
             if (distanceFromLeft < closestDistance) {
                 closestDistance = distanceFromLeft;
                 bestTarget = block;
-                snapDirection = 'left'; // הבלוק הנגרר יהיה משמאל לבלוק היעד
+                snapDirection = 'toRight';  // הבלוק הנגרר יזוז ימינה אל הבלוק היעד
             }
         });
         
@@ -317,8 +316,15 @@
             draggedElement.classList.add('snap-highlight');
             bestTarget.classList.add('snap-target');
             
+            // הוסף סימון כיוון חזותי
+            if (snapDirection === 'toLeft') {
+                draggedElement.classList.add('snap-direction-left');
+            } else if (snapDirection === 'toRight') {
+                draggedElement.classList.add('snap-direction-right');
+            }
+            
             if (ENABLE_LOGGING) {
-                console.log(`[Transform v2] נמצא יעד הצמדה: ${bestTarget.id}, כיוון: ${snapDirection}, מרחק: ${closestDistance.toFixed(2)}px`);
+                console.log(`[FixedDirection] נמצא יעד הצמדה: ${bestTarget.id}, כיוון: ${snapDirection}, מרחק: ${closestDistance.toFixed(2)}px`);
             }
         }
     }
@@ -330,8 +336,10 @@
         });
     }
     
-    // ניתוק חיבורים קיימים
-    function breakConnections(block) {
+    // ניתוק בלוק מהחיבורים שלו
+    function disconnectBlock(block) {
+        if (!block) return;
+        
         // בדיקה אם הבלוק מחובר לבלוק שמאלי
         const leftBlockId = block.dataset.leftBlockId;
         if (leftBlockId) {
@@ -339,13 +347,13 @@
             if (leftBlock) {
                 delete leftBlock.dataset.rightBlockId;
                 leftBlock.classList.remove('connected-left');
+                
+                // איפוס המיקום של הבלוק הנוכחי
+                block.style.left = block.getBoundingClientRect().left + 'px';
+                block.style.top = block.getBoundingClientRect().top + 'px';
             }
             delete block.dataset.leftBlockId;
             block.classList.remove('connected-right');
-            
-            if (ENABLE_LOGGING) {
-                console.log(`[Transform v2] נותק חיבור עם בלוק שמאלי: ${leftBlockId}`);
-            }
         }
         
         // בדיקה אם הבלוק מחובר לבלוק ימני
@@ -358,93 +366,79 @@
             }
             delete block.dataset.rightBlockId;
             block.classList.remove('connected-left');
-            
-            if (ENABLE_LOGGING) {
-                console.log(`[Transform v2] נותק חיבור עם בלוק ימני: ${rightBlockId}`);
-            }
+        }
+        
+        // איפוס כל טרנספורם
+        block.style.transform = '';
+        
+        if (ENABLE_LOGGING && (leftBlockId || rightBlockId)) {
+            console.log(`[FixedDirection] ניתוק בלוק ${block.id} מהחיבורים שלו`);
         }
     }
     
     // ========================================================================
-    // חיבור בלוקים עם טרנספורם משופר
+    // חיבור בלוקים עם כיוון נכון
     // ========================================================================
-    function connectBlocksWithImprovedTransform(draggedBlock, targetBlock, direction) {
-        // וידוא שהבלוקים תקפים
-        if (!draggedBlock || !targetBlock || !programmingArea.contains(draggedBlock) || !programmingArea.contains(targetBlock)) {
-            console.error("[Transform v2] בלוקים לא תקפים לחיבור");
-            return;
-        }
-        
-        // וידוא שאנחנו לא באמצע חיבור אחר
-        if (isProcessingConnection) {
-            console.warn("[Transform v2] דילוג על חיבור כי כבר מתבצע חיבור אחר");
-            return;
-        }
-        
-        // וידוא שעבר מספיק זמן מהחיבור האחרון
-        const now = Date.now();
-        if (now - lastConnectionTime < 300) {
-            console.warn("[Transform v2] דילוג על חיבור כי לא עבר מספיק זמן מהחיבור האחרון");
-            return;
-        }
-        
-        lastConnectionTime = now;
-        isProcessingConnection = true;
+    function connectBlocksInCorrectDirection(draggedBlock, targetBlock, direction) {
+        if (!draggedBlock || !targetBlock) return;
         
         try {
-            // קביעת סדר הבלוקים לפי כיוון החיבור
-            let leftBlock, rightBlock;
+            if (ENABLE_LOGGING) {
+                console.log(`[FixedDirection] התחלת חיבור בכיוון: ${direction}`);
+                console.log(`  לפני חיבור - נגרר: (${draggedBlock.offsetLeft}, ${draggedBlock.offsetTop}), יעד: (${targetBlock.offsetLeft}, ${targetBlock.offsetTop})`);
+            }
             
-            if (direction === 'right') {
-                // הבלוק הנגרר יהיה מימין לבלוק היעד
-                leftBlock = targetBlock;
-                rightBlock = draggedBlock;
-            } else {
-                // הבלוק הנגרר יהיה משמאל לבלוק היעד
+            // מיקום וגודל הבלוקים לפני החיבור
+            const draggedRect = draggedBlock.getBoundingClientRect();
+            const targetRect = targetBlock.getBoundingClientRect();
+            
+            // ניתוק כל חיבור קודם
+            disconnectBlock(draggedBlock);
+            disconnectBlock(targetBlock);
+            
+            let leftBlock, rightBlock;
+            let newX, newY;
+            
+            if (direction === 'toRight') {
+                // הבלוק הנגרר צריך לזוז ימינה - יהיה משמאל ליעד
                 leftBlock = draggedBlock;
                 rightBlock = targetBlock;
+                
+                // חישוב מיקום חדש לבלוק הימני (היעד)
+                newX = draggedBlock.offsetLeft + draggedRect.width - PUZZLE_CONNECTOR_WIDTH;
+                newY = draggedBlock.offsetTop;
+                
+                if (ENABLE_LOGGING) {
+                    console.log(`  [toRight] הבלוק ${rightBlock.id} יזוז למיקום (${newX}, ${newY})`);
+                }
+                
+                // עדכון מיקום הבלוק הימני
+                rightBlock.style.left = `${newX}px`;
+                rightBlock.style.top = `${newY}px`;
+                
+            } else if (direction === 'toLeft') {
+                // הבלוק הנגרר צריך לזוז שמאלה - יהיה מימין ליעד
+                leftBlock = targetBlock;
+                rightBlock = draggedBlock;
+                
+                // חישוב מיקום חדש לבלוק הימני (הנגרר)
+                newX = targetBlock.offsetLeft + targetRect.width - PUZZLE_CONNECTOR_WIDTH;
+                newY = targetBlock.offsetTop;
+                
+                if (ENABLE_LOGGING) {
+                    console.log(`  [toLeft] הבלוק ${rightBlock.id} יזוז למיקום (${newX}, ${newY})`);
+                }
+                
+                // עדכון מיקום הבלוק הימני
+                rightBlock.style.left = `${newX}px`;
+                rightBlock.style.top = `${newY}px`;
             }
             
-            // רישום מידע לפני חיבור
-            const leftRect = leftBlock.getBoundingClientRect();
-            const rightRect = rightBlock.getBoundingClientRect();
+            // יצירת קשר לוגי בין הבלוקים
+            leftBlock.dataset.rightBlockId = rightBlock.id;
+            rightBlock.dataset.leftBlockId = leftBlock.id;
             
-            if (ENABLE_LOGGING) {
-                console.log(`[Transform v2] לפני חיבור - שמאל: (${leftRect.left}, ${leftRect.top}), ימין: (${rightRect.left}, ${rightRect.top})`);
-            }
-            
-            // ניתוק כל חיבור קיים
-            breakConnections(leftBlock);
-            breakConnections(rightBlock);
-            
-            // חישוב הסט מעודכן - בבוק ימני צריך להיות מוזז כך שיהיה בדיוק מימין לבלוק שמאלי עם חפיפה
-            // נחשב את המרחק בין הקצה הימני של השמאלי לקצה השמאלי של הימני
-            // ניקח בחשבון את תחילת הבלוק (left) ואת רוחב הבלוק
-            const leftBlockLeft = parseInt(leftBlock.style.left) || 0;
-            const leftBlockWidth = leftRect.width;
-            const rightBlockLeft = parseInt(rightBlock.style.left) || 0;
-            
-            // המיקום הרצוי של הבלוק הימני: תחילת השמאלי + רוחב השמאלי - רוחב החפיפה
-            const desiredRightBlockLeft = leftBlockLeft + leftBlockWidth - PUZZLE_CONNECTOR_WIDTH;
-            
-            // ההסט הדרוש: המיקום הרצוי פחות המיקום הנוכחי
-            const offsetX = desiredRightBlockLeft - rightBlockLeft;
-            
-            // חישוב הסט האנכי - נרצה שהבלוקים יהיו באותו גובה
-            const leftBlockTop = parseInt(leftBlock.style.top) || 0;
-            const rightBlockTop = parseInt(rightBlock.style.top) || 0;
-            const offsetY = leftBlockTop - rightBlockTop;
-            
-            if (ENABLE_LOGGING) {
-                console.log(`[Transform v2] חישוב הסט: X=${offsetX}px, Y=${offsetY}px`);
-                console.log(`[Transform v2] מיקום רצוי לבלוק ימני: ${desiredRightBlockLeft}px`);
-            }
-            
-            // הגדרת טרנספורם לבלוק הימני
-            rightBlock.style.transition = 'transform 0.25s ease-out';
-            rightBlock.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
-            
-            // סימון חזותי לבלוקים מחוברים
+            // הוספת סימונים חזותיים
             leftBlock.classList.add('connected-left');
             rightBlock.classList.add('connected-right');
             
@@ -452,50 +446,31 @@
             leftBlock.classList.add('connection-animation');
             rightBlock.classList.add('connection-animation');
             
-            // יצירת קשר לוגי בין הבלוקים
-            leftBlock.dataset.rightBlockId = rightBlock.id;
-            rightBlock.dataset.leftBlockId = leftBlock.id;
-            
-            // הסרת אנימציית החיבור לאחר סיום
+            // הסרת אנימציית החיבור לאחר זמן קצר
             setTimeout(() => {
                 leftBlock.classList.remove('connection-animation');
                 rightBlock.classList.remove('connection-animation');
                 
-                // סיום עיבוד החיבור
-                isProcessingConnection = false;
-                
                 if (ENABLE_LOGGING) {
-                    const newRightRect = rightBlock.getBoundingClientRect();
-                    console.log(`[Transform v2] לאחר חיבור - ימין: (${newRightRect.left}, ${newRightRect.top})`);
-                    console.log(`[Transform v2] חיבור הושלם בהצלחה`);
+                    console.log(`  אחרי חיבור - שמאל: (${leftBlock.offsetLeft}, ${leftBlock.offsetTop}), ימין: (${rightBlock.offsetLeft}, ${rightBlock.offsetTop})`);
+                    console.log(`[FixedDirection] חיבור הושלם בהצלחה`);
                 }
             }, 300);
             
         } catch (e) {
-            console.error("[Transform v2] שגיאה בחיבור בלוקים:", e);
-            
-            // איפוס מצב במקרה של שגיאה
-            isProcessingConnection = false;
-            
-            // ניסיון לנקות את הטרנספורם
-            if (draggedBlock) {
-                draggedBlock.style.transform = '';
-            }
+            console.error("[FixedDirection] שגיאה בחיבור בלוקים:", e);
         }
     }
     
     // ========================================================================
     // API ציבורי
     // ========================================================================
-    window.registerNewBlockForImprovedTransform = function(newBlockElement){
+    window.registerNewBlockForFixedDirection = function(newBlockElement){
         if (!newBlockElement) return;
         
         if (!newBlockElement.id) {
             newBlockElement.id = generateUniqueBlockId();
         }
-        
-        // איפוס טרנספורם
-        newBlockElement.style.transform = '';
         
         // וידוא שהבלוק במיקום אבסולוטי
         if (newBlockElement.style.position !== 'absolute') {
@@ -503,37 +478,37 @@
         }
         
         if (ENABLE_LOGGING) {
-            console.log(`[Transform v2] בלוק חדש נרשם: ${newBlockElement.id}`);
+            console.log(`[FixedDirection] בלוק חדש נרשם: ${newBlockElement.id}`);
         }
     };
     
     // פונקציה לחיבור שני בלוקים באופן חיצוני
-    window.connectBlocksWithTransform = function(block1, block2) {
-        if (!block1 || !block2) {
-            console.error("[Transform v2] ניסיון לחבר בלוקים לא תקפים");
+    window.connectBlocksFixed = function(leftBlock, rightBlock) {
+        if (!leftBlock || !rightBlock) {
+            console.error("[FixedDirection] ניסיון לחבר בלוקים לא תקפים");
             return;
         }
         
-        // חיבור עם בלוק1 משמאל לבלוק2
-        connectBlocksWithImprovedTransform(block2, block1, 'right');
+        // המתודה דואגת שהבלוק הימני ימוקם נכון ביחס לשמאלי
+        connectBlocksInCorrectDirection(rightBlock, leftBlock, 'toLeft');
     };
     
     // החלף את מערכת החיבורים הנוכחית
     if (window.registerNewBlockForLinkage) {
-        console.log("[Transform v2] מחליף את מערכת החיבורים הקודמת");
-        window.registerNewBlockForLinkage = window.registerNewBlockForImprovedTransform;
+        console.log("[FixedDirection] מחליף את מערכת החיבורים הקודמת");
+        window.registerNewBlockForLinkage = window.registerNewBlockForFixedDirection;
     }
     
     // הוסף פונקציית התאוששות לחלון
-    window.recoverFromTransformV2StuckState = recoverFromStuckState;
+    window.recoverFromFixedDirectionStuckState = recoverFromStuckState;
     
     // הפעלת המערכת
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initImprovedTransformSystem);
+        document.addEventListener('DOMContentLoaded', initFixedDirectionSystem);
     } else {
-        initImprovedTransformSystem();
+        initFixedDirectionSystem();
     }
     
 })();
 
-console.log("Improved transform-based linkage system loaded");
+console.log("Fixed direction linkage system loaded");
