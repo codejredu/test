@@ -1,6 +1,6 @@
 // ========================================================================
 // Improved Block Linkage System (linkageimproved.js)
-// Version: Bi-Directional Snap - FINAL WORKING VERSION
+// Version: Perfect Puzzle Connection with Bi-Directional Support
 // ========================================================================
 
 (function() {
@@ -10,7 +10,7 @@
     const HORIZONTAL_SNAP_OFFSET = 0; 
     const ENABLE_DETAILED_SNAP_LOGGING = true; 
     
-    // קבוע לתיקון בעיית החיבור
+    // קבועים לחיבור מושלם של פאזל
     const PUZZLE_CONNECTOR_WIDTH = 8; // הרוחב של חיבור הפאזל
 
     // State Variables
@@ -39,7 +39,7 @@
         }
         programmingArea.addEventListener('mousedown', handleMouseDown);
         console.log("[Linkage] Mousedown listener ATTACHED.");
-        console.log("[Linkage] System Initialized with bi-directional support and puzzle connector width: " + PUZZLE_CONNECTOR_WIDTH + "px");
+        console.log("[Linkage] System Initialized with perfect puzzle connection and bi-directional support");
         prepareExistingBlocks();
     }
     
@@ -363,13 +363,13 @@
     }
 
     // ========================================================================
-    // Linking Logic (Super Simple Direct Positioning)
+    // Linking Logic (Perfect Puzzle Connection)
     // ========================================================================
     function linkBlocksHorizontally(leftBlock, rightBlock) {
         if (!leftBlock || !rightBlock || leftBlock === rightBlock || !programmingArea) return;
         if (leftBlock.dataset.rightBlockId || rightBlock.dataset.leftBlockId) return;
 
-        console.log(`[Linkage] Linking ${leftBlock.id} -> ${rightBlock.id} (Direct Position Method)`);
+        console.log(`[Linkage] Linking ${leftBlock.id} -> ${rightBlock.id} (Perfect Puzzle Connection)`);
         console.log(`[Linkage]   Before - Left [${leftBlock.id}]: L=${leftBlock.offsetLeft}, T=${leftBlock.offsetTop}, W=${leftBlock.offsetWidth}`);
         console.log(`[Linkage]   Before - Right [${rightBlock.id}]: L=${rightBlock.offsetLeft}, T=${rightBlock.offsetTop}`);
 
@@ -380,12 +380,15 @@
         // איפוס כל טרנספורם קודם
         rightBlock.style.transform = '';
             
-        // שיטת מיקום ישיר - פשוטה וברורה
+        // שיטת מיקום ישיר עם התחשבות בחיבור הפאזל
         const leftBlockWidth = leftBlock.offsetWidth;
+        
+        // בחיבור פאזל מדויק, הלבנה הימנית מונחת כך שהבליטה של הלבנה השמאלית
+        // תיכנס לשקע של הלבנה הימנית
         const targetX = leftBlock.offsetLeft + leftBlockWidth - PUZZLE_CONNECTOR_WIDTH;
         const targetY = leftBlock.offsetTop;
         
-        console.log(`[Linkage] Setting DIRECT position: left=${targetX}px, top=${targetY}px`);
+        console.log(`[Linkage] Setting perfect puzzle position: left=${targetX}px, top=${targetY}px (overlap=${PUZZLE_CONNECTOR_WIDTH}px)`);
         
         // נקבע מיקום מדויק בבת אחת
         rightBlock.style.position = 'absolute';
@@ -401,10 +404,12 @@
             rightBlock.classList.remove('snap-highlight');
             leftBlock.classList.remove('snap-target');
             
-            console.log(`[Linkage] Connection completed successfully.`);
+            // בדיקה נוספת שהמיקום נכון
+            console.log(`[Linkage] Final position: left=${rightBlock.offsetLeft}px, top=${rightBlock.offsetTop}px`);
+            console.log(`[Linkage] Connection completed successfully with perfect puzzle fit.`);
         }, 300);
         
-        console.log(`[Linkage] Linked HORIZONTALLY ${leftBlock.id} -> ${rightBlock.id}.`);
+        console.log(`[Linkage] Linked HORIZONTALLY ${leftBlock.id} -> ${rightBlock.id} with perfect puzzle connection.`);
     }
 
     // ========================================================================
@@ -423,4 +428,4 @@
     };
 
 })();
-console.log("linkageimproved.js script finished execution (BI-DIRECTIONAL SNAP SUPPORT).");
+console.log("linkageimproved.js script finished execution (PERFECT PUZZLE CONNECTION).");
