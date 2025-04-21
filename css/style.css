@@ -354,3 +354,9 @@ main {
     box-shadow: 0 0 10px rgba(30, 144, 255, 0.7) !important;
     /* ודא שאין כאן בטעות משהו כמו display: none; או visibility: hidden; */
 }
+/* הדגשה צהובה לבלוק הנגרר בעת קרבה גבוהה */
+.snap-highlight-yellow {
+    outline: 3px dashed gold !important; /* צבע צהוב/זהב */
+    outline-offset: 3px; /* היסט קצת יותר גדול אולי? */
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.8) !important; /* צל צהוב */
+}
