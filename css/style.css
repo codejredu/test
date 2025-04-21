@@ -373,7 +373,7 @@ main {
 #program-blocks .connected-block,
 #program-blocks .has-connected-block {
   /* אפקט ויזואלי עדין מאוד כדי לסמן שהם חלק מרצף */
-  opacity: 0.75; /* שקיפות קלה */
+  opacity: 0.9; /* שקיפות קלה */
   /* אפשרות נוספת: צל עדין מאוד שיראה שהם "יושבים" יחד */
   /* filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1)); */
 }
