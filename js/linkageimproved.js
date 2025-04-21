@@ -1,563 +1,273 @@
 // ========================================================================
-// Block Linkage System using Transform - FIXED DIRECTION
-// Version: TRANSFORM-BASED CONNECTION v4
+// Improved Block Linkage System (linkageimproved.js)
+// Version: Puzzle Connector Snapping Logic
 // ========================================================================
+
 (function() {
-    // קונפיגורציה
-    const PUZZLE_CONNECTOR_WIDTH = 8; // רוחב החיבור בפיקסלים
-    const VERTICAL_ALIGNMENT_TOLERANCE = 30; // מרחק אנכי מקסימלי לחיבור
-    const HORIZONTAL_SNAP_DISTANCE = 40; // מרחק אופקי מקסימלי לחיבור
-    const ENABLE_LOGGING = true; // האם להציג לוגים מפורטים
-    
-    // משתני מצב
-    let isDragging = false;
-    let draggedElement = null;
-    let potentialSnapTarget = null;
-    let initialMouseX = 0;
-    let initialMouseY = 0;
-    let initialElementX = 0;
-    let initialElementY = 0;
-    let programmingArea = null;
+    // Configuration
+    const PUZZLE_CONNECTOR_WIDTH = 8; // רוחב אזור השקע/בליטה (בערך)
+    const HORIZONTAL_SNAP_DISTANCE = 20; // מרחק אופקי קטן יותר להצמדה מדויקת יותר
+    const VERTICAL_ALIGNMENT_TOLERANCE = 15; // יישור אנכי הדוק יותר
+    const ENABLE_LOGGING = true; // הפעלת לוגים לבדיקה
+
+    // State Variables
+    let isDragging = false; let draggedElement = null;
+    let potentialSnapTarget = null; // הבלוק משמאל שאליו אולי נצמד
+    let initialMouseX = 0; let initialMouseY = 0;
+    let initialElementX = 0; let initialElementY = 0; let programmingArea = null;
     let nextBlockId = 1;
-    let snapDirection = 'none';
-    
+
     // ========================================================================
-    // אתחול המערכת
+    // Initialization
     // ========================================================================
-    function initFixedDirectionSystem() {
-        console.log("[FixedDirection] אתחול מערכת חיבורים מתוקנת...");
-        
-        // איתור אזור התכנות
+    function initializeLinkageSystem() {
+        if (ENABLE_LOGGING) console.log("[PuzzleLink] Attempting Init...");
         programmingArea = document.getElementById("program-blocks");
-        if (!programmingArea) {
-            console.error("[FixedDirection] שגיאה: לא נמצא אזור #program-blocks");
-            return;
-        }
-        
-        // הוספת סגנונות
-        addFixedDirectionStyles();
-        
-        // הגדרת מאזין ללחיצת עכבר
+        if (!programmingArea) { console.error("[PuzzleLink] ERROR: #program-blocks not found!"); return; }
         programmingArea.addEventListener('mousedown', handleMouseDown);
-        console.log("[FixedDirection] מאזין mousedown נוסף בהצלחה");
-        
-        // הכנת בלוקים קיימים
+        if (ENABLE_LOGGING) console.log("[PuzzleLink] System Initialized.");
         prepareExistingBlocks();
-        
-        // הוספת מאזין חירום
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                recoverFromStuckState();
-            }
-        });
-        
-        console.log("[FixedDirection] מערכת אותחלה בהצלחה");
     }
-    
-    // הוספת סגנונות CSS
-    function addFixedDirectionStyles() {
-        if (document.getElementById('fixed-direction-styles')) return;
-        
-        const styleElement = document.createElement('style');
-        styleElement.id = 'fixed-direction-styles';
-        styleElement.textContent = `
-            .snap-highlight {
-                box-shadow: 0 0 0 3px #4285f4 !important;
-                transition: box-shadow 0.2s ease-in-out;
-            }
-            
-            .snap-target {
-                box-shadow: 0 0 0 3px #34a853 !important;
-                transition: box-shadow 0.2s ease-in-out;
-            }
-            
-            .connected-left {
-                box-shadow: -2px 0 0 1px #34a853 !important;
-            }
-            
-            .connected-right {
-                box-shadow: 2px 0 0 1px #4285f4 !important;
-            }
-            
-            .block-container {
-                cursor: grab;
-                transition: all 0.25s ease-out;
-            }
-            
-            .block-container.dragging {
-                cursor: grabbing;
-                z-index: 1000;
-                transition: none;
-            }
-            
-            .connection-animation {
-                animation: connect-pulse 0.3s ease-out;
-            }
-            
-            @keyframes connect-pulse {
-                0% { opacity: 1; transform: scale(1); }
-                50% { opacity: 0.8; transform: scale(1.05); }
-                100% { opacity: 1; transform: scale(1); }
-            }
-            
-            .snap-direction-left:before {
-                content: "◄";
-                position: absolute;
-                left: -15px;
-                top: 50%;
-                transform: translateY(-50%);
-                color: #34a853;
-                font-size: 14px;
-            }
-            
-            .snap-direction-right:after {
-                content: "►";
-                position: absolute;
-                right: -15px;
-                top: 50%;
-                transform: translateY(-50%);
-                color: #4285f4;
-                font-size: 14px;
-            }
-            
-            /* סגנון חדש להצגת חיבור הפאזל */
-            .connected-blocks {
-                position: relative;
-            }
-            
-            .overlap-indicator {
-                position: absolute;
-                width: 8px;
-                height: 100%;
-                background-color: rgba(255, 255, 0, 0.3);
-                z-index: 100;
-                pointer-events: none;
-            }
-        `;
-        
-        document.head.appendChild(styleElement);
-        console.log("[FixedDirection] סגנונות נוספו");
-    }
-    
-    // הכנת בלוקים קיימים
     function prepareExistingBlocks() {
-        const blocks = programmingArea.querySelectorAll('.block-container');
-        blocks.forEach(block => {
-            if (!block.id) {
-                block.id = generateUniqueBlockId();
-            }
-            
-            // וידוא שהבלוק במיקום אבסולוטי
-            if (block.style.position !== 'absolute') {
-                block.style.position = 'absolute';
-            }
+        const blocksInArea = programmingArea.querySelectorAll('.block-container');
+        blocksInArea.forEach(block => {
+            if (!block.id) { block.id = generateUniqueBlockId(); }
+            if (!block.style.position || block.style.position === 'static') { block.style.position = 'absolute'; }
         });
-        
-        console.log(`[FixedDirection] הוכנו ${blocks.length} בלוקים קיימים`);
+        if (blocksInArea.length > 0) console.log(`[PuzzleLink] Prepared ${blocksInArea.length} existing blocks.`);
     }
-    
-    // יצירת מזהה ייחודי לבלוק
-    function generateUniqueBlockId() {
-        return `block-${Date.now()}-${nextBlockId++}`;
+    function runInitialization() {
+        if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initializeLinkageSystem); }
+        else { setTimeout(initializeLinkageSystem, 0); } // עיכוב קל
     }
-    
-    // פונקציית התאוששות ממצב תקוע
-    function recoverFromStuckState() {
-        console.log("[FixedDirection] מבצע ניקוי מצב תקוע...");
-        
-        // ניקוי הדגשות וסימונים
-        document.querySelectorAll('.snap-highlight, .snap-target, .dragging, .connection-animation, .snap-direction-left, .snap-direction-right').forEach(el => {
-            el.classList.remove('snap-highlight', 'snap-target', 'dragging', 'connection-animation', 'snap-direction-left', 'snap-direction-right');
-        });
-        
-        // ודא שאירועי העכבר כבר לא מאזינים
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-        
-        // איפוס משתני מצב
-        isDragging = false;
-        draggedElement = null;
-        potentialSnapTarget = null;
-        
-        console.log("[FixedDirection] ניקוי מצב הושלם");
-    }
-    
+    runInitialization();
+
     // ========================================================================
-    // טיפול באירועי עכבר
+    // Unique ID Generation
+    // ========================================================================
+    function generateUniqueBlockId() { return `block-puzzle-${Date.now()}-${nextBlockId++}`; }
+
+    // ========================================================================
+    // Event Handlers
     // ========================================================================
     function handleMouseDown(event) {
         const targetBlock = event.target.closest('.block-container');
-        if (!targetBlock || !programmingArea) return;
-        
-        event.preventDefault();
-        isDragging = true;
-        draggedElement = targetBlock;
-        
-        if (!draggedElement.id) {
-            draggedElement.id = generateUniqueBlockId();
-        }
-        
-        // הוסף מחלקת גרירה
-        draggedElement.classList.add('dragging');
-        
-        // שמור מיקום התחלתי
-        initialMouseX = event.clientX;
-        initialMouseY = event.clientY;
-        
-        // זכור את המיקום האבסולוטי הנוכחי
-        const computedStyle = window.getComputedStyle(draggedElement);
-        initialElementX = parseInt(computedStyle.left) || 0;
-        initialElementY = parseInt(computedStyle.top) || 0;
-        
-        // נתק קשרים קיימים
-        disconnectBlock(draggedElement);
-        
-        // הוספת מאזינים זמניים
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
-        
-        if (ENABLE_LOGGING) {
-            console.log(`[FixedDirection] התחלת גרירה: ${draggedElement.id} ממיקום (${initialElementX}, ${initialElementY})`);
-        }
-    }
-    
-    function handleMouseMove(event) {
-        if (!isDragging || !draggedElement) return;
-        
-        const deltaX = event.clientX - initialMouseX;
-        const deltaY = event.clientY - initialMouseY;
-        
-        const newX = initialElementX + deltaX;
-        const newY = initialElementY + deltaY;
-        
-        // עדכון מיקום הבלוק
-        draggedElement.style.left = `${newX}px`;
-        draggedElement.style.top = `${newY}px`;
-        
-        // חיפוש יעד אפשרי להצמדה
-        findSnapTarget();
-    }
-    
-    function handleMouseUp(event) {
-        if (!isDragging || !draggedElement) return;
-        
-        // הסרת מאזינים זמניים
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-        
-        const currentDraggedElement = draggedElement;
-        const currentTarget = potentialSnapTarget;
-        const currentDirection = snapDirection;
-        
-        // הסרת מחלקת גרירה
-        currentDraggedElement.classList.remove('dragging');
-        currentDraggedElement.classList.remove('snap-direction-left', 'snap-direction-right');
-        
-        // ניקוי הדגשות
-        clearSnapHighlights();
-        
-        // בדיקה אם יש יעד הצמדה
-        if (currentTarget && programmingArea && programmingArea.contains(currentTarget) && currentDirection !== 'none') {
-            if (ENABLE_LOGGING) {
-                console.log(`[FixedDirection] ביצוע הצמדה - בלוק: ${currentDraggedElement.id}, יעד: ${currentTarget.id}, כיוון: ${currentDirection}`);
-            }
-            
-            // ביצוע חיבור מתוקן
-            connectBlocksInCorrectDirection(currentDraggedElement, currentTarget, currentDirection);
-        } else {
-            if (ENABLE_LOGGING) {
-                console.log(`[FixedDirection] אין יעד הצמדה - הבלוק נשאר במיקומו הנוכחי`);
-            }
-        }
-        
-        // איפוס משתני מצב
-        isDragging = false;
-        draggedElement = null;
-        potentialSnapTarget = null;
-        snapDirection = 'none';
-    }
-    
-    // ========================================================================
-    // חיפוש יעד הצמדה
-    // ========================================================================
-    function findSnapTarget() {
-        // ניקוי הדגשות קודמות
-        clearSnapHighlights();
-        potentialSnapTarget = null;
-        snapDirection = 'none';
-        
-        if (!isDragging || !draggedElement || !programmingArea) return;
-        
-        // הסרת סימוני כיוון קודמים
-        draggedElement.classList.remove('snap-direction-left', 'snap-direction-right');
-        
-        const dragRect = draggedElement.getBoundingClientRect();
-        const blocks = programmingArea.querySelectorAll('.block-container');
-        
-        let closestDistance = HORIZONTAL_SNAP_DISTANCE;
-        let bestTarget = null;
-        
-        blocks.forEach(block => {
-            // דילוג על הבלוק עצמו
-            if (block === draggedElement) return;
-            
-            const blockRect = block.getBoundingClientRect();
-            
-            // בדיקה אם הבלוקים קרובים מספיק אנכית
-            const verticalDistance = Math.abs((dragRect.top + dragRect.height/2) - (blockRect.top + blockRect.height/2));
-            if (verticalDistance > VERTICAL_ALIGNMENT_TOLERANCE) return;
-            
-            // בדיקת מרחק אופקי - האם הבלוק הנגרר קרוב מימין לבלוק הנבדק
-            const distanceFromRight = Math.abs(dragRect.left - blockRect.right);
-            if (distanceFromRight < closestDistance) {
-                closestDistance = distanceFromRight;
-                bestTarget = block;
-                snapDirection = 'toLeft';  // הבלוק הנגרר יזוז שמאלה אל הבלוק היעד
-            }
-            
-            // בדיקת מרחק אופקי - האם הבלוק הנגרר קרוב משמאל לבלוק הנבדק
-            const distanceFromLeft = Math.abs(dragRect.right - blockRect.left);
-            if (distanceFromLeft < closestDistance) {
-                closestDistance = distanceFromLeft;
-                bestTarget = block;
-                snapDirection = 'toRight';  // הבלוק הנגרר יזוז ימינה אל הבלוק היעד
-            }
-        });
-        
-        // אם נמצא יעד מתאים, הדגש אותו
-        if (bestTarget) {
-            potentialSnapTarget = bestTarget;
-            draggedElement.classList.add('snap-highlight');
-            bestTarget.classList.add('snap-target');
-            
-            // הוסף סימון כיוון חזותי
-            if (snapDirection === 'toLeft') {
-                draggedElement.classList.add('snap-direction-left');
-            } else if (snapDirection === 'toRight') {
-                draggedElement.classList.add('snap-direction-right');
-            }
-            
-            if (ENABLE_LOGGING) {
-                console.log(`[FixedDirection] נמצא יעד הצמדה: ${bestTarget.id}, כיוון: ${snapDirection}, מרחק: ${closestDistance.toFixed(2)}px`);
-            }
-        }
-    }
-    
-    // ניקוי הדגשות
-    function clearSnapHighlights() {
-        document.querySelectorAll('.snap-highlight, .snap-target').forEach(el => {
-            el.classList.remove('snap-highlight', 'snap-target');
-        });
-    }
-    
-    // ניתוק בלוק מהחיבורים שלו
-    function disconnectBlock(block) {
-        if (!block) return;
-        
-        // בדיקה אם הבלוק מחובר לבלוק שמאלי
-        const leftBlockId = block.dataset.leftBlockId;
+        if (!targetBlock || !programmingArea || !programmingArea.contains(targetBlock)) return;
+        // אם הבלוק כבר מחובר מימין (יש לו leftBlockId), נתפוס רק אותו
+        // אם הוא מחובר משמאל (יש לו rightBlockId), צריך לתפוס את כל השרשרת מימין (לא ממומש כרגע)
+        // אם הוא מחובר מלמעלה, נתפוס את כל השרשרת מתחת (לא ממומש כרגע)
+
+        event.preventDefault(); isDragging = true; draggedElement = targetBlock;
+        if (!draggedElement.id) { draggedElement.id = generateUniqueBlockId(); }
+        if (ENABLE_LOGGING) console.log(`[PuzzleLink] Drag Start: ${draggedElement.id}`);
+
+        // --- Detaching Logic ---
+        // ניתוק מהבלוק משמאל (אם קיים)
+        const leftBlockId = draggedElement.dataset.leftBlockId;
         if (leftBlockId) {
             const leftBlock = document.getElementById(leftBlockId);
             if (leftBlock) {
                 delete leftBlock.dataset.rightBlockId;
-                leftBlock.classList.remove('connected-left');
-                
-                // איפוס המיקום של הבלוק הנוכחי
-                block.style.left = block.getBoundingClientRect().left + 'px';
-                block.style.top = block.getBoundingClientRect().top + 'px';
+                leftBlock.classList.remove('connected-right'); // הסרת קלאס CSS
+                if (ENABLE_LOGGING) console.log(`[PuzzleLink] Detached ${draggedElement.id} from Left: ${leftBlockId}`);
             }
-            delete block.dataset.leftBlockId;
-            block.classList.remove('connected-right');
+            delete draggedElement.dataset.leftBlockId;
+            draggedElement.classList.remove('connected-left'); // הסרת קלאס CSS
         }
-        
-        // בדיקה אם הבלוק מחובר לבלוק ימני
-        const rightBlockId = block.dataset.rightBlockId;
-        if (rightBlockId) {
-            const rightBlock = document.getElementById(rightBlockId);
-            if (rightBlock) {
-                delete rightBlock.dataset.leftBlockId;
-                rightBlock.classList.remove('connected-right');
-            }
-            delete block.dataset.rightBlockId;
-            block.classList.remove('connected-left');
-        }
-        
-        // הסרת סממני חיבור חזותיים
-        const overlapIndicator = block.querySelector('.overlap-indicator');
-        if (overlapIndicator) {
-            overlapIndicator.remove();
-        }
-        
-        // איפוס כל טרנספורם
-        block.style.transform = '';
-        
-        if (ENABLE_LOGGING && (leftBlockId || rightBlockId)) {
-            console.log(`[FixedDirection] ניתוק בלוק ${block.id} מהחיבורים שלו`);
-        }
-    }
-    
-    // ========================================================================
-    // חיבור בלוקים עם כיוון נכון
-    // ========================================================================
-    function connectBlocksInCorrectDirection(draggedBlock, targetBlock, direction) {
-        if (!draggedBlock || !targetBlock) return;
-        
-        try {
-            if (ENABLE_LOGGING) {
-                console.log(`[FixedDirection] התחלת חיבור בכיוון: ${direction}`);
-                console.log(`  לפני חיבור - נגרר: (${draggedBlock.offsetLeft}, ${draggedBlock.offsetTop}), יעד: (${targetBlock.offsetLeft}, ${targetBlock.offsetTop})`);
-            }
-            
-            // מיקום וגודל הבלוקים לפני החיבור
-            const draggedRect = draggedBlock.getBoundingClientRect();
-            const targetRect = targetBlock.getBoundingClientRect();
-            
-            // ניתוק כל חיבור קודם
-            disconnectBlock(draggedBlock);
-            disconnectBlock(targetBlock);
-            
-            let leftBlock, rightBlock;
-            let newX, newY;
-            
-            if (direction === 'toRight') {
-                // הבלוק הנגרר צריך לזוז ימינה - יהיה משמאל ליעד
-                leftBlock = draggedBlock;
-                rightBlock = targetBlock;
-                
-                // חישוב מיקום חדש לבלוק הימני (היעד) - כך שיהיה חפיפה של PUZZLE_CONNECTOR_WIDTH פיקסלים
-                newX = draggedBlock.offsetLeft + draggedRect.width - PUZZLE_CONNECTOR_WIDTH;
-                newY = draggedBlock.offsetTop;
-                
-                if (ENABLE_LOGGING) {
-                    console.log(`  [toRight] הבלוק ${rightBlock.id} יזוז למיקום (${newX}, ${newY})`);
-                }
-                
-                // עדכון מיקום הבלוק הימני
-                rightBlock.style.left = `${newX}px`;
-                rightBlock.style.top = `${newY}px`;
-                
-                // הוספת אינדיקטור חפיפה
-                addOverlapIndicator(leftBlock, 'right');
-                
-            } else if (direction === 'toLeft') {
-                // הבלוק הנגרר צריך לזוז שמאלה - יהיה מימין ליעד
-                leftBlock = targetBlock;
-                rightBlock = draggedBlock;
-                
-                // חישוב מיקום חדש לבלוק הימני (הנגרר) - כך שיהיה חפיפה של PUZZLE_CONNECTOR_WIDTH פיקסלים
-                newX = targetBlock.offsetLeft + targetRect.width - PUZZLE_CONNECTOR_WIDTH;
-                newY = targetBlock.offsetTop;
-                
-                if (ENABLE_LOGGING) {
-                    console.log(`  [toLeft] הבלוק ${rightBlock.id} יזוז למיקום (${newX}, ${newY})`);
-                }
-                
-                // עדכון מיקום הבלוק הימני
-                rightBlock.style.left = `${newX}px`;
-                rightBlock.style.top = `${newY}px`;
-                
-                // הוספת אינדיקטור חפיפה
-                addOverlapIndicator(leftBlock, 'right');
-            }
-            
-            // יצירת קשר לוגי בין הבלוקים
-            leftBlock.dataset.rightBlockId = rightBlock.id;
-            rightBlock.dataset.leftBlockId = leftBlock.id;
-            
-            // הוספת סימונים חזותיים
-            leftBlock.classList.add('connected-left');
-            rightBlock.classList.add('connected-right');
-            
-            // הוספת אנימציית חיבור
-            leftBlock.classList.add('connection-animation');
-            rightBlock.classList.add('connection-animation');
-            
-            // הסרת אנימציית החיבור לאחר זמן קצר
-            setTimeout(() => {
-                leftBlock.classList.remove('connection-animation');
-                rightBlock.classList.remove('connection-animation');
-                
-                if (ENABLE_LOGGING) {
-                    console.log(`  אחרי חיבור - שמאל: (${leftBlock.offsetLeft}, ${leftBlock.offsetTop}), ימין: (${rightBlock.offsetLeft}, ${rightBlock.offsetTop})`);
-                    console.log(`[FixedDirection] חיבור הושלם בהצלחה`);
-                }
-            }, 300);
-            
-        } catch (e) {
-            console.error("[FixedDirection] שגיאה בחיבור בלוקים:", e);
-        }
-    }
-    
-    // פונקציה להוספת אינדיקטור חפיפה ויזואלי
-    function addOverlapIndicator(block, position) {
-        // ודא שאין אינדיקטור קיים
-        const existingIndicator = block.querySelector('.overlap-indicator');
-        if (existingIndicator) {
-            existingIndicator.remove();
-        }
-        
-        // יצירת אינדיקטור חדש
-        const indicator = document.createElement('div');
-        indicator.className = 'overlap-indicator';
-        
-        // מיקום האינדיקטור בהתאם לכיוון
-        if (position === 'right') {
-            indicator.style.right = '0';
-        } else {
-            indicator.style.left = '0';
-        }
-        
-        // הוספת האינדיקטור לבלוק
-        block.appendChild(indicator);
-    }
-    
-    // ========================================================================
-    // API ציבורי
-    // ========================================================================
-    window.registerNewBlockForFixedDirection = function(newBlockElement){
-        if (!newBlockElement) return;
-        
-        if (!newBlockElement.id) {
-            newBlockElement.id = generateUniqueBlockId();
-        }
-        
-        // וידוא שהבלוק במיקום אבסולוטי
-        if (newBlockElement.style.position !== 'absolute') {
-            newBlockElement.style.position = 'absolute';
-        }
-        
-        if (ENABLE_LOGGING) {
-            console.log(`[FixedDirection] בלוק חדש נרשם: ${newBlockElement.id}`);
-        }
-    };
-    
-    // פונקציה לחיבור שני בלוקים באופן חיצוני
-    window.connectBlocksFixed = function(leftBlock, rightBlock) {
-        if (!leftBlock || !rightBlock) {
-            console.error("[FixedDirection] ניסיון לחבר בלוקים לא תקפים");
-            return;
-        }
-        
-        // המתודה דואגת שהבלוק הימני ימוקם נכון ביחס לשמאלי
-        connectBlocksInCorrectDirection(rightBlock, leftBlock, 'toLeft');
-    };
-    
-    // החלף את מערכת החיבורים הנוכחית
-    if (window.registerNewBlockForLinkage) {
-        console.log("[FixedDirection] מחליף את מערכת החיבורים הקודמת");
-        window.registerNewBlockForLinkage = window.registerNewBlockForFixedDirection;
-    }
-    
-    // הוסף פונקציית התאוששות לחלון
-    window.recoverFromFixedDirectionStuckState = recoverFromStuckState;
-    
-    // הפעלת המערכת
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initFixedDirectionSystem);
-    } else {
-        initFixedDirectionSystem();
-    }
-    
-})();
+        // ניתוק מהבלוק מימין (אם קיים - לא יזוז איתנו כרגע)
+         const rightBlockId = draggedElement.dataset.rightBlockId;
+         if (rightBlockId) {
+             const rightBlock = document.getElementById(rightBlockId);
+             if (rightBlock) {
+                 delete rightBlock.dataset.leftBlockId;
+                 rightBlock.classList.remove('connected-left');
+                 if (ENABLE_LOGGING) console.log(`[PuzzleLink] Detached Right block ${rightBlockId} from ${draggedElement.id}`);
+             }
+             delete draggedElement.dataset.rightBlockId;
+             draggedElement.classList.remove('connected-right');
+         }
+         // ניתוק מהבלוק מלמעלה (אם קיים)
+        const prevBlockId = draggedElement.dataset.prevBlockId;
+        if (prevBlockId) {
+             const prevBlock = document.getElementById(prevBlockId);
+             if (prevBlock) { delete prevBlock.dataset.nextBlockId; /* להוסיף הסרת קלאס אנכי אם יש */ }
+             delete draggedElement.dataset.prevBlockId;
+             /* להוסיף הסרת קלאס אנכי אם יש */
+             if (ENABLE_LOGGING) console.log(`[PuzzleLink] Detached ${draggedElement.id} from Top: ${prevBlockId}`);
+         }
 
-console.log("Fixed direction linkage system loaded");
+
+        initialMouseX = event.clientX; initialMouseY = event.clientY;
+        initialElementX = draggedElement.offsetLeft; initialElementY = draggedElement.offsetTop;
+        draggedElement.style.zIndex = 1000; draggedElement.style.cursor = 'grabbing';
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
+        document.addEventListener('mouseleave', handleMouseLeave);
+    }
+
+    function handleMouseMove(event) {
+        if (!isDragging || !draggedElement) return;
+        const deltaX = event.clientX - initialMouseX; const deltaY = event.clientY - initialMouseY;
+        const newX = initialElementX + deltaX; const newY = initialElementY + deltaY;
+        draggedElement.style.left = `${newX}px`; draggedElement.style.top = `${newY}px`;
+        findAndHighlightSnapTarget(); // הלוגיקה החדשה
+    }
+
+    function handleMouseUp(event) {
+        if (!isDragging || !draggedElement) return;
+        const currentDraggedElement = draggedElement;
+        const currentTarget = potentialSnapTarget;
+        const isValidSnapTarget = currentTarget && programmingArea && programmingArea.contains(currentTarget);
+
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('mouseleave', handleMouseLeave);
+
+        isDragging = false; draggedElement = null; potentialSnapTarget = null; // איפוס לפני הקישור
+
+        if (isValidSnapTarget) {
+            linkBlocksHorizontally(currentTarget, currentDraggedElement); // הצמדה ומיקום
+            // הפעלת אנימציה קצרה
+            currentTarget.classList.add('connection-animation');
+            currentDraggedElement.classList.add('connection-animation');
+            setTimeout(() => {
+                currentTarget.classList.remove('connection-animation');
+                currentDraggedElement.classList.remove('connection-animation');
+            }, 400); // משך האנימציה מ-CSS
+        } else {
+            // מיקום סופי רגיל אם אין הצמדה
+             if (programmingArea && currentDraggedElement) {
+                 let finalX = currentDraggedElement.offsetLeft; let finalY = currentDraggedElement.offsetTop;
+                 // אין צורך בתיקון גבולות כרגע
+                 // console.log(`[PuzzleLink] Placed ${currentDraggedElement.id} at ${finalX}, ${finalY} (no snap)`);
+             }
+        }
+
+        // ניקוי סופי של סגנונות גרירה והדגשה
+        clearSnapHighlighting(); // הסרת קלאסי snap
+        if(currentDraggedElement) {
+             currentDraggedElement.style.zIndex = '';
+             currentDraggedElement.style.cursor = '';
+        }
+        if (ENABLE_LOGGING) console.log("[PuzzleLink] --- MouseUp Finished ---");
+    }
+
+    function handleMouseLeave(event) { if (isDragging) { handleMouseUp(event); } }
+
+    // ========================================================================
+    // Snapping Logic ( Puzzle Connector Version )
+    // ========================================================================
+    function findAndHighlightSnapTarget() {
+        const shouldLog = ENABLE_DETAILED_SNAP_LOGGING && isDragging && draggedElement;
+        clearSnapHighlighting(); // תמיד מנקה קודם
+        potentialSnapTarget = null;
+
+        if (!isDragging || !draggedElement || !programmingArea) return;
+
+        const dragRect = draggedElement.getBoundingClientRect();
+        if (dragRect.height <= 0 || dragRect.width <= 0) return;
+
+        // נקודת חיבור: מרכז השקע בצד שמאל של הבלוק הנגרר
+        const dragNotchCenter = {
+            x: dragRect.left + (PUZZLE_CONNECTOR_WIDTH / 2), // קרוב לקצה השמאלי
+            y: dragRect.top + dragRect.height / 2
+        };
+
+        let closestDistance = HORIZONTAL_SNAP_DISTANCE;
+        let bestTarget = null;
+
+        const allBlocks = programmingArea.querySelectorAll('.block-container');
+
+        allBlocks.forEach(block => {
+            const targetId = block.id || 'no-id';
+            if (block === draggedElement || block.dataset.rightBlockId || draggedElement.dataset.leftBlockId) {
+                 // דלג על עצמך, על מטרות שכבר מחוברות מימין, או אם הנגרר כבר מחובר משמאל
+                 return;
+            }
+
+            const targetRect = block.getBoundingClientRect();
+            if (targetRect.height <= 0 || targetRect.width <= 0) return;
+
+            // נקודת חיבור: מרכז הבליטה בצד ימין של בלוק המטרה
+            const targetBumpCenter = {
+                x: targetRect.right - (PUZZLE_CONNECTOR_WIDTH / 2), // קרוב לקצה הימני
+                y: targetRect.top + targetRect.height / 2
+            };
+
+            const dx = dragNotchCenter.x - targetBumpCenter.x;
+            const dy = dragNotchCenter.y - targetBumpCenter.y;
+            const horizontalDistance = Math.abs(dx);
+            const verticalDistance = Math.abs(dy);
+
+            if (horizontalDistance < closestDistance && verticalDistance < VERTICAL_ALIGNMENT_TOLERANCE) {
+                 if (shouldLog) console.log(`[PuzzleLink] ==> Potential Match: ${targetId} (H:${horizontalDistance.toFixed(0)}, V:${verticalDistance.toFixed(0)})`);
+                closestDistance = horizontalDistance;
+                bestTarget = block;
+            }
+        });
+
+        if (bestTarget) {
+            potentialSnapTarget = bestTarget;
+            // הוספת קלאסים להדגשה ויזואלית לפי ה-CSS החדש
+            draggedElement.classList.add('snap-highlight', 'snap-direction-right');
+            potentialSnapTarget.classList.add('snap-target', 'snap-direction-left');
+            if (shouldLog) console.log(`[PuzzleLink] --- Best target found: ${bestTarget.id}. Added snap classes. ---`);
+        }
+        // אם לא נמצא יעד, clearSnapHighlighting כבר ניקה את הקלאסים בתחילת הפונקציה
+    }
+
+    function highlightSnapTarget(block, classToAdd) { // פונקציה זו הוחלפה בלוגיקה ב-findAndHighlight...
+         // ניתן למחוק או להשאיר ריקה
+    }
+
+     function clearSnapHighlighting() {
+         if (!programmingArea) return;
+         const highlighted = programmingArea.querySelectorAll('.snap-highlight, .snap-target, .snap-direction-left, .snap-direction-right');
+         highlighted.forEach(el => {
+             el.classList.remove('snap-highlight', 'snap-target', 'snap-direction-left', 'snap-direction-right');
+         });
+     }
+
+    // ========================================================================
+    // Linking Logic ( Puzzle Connector Version )
+    // ========================================================================
+    function linkBlocksHorizontally(leftBlock, rightBlock) {
+        if (!leftBlock || !rightBlock || leftBlock === rightBlock || !programmingArea) return;
+        if (leftBlock.dataset.rightBlockId || rightBlock.dataset.leftBlockId) return;
+
+        if (ENABLE_LOGGING) console.log(`[PuzzleLink] Linking ${leftBlock.id} -> ${rightBlock.id}`);
+
+        leftBlock.dataset.rightBlockId = rightBlock.id;
+        rightBlock.dataset.leftBlockId = leftBlock.id;
+
+        // חישוב מיקום ההצמדה המדויק של הפאזל
+        const leftWidth = leftBlock.offsetWidth;
+        const targetX = leftBlock.offsetLeft + leftWidth - PUZZLE_CONNECTOR_WIDTH; // מיקום שמאל הנגרר
+        const targetY = (leftBlock.offsetTop + leftBlock.offsetHeight / 2) - (rightBlock.offsetHeight / 2); // יישור מרכז אנכי
+
+        if (ENABLE_LOGGING) console.log(`[PuzzleLink]   Calculated Target: X=${targetX.toFixed(0)}, Y=${targetY.toFixed(0)}`);
+
+        rightBlock.style.left = `${targetX}px`;
+        rightBlock.style.top = `${targetY}px`;
+
+        // הוספת קלאסים של חיבור
+        leftBlock.classList.add('connected-right');
+        rightBlock.classList.add('connected-left');
+
+        if (ENABLE_LOGGING) console.log(`[PuzzleLink] Linked & Positioned ${leftBlock.id} -> ${rightBlock.id}. Added connection classes.`);
+
+         // אין צורך בבדיקת פער אסינכרונית כרגע, הבעיה הקודמת נפתרה כנראה
+    }
+
+    // ========================================================================
+    // Public API
+    // ========================================================================
+    window.registerNewBlockForLinkage = function(newBlockElement) {
+         if (!newBlockElement) return;
+         if (!newBlockElement.id) { newBlockElement.id = generateUniqueBlockId(); }
+         try { newBlockElement.style.position = 'absolute'; } catch (e) { console.error("Reg Error", e); }
+         if (ENABLE_LOGGING) console.log(`[PuzzleLink] Registered block ${newBlockElement.id}.`);
+    };
+
+})();
+console.log("linkageimproved.js script finished execution (Puzzle Connector Logic).");
