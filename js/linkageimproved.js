@@ -24,7 +24,7 @@
   const CONFIG = {
     PIN_WIDTH: 5,
     // *** שונה בחזרה ל-8 ***
-    CONNECT_THRESHOLD: 4, // סף להפעלת הדגשה וזיהוי יעד פוטנציאלי
+    CONNECT_THRESHOLD: 2, // סף להפעלת הדגשה וזיהוי יעד פוטנציאלי
     VERTICAL_ALIGN_THRESHOLD: 20,
     VERTICAL_OVERLAP_REQ: 0.4, // דרישה ל-40% חפיפה אנכית לפחות
     BLOCK_GAP: 0, // אין רווח - חיבור שקע-תקע
