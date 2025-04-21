@@ -1,6 +1,6 @@
 // ========================================================================
-// Block Linkage System using Relative Positioning
-// Version: RELATIVE-POSITIONING CONNECTION
+// Block Linkage System using Transform (Pixel Offset)
+// Version: TRANSFORM-BASED CONNECTION
 // ========================================================================
 (function() {
     // קונפיגורציה
@@ -18,115 +18,45 @@
     let initialElementX = 0;
     let initialElementY = 0;
     let programmingArea = null;
-    let rowsContainer = null;
     let nextBlockId = 1;
-    let nextRowId = 1;
     let snapDirection = 'right';
     
-    // מעקב אחרי מצב שורות
-    let rows = [];
+    // מעקב אחרי בלוקים מחוברים
+    let connectedBlocks = new Map(); // מפה שמכילה רשימת חיבורים לכל בלוק
     
     // ========================================================================
     // אתחול המערכת
     // ========================================================================
-    function initRelativePositioningSystem() {
-        console.log("[Relative Positioning] אתחול מערכת חיבורים מבוססת מיקום יחסי...");
+    function initTransformLinkageSystem() {
+        console.log("[Transform Linkage] אתחול מערכת חיבורים מבוססת Transform...");
         
         // איתור אזור התכנות
         programmingArea = document.getElementById("program-blocks");
         if (!programmingArea) {
-            console.error("[Relative Positioning] שגיאה: לא נמצא אזור #program-blocks");
+            console.error("[Transform Linkage] שגיאה: לא נמצא אזור #program-blocks");
             return;
         }
-        
-        // יצירת מיכל שורות חדש
-        createRowsContainer();
         
         // הוספת סגנונות
-        addRelativePositioningStyles();
+        addTransformStyles();
         
-        // העברת בלוקים קיימים למיכל החדש
-        moveExistingBlocksToRowsContainer();
+        // הגדרת מאזין ללחיצת עכבר
+        programmingArea.addEventListener('mousedown', handleMouseDown);
+        console.log("[Transform Linkage] מאזין mousedown נוסף בהצלחה");
         
-        // הגדרת מאזינים לאירועים
-        setupEventListeners();
+        // הכנת בלוקים קיימים
+        prepareExistingBlocks();
         
-        console.log("[Relative Positioning] מערכת אותחלה בהצלחה");
+        console.log("[Transform Linkage] מערכת אותחלה בהצלחה");
     }
     
-    // יצירת מיכל השורות
-    function createRowsContainer() {
-        // בדיקה אם כבר קיים מיכל שורות
-        const existingContainer = document.getElementById('blocks-rows-container');
-        if (existingContainer) {
-            rowsContainer = existingContainer;
-            return;
-        }
-        
-        // יצירת מיכל חדש
-        rowsContainer = document.createElement('div');
-        rowsContainer.id = 'blocks-rows-container';
-        rowsContainer.className = 'blocks-rows-container';
-        
-        // החלפת מיכל התכנות הקיים במיכל השורות
-        const parent = programmingArea.parentNode;
-        
-        // שמירת המיקום והמימדים המקוריים
-        const originalRect = programmingArea.getBoundingClientRect();
-        rowsContainer.style.width = programmingArea.style.width || '100%';
-        rowsContainer.style.height = programmingArea.style.height || '100%';
-        rowsContainer.style.position = 'relative';
-        
-        // החלפת המיכלים
-        parent.insertBefore(rowsContainer, programmingArea);
-        parent.removeChild(programmingArea);
-        
-        // עדכון ההפניה
-        programmingArea = rowsContainer;
-        
-        if (ENABLE_LOGGING) {
-            console.log("[Relative Positioning] נוצר מיכל שורות חדש");
-        }
-    }
-    
-    // הוספת סגנונות CSS
-    function addRelativePositioningStyles() {
-        if (document.getElementById('relative-positioning-styles')) return;
+    // הוספת סגנונות CSS הנדרשים למערכת
+    function addTransformStyles() {
+        if (document.getElementById('transform-linkage-styles')) return;
         
         const styleElement = document.createElement('style');
-        styleElement.id = 'relative-positioning-styles';
+        styleElement.id = 'transform-linkage-styles';
         styleElement.textContent = `
-            .blocks-rows-container {
-                width: 100%;
-                height: 100%;
-                position: relative;
-                overflow: visible;
-            }
-            
-            .blocks-row {
-                display: flex;
-                flex-direction: row;
-                margin-bottom: 10px;
-                position: absolute;
-                left: 0;
-                transition: top 0.3s ease-out;
-            }
-            
-            .row-blocks-container {
-                display: flex;
-                flex-direction: row;
-                margin-left: 0;
-                transition: margin-left 0.2s ease-out;
-            }
-            
-            .block-in-row {
-                position: relative !important;
-                left: auto !important;
-                top: auto !important;
-                margin-right: -${PUZZLE_CONNECTOR_WIDTH}px;
-                cursor: grab;
-            }
-            
             .snap-highlight {
                 box-shadow: 0 0 0 3px #4285f4 !important;
                 transition: box-shadow 0.2s ease-in-out;
@@ -137,114 +67,52 @@
                 transition: box-shadow 0.2s ease-in-out;
             }
             
-            .dragging {
+            .connected-left {
+                box-shadow: -2px 0 0 1px #34a853 !important;
+            }
+            
+            .connected-right {
+                box-shadow: 2px 0 0 1px #4285f4 !important;
+            }
+            
+            .block-container {
+                cursor: grab;
+                transition: transform 0.2s ease-out;
+            }
+            
+            .block-container.dragging {
                 cursor: grabbing;
                 z-index: 1000;
-                opacity: 0.8;
+                transition: none;
             }
             
-            .ghost-placeholder {
-                border: 2px dashed #4285f4;
-                background-color: rgba(66, 133, 244, 0.1);
-                border-radius: 4px;
-            }
-            
-            .row-hidden {
-                visibility: hidden;
+            .block-parent {
+                position: absolute;
                 pointer-events: none;
+            }
+            
+            .block-child {
+                pointer-events: auto;
             }
         `;
         
         document.head.appendChild(styleElement);
-        console.log("[Relative Positioning] סגנונות נוספו");
+        console.log("[Transform Linkage] סגנונות Transform נוספו");
     }
     
-    // העברת בלוקים קיימים למיכל החדש
-    function moveExistingBlocksToRowsContainer() {
-        const existingBlocks = Array.from(programmingArea.querySelectorAll('.block-container:not(.block-in-row)'));
-        
-        if (existingBlocks.length === 0) return;
-        
-        if (ENABLE_LOGGING) {
-            console.log(`[Relative Positioning] העברת ${existingBlocks.length} בלוקים קיימים למיכל החדש`);
-        }
-        
-        // יצירת שורה עבור כל בלוק קיים
-        existingBlocks.forEach(block => {
+    // הכנת בלוקים קיימים
+    function prepareExistingBlocks() {
+        const blocks = programmingArea.querySelectorAll('.block-container');
+        blocks.forEach(block => {
             if (!block.id) {
                 block.id = generateUniqueBlockId();
             }
             
-            // יצירת שורה חדשה
-            const row = createNewRow();
-            
-            // שמירת המיקום המקורי
-            const left = parseInt(block.style.left) || 0;
-            const top = parseInt(block.style.top) || 0;
-            
-            // מיקום השורה במיקום המקורי של הבלוק
-            row.style.left = `${left}px`;
-            row.style.top = `${top}px`;
-            
-            // הוספת הבלוק לשורה
-            const blocksContainer = row.querySelector('.row-blocks-container');
-            
-            // הסרת הבלוק מהמיכל המקורי אם צריך
-            if (block.parentNode) {
-                block.parentNode.removeChild(block);
-            }
-            
-            // הוספת הבלוק לשורה
-            blocksContainer.appendChild(block);
-            
-            // הגדרת הבלוק כחלק משורה
-            block.classList.add('block-in-row');
-            
-            // הוספת השורה למיכל
-            programmingArea.appendChild(row);
-            
-            // הוספת השורה למעקב
-            rows.push({
-                id: row.id,
-                element: row,
-                blocks: [block.id]
-            });
+            // ודא שאין transform קיים
+            block.style.transform = '';
         });
         
-        if (ENABLE_LOGGING) {
-            console.log(`[Relative Positioning] נוצרו ${rows.length} שורות`);
-        }
-    }
-    
-    // הגדרת מאזינים לאירועים
-    function setupEventListeners() {
-        // מאזין גלובלי ללחיצת עכבר
-        programmingArea.addEventListener('mousedown', handleMouseDown);
-        
-        // מאזין למקש Escape לניקוי מצב תקוע
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                recoverFromStuckState();
-            }
-        });
-        
-        if (ENABLE_LOGGING) {
-            console.log("[Relative Positioning] מאזינים לאירועים הוגדרו");
-        }
-    }
-    
-    // יצירת שורה חדשה
-    function createNewRow() {
-        const row = document.createElement('div');
-        row.id = generateUniqueRowId();
-        row.className = 'blocks-row';
-        
-        // יצירת מיכל בלוקים בתוך השורה
-        const blocksContainer = document.createElement('div');
-        blocksContainer.className = 'row-blocks-container';
-        row.appendChild(blocksContainer);
-        
-        return row;
+        console.log(`[Transform Linkage] הוכנו ${blocks.length} בלוקים קיימים`);
     }
     
     // יצירת מזהה ייחודי לבלוק
@@ -252,41 +120,12 @@
         return `block-${Date.now()}-${nextBlockId++}`;
     }
     
-    // יצירת מזהה ייחודי לשורה
-    function generateUniqueRowId() {
-        return `row-${Date.now()}-${nextRowId++}`;
-    }
-    
-    // ניקוי מצב תקוע
-    function recoverFromStuckState() {
-        if (ENABLE_LOGGING) {
-            console.log("[Relative Positioning] ניקוי מצב תקוע");
-        }
-        
-        // ביטול גרירה
-        isDragging = false;
-        
-        // הסרת מחלקות מיוחדות
-        document.querySelectorAll('.dragging, .snap-highlight, .snap-target, .ghost-placeholder, .row-hidden').forEach(el => {
-            el.classList.remove('dragging', 'snap-highlight', 'snap-target', 'ghost-placeholder', 'row-hidden');
-        });
-        
-        // הסרת מאזיני גרירה
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-        
-        // איפוס משתני מצב
-        draggedElement = null;
-        potentialSnapTarget = null;
-    }
-    
     // ========================================================================
     // טיפול באירועי עכבר
     // ========================================================================
     function handleMouseDown(event) {
-        // בדיקה אם לחצו על בלוק
         const targetBlock = event.target.closest('.block-container');
-        if (!targetBlock) return;
+        if (!targetBlock || !programmingArea) return;
         
         event.preventDefault();
         isDragging = true;
@@ -296,157 +135,134 @@
             draggedElement.id = generateUniqueBlockId();
         }
         
-        // זיהוי השורה של הבלוק
-        const sourceRow = draggedElement.closest('.blocks-row');
-        if (!sourceRow) {
-            console.warn("[Relative Positioning] בלוק ללא שורה הורה:", draggedElement.id);
-            return;
-        }
+        // הוסף מחלקת גרירה
+        draggedElement.classList.add('dragging');
         
-        // סימון השורה כמוסתרת
-        sourceRow.classList.add('row-hidden');
-        
-        // יצירת עותק של הבלוק לגרירה
-        const blockRect = draggedElement.getBoundingClientRect();
-        const containerRect = programmingArea.getBoundingClientRect();
-        
-        // שמירת מיקום התחלתי
+        // שמור מיקום התחלתי
         initialMouseX = event.clientX;
         initialMouseY = event.clientY;
-        initialElementX = blockRect.left - containerRect.left;
-        initialElementY = blockRect.top - containerRect.top;
         
-        // יצירת עותק של הבלוק לגרירה
-        const ghostElement = draggedElement.cloneNode(true);
-        ghostElement.id = 'ghost-' + draggedElement.id;
-        ghostElement.classList.add('dragging');
-        ghostElement.classList.remove('block-in-row');
-        ghostElement.style.position = 'absolute';
-        ghostElement.style.left = `${initialElementX}px`;
-        ghostElement.style.top = `${initialElementY}px`;
-        ghostElement.style.width = `${blockRect.width}px`;
-        ghostElement.style.height = `${blockRect.height}px`;
+        const rect = draggedElement.getBoundingClientRect();
+        const computedStyle = window.getComputedStyle(draggedElement);
+        let transform = computedStyle.transform;
         
-        // הוספת העותק למיכל
-        programmingArea.appendChild(ghostElement);
+        // אם יש טרנספורם קיים, נשמור את המיקום האבסולוטי הנוכחי
+        if (transform && transform !== 'none') {
+            // מיקום אבסולוטי מחושב
+            const programRect = programmingArea.getBoundingClientRect();
+            initialElementX = rect.left - programRect.left;
+            initialElementY = rect.top - programRect.top;
+            
+            // איפוס הטרנספורם כך שנוכל לגרור מהמיקום האמיתי
+            draggedElement.style.transform = '';
+            
+            // עדכון המיקום האבסולוטי לאחר איפוס הטרנספורם
+            draggedElement.style.left = `${initialElementX}px`;
+            draggedElement.style.top = `${initialElementY}px`;
+        } else {
+            // אם אין טרנספורם, נשתמש במיקום ה-CSS הנוכחי
+            initialElementX = parseInt(computedStyle.left) || 0;
+            initialElementY = parseInt(computedStyle.top) || 0;
+        }
         
-        // הוספת מאזינים לאירועי גרירה
+        // ברר אם הבלוק מחובר לבלוקים אחרים
+        const connections = getBlockConnections(draggedElement.id);
+        
+        // נתק את כל החיבורים של הבלוק
+        if (connections.length > 0) {
+            disconnectBlock(draggedElement.id);
+        }
+        
+        // הוספת מאזינים זמניים
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
         
         if (ENABLE_LOGGING) {
-            console.log(`[Relative Positioning] התחלת גרירה: ${draggedElement.id}`);
+            console.log(`[Transform Linkage] התחלת גרירה: ${draggedElement.id}`);
         }
     }
     
     function handleMouseMove(event) {
         if (!isDragging || !draggedElement) return;
         
-        // מציאת העותק הרפאים
-        const ghostElement = document.getElementById('ghost-' + draggedElement.id);
-        if (!ghostElement) return;
-        
-        // חישוב מיקום חדש
         const deltaX = event.clientX - initialMouseX;
         const deltaY = event.clientY - initialMouseY;
         
         const newX = initialElementX + deltaX;
         const newY = initialElementY + deltaY;
         
-        // עדכון מיקום העותק
-        ghostElement.style.left = `${newX}px`;
-        ghostElement.style.top = `${newY}px`;
+        // עדכון מיקום הבלוק
+        draggedElement.style.left = `${newX}px`;
+        draggedElement.style.top = `${newY}px`;
         
         // חיפוש יעד אפשרי להצמדה
-        findPotentialSnapTarget(ghostElement);
+        findSnapTarget();
     }
     
     function handleMouseUp(event) {
         if (!isDragging || !draggedElement) return;
         
-        // הסרת מאזינים
+        // הסרת מאזינים זמניים
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
         
-        // מציאת העותק הרפאים
-        const ghostElement = document.getElementById('ghost-' + draggedElement.id);
+        // הסרת מחלקת גרירה
+        draggedElement.classList.remove('dragging');
         
-        // זיהוי השורה המקורית
-        const sourceRow = draggedElement.closest('.blocks-row');
-        
-        // בדיקה אם יש יעד הצמדה
-        if (potentialSnapTarget && ghostElement) {
-            // ביצוע הצמדה לבלוק אחר
-            connectBlocksInRows(draggedElement, potentialSnapTarget, snapDirection);
-        } else if (ghostElement) {
-            // יצירת שורה חדשה במיקום הנוכחי
-            createNewRowWithBlock(draggedElement, parseInt(ghostElement.style.left), parseInt(ghostElement.style.top));
-        }
-        
-        // הסרת השורה הריקה אם צריך
-        if (sourceRow) {
-            const blocksContainer = sourceRow.querySelector('.row-blocks-container');
-            if (blocksContainer && blocksContainer.children.length === 0) {
-                // הסרת השורה הריקה
-                sourceRow.parentNode.removeChild(sourceRow);
-                
-                // הסרת השורה ממעקב
-                const rowIndex = rows.findIndex(r => r.id === sourceRow.id);
-                if (rowIndex !== -1) {
-                    rows.splice(rowIndex, 1);
-                }
-            } else {
-                // ביטול הסתרת השורה
-                sourceRow.classList.remove('row-hidden');
-            }
-        }
-        
-        // הסרת העותק
-        if (ghostElement) {
-            ghostElement.parentNode.removeChild(ghostElement);
-        }
+        const currentDraggedElement = draggedElement;
+        const currentTarget = potentialSnapTarget;
         
         // ניקוי הדגשות
-        clearSnapHighlights();
+        clearHighlights();
+        
+        // בדיקה אם יש יעד הצמדה
+        if (currentTarget && programmingArea && programmingArea.contains(currentTarget)) {
+            if (ENABLE_LOGGING) {
+                console.log(`[Transform Linkage] ביצוע הצמדה - בלוק: ${currentDraggedElement.id}, יעד: ${currentTarget.id}, כיוון: ${snapDirection}`);
+            }
+            
+            // ביצוע חיבור באמצעות טרנספורם
+            connectBlocksWithTransform(currentDraggedElement, currentTarget, snapDirection);
+        } else {
+            if (ENABLE_LOGGING) {
+                console.log(`[Transform Linkage] אין יעד הצמדה - הבלוק נשאר במיקומו הנוכחי`);
+            }
+        }
         
         // איפוס משתני מצב
         isDragging = false;
         draggedElement = null;
         potentialSnapTarget = null;
-        
-        if (ENABLE_LOGGING) {
-            console.log("[Relative Positioning] גרירה הסתיימה");
-        }
     }
     
     // ========================================================================
     // חיפוש יעד הצמדה
     // ========================================================================
-    function findPotentialSnapTarget(ghostElement) {
+    function findSnapTarget() {
         // ניקוי הדגשות קודמות
-        clearSnapHighlights();
+        clearHighlights();
         potentialSnapTarget = null;
         
-        if (!ghostElement) return;
+        if (!isDragging || !draggedElement || !programmingArea) return;
         
-        const ghostRect = ghostElement.getBoundingClientRect();
-        const allBlocks = programmingArea.querySelectorAll('.block-container:not(#' + ghostElement.id + ')');
+        const dragRect = draggedElement.getBoundingClientRect();
+        const blocks = programmingArea.querySelectorAll('.block-container');
         
         let closestDistance = HORIZONTAL_SNAP_DISTANCE;
         let bestTarget = null;
         
-        allBlocks.forEach(block => {
-            // דילוג על הבלוק המקורי
+        blocks.forEach(block => {
+            // דילוג על הבלוק עצמו
             if (block === draggedElement) return;
             
             const blockRect = block.getBoundingClientRect();
             
             // בדיקה אם הבלוקים קרובים מספיק אנכית
-            const verticalDistance = Math.abs((ghostRect.top + ghostRect.height/2) - (blockRect.top + blockRect.height/2));
+            const verticalDistance = Math.abs((dragRect.top + dragRect.height/2) - (blockRect.top + blockRect.height/2));
             if (verticalDistance > VERTICAL_ALIGNMENT_TOLERANCE) return;
             
             // בדיקת מרחק אופקי - האם הבלוק הנגרר קרוב מימין לבלוק הנבדק
-            const distanceFromRight = Math.abs(ghostRect.left - blockRect.right);
+            const distanceFromRight = Math.abs(dragRect.left - blockRect.right);
             if (distanceFromRight < closestDistance) {
                 closestDistance = distanceFromRight;
                 bestTarget = block;
@@ -454,7 +270,7 @@
             }
             
             // בדיקת מרחק אופקי - האם הבלוק הנגרר קרוב משמאל לבלוק הנבדק
-            const distanceFromLeft = Math.abs(ghostRect.right - blockRect.left);
+            const distanceFromLeft = Math.abs(dragRect.right - blockRect.left);
             if (distanceFromLeft < closestDistance) {
                 closestDistance = distanceFromLeft;
                 bestTarget = block;
@@ -465,228 +281,222 @@
         // אם נמצא יעד מתאים, הדגש אותו
         if (bestTarget) {
             potentialSnapTarget = bestTarget;
-            ghostElement.classList.add('snap-highlight');
+            draggedElement.classList.add('snap-highlight');
             bestTarget.classList.add('snap-target');
             
             if (ENABLE_LOGGING) {
-                console.log(`[Relative Positioning] נמצא יעד הצמדה: ${bestTarget.id}, כיוון: ${snapDirection}`);
+                console.log(`[Transform Linkage] נמצא יעד הצמדה: ${bestTarget.id}, כיוון: ${snapDirection}, מרחק: ${closestDistance.toFixed(2)}px`);
             }
         }
     }
     
     // ניקוי הדגשות
-    function clearSnapHighlights() {
+    function clearHighlights() {
         document.querySelectorAll('.snap-highlight, .snap-target').forEach(el => {
             el.classList.remove('snap-highlight', 'snap-target');
         });
     }
     
     // ========================================================================
-    // חיבור בלוקים
+    // חיבור בלוקים באמצעות Transform
     // ========================================================================
-    function connectBlocksInRows(sourceBlock, targetBlock, direction) {
-        if (ENABLE_LOGGING) {
-            console.log(`[Relative Positioning] חיבור בלוקים: ${sourceBlock.id} ו-${targetBlock.id}, כיוון: ${direction}`);
-        }
-        
-        // זיהוי השורה של הבלוק היעד
-        const targetRow = targetBlock.closest('.blocks-row');
-        if (!targetRow) {
-            console.error("[Relative Positioning] בלוק יעד ללא שורה:", targetBlock.id);
-            return;
-        }
-        
-        // קבלת מיכל הבלוקים בשורת היעד
-        const targetBlocksContainer = targetRow.querySelector('.row-blocks-container');
-        if (!targetBlocksContainer) return;
-        
-        // קבלת כל הבלוקים בשורת היעד
-        const blocksInTargetRow = Array.from(targetBlocksContainer.children);
-        
-        // מציאת האינדקס של בלוק היעד
-        const targetIndex = blocksInTargetRow.indexOf(targetBlock);
-        if (targetIndex === -1) return;
-        
-        // הסרת הבלוק המקור מהשורה המקורית
-        const sourceRow = sourceBlock.closest('.blocks-row');
-        if (sourceRow) {
-            sourceRow.classList.remove('row-hidden');
-            const sourceBlocksContainer = sourceRow.querySelector('.row-blocks-container');
-            if (sourceBlocksContainer && sourceBlocksContainer.contains(sourceBlock)) {
-                sourceBlocksContainer.removeChild(sourceBlock);
+    function connectBlocksWithTransform(draggedBlock, targetBlock, direction) {
+        try {
+            let leftBlock, rightBlock;
+            
+            // קביעת סדר הבלוקים לפי כיוון החיבור
+            if (direction === 'right') {
+                // הבלוק הנגרר יהיה מימין לבלוק היעד
+                leftBlock = targetBlock;
+                rightBlock = draggedBlock;
+            } else {
+                // הבלוק הנגרר יהיה משמאל לבלוק היעד
+                leftBlock = draggedBlock;
+                rightBlock = targetBlock;
             }
-        }
-        
-        // קביעת אינדקס ההוספה בהתאם לכיוון
-        let insertIndex = direction === 'right' ? targetIndex + 1 : targetIndex;
-        
-        // הוספת הבלוק לשורת היעד במיקום הנכון
-        if (insertIndex >= blocksInTargetRow.length) {
-            // הוספה בסוף
-            targetBlocksContainer.appendChild(sourceBlock);
-        } else {
-            // הוספה באמצע
-            targetBlocksContainer.insertBefore(sourceBlock, blocksInTargetRow[insertIndex]);
-        }
-        
-        // הגדרת הבלוק כחלק משורה
-        sourceBlock.classList.add('block-in-row');
-        
-        // עדכון רשימת הבלוקים בשורה במעקב
-        const rowData = rows.find(r => r.id === targetRow.id);
-        if (rowData) {
-            // הוספת בלוק המקור לרשימת הבלוקים בשורה
-            if (!rowData.blocks.includes(sourceBlock.id)) {
-                // מציאת האינדקס הנכון להוספה
-                const blockInsertIndex = direction === 'right' ? rowData.blocks.indexOf(targetBlock.id) + 1 : rowData.blocks.indexOf(targetBlock.id);
-                rowData.blocks.splice(blockInsertIndex, 0, sourceBlock.id);
+            
+            // חישוב ההסט
+            const leftRect = leftBlock.getBoundingClientRect();
+            const rightRect = rightBlock.getBoundingClientRect();
+            
+            // חישוב ההסט בפיקסלים שהבלוק הימני צריך לנוע כדי להיות בחפיפה עם הבלוק השמאלי
+            const offsetX = (leftRect.right - PUZZLE_CONNECTOR_WIDTH) - rightRect.left;
+            const offsetY = leftRect.top - rightRect.top;
+            
+            if (ENABLE_LOGGING) {
+                console.log(`[Transform Linkage] חישוב הסט: X=${offsetX}px, Y=${offsetY}px`);
+                console.log(`[Transform Linkage] מיקום לפני הסט - שמאל: ${leftRect.left}, ${leftRect.top}, ימין: ${rightRect.left}, ${rightRect.top}`);
             }
-        }
-        
-        // אנימציית חיבור
-        sourceBlock.style.transition = 'all 0.3s ease-out';
-        setTimeout(() => {
-            sourceBlock.style.transition = '';
-        }, 300);
-        
-        if (ENABLE_LOGGING) {
-            console.log(`[Relative Positioning] בלוק ${sourceBlock.id} חובר לשורה ${targetRow.id}`);
+            
+            // הגדרת טרנספורמציה לבלוק הימני
+            rightBlock.style.transition = 'transform 0.2s ease-out';
+            rightBlock.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+            
+            // זיהוי חזותי לבלוקים מחוברים
+            leftBlock.classList.add('connected-left');
+            rightBlock.classList.add('connected-right');
+            
+            // יצירת קשר לוגי בין הבלוקים
+            leftBlock.dataset.rightBlockId = rightBlock.id;
+            rightBlock.dataset.leftBlockId = leftBlock.id;
+            
+            // שמירת החיבור במפת החיבורים
+            addConnection(leftBlock.id, rightBlock.id);
+            
+            // הפעלת אירוע לבדיקת חיבור תקין
+            setTimeout(() => {
+                const newRightRect = rightBlock.getBoundingClientRect();
+                if (ENABLE_LOGGING) {
+                    console.log(`[Transform Linkage] מיקום אחרי הסט - ימין: ${newRightRect.left}, ${newRightRect.top}`);
+                    console.log(`[Transform Linkage] טרנספורם סופי: ${rightBlock.style.transform}`);
+                }
+            }, 250);
+            
+        } catch (e) {
+            console.error("[Transform Linkage] שגיאה בחיבור בלוקים:", e);
+            // איפוס הטרנספורם במקרה של שגיאה
+            draggedBlock.style.transform = '';
         }
     }
     
-    // יצירת שורה חדשה עם בלוק
-    function createNewRowWithBlock(block, left, top) {
+    // ========================================================================
+    // ניהול חיבורים
+    // ========================================================================
+    
+    // הוספת חיבור בין שני בלוקים
+    function addConnection(leftBlockId, rightBlockId) {
+        // אתחול המפה אם צריך
+        if (!connectedBlocks.has(leftBlockId)) {
+            connectedBlocks.set(leftBlockId, { left: null, right: rightBlockId });
+        } else {
+            connectedBlocks.get(leftBlockId).right = rightBlockId;
+        }
+        
+        if (!connectedBlocks.has(rightBlockId)) {
+            connectedBlocks.set(rightBlockId, { left: leftBlockId, right: null });
+        } else {
+            connectedBlocks.get(rightBlockId).left = leftBlockId;
+        }
+        
         if (ENABLE_LOGGING) {
-            console.log(`[Relative Positioning] יצירת שורה חדשה עם בלוק ${block.id} במיקום (${left}, ${top})`);
+            console.log(`[Transform Linkage] חיבור נוסף: ${leftBlockId} -> ${rightBlockId}`);
+        }
+    }
+    
+    // קבלת כל החיבורים של בלוק
+    function getBlockConnections(blockId) {
+        const connections = [];
+        
+        // אם לבלוק אין רשומה במפה, אין לו חיבורים
+        if (!connectedBlocks.has(blockId)) {
+            return connections;
         }
         
-        // יצירת שורה חדשה
-        const newRow = createNewRow();
+        const blockConnections = connectedBlocks.get(blockId);
         
-        // מיקום השורה
-        newRow.style.left = `${left}px`;
-        newRow.style.top = `${top}px`;
+        // בדיקת חיבור שמאלי
+        if (blockConnections.left) {
+            connections.push({
+                type: 'left',
+                blockId: blockConnections.left
+            });
+        }
         
-        // הסרת הבלוק מהשורה המקורית
-        const sourceRow = block.closest('.blocks-row');
-        if (sourceRow) {
-            sourceRow.classList.remove('row-hidden');
-            const sourceBlocksContainer = sourceRow.querySelector('.row-blocks-container');
-            if (sourceBlocksContainer && sourceBlocksContainer.contains(block)) {
-                sourceBlocksContainer.removeChild(block);
+        // בדיקת חיבור ימני
+        if (blockConnections.right) {
+            connections.push({
+                type: 'right',
+                blockId: blockConnections.right
+            });
+        }
+        
+        return connections;
+    }
+    
+    // ניתוק בלוק מכל החיבורים שלו
+    function disconnectBlock(blockId) {
+        if (!connectedBlocks.has(blockId)) {
+            return;
+        }
+        
+        const block = document.getElementById(blockId);
+        if (!block) {
+            return;
+        }
+        
+        const connections = getBlockConnections(blockId);
+        
+        // ניתוק כל החיבורים של הבלוק
+        connections.forEach(connection => {
+            const connectedBlock = document.getElementById(connection.blockId);
+            if (!connectedBlock) return;
+            
+            if (connection.type === 'left') {
+                // הבלוק שמאלי לבלוק הנוכחי
+                if (connectedBlocks.has(connection.blockId)) {
+                    connectedBlocks.get(connection.blockId).right = null;
+                }
+                connectedBlocks.get(blockId).left = null;
+                delete block.dataset.leftBlockId;
+                delete connectedBlock.dataset.rightBlockId;
+                
+                // הסרת מחלקות חיבור
+                block.classList.remove('connected-right');
+                connectedBlock.classList.remove('connected-left');
+            } else {
+                // הבלוק ימני לבלוק הנוכחי
+                if (connectedBlocks.has(connection.blockId)) {
+                    connectedBlocks.get(connection.blockId).left = null;
+                }
+                connectedBlocks.get(blockId).right = null;
+                delete block.dataset.rightBlockId;
+                delete connectedBlock.dataset.leftBlockId;
+                
+                // הסרת מחלקות חיבור
+                block.classList.remove('connected-left');
+                connectedBlock.classList.remove('connected-right');
             }
-        }
-        
-        // הוספת הבלוק לשורה החדשה
-        const blocksContainer = newRow.querySelector('.row-blocks-container');
-        blocksContainer.appendChild(block);
-        
-        // הגדרת הבלוק כחלק משורה
-        block.classList.add('block-in-row');
-        
-        // הוספת השורה למיכל
-        programmingArea.appendChild(newRow);
-        
-        // הוספת השורה למעקב
-        rows.push({
-            id: newRow.id,
-            element: newRow,
-            blocks: [block.id]
+            
+            if (ENABLE_LOGGING) {
+                console.log(`[Transform Linkage] חיבור נותק: ${blockId} - ${connection.blockId}`);
+            }
         });
         
-        if (ENABLE_LOGGING) {
-            console.log(`[Relative Positioning] נוצרה שורה חדשה: ${newRow.id}`);
-        }
+        // איפוס טרנספורם
+        block.style.transform = '';
     }
     
     // ========================================================================
     // API ציבורי
     // ========================================================================
-    window.registerNewBlockForRelativePositioning = function(newBlockElement) {
+    window.registerNewBlockForTransformLinkage = function(newBlockElement){
         if (!newBlockElement) return;
         
         if (!newBlockElement.id) {
             newBlockElement.id = generateUniqueBlockId();
         }
         
-        // יצירת שורה חדשה עבור הבלוק החדש
-        const newRow = createNewRow();
-        
-        // מיקום השורה
-        const left = parseInt(newBlockElement.style.left) || 0;
-        const top = parseInt(newBlockElement.style.top) || 0;
-        newRow.style.left = `${left}px`;
-        newRow.style.top = `${top}px`;
-        
-        // הוספת הבלוק לשורה
-        const blocksContainer = newRow.querySelector('.row-blocks-container');
-        
-        // הסרת הבלוק מההורה הנוכחי אם יש
-        if (newBlockElement.parentNode) {
-            newBlockElement.parentNode.removeChild(newBlockElement);
-        }
-        
-        // הוספת הבלוק לשורה
-        blocksContainer.appendChild(newBlockElement);
-        
-        // הגדרת הבלוק כחלק משורה
-        newBlockElement.classList.add('block-in-row');
-        
-        // הוספת השורה למיכל
-        programmingArea.appendChild(newRow);
-        
-        // הוספת השורה למעקב
-        rows.push({
-            id: newRow.id,
-            element: newRow,
-            blocks: [newBlockElement.id]
-        });
+        // ודא שאין טרנספורם קיים
+        newBlockElement.style.transform = '';
         
         if (ENABLE_LOGGING) {
-            console.log(`[Relative Positioning] בלוק חדש נרשם: ${newBlockElement.id} בשורה: ${newRow.id}`);
+            console.log(`[Transform Linkage] בלוק חדש נרשם: ${newBlockElement.id}`);
         }
-    };
-    
-    // פונקציה לחיבור שני בלוקים
-    window.connectBlocks = function(block1, block2) {
-        if (!block1 || !block2) {
-            console.error("[Relative Positioning] ניסיון לחבר בלוקים לא תקינים");
-            return;
-        }
-        
-        if (ENABLE_LOGGING) {
-            console.log(`[Relative Positioning] חיבור חיצוני של בלוקים: ${block1.id} ו-${block2.id}`);
-        }
-        
-        // בדיקה אם הבלוקים כבר בשורה
-        const row1 = block1.closest('.blocks-row');
-        const row2 = block2.closest('.blocks-row');
-        
-        if (row1 && row2 && row1 === row2) {
-            // הבלוקים כבר באותה שורה, אין צורך לעשות כלום
-            return;
-        }
-        
-        // קביעת כיוון החיבור (בלוק 1 משמאל לבלוק 2)
-        connectBlocksInRows(block2, block1, 'right');
     };
     
     // החלף את מערכת החיבורים הנוכחית
     if (window.registerNewBlockForLinkage) {
-        console.log("[Relative Positioning] מחליף את מערכת החיבורים הקודמת");
-        window.registerNewBlockForLinkage = window.registerNewBlockForRelativePositioning;
+        console.log("[Transform Linkage] מחליף את מערכת החיבורים הקודמת");
+        window.registerNewBlockForLinkage = window.registerNewBlockForTransformLinkage;
     }
-    
-    // הוסף פונקציית חירום
-    window.recoverFromRelativePositioningStuckState = recoverFromStuckState;
     
     // הפעלת המערכת
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initRelativePositioningSystem);
+        document.addEventListener('DOMContentLoaded', initTransformLinkageSystem);
     } else {
-        initRelativePositioningSystem();
+        initTransformLinkageSystem();
     }
     
 })();
 
-console.log("Relative positioning linkage system loaded");
+console.log("Transform-based linkage system loaded");
