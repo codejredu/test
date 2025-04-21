@@ -1,60 +1,58 @@
 // --- START OF FILE linkageimproved.js ---
-// (אותו קוד כמו קודם עד לפונקציה findSnapTarget)
+// (קוד קודם...)
 
-    // ================= Snapping Logic & Indicator =================
+    // ================= Block Discovery & Listener Setup =================
+    function handleMutations(mutationsList) {
+        log("[handleMutations] Detected mutations:", mutationsList.length); // לוג חדש
+        for (const mutation of mutationsList) {
+            log(`   [handleMutations] Mutation type: ${mutation.type}`); // לוג חדש
+            if (mutation.type === 'childList') {
+                 log(`   [handleMutations] Added nodes: ${mutation.addedNodes.length}, Removed nodes: ${mutation.removedNodes.length}`); // לוג חדש
+                mutation.addedNodes.forEach((node, index) => {
+                    log(`      [handleMutations] Checking added node ${index}:`, node); // לוג חדש ומפורט
+                    // הדפס מאפיינים חשובים של הצומת
+                    if (node.nodeType) log(`         Node type: ${node.nodeType}`);
+                    if (node.classList) log(`         Classes: ${JSON.stringify(Array.from(node.classList))}`);
+                    if (node.tagName) log(`         Tag name: ${node.tagName}`);
 
-    function findSnapTarget(draggedBlock) {
-        let bestTarget = null;
-        let minDistance = SNAP_THRESHOLD; // e.g., 20
-
-        const draggedRect = draggedBlock.getBoundingClientRect();
-        if (!programmingAreaRect) programmingAreaRect = programmingArea.getBoundingClientRect();
-
-        // קבל את כל הבלוקים האחרים באזור התכנות
-        const potentialTargets = programmingArea.querySelectorAll('.block-container:not(.block-dragging)');
-        log(`[findSnapTarget] Dragging ${draggedBlock.id}. Checking ${potentialTargets.length} potential targets.`); // לוג חדש
-
-        potentialTargets.forEach(potentialTarget => {
-            const targetRect = potentialTarget.getBoundingClientRect();
-            log(`   [findSnapTarget] Evaluating target: ${potentialTarget.id}`); // לוג חדש
-
-            // 1. בדיקה אנכית: מרחק בין החלק העליון של הנגרר לתחתית המטרה
-            const verticalDistance = Math.abs(draggedRect.top - (targetRect.bottom + SNAP_GAP));
-            log(`      [findSnapTarget] VDist = |${draggedRect.top.toFixed(1)} - (${targetRect.bottom.toFixed(1)} + ${SNAP_GAP})| = ${verticalDistance.toFixed(1)}`); // לוג חדש
-
-            // אם המרחק האנכי קטן מסף הקרבה
-            if (verticalDistance < minDistance) {
-                log(`      [findSnapTarget] VDist OK (${verticalDistance.toFixed(1)} < ${minDistance}). Checking HOverlap...`); // לוג חדש
-
-                // 2. בדיקה אופקית: חישוב חפיפה
-                const horizontalOverlap = Math.max(0, Math.min(draggedRect.right, targetRect.right) - Math.max(draggedRect.left, targetRect.left));
-                // חישוב החפיפה המינימלית הנדרשת (אחוז מהרוחב הצר יותר)
-                const requiredOverlapWidth = Math.min(draggedRect.width, targetRect.width) * HORIZONTAL_OVERLAP_THRESHOLD;
-                log(`         [findSnapTarget] HOverlap = ${horizontalOverlap.toFixed(1)}, Required = ${requiredOverlapWidth.toFixed(1)}`); // לוג חדש
-
-                // אם יש חפיפה אופקית מספקת
-                if (horizontalOverlap >= requiredOverlapWidth) {
-                    log(`            [findSnapTarget] HOverlap OK. ${potentialTarget.id} is a candidate!`); // לוג חדש
-                    // 3. בדיקת תאימות (אופציונלי) - כרגע מאפשרים הכל
-                    minDistance = verticalDistance; // עדכן את המרחק המינימלי שנמצא
-                    bestTarget = potentialTarget; // שמור את המטרה הטובה ביותר שנמצאה עד כה
-                } else {
-                    log(`            [findSnapTarget] HOverlap FAILED for ${potentialTarget.id}.`); // לוג חדש
-                }
-            } else {
-                 // אם המרחק האנכי גדול מדי, אין טעם להמשיך לבדוק את הבלוק הזה
-                 // log(`      [findSnapTarget] VDist too large for ${potentialTarget.id}.`); // לוג די רועש
+                    // --- תנאי הבדיקה המקורי ---
+                    if (node.nodeType === Node.ELEMENT_NODE && node.classList && node.classList.contains('block-container') && !node.classList.contains('in-palette')) {
+                        log(`         [handleMutations] Node IS a valid block in area! Adding listener...`); // לוג חדש
+                        addBlockListeners(node); // הוסף מאזין mousedown
+                    } else {
+                         log(`         [handleMutations] Node is NOT a valid block in area (or is in palette). Skipping listener.`); // לוג חדש
+                    }
+                });
+                mutation.removedNodes.forEach(node => {
+                     if (node.nodeType === Node.ELEMENT_NODE && node.classList && node.classList.contains('block-container')) {
+                         log(`      [handleMutations] Block removed:`, node.id || node.dataset.type);
+                         // כאן אפשר להוסיף לוגיקה לניקוי חיבורים אם מימשתם אותה
+                     }
+                 });
             }
-        }); // סוף הלולאה על potentialTargets
-
-        if (bestTarget) {
-             log(`[findSnapTarget] Best target found: ${bestTarget.id} (at VDist ${minDistance.toFixed(1)})`); // לוג חדש
-        } else {
-             log("[findSnapTarget] No suitable target found in this pass."); // לוג חדש
         }
-        return bestTarget;
     }
 
-    // ... שאר הקוד (snapBlocks, updateVisualIndicator וכו') נשאר זהה ...
+    function addListenersToExistingBlocks() {
+        // ... (קודם) ...
+    }
+
+    function addBlockListeners(block) {
+        if (!block.id) {
+            block.id = generateUniqueId(block.dataset.type);
+            log(`   [addBlockListeners] Generated ID: ${block.id}`); // הוספתי רווח בהתחלה
+        } else {
+             log(`   [addBlockListeners] Block already has ID: ${block.id}`); // הוספתי רווח
+        }
+        block.removeEventListener('mousedown', handleMouseDown); // מניעת כפילות
+        block.addEventListener('mousedown', handleMouseDown);
+        log(`   [addBlockListeners] Added mousedown listener to ${block.id}`); // הוספתי רווח
+    }
+
+    function generateUniqueId(prefix = 'block') {
+        // ... (קודם) ...
+    }
+
+// ... שאר הקוד של linkageimproved.js ...
 
 // --- END OF FILE linkageimproved.js ---
