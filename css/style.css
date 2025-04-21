@@ -1,4 +1,4 @@
-/* style.css - עם צבעים מעודכנים לילדי גן */
+/* style.css - עם צבעים מעודכנים לילדי גן וסגנון לבלוקים מחוברים */
 :root {
     /* צבעים עם הרבה יותר שקיפות (0.25 במקום 0.85) */
     --motion-color: rgba(102, 210, 255, 0.25);    /* כחול-תכלת בהיר עם שקיפות גבוהה */
@@ -7,7 +7,7 @@
     --sound-color: rgba(126, 217, 87, 0.25);     /* ירוק תפוח בהיר עם שקיפות גבוהה */
     --control-color: rgba(255, 189, 103, 0.25);   /* כתום אפרסק עם שקיפות גבוהה */
     --end-color: rgba(255, 107, 107, 0.25);       /* אדום קורל רך עם שקיפות גבוהה */
-    
+
     /* צבעים מלאים לאלמנטים אחרים שצריכים להיות פחות שקופים */
     --motion-color-solid: #66D2FF;
     --triggering-color-solid: #FFE866;
@@ -23,6 +23,7 @@ body {
     padding: 0;
     background-color: #f0f4ff;
     direction: ltr; /* כיוון משמאל לימין */
+    overflow: hidden; /* Prevent body scrolling */
 }
 
 .container {
@@ -38,20 +39,25 @@ header {
     flex-direction: column;
     align-items: center;
     border-bottom: 1px solid #e0e0e0;
+    flex-shrink: 0;
 }
 
 main {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+    overflow: hidden;
 }
 
 .stage-container {
-    flex: 1;
+    flex-basis: 480px;
+    flex-shrink: 0;
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 10px;
+    background-color: #e8eaf6;
+    overflow: hidden;
 }
 
 #stage {
@@ -59,11 +65,11 @@ main {
     width: 550px;
     height: 450px;
     background-color: #f5f5f5;
-    border: 1px solid #e0e0e0;
+    border: 1px solid #d1d1d1;
     border-radius: 10px;
     position: relative;
-    gap: 1px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
 }
 
 #stage::before {
@@ -79,9 +85,9 @@ main {
 
 #stage.show-grid {
   background-image:
-    linear-gradient(to right, lightgrey 1px, transparent 1px),
-    linear-gradient(to bottom, lightgrey 1px, transparent 1px);
-  background-size: 56px 46px; /* גודל קווי הרשת */
+    linear-gradient(to right, #dcdcdc 1px, transparent 1px),
+    linear-gradient(to bottom, #dcdcdc 1px, transparent 1px);
+  background-size: 55px 45px;
   background-position: top left;
 }
 
@@ -91,120 +97,139 @@ main {
     position: absolute;
     object-fit: contain;
     cursor: grab;
-    transition: all 0.1s ease-out;
+    transition: transform 0.1s ease-out, top 0.1s ease-out, left 0.1s ease-out;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
 .palette-and-programming {
     display: flex;
-    flex-direction: column;
-    flex: 1;
+    flex-direction: row;
+    flex-grow: 1;
+    overflow: hidden;
+    background-color: #f9f9f9;
 }
 
 #block-palette {
+    flex-basis: 250px;
+    flex-shrink: 0;
     background-color: #f0f0f0;
-    border: 1px solid #e0e0e0;
-    margin: 10px;
-    padding: 10px;
-    border-radius: 10px;
-    height: 130px;
+    border-right: 1px solid #e0e0e0;
     display: flex;
-    flex-direction: row;
-    align-items: stretch;
+    flex-direction: column;
     overflow: hidden;
-    transition: border-color 0.3s ease;
+    height: 100%;
 }
 
 .category-tabs {
     display: flex;
-    flex-direction: row;
     flex-wrap: wrap;
-    margin-bottom: 0;
-    height: 100%;
-    align-content: flex-start;
-    background-color: #f0f0f0;
+    justify-content: center;
+    padding: 10px 5px;
+    background-color: #e5e5e5;
+    border-bottom: 1px solid #d0d0d0;
+    flex-shrink: 0;
 }
 
-/* סגנון לכפתורי הקטגוריות */
 .category-tab {
     border: none;
     padding: 0;
-    margin-left: 5px;
-    margin-bottom: 5px;
-    border-radius: 10px;
+    margin: 3px;
+    border-radius: 8px;
     cursor: pointer;
-    width: 80px;
-    height: 80px;
+    width: 60px;
+    height: 60px;
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: transparent;
+    background-color: #f8f8f8;
+    transition: background-color 0.2s, box-shadow 0.2s, outline 0.2s;
+    outline: 2px solid transparent;
 }
 
 .category-tab img {
-    max-width: 80px;
-    max-height: 80px;
+    max-width: 50px;
+    max-height: 50px;
     pointer-events: none;
 }
 
-/* סגנון לכפתור קטגוריה פעיל */
-.category-tab.active {
-    outline: 3px solid #4a90e2;
-    box-shadow: 0 0 10px rgba(74, 144, 226, 0.5);
+.category-tab:hover {
+    background-color: #eaeaea;
 }
 
-/* עדכון איזור הבלוקים */
+.category-tab.active {
+    outline: 3px solid #4a90e2;
+    box-shadow: 0 0 8px rgba(74, 144, 226, 0.4);
+    background-color: #fff;
+}
+
 .block-category {
     display: none;
-    padding: 10px;
     flex-grow: 1;
-    height: 100%;
-    margin-left: 0px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 10px;
     background-color: #f0f0f0;
-    overflow-x: auto;
     transition: background-color 0.3s ease;
+    align-content: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .block-category.active {
     display: flex;
-    flex-wrap: wrap;
-    padding: 10px;
-    border-radius: 0 10px 10px 0;
 }
 
 #programming-area {
-    background-color: #fff;
-    border: 1px solid #e0e0e0;
-    margin: 10px;
-    padding: 10px;
-    border-radius: 10px;
-    flex: 2;
-    min-height: 200px;
+    flex-grow: 1;
+    background-color: #ffffff;
+    border-left: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
 }
 
 .program-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    padding: 8px 15px;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #f8f8f8;
+    flex-shrink: 0;
+    font-size: 14px;
+    font-weight: bold;
+    color: #555;
 }
 
 #clear-all {
     color: #e74c3c;
     cursor: pointer;
+    font-weight: normal;
+    padding: 3px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+#clear-all:hover {
+    background-color: #f5dedb;
 }
 
 #program-blocks {
-    min-height: 180px;
-    border: 1px dashed #ccc;
+    flex-grow: 1;
     padding: 10px;
     position: relative;
+    overflow: auto;
+    border: 1px dashed #ccc;
+    margin: 10px;
+    border-radius: 5px;
 }
 
 #program-blocks .block-container {
-    position: absolute;
+    position: absolute !important; /* Force absolute positioning */
 }
 
 .logo {
@@ -214,17 +239,15 @@ main {
     margin-bottom: 5px;
 }
 
-/* עיצוב לאזור האייקונים בכותרת */
 .header-icons {
     display: flex;
     align-items: center;
 }
 
-/* עיצוב לכל אייקון בכותרת */
 .icon {
-    margin-left: 13px;
-    width: 50px;
-    height: 50px;
+    margin-left: 10px;
+    width: 45px;
+    height: 45px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -234,41 +257,34 @@ main {
     position: relative;
     background-color: transparent;
     box-shadow: none;
-}
-
-/* עיצוב ספציפי לאייקון הרשת (grid) */
-#grid-toggle {
-    margin-left: 13px;
-    width: 50px;
-    height: 50px;
-    border: none;
-    outline: none;
     padding: 0;
-    background-color: transparent;
-    border-radius: 0;
+    border-radius: 6px;
+    transition: background-color 0.2s;
 }
 
-/* עיצוב לתמונות בתוך האייקונים */
+#grid-toggle {
+     margin-left: 10px;
+     width: 45px;
+     height: 45px;
+     border: none;
+     outline: none;
+     padding: 0;
+     background-color: transparent;
+     border-radius: 6px;
+}
+
 .header-icon-img {
-    width: 45px;
-    height: 45px;
+    width: 38px;
+    height: 38px;
     object-fit: contain;
     border: none;
     outline: none;
 }
 
-/* עיצוב כשהעכבר מרחף מעל האייקון */
-.icon:hover {
+.icon:hover, #grid-toggle:hover {
     background-color: #f0f0f0;
-    border-radius: 8px;
 }
 
-#grid-toggle:hover {
-    background-color: #f0f0f0;
-    border-radius: 8px;
-}
-
-/* סגנון לתמונות SVG של הבלוקים - הסרת רקע */
 .block-svg-image {
     width: 100px;
     height: 80px;
@@ -276,27 +292,33 @@ main {
     pointer-events: none;
     -webkit-user-drag: none;
     background-color: transparent !important;
+    display: block;
 }
 
-/* עדכון מיכל הבלוק - הסרת הרקע המלבני */
 #block-palette .block-container,
 #programming-area .block-container {
-    position: relative;
+    position: relative; /* Needed for palette, overridden in programming area */
     width: 100px;
     height: 80px;
-    margin: 8px;
+    margin: 5px;
     cursor: grab;
-    background-color: transparent !important; /* רקע שקוף */
-    box-shadow: none !important; /* הסרת הצל */
-    border: none !important; /* הסרת מסגרת אם קיימת */
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Add transition for opacity change */
+    transition: opacity 0.2s ease-in-out;
 }
 
-#block-palette .block-container:active,
+#block-palette .block-container:active {
+    cursor: grabbing;
+}
 #programming-area .block-container:active {
     cursor: grabbing;
 }
 
-/* הסרת רקעים נוספים שעלולים להיות */
 #block-palette .block-container::before,
 #block-palette .block-container::after,
 #programming-area .block-container::before,
@@ -305,7 +327,6 @@ main {
     background: transparent !important;
 }
 
-/* סגנון מיוחד לבלוק repeat */
 #block-palette .block-container[data-type="repeat"] .block-svg-image,
 #programming-area .block-container[data-type="repeat"] .block-svg-image {
     width: 256px !important;
@@ -319,38 +340,47 @@ main {
     background-color: transparent !important;
 }
 
-/* צבעי רקע לקטגוריות השונות */
 .block-category[data-category="triggering"].active {
     background-color: var(--triggering-color) !important;
 }
-
 .block-category[data-category="motion"].active {
     background-color: var(--motion-color) !important;
 }
-
 .block-category[data-category="looks"].active {
     background-color: var(--looks-color) !important;
 }
-
 .block-category[data-category="sound"].active {
     background-color: var(--sound-color) !important;
 }
-
 .block-category[data-category="control"].active {
     background-color: var(--control-color) !important;
 }
-
 .block-category[data-category="end"].active {
     background-color: var(--end-color) !important;
 }
 
-/* הסרת שקיפות נוספת שהייתה קיימת */
 .block-category.active {
-    opacity: 1; /* אין צורך בשקיפות נוספת כי הצבעים כבר מוגדרים עם שקיפות */
+    opacity: 1;
 }
-.snap-highlight {
-    outline: 3px dashed dodgerblue !important;
-    outline-offset: 2px;
-    box-shadow: 0 0 10px rgba(30, 144, 255, 0.7) !important;
-    /* ודא שאין כאן בטעות משהו כמו display: none; או visibility: hidden; */
+
+/* Styles for highlighting potential snap targets (from JS) */
+/* .snap-target { ... } */
+/* .future-position-indicator { ... } */
+/* .snap-highlight { ... } - This class seems unused, removing */
+
+
+/* ==== הוספת סגנון לבלוקים מחוברים ==== */
+#program-blocks .connected-block,
+#program-blocks .has-connected-block {
+  /* אפקט ויזואלי עדין מאוד כדי לסמן שהם חלק מרצף */
+  opacity: 0.9; /* שקיפות קלה */
+  /* אפשרות נוספת: צל עדין מאוד שיראה שהם "יושבים" יחד */
+  /* filter: drop-shadow(0 1px 1px rgba(0,0,0,0.1)); */
 }
+
+/* אפשר גם להדגיש את הבלוק הראשון בשרשרת (ללא data-connected-to אבל עם data-connected-from-right) */
+#program-blocks .block-container:not([data-connected-to])[data-connected-from-right] {
+   /* לדוגמה, אפשר להבהיר אותו מעט יותר */
+   opacity: 1.0; /* ודא שהבלוק הראשון לא מקבל שקיפות */
+}
+/* ==== סוף תוספת סגנון ==== */
