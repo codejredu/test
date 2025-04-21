@@ -115,7 +115,7 @@
         }
     }
     
-    // פונקציה להוספת חיווי חזותי
+    // מוסיף סגנונות CSS מותאמים עבור אנימציית החיבור
     function addVisualIndicationStyles() {
         // בדוק קודם אם הסגנונות כבר קיימים
         if (document.getElementById('linkage-styles')) return;
@@ -142,17 +142,26 @@
                 transition: opacity 0.2s ease-in-out;
             }
             
-            /* Add styles for connected blocks */
+            /* סגנונות עבור בלוקים מחוברים */
             .connected-left {
                 box-shadow: -2px 0 0 1px #34a853 !important;
+                position: relative;
+                z-index: 1;
             }
             
             .connected-right {
                 box-shadow: 2px 0 0 1px #4285f4 !important;
+                position: relative;
+                z-index: 2;
+            }
+            
+            /* אנימציית חיבור */
+            .block-with-transition {
+                transition: left 0.2s ease-out, top 0.2s ease-out !important;
             }
         `;
         document.head.appendChild(styleElement);
-        console.log("[Linkage] Added visual indication styles");
+        console.log("[Linkage] נוספו סגנונות חזותיים");
     }
     
     function prepareExistingBlocks() {
@@ -277,35 +286,54 @@
         const isValidSnapTarget = currentTarget && programmingArea && programmingArea.contains(currentTarget);
         const currentDirection = snapDirection;
         
+        // שמירת מיקום נוכחי של האלמנט הנגרר
+        const currentPosition = {
+            x: currentDraggedElement.offsetLeft,
+            y: currentDraggedElement.offsetTop
+        };
+        
         // הסר מאזינים גלובליים מיד
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
         document.removeEventListener('mouseleave', handleMouseLeave);
         
-        console.log(`[Linkage] Mouse released. Target: ${currentTarget ? currentTarget.id : 'none'}, Direction: ${currentDirection}`);
+        console.log(`[Linkage] עכבר שוחרר. יעד: ${currentTarget ? currentTarget.id : 'ללא'}, כיוון: ${currentDirection}`);
         
         // בצע הצמדה או מיקום סופי
         if (isValidSnapTarget) {
-            console.log(`[Linkage] SNAP: Connecting blocks in direction: ${currentDirection}`);
+            console.log(`[Linkage] הצמדה: חיבור בלוקים בכיוון: ${currentDirection}`);
             
             try {
+                // הוספת אנימציה חלקה
+                currentDraggedElement.classList.add('block-with-transition');
+                if (currentTarget) currentTarget.classList.add('block-with-transition');
+                
                 if (currentDirection === 'right') {
                     // בלוק היעד משמאל והבלוק הנגרר מימין
                     // כלומר, הבלוק הנגרר צריך להיות ממוקם מימין לבלוק היעד
                     directlySetPuzzleConnection(currentTarget, currentDraggedElement);
-                    console.log(`[Linkage] Connected left-to-right: ${currentTarget.id} -> ${currentDraggedElement.id}`);
+                    console.log(`[Linkage] חיבור משמאל-לימין: ${currentTarget.id} -> ${currentDraggedElement.id}`);
                 } else {
                     // בלוק היעד מימין והבלוק הנגרר משמאל
                     // כלומר, הבלוק הנגרר צריך להיות ממוקם משמאל לבלוק היעד
                     directlySetPuzzleConnection(currentDraggedElement, currentTarget);
-                    console.log(`[Linkage] Connected left-to-right: ${currentDraggedElement.id} -> ${currentTarget.id}`);
+                    console.log(`[Linkage] חיבור משמאל-לימין: ${currentDraggedElement.id} -> ${currentTarget.id}`);
                 }
+                
+                // הסרת מעבר האנימציה לאחר זמן קצר
+                setTimeout(() => {
+                    currentDraggedElement.classList.remove('block-with-transition');
+                    if (currentTarget) currentTarget.classList.remove('block-with-transition');
+                }, 300);
             } catch (e) {
-                console.error("[Linkage] Error connecting blocks:", e);
+                console.error("[Linkage] שגיאה בחיבור בלוקים:", e);
+                // החזרת האלמנט למצב הקודם
+                currentDraggedElement.style.left = currentPosition.x + 'px';
+                currentDraggedElement.style.top = currentPosition.y + 'px';
             }
         } else {
             // אין הצמדה - המיקום האחרון מ-mousemove נשאר
-            console.log(`[Linkage] No snap target - block will remain at current position`);
+            console.log(`[Linkage] אין יעד הצמדה - הבלוק יישאר במיקום הנוכחי`);
         }
         
         // ניקוי סופי
@@ -323,7 +351,7 @@
         draggedElement = null;
         potentialSnapTarget = null;
         
-        console.log("--- MouseUp Finished ---");
+        console.log("--- סיום MouseUp ---");
     }
     
     function handleMouseLeave(event) { 
@@ -496,92 +524,121 @@
     function directlySetPuzzleConnection(leftBlock, rightBlock) {
         if (!leftBlock || !rightBlock || leftBlock === rightBlock || !programmingArea) return;
         
-        console.log(`[Linkage] Connecting blocks: ${leftBlock.id} -> ${rightBlock.id}`);
+        console.log(`[Linkage] חיבור בלוקים: ${leftBlock.id} -> ${rightBlock.id}`);
         
-        // Log initial positions
-        console.log(`[Linkage] Before - Left [${leftBlock.id}]: L=${leftBlock.offsetLeft}, T=${leftBlock.offsetTop}, W=${leftBlock.offsetWidth}`);
-        console.log(`[Linkage] Before - Right [${rightBlock.id}]: L=${rightBlock.offsetLeft}, T=${rightBlock.offsetTop}`);
+        // רישום מיקומים התחלתיים
+        console.log(`[Linkage] לפני - שמאל [${leftBlock.id}]: שמאל=${leftBlock.offsetLeft}, למעלה=${leftBlock.offsetTop}, רוחב=${leftBlock.offsetWidth}`);
+        console.log(`[Linkage] לפני - ימין [${rightBlock.id}]: שמאל=${rightBlock.offsetLeft}, למעלה=${rightBlock.offsetTop}`);
         
-        // 1. Establish relationship between blocks
+        // 1. יצירת קשר בין הבלוקים
         leftBlock.dataset.rightBlockId = rightBlock.id;
         rightBlock.dataset.leftBlockId = leftBlock.id;
         
-        // 2. Temporarily disable observer to prevent infinite loops
+        // 2. השבתה זמנית של המשקיף למניעת לולאות אינסופיות
         if (observer) observer.disconnect();
         
         try {
-            // 3. Calculate the correct connecting position
-            // Get the left block's dimensions and position
+            // 3. חישוב המיקום הנכון לחיבור
+            // השגת מימדים ומיקומים של הבלוק השמאלי
             const leftRect = leftBlock.getBoundingClientRect();
             const rightRect = rightBlock.getBoundingClientRect();
             
-            // Calculate the snap position with proper overlap
-            // The right block should overlap the left block by exactly PUZZLE_CONNECTOR_WIDTH pixels
+            // שמירת המיקום הנוכחי של הבלוק הימני לפני שינוי
+            const originalRight = {
+                x: rightBlock.offsetLeft,
+                y: rightBlock.offsetTop
+            };
+            
+            // חישוב מיקום ההצמדה עם חפיפה מתאימה
+            // הבלוק הימני אמור לחפוף את הבלוק השמאלי בדיוק ב-PUZZLE_CONNECTOR_WIDTH פיקסלים
             const targetX = leftBlock.offsetLeft + leftBlock.offsetWidth - PUZZLE_CONNECTOR_WIDTH;
             
-            // For vertical alignment, we keep blocks at the same level
+            // ליישור אנכי, נשמור את הבלוקים באותה רמה
             const targetY = leftBlock.offsetTop;
             
-            console.log(`[Linkage] Positioning right block at X=${targetX}, Y=${targetY} (overlap=${PUZZLE_CONNECTOR_WIDTH}px)`);
+            console.log(`[Linkage] מיקום הבלוק הימני ב-X=${targetX}, Y=${targetY} (חפיפה=${PUZZLE_CONNECTOR_WIDTH}פיקסלים)`);
             
-            // 4. Clear any interfering properties
+            // 4. ניקוי כל המאפיינים שעלולים להפריע
             rightBlock.style.transition = 'none';
             rightBlock.style.transform = '';
             
-            // 5. Set basic positioning directly with absolute positioning
+            // 5. הגדרת מיקום בסיסי ישירות עם מיקום אבסולוטי
             rightBlock.style.position = 'absolute';
             rightBlock.style.left = targetX + 'px';
             rightBlock.style.top = targetY + 'px';
             
-            // 6. Add visual connection indicators
+            // 6. הוספת מחווני חיבור חזותיים
             leftBlock.classList.add('connected-left');
             rightBlock.classList.add('connected-right');
             
-            // 7. Force a layout reflow to ensure the browser applies our changes immediately
+            // 7. אילוץ זרימת פריסה מחדש כדי להבטיח שהדפדפן מחיל את השינויים שלנו באופן מיידי
             void rightBlock.offsetWidth;
             
-            // 8. Check position after setting to verify
-            console.log(`[Linkage] After positioning - Right block: L=${rightBlock.offsetLeft}, T=${rightBlock.offsetTop}`);
+            // 8. בדיקת מיקום לאחר הגדרה לאימות
+            console.log(`[Linkage] אחרי מיקום - בלוק ימני: שמאל=${rightBlock.offsetLeft}, למעלה=${rightBlock.offsetTop}`);
             
-            // 9. Add brief visual feedback to indicate successful connection
+            // 9. הוספת משוב חזותי קצר לציון חיבור מוצלח
             rightBlock.classList.add('snap-highlight');
             leftBlock.classList.add('snap-target');
+            
+            // בדיקה אם הבלוק קפץ במקום להתחבר הלאה
+            if (originalRight.x > targetX + 50) {
+                console.warn(`[Linkage] זוהתה קפיצה אחורה! מיקום מקורי: ${originalRight.x}, מיקום יעד: ${targetX}`);
+                
+                // נסיון תיקון - החזרת הבלוק למיקום הקודם ואז אנימציה
+                rightBlock.style.transition = 'none';
+                rightBlock.style.left = originalRight.x + 'px';
+                rightBlock.style.top = originalRight.y + 'px';
+                
+                // אילוץ עיבוד מחדש
+                void rightBlock.offsetWidth;
+                
+                // אנימציה למיקום החדש
+                rightBlock.style.transition = 'left 0.2s ease-out, top 0.2s ease-out';
+                setTimeout(() => {
+                    rightBlock.style.left = targetX + 'px';
+                    rightBlock.style.top = targetY + 'px';
+                }, 50);
+            }
             
             setTimeout(() => {
                 rightBlock.classList.remove('snap-highlight');
                 leftBlock.classList.remove('snap-target');
+                rightBlock.style.transition = '';  // הסרת אנימציה לאחר סיום
             }, 300);
             
-            // 10. Show success message
+            // 10. הצגת הודעת הצלחה
             if (ENABLE_DETAILED_SNAP_LOGGING) {
-                console.log(`[Linkage] Successfully connected blocks with ${PUZZLE_CONNECTOR_WIDTH}px overlap`);
+                console.log(`[Linkage] חיבור בלוקים הושלם בהצלחה עם חפיפה של ${PUZZLE_CONNECTOR_WIDTH} פיקסלים`);
             }
         }
         catch(e) {
-            console.error("[Linkage] Error in direct positioning:", e);
+            console.error("[Linkage] שגיאה במיקום ישיר:", e);
             
-            // Fallback - simpler approach if the main approach fails
+            // גישה חלופית - פשוטה יותר במקרה של כישלון בגישה הראשית
             try {
                 const leftWidth = leftBlock.offsetWidth;
                 const targetX = leftBlock.offsetLeft + leftWidth - PUZZLE_CONNECTOR_WIDTH;
                 const targetY = leftBlock.offsetTop;
                 
+                // אנימציה חלקה
+                rightBlock.style.transition = 'left 0.2s ease-out, top 0.2s ease-out';
                 rightBlock.style.left = targetX + 'px';
                 rightBlock.style.top = targetY + 'px';
                 
-                console.log(`[Linkage] Used fallback positioning method: X=${targetX}, Y=${targetY}`);
+                console.log(`[Linkage] שימוש בשיטת מיקום חלופית: X=${targetX}, Y=${targetY}`);
             } catch (fallbackError) {
-                console.error("[Linkage] Even fallback positioning failed:", fallbackError);
+                console.error("[Linkage] גם שיטת המיקום החלופית נכשלה:", fallbackError);
             }
         }
         finally {
-            // Always restore the observer
+            // תמיד שחזר את המשקיף
             if (observer) {
                 setupDOMObserver();
             }
         }
         
-        console.log(`[Linkage] Connection completed: ${leftBlock.id} -> ${rightBlock.id}`);
+        console.log(`[Linkage] החיבור הושלם: ${leftBlock.id} -> ${rightBlock.id}`);
     }
     
     // ========================================================================
