@@ -1,4 +1,6 @@
-/* style.css - עם צבעים מעודכנים לילדי גן */
+/* --- START OF FILE style.css --- */
+
+/* style.css - משולב עם סגנון פאזל וצבעים לילדי גן */
 :root {
     /* צבעים עם הרבה יותר שקיפות (0.25 במקום 0.85) */
     --motion-color: rgba(102, 210, 255, 0.25);    /* כחול-תכלת בהיר עם שקיפות גבוהה */
@@ -15,14 +17,18 @@
     --sound-color-solid: #7ED957;
     --control-color-solid: #FFBD67;
     --end-color-solid: #FF6B6B;
+
+    /* צבע ברירת מחדל לבלוקים באזור התכנות */
+    --default-block-bg: lightblue;
+    --default-block-border: blue;
 }
 
 body {
-    font-family: Arial, sans-serif;
+    font-family: Arial, sans-serif; /* נשמר מהקובץ הראשון */
     margin: 0;
     padding: 0;
-    background-color: #f0f4ff;
-    direction: ltr; /* כיוון משמאל לימין */
+    background-color: #f0f4ff; /* נשמר מהקובץ הראשון */
+    direction: ltr; /* נשמר מהקובץ הראשון, ישפיע על מיקום הפאזל (שקע שמאל, בליטה ימין) */
 }
 
 .container {
@@ -42,17 +48,21 @@ header {
 
 main {
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* שינוי מ-row ל-column כדי להתאים למבנה */
     flex-grow: 1;
+    /* הסרת flex-direction: row מהקובץ המקורי */
 }
 
 .stage-container {
-    flex: 1;
+    /* flex: 1; - הוסר כדי לאפשר ל-palette-and-programming לתפוס יותר מקום */
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 10px;
+    /* גובה קבוע או מינימלי אם צריך */
+    min-height: 470px; /* לדוגמה, להתאים לגובה הבמה + padding */
 }
+
 
 #stage {
     flex: 0 0 auto;
@@ -62,7 +72,7 @@ main {
     border: 1px solid #e0e0e0;
     border-radius: 10px;
     position: relative;
-    gap: 1px;
+    /* gap: 1px; - הוסר, לא רלוונטי ל-div בודד */
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
@@ -91,7 +101,7 @@ main {
     position: absolute;
     object-fit: contain;
     cursor: grab;
-    /* transition: all 0.1s ease-out; */ /* נטרול transition לבדיקת התנגשויות */
+    transition: all 0.1s ease-out;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -99,8 +109,8 @@ main {
 
 .palette-and-programming {
     display: flex;
-    flex-direction: column;
-    flex: 1;
+    flex-direction: column; /* שומר על סידור Palette מעל Programming Area */
+    flex: 1; /* תופס את שאר הגובה */
 }
 
 #block-palette {
@@ -109,30 +119,30 @@ main {
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    height: 130px;
+    height: 130px; /* גובה קבוע כפי שהיה */
     display: flex;
-    flex-direction: row;
-    align-items: stretch;
-    overflow: hidden;
+    flex-direction: row; /* טאבים משמאל, קטגוריה מימין */
+    align-items: stretch; /* למתוח את הילדים לגובה */
+    overflow: hidden; /* למנוע גלישה אם יש יותר מדי טאבים */
     transition: border-color 0.3s ease;
 }
 
 .category-tabs {
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    margin-bottom: 0;
+    flex-direction: column; /* טאבים אחד מתחת לשני */
+    flex-wrap: wrap; /* אם יש יותר מדי, יעבור לעמודה הבאה */
+    margin-right: 10px; /* רווח בין הטאבים לקטגוריה (הוחלף מ-margin-bottom) */
     height: 100%;
     align-content: flex-start;
-    background-color: #f0f0f0;
+    background-color: #f0f0f0; /* התאמת רקע */
 }
 
 /* סגנון לכפתורי הקטגוריות */
 .category-tab {
     border: none;
     padding: 0;
-    margin-left: 5px;
-    margin-bottom: 5px;
+    margin-bottom: 5px; /* רווח בין הטאבים */
+    /* margin-left: 5px; - הוסר, הוחלף ב-margin-bottom */
     border-radius: 10px;
     cursor: pointer;
     width: 80px;
@@ -157,25 +167,28 @@ main {
 
 /* עדכון איזור הבלוקים */
 .block-category {
-    display: none;
+    display: none; /* מוסתר כברירת מחדל */
     padding: 10px;
-    flex-grow: 1;
-    height: 100%;
-    margin-left: 0px;
+    flex-grow: 1; /* תופס את שאר הרוחב */
+    height: 100%; /* תופס את כל הגובה של הפאלט */
+    /* margin-left: 0px; - הוסר */
     background-color: #f0f0f0;
-    overflow-x: auto;
-    /* transition: background-color 0.3s ease; */ /* נטרול transition לבדיקה */
+    overflow-x: auto; /* מאפשר גלילה אופקית אם יש הרבה בלוקים */
+    overflow-y: hidden; /* מונע גלילה אנכית מיותרת */
+    transition: background-color 0.3s ease;
+    white-space: nowrap; /* מונע שבירת שורה של הבלוקים בפנים */
+    box-sizing: border-box; /* כולל padding בחישוב הגובה */
 }
 
+
 .block-category.active {
-    display: flex;
-    flex-wrap: nowrap; /* שינוי ל-nowrap כדי שיהיו בשורה אחת */
+    display: flex; /* השתמש ב-flex כדי לסדר את הבלוקים בשורה */
+    flex-wrap: nowrap; /* לא לשבור שורה, להסתמך על גלילה */
+    align-items: center; /* יישור אנכי של הבלוקים */
     padding: 10px;
-    border-radius: 0 10px 10px 0;
-    overflow-x: auto; /* לאפשר גלילה אופקית */
-    overflow-y: hidden; /* למנוע גלילה אנכית מיותרת */
-    align-items: center; /* יישור אנכי למרכז */
+    border-radius: 0 10px 10px 0; /* פינות מעוגלות בצד הרלוונטי */
 }
+
 
 #programming-area {
     background-color: #fff;
@@ -183,10 +196,10 @@ main {
     margin: 10px;
     padding: 10px;
     border-radius: 10px;
-    flex: 2;
-    min-height: 200px;
-    position: relative; /* חשוב מאוד לאזור ההפלה והמיקום האבסולוטי */
-    overflow: auto;     /* לאפשר גלילה אם יש הרבה בלוקים */
+    flex: 2; /* תופס יותר מקום גובה */
+    min-height: 200px; /* גובה מינימלי */
+    display: flex; /* שימוש ב-flex */
+    flex-direction: column; /* לסדר את הכותרת מעל הבלוקים */
 }
 
 .program-header {
@@ -194,6 +207,7 @@ main {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 10px;
+    flex-shrink: 0; /* למנוע מהכותרת להתכווץ */
 }
 
 #clear-all {
@@ -201,30 +215,27 @@ main {
     cursor: pointer;
 }
 
+/* אזור התכנות עצמו - ה"וורקספייס" של הבלוקים המתחברים */
 #program-blocks {
     min-height: 180px;
-    /* border: 1px dashed #ccc; */ /* אפשר להסיר את המסגרת הזו */
-    padding: 0; /* אין צורך בפדינג פנימי אם הבלוקים אבסולוטיים */
-    position: relative; /* חשוב! */
-    width: 100%; /* לתפוס את כל הרוחב של האזור */
-    height: 100%; /* לתפוס את כל הגובה של האזור */
+    border: 1px dashed #ccc;
+    padding: 10px;
+    position: relative; /* חשוב למיקום אבסולוטי של הבלוקים (אם משתמשים) וה-snap-indicator */
+    flex-grow: 1; /* תופס את שאר המקום בתוך programming-area */
+
+    /* סגנונות מה-workspace של הקוד השני: */
+    display: flex; /* כדי שהלבנים יסתדרו בשורה */
+    align-items: flex-start; /* ליישור הלבנים למעלה */
+    gap: 0; /* חשוב שהלבנים יהיו צמודות לאחר חיבור */
+    overflow-x: auto; /* לאפשר גלילה אם השרשור ארוך */
+    overflow-y: hidden;
 }
 
-/* מיכל הבלוקים באזור התכנות - חייב להיות אבסולוטי */
-#program-blocks .block-container {
-    position: absolute !important; /* ודא שזה אבסולוטי */
-    /* width/height יקבעו לפי התמונה או הגדרות מיוחדות */
-    margin: 0; /* הסר מרווחים */
-    cursor: grab;
-    background-color: transparent !important;
-    box-shadow: none !important;
-    border: none !important;
-    /* transition: none !important; */ /* נטרול כל אנימציית מעבר לבדיקה */
-}
+/* הסרת הסגנון הישן שמיקם את הבלוקים באופן אבסולוטי */
+/* #program-blocks .block-container {
+    position: absolute;
+} */
 
-#program-blocks .block-container:active {
-    cursor: grabbing;
-}
 
 .logo {
     font-size: 20px;
@@ -234,80 +245,225 @@ main {
 }
 
 /* עיצוב לאזור האייקונים בכותרת */
-.header-icons { display: flex; align-items: center; }
-.icon { margin-left: 13px; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; cursor: pointer; border: none; outline: none; position: relative; background-color: transparent; box-shadow: none; }
-#grid-toggle { margin-left: 13px; width: 50px; height: 50px; border: none; outline: none; padding: 0; background-color: transparent; border-radius: 0; }
-.header-icon-img { width: 45px; height: 45px; object-fit: contain; border: none; outline: none; }
-.icon:hover { background-color: #f0f0f0; border-radius: 8px; }
-#grid-toggle:hover { background-color: #f0f0f0; border-radius: 8px; }
+.header-icons {
+    display: flex;
+    align-items: center;
+}
 
-/* סגנון לתמונות SVG של הבלוקים */
-.block-svg-image {
-    /* גודל התמונה יכול להישאר קבוע או להשתנות לפי סוג הבלוק */
+/* עיצוב לכל אייקון בכותרת */
+.icon {
+    margin-left: 13px;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    border: none;
+    outline: none;
+    position: relative;
+    background-color: transparent;
+    box-shadow: none;
+}
+
+/* עיצוב ספציפי לאייקון הרשת (grid) */
+#grid-toggle {
+    margin-left: 13px;
+    width: 50px;
+    height: 50px;
+    border: none;
+    outline: none;
+    padding: 0;
+    background-color: transparent;
+    border-radius: 0;
+}
+
+/* עיצוב לתמונות בתוך האייקונים */
+.header-icon-img {
+    width: 45px;
+    height: 45px;
+    object-fit: contain;
+    border: none;
+    outline: none;
+}
+
+/* עיצוב כשהעכבר מרחף מעל האייקון */
+.icon:hover {
+    background-color: #f0f0f0;
+    border-radius: 8px;
+}
+
+#grid-toggle:hover {
+    background-color: #f0f0f0;
+    border-radius: 8px;
+}
+
+
+/* --- סגנון הבלוקים בפאלט (SVG) --- */
+
+/* מיכל הבלוק בפאלט */
+#block-palette .block-container {
+    position: relative; /* או absolute אם נדרש בתוך הקטגוריה */
+    width: 100px;
+    height: 80px;
+    margin: 5px; /* רווח בין הבלוקים בפאלט */
+    cursor: grab;
+    background-color: transparent !important; /* רקע שקוף */
+    box-shadow: none !important; /* הסרת הצל */
+    border: none !important; /* הסרת מסגרת אם קיימת */
+    display: inline-block; /* מאפשר להם להיות בשורה בתוך ה-flex container של הקטגוריה */
+    vertical-align: middle; /* יישור אנכי */
+}
+
+#block-palette .block-container:active {
+    cursor: grabbing;
+}
+
+/* תמונת ה-SVG בתוך הבלוק בפאלט */
+#block-palette .block-svg-image {
     width: 100px;
     height: 80px;
     user-select: none;
     pointer-events: none;
     -webkit-user-drag: none;
     background-color: transparent !important;
-    display: block; /* למנוע רווחים מתחת לתמונה */
+    display: block; /* למנוע רווחים מיותרים */
 }
 
-/* עדכון מיכל הבלוק בפלטה - שיהיה לו גודל ברור */
-#block-palette .block-container {
-    position: relative; /* או static, תלוי איך הפלטה בנויה */
-    width: auto; /* רוחב אוטומטי לפי התוכן */
-    height: auto; /* גובה אוטומטי */
-    margin: 5px; /* מרווח קטן יותר בפלטה */
-    cursor: grab;
-    display: inline-block; /* להציג בשורה */
-    vertical-align: top;
+/* סגנון מיוחד לבלוק repeat בפאלט */
+#block-palette .block-container[data-type="repeat"] {
+    width: 256px !important;
+    height: 118px !important;
     background-color: transparent !important;
-    box-shadow: none !important;
-    border: none !important;
 }
-
-#block-palette .block-container:active { cursor: grabbing; }
-
-
-/* סגנון מיוחד לבלוק repeat */
-#block-palette .block-container[data-type="repeat"] .block-svg-image,
-#programming-area .block-container[data-type="repeat"] .block-svg-image {
-    width: 256px !important;
-    height: 118px !important;
-}
-#block-palette .block-container[data-type="repeat"],
-#programming-area .block-container[data-type="repeat"] {
+#block-palette .block-container[data-type="repeat"] .block-svg-image {
     width: 256px !important;
     height: 118px !important;
 }
 
+/* --- סגנון הבלוקים המתחברים באזור התכנות (#program-blocks) --- */
+/* סגנון ברירת מחדל לבלוק טקסט רגיל באזור התכנות */
+#program-blocks .block {
+    background-color: var(--default-block-bg);
+    border: 1px solid var(--default-block-border);
+    padding: 10px 20px;
+    margin: 0; /* אין רווח בין בלוקים מחוברים */
+    cursor: grab;
+    display: inline-block; /* כדי שיוכלו להיות בשורה */
+    position: relative; /* מאפשר שימוש ב-::before/::after ל"פאזל" */
+    user-select: none; /* למנוע בחירת טקסט בגרירה */
+    min-width: 80px; /* רוחב מינימלי ללבנה */
+    height: 40px; /* גובה אחיד לבלוקים, לדוגמה */
+    line-height: 20px; /* גובה השורה כדי למרכז טקסט אנכית */
+    text-align: center;
+    white-space: nowrap; /* למנוע שבירת שורה */
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    box-sizing: border-box; /* כולל padding ו-border במידות */
+    /* אפשר להוסיף עיצוב פאזל מורכב יותר עם ::before ו-::after או SVG */
+}
 
-/* צבעי רקע לקטגוריות השונות בפלטה */
-.block-category[data-category="triggering"].active { background-color: var(--triggering-color) !important; }
-.block-category[data-category="motion"].active { background-color: var(--motion-color) !important; }
-.block-category[data-category="looks"].active { background-color: var(--looks-color) !important; }
-.block-category[data-category="sound"].active { background-color: var(--sound-color) !important; }
-.block-category[data-category="control"].active { background-color: var(--control-color) !important; }
-.block-category[data-category="end"].active { background-color: var(--end-color) !important; }
+/* שקע שמאלי (ויזואלי בלבד) - מותאם ל-LTR */
+#program-blocks .block::before {
+    content: '';
+    position: absolute;
+    left: -5px; /* מיקום משמאל */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 20px; /* גובה השקע */
+    background-color: #fff; /* צבע הרקע של #program-blocks */
+    border: 1px solid var(--default-block-border);
+    border-left: none; /* בלי גבול שמאלי */
+    /* צורת חצי עיגול/אליפסה לשקע משמאל */
+    border-radius: 0 10px 10px 0 / 0 50% 50% 0; /* רדיוסים ל-LTR */
+    z-index: 1;
+    box-sizing: border-box;
+}
 
-.block-category.active { opacity: 1; }
+/* בליטה ימנית (ויזואלי בלבד) - מותאם ל-LTR */
+#program-blocks .block::after {
+    content: '';
+    position: absolute;
+    right: -5px; /* מיקום מימין (קצת פחות מרוחב השקע כדי שיראה נכנס) */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 20px; /* גובה הבליטה */
+    background-color: var(--default-block-bg); /* צבע הלבנה */
+    border: 1px solid var(--default-block-border);
+    border-right: none; /* בלי גבול ימני */
+     /* צורת חצי עיגול/אליפסה לבליטה מימין */
+    border-radius: 10px 0 0 10px / 50% 0 0 50%; /* רדיוסים ל-LTR */
+    z-index: 2; /* מעל השקע הפוטנציאלי */
+    box-sizing: border-box;
+}
 
+/* סגנון ללבנה באזור התכנות בזמן גרירה */
+#program-blocks .block.dragging {
+    opacity: 0.6;
+    cursor: grabbing;
+    box-shadow: 5px 5px 15px rgba(0,0,0,0.4);
+}
 
-/* --- סגנונות ההצמדה --- */
+/* הסתרת צורות הפאזל בלבנים הראשונה והאחרונה בשרשור באזור התכנות */
+#program-blocks > .block:first-child::before {
+    display: none;
+}
+#program-blocks > .block:last-child::after {
+    display: none;
+}
 
-/* הילה כחולה ישנה (כרגע לא בשימוש ב-JS, אפשר למחוק או להשאיר) */
+/* --- סגנון חיווי החיבור --- */
+.snap-indicator {
+    position: absolute; /* מיקום ביחס ל-#program-blocks */
+    width: 20px; /* רוחב אזור החיבור */
+    /* height: 40px; גובה יקבע דינמית או לפי גובה הבלוק */
+    border: 2px dashed orange;
+    background-color: rgba(255, 255, 0, 0.3); /* צהוב שקוף */
+    /* מוסתר כברירת מחדל */
+    display: none;
+    pointer-events: none; /* לא להפריע לאירועי עכבר אחרים */
+    z-index: 10; /* מעל שאר האלמנטים */
+    box-sizing: border-box; /* שה-border יהיה כלול במידות */
+}
+
+/* --- צבעי רקע לקטגוריות --- */
+/* צבעי רקע לקטגוריות השונות בפאלט */
+.block-category[data-category="triggering"].active {
+    background-color: var(--triggering-color) !important;
+}
+
+.block-category[data-category="motion"].active {
+    background-color: var(--motion-color) !important;
+}
+
+.block-category[data-category="looks"].active {
+    background-color: var(--looks-color) !important;
+}
+
+.block-category[data-category="sound"].active {
+    background-color: var(--sound-color) !important;
+}
+
+.block-category[data-category="control"].active {
+    background-color: var(--control-color) !important;
+}
+
+.block-category[data-category="end"].active {
+    background-color: var(--end-color) !important;
+}
+
+/* הסרת שקיפות נוספת שהייתה קיימת */
+.block-category.active {
+    opacity: 1; /* אין צורך בשקיפות נוספת כי הצבעים כבר מוגדרים עם שקיפות */
+}
+
+/* סגנון להדגשת ה-snap שהיה בקובץ המקורי (אולי שימש למשהו אחר?) */
+/* אם הוא מיותר, ניתן להסיר אותו */
 .snap-highlight {
     outline: 3px dashed dodgerblue !important;
     outline-offset: 2px;
     box-shadow: 0 0 10px rgba(30, 144, 255, 0.7) !important;
 }
 
-/* *** הכלל החדש להילה הצהובה השקופה *** */
-.snap-highlight-yellow {
-    outline: 3px dashed gold !important;        /* מסגרת צהובה מקווקוות */
-    outline-offset: 3px;                        /* הרחקה קלה של המסגרת */
-    box-shadow: 0 0 12px rgba(255, 215, 0, 0.8) !important; /* צל צהוב בולט */
-    background-color: rgba(255, 215, 0, 0.3) !important;   /* רקע צהוב עם 30% אטימות (יותר בולט) */
-    border-radius: 5px; /* עיגול פינות קל להילה */
-}
+/* --- END OF FILE style.css --- */
