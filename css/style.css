@@ -1,266 +1,415 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // קבל הפניות לאלמנטים קבועים
-    const workspace = document.getElementById('program-blocks'); // השתמש ב-ID הנכון
-    const palette = document.getElementById('block-palette');    // הפניה לפאלט
-    const snapIndicator = document.getElementById('snap-indicator');
-    const SNAP_THRESHOLD = 30;
+/* --- START OF FILE style.css --- */
 
-    let draggedElement = null;
-    let potentialHost = null;
-    let snapSide = null;
-    let isDraggingFromPalette = false; // דגל לזיהוי מקור הגרירה
+/* style.css - משולב עם תיקוני גודל, פאזל וצבעים לילדי גן */
+:root {
+    /* צבעים עם הרבה יותר שקיפות (0.25 במקום 0.85) */
+    --motion-color: rgba(102, 210, 255, 0.25);
+    --triggering-color: rgba(255, 232, 102, 0.25);
+    --looks-color: rgba(210, 149, 246, 0.25);
+    --sound-color: rgba(126, 217, 87, 0.25);
+    --control-color: rgba(255, 189, 103, 0.25);
+    --end-color: rgba(255, 107, 107, 0.25);
 
-    // --- פונקציות עזר (positionSnapIndicator, hideSnapIndicator) ---
-    // ... (כמו בקוד המקורי, ודא שהן פועלות עם 'workspace' הנכון) ...
-    function positionSnapIndicator(host, side) {
-        const hostRect = host.getBoundingClientRect();
-        // ודא ש-workspace הוא האלמנט הנכון (#program-blocks)
-        const workspaceRect = workspace.getBoundingClientRect();
-        const indicatorHeight = snapIndicator.offsetHeight || hostRect.height; // התאם לגובה המארח
+    /* צבעים מלאים לאלמנטים אחרים שצריכים להיות פחות שקופים */
+    --motion-color-solid: #66D2FF;
+    --triggering-color-solid: #FFE866;
+    --looks-color-solid: #D295F6;
+    --sound-color-solid: #7ED957;
+    --control-color-solid: #FFBD67;
+    --end-color-solid: #FF6B6B;
 
-        let top = hostRect.top - workspaceRect.top + workspace.scrollTop; // הסר חלוקה ב-2 אם רוצים גובה מלא
-        let left;
+    /* צבע ברירת מחדל לבלוקים באזור התכנות */
+    --default-block-bg: lightgrey; /* שינוי צבע ברירת מחדל */
+    --default-block-border: grey;
+}
 
-        if (side === 'left') {
-            left = hostRect.left - workspaceRect.left - snapIndicator.offsetWidth + workspace.scrollLeft;
-        } else { // side === 'right'
-            left = hostRect.right - workspaceRect.left + workspace.scrollLeft;
-        }
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f4ff;
+    direction: ltr; /* כיוון משמאל לימין */
+}
 
-        snapIndicator.style.top = `${top}px`;
-        snapIndicator.style.left = `${left}px`;
-        snapIndicator.style.height = `${hostRect.height}px`; // התאם גובה החיווי לגובה הלבנה
-        snapIndicator.style.display = 'block';
-    }
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
 
-    function hideSnapIndicator() {
-        snapIndicator.style.display = 'none';
-        potentialHost = null;
-        snapSide = null;
-    }
+header {
+    background-color: #fff;
+    padding: 10px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-bottom: 1px solid #e0e0e0;
+}
 
-    // פונקציית בדיקת קרבה (ללא שינוי מהותי, ודא שהיא משתמשת ב-workspace הנכון)
-    function checkSnapProximity(event) {
-        hideSnapIndicator();
-        if (!draggedElement) return;
+main {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
 
-        const currentX = event.clientX;
-        const currentY = event.clientY;
-        const workspaceBlocks = Array.from(workspace.querySelectorAll('.block')); // מצא בלוקים *בתוך* אזור התכנות
+.stage-container {
+     /* שינוי: מ-flex:1 ל-flex: 0 0 auto כדי לתת יותר מקום לאזור התכנות */
+    flex: 0 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    /* גובה יכול להיות מוגדר כאן אם רוצים לשלוט בו ישירות */
+     min-height: 470px; /* גובה במה + padding */
+}
 
-        let closestHost = null;
-        let closestSide = null;
-        let minDistance = SNAP_THRESHOLD;
+#stage {
+    flex: 0 0 auto;
+    width: 550px;
+    height: 450px;
+    background-color: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    position: relative;
+    /* gap: 1px; הוסר */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
 
-        workspaceBlocks.forEach(hostBlock => {
-            if (hostBlock === draggedElement) return;
-            const hostRect = hostBlock.getBoundingClientRect();
-            const isVerticallyAligned = currentY > hostRect.top && currentY < hostRect.bottom;
+#stage::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background: none;
+}
 
-            if (isVerticallyAligned) {
-                const distToLeft = Math.abs(currentX - hostRect.left);
-                const distToRight = Math.abs(currentX - hostRect.right);
+#stage.show-grid {
+  background-image:
+    linear-gradient(to right, lightgrey 1px, transparent 1px),
+    linear-gradient(to bottom, lightgrey 1px, transparent 1px);
+  background-size: 56px 46px; /* גודל קווי הרשת */
+  background-position: top left;
+}
 
-                if (distToLeft < minDistance && distToLeft < distToRight) { // קרוב יותר לשמאל
-                    minDistance = distToLeft;
-                    closestHost = hostBlock;
-                    closestSide = 'left';
-                } else if (distToRight < minDistance) { // קרוב יותר לימין
-                    minDistance = distToRight;
-                    closestHost = hostBlock;
-                    closestSide = 'right';
-                }
-            }
-        });
+#character {
+    width: 100px;
+    height: 100px;
+    position: absolute;
+    object-fit: contain;
+    cursor: grab;
+    transition: all 0.1s ease-out;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
 
-        if (closestHost) {
-            potentialHost = closestHost;
-            snapSide = closestSide;
-            positionSnapIndicator(potentialHost, snapSide);
-        }
-    }
+.palette-and-programming {
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* תופס את שאר הגובה הזמין */
+    overflow: hidden; /* למנוע גלישה אם התוכן גבוה מדי */
+}
+
+#block-palette {
+    background-color: #f0f0f0;
+    border: 1px solid #e0e0e0;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    height: 130px; /* גובה קבוע */
+    display: flex;
+    flex-direction: row; /* Tabs | Category Area */
+    align-items: stretch;
+    overflow: hidden;
+    transition: border-color 0.3s ease;
+    flex-shrink: 0; /* למנוע מהפאלט להתכווץ */
+}
+
+.category-tabs {
+    display: flex;
+    flex-direction: column; /* טאבים אחד מתחת לשני */
+    flex-wrap: wrap;
+    margin-right: 10px; /* רווח בין הטאבים לקטגוריה */
+    /* height: 100%; - מוסר, נותן ל-flex לקבוע */
+    align-content: flex-start;
+    background-color: #f0f0f0; /* התאמת רקע */
+    flex-shrink: 0; /* למנוע התכווצות הטאבים */
+}
+
+/* סגנון לכפתורי הקטגוריות */
+.category-tab {
+    border: none;
+    padding: 0;
+    margin-bottom: 5px;
+    border-radius: 10px;
+    cursor: pointer;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: transparent;
+}
+
+.category-tab img {
+    max-width: 80px;
+    max-height: 80px;
+    pointer-events: none;
+}
+
+/* סגנון לכפתור קטגוריה פעיל */
+.category-tab.active {
+    outline: 3px solid #4a90e2;
+    box-shadow: 0 0 10px rgba(74, 144, 226, 0.5);
+}
+
+/* אזור הבלוקים בפאלט */
+.block-category {
+    display: none;
+    padding: 10px;
+    flex-grow: 1; /* תופס את שאר הרוחב */
+    height: 100%; /* מתאים לגובה הפאלט */
+    margin-left: 0px; /* הוסר */
+    background-color: #f0f0f0;
+    overflow-x: auto; /* גלילה אופקית לבלוקים */
+    overflow-y: hidden;
+    transition: background-color 0.3s ease;
+    white-space: nowrap; /* למנוע שבירת שורה של הבלוקים */
+    box-sizing: border-box;
+}
+
+.block-category.active {
+    display: flex;
+    flex-wrap: nowrap; /* בלוקים בשורה אחת */
+    align-items: center; /* יישור אנכי */
+    /* padding: 10px; כבר מוגדר למעלה */
+    border-radius: 0 10px 10px 0;
+}
+
+#programming-area {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    flex: 1; /* שינוי: מ-2 ל-1, כדי לתפוס את שאר המקום הזמין */
+    min-height: 200px; /* גובה מינימלי */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* מונע גלישה של אזור התכנות כולו */
+}
+
+.program-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-shrink: 0; /* מונע התכווצות */
+}
+
+#clear-all {
+    color: #e74c3c;
+    cursor: pointer;
+}
+
+/* --- אזור התכנות עצמו (Workspace) --- */
+#program-blocks {
+    min-height: 180px;
+    border: 1px dashed #ccc;
+    padding: 10px;
+    position: relative; /* חובה ל-absolute positioning של ה-snap-indicator */
+    flex-grow: 1; /* תופס את שאר המקום בתוך programming-area */
+    background-color: #fff; /* רקע לאזור הגרירה */
+
+    /* *** תכונות שהוספו/שונו עבור ה-workspace *** */
+    display: flex;          /* סידור הבלוקים בשורה */
+    align-items: flex-start; /* יישור הבלוקים למעלה */
+    gap: 0;                 /* בלי רווח בין בלוקים מחוברים */
+    overflow-x: auto;       /* גלילה אופקית אם השרשור ארוך */
+    overflow-y: hidden;     /* למנוע גלילה אנכית מיותרת */
+    white-space: nowrap;   /* למנוע שבירת שורה של ה-inline-block (אם יש) */
+}
+
+/* הסרת הכלל הבעייתי הקודם */
+/* #program-blocks .block-container {
+    position: absolute;
+} */
+
+.logo {
+    font-size: 20px;
+    font-weight: bold;
+    color: #4a90e2;
+    margin-bottom: 5px;
+}
+
+/* כותרת וכו' (ללא שינוי) */
+.header-icons { display: flex; align-items: center; }
+.icon { margin-left: 13px; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; cursor: pointer; border: none; outline: none; position: relative; background-color: transparent; box-shadow: none; }
+#grid-toggle { margin-left: 13px; width: 50px; height: 50px; border: none; outline: none; padding: 0; background-color: transparent; border-radius: 0; }
+.header-icon-img { width: 45px; height: 45px; object-fit: contain; border: none; outline: none; }
+.icon:hover { background-color: #f0f0f0; border-radius: 8px; }
+#grid-toggle:hover { background-color: #f0f0f0; border-radius: 8px; }
 
 
-    // --- האזנה לאירועים באמצעות Event Delegation ---
+/* --- סגנון הבלוקים בפאלט (SVG Containers) --- */
+/* המיכל של הבלוק בפאלט */
+#block-palette .block-container {
+    position: relative; /* או absolute תלוי בהקשר הקטגוריה */
+    width: 100px;
+    height: 80px;
+    margin: 5px;
+    cursor: grab;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    display: inline-block; /* או flex-shrink: 0 אם בתוך flex container */
+    vertical-align: middle; /* ליישור אם inline-block */
+    flex-shrink: 0; /* מונע התכווצות בתוך flex */
+}
 
-    // 1. האזנה לתחילת גרירה (מהפאלט או מאזור התכנות)
-    document.addEventListener('dragstart', (event) => {
-        const target = event.target;
-        isDraggingFromPalette = false; // אפס את הדגל
+#block-palette .block-container:active {
+    cursor: grabbing;
+}
 
-        // בדיקה אם הגרירה התחילה מבלוק בתוך הפאלט
-        const paletteBlockContainer = target.closest('#block-palette .block-container');
-        if (paletteBlockContainer) {
-            draggedElement = paletteBlockContainer; // שמור את המקור מהפאלט
-            // אפשר לשמור מידע מה-data attributes של ה-paletteBlockContainer
-            event.dataTransfer.setData('text/plain', paletteBlockContainer.id || `palette-${Date.now()}`); // ID זמני אם אין
-            event.dataTransfer.setData('blockType', paletteBlockContainer.dataset.type || 'default');
-            event.dataTransfer.setData('blockCategory', paletteBlockContainer.closest('.block-category')?.dataset.category || 'unknown');
-            event.dataTransfer.effectAllowed = 'copy'; // גוררים עותק מהפאלט
-            isDraggingFromPalette = true;
-             setTimeout(() => {
-                // אפשר להוסיף קלאס ל-paletteBlockContainer אם רוצים עיצוב מיוחד בזמן גרירה ממנו
-             }, 0);
+/* תמונת ה-SVG בפאלט */
+#block-palette .block-svg-image {
+    width: 100%; /* מתאים למיכל */
+    height: 100%; /* מתאים למיכל */
+    user-select: none;
+    pointer-events: none;
+    -webkit-user-drag: none;
+    background-color: transparent !important;
+    display: block;
+}
 
-        // בדיקה אם הגרירה התחילה מבלוק בתוך אזור התכנות
-        } else if (target.matches('#program-blocks .block')) {
-            draggedElement = target; // זה הבלוק שנגרר מאזור התכנות
-            event.dataTransfer.setData('text/plain', draggedElement.id);
-            event.dataTransfer.effectAllowed = 'move'; // מזיזים בלוק קיים
-             setTimeout(() => {
-                 if(draggedElement) draggedElement.classList.add('dragging'); // הוסף קלאס רק לבלוקים באזור התכנות
-             }, 0);
-        } else {
-            // אם הגרירה לא התחילה מאלמנט רלוונטי, אל תעשה כלום או בטל
-            // event.preventDefault(); // בדרך כלל לא נדרש כאן
-            return;
-        }
-        hideSnapIndicator();
-    });
+/* הסרת חלקי הפאזל מהבלוקים בפאלט (ליתר ביטחון) */
+#block-palette .block-container::before,
+#block-palette .block-container::after {
+    display: none !important;
+}
 
-
-    // 2. האזנה לסיום הגרירה (בכל מקום במסמך)
-    document.addEventListener('dragend', (event) => {
-        if (draggedElement) {
-            // הסר קלאס 'dragging' אם הוא קיים (רק לבלוקים מאזור התכנות)
-             if (draggedElement.classList.contains('block')) {
-                draggedElement.classList.remove('dragging');
-            }
-        }
-        // איפוס כל המשתנים הגלובליים הקשורים לגרירה
-        draggedElement = null;
-        potentialHost = null;
-        snapSide = null;
-        isDraggingFromPalette = false;
-        hideSnapIndicator();
-    });
+/* בלוק repeat בפאלט */
+#block-palette .block-container[data-type="repeat"] {
+    width: 256px !important;
+    height: 118px !important;
+    background-color: transparent !important;
+}
+/* אין צורך להגדיר שוב את גודל התמונה אם היא 100% */
 
 
-    // 3. האזנה לאירועים על אזור התכנות עצמו
-    workspace.addEventListener('dragenter', (event) => {
-        event.preventDefault(); // אפשר כניסה לאזור
-    });
+/* --- סגנון הבלוקים המתחברים באזור התכנות (#program-blocks) --- */
+/* זה הקלאס שיוחל על ה-div שנוצר/נגרר ב-JS */
+#program-blocks .block {
+    /* *** התאמת מידות *** */
+    height: 80px; /* גובה זהה לבלוק בפאלט */
+    width: 100px; /* רוחב זהה לבלוק בפאלט */
+    padding: 10px; /* ריפוד פנימי */
+    line-height: 60px; /* גובה הבלוק פחות ריפוד אנכי (80 - 2*10) */
+    box-sizing: border-box; /* חשוב לשמירת המידות עם padding/border */
 
-    workspace.addEventListener('dragover', (event) => {
-        event.preventDefault(); // חובה כדי לאפשר drop
-        if (isDraggingFromPalette) {
-            event.dataTransfer.dropEffect = 'copy';
-        } else {
-            event.dataTransfer.dropEffect = 'move';
-        }
-        checkSnapProximity(event); // בדוק קרבה והצג חיווי
-    });
+    /* *** סגנונות ויזואליים ובסיסיים *** */
+    background-color: var(--default-block-bg);
+    border: 1px solid var(--default-block-border);
+    margin: 0; /* אין רווח בין בלוקים מחוברים */
+    cursor: grab;
+    display: inline-block; /* מאפשר להיות בשורה עם flex */
+    vertical-align: top;  /* יישור למעלה עם שאר הבלוקים */
+    position: relative;   /* חובה עבור ::before/::after */
+    user-select: none;
+    text-align: center;
+    white-space: nowrap;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    color: black; /* צבע טקסט */
+    font-size: 14px; /* גודל טקסט */
+    border-radius: 5px; /* פינות מעוגלות קלות לבלוק עצמו */
+    flex-shrink: 0; /* למנוע התכווצות */
+}
 
-    workspace.addEventListener('dragleave', (event) => {
-        // הסתר חיווי רק אם העכבר עוזב *לגמרי* את אזור התכנות
-        if (!workspace.contains(event.relatedTarget)) {
-            hideSnapIndicator();
-        }
-    });
+/* שקע שמאלי (ויזואלי) - מותאם ל-LTR ולגובה 80px */
+#program-blocks .block::before {
+    content: '';
+    position: absolute;
+    left: -6px; /* קצת יותר עמוק */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px; /* קצת יותר רחב */
+    height: 30px; /* גובה השקע (מותאם ל-80px) */
+    background-color: #fff; /* צבע הרקע של #program-blocks */
+    border: 1px solid var(--default-block-border);
+    border-left: none;
+    /* צורת פאזל מעודכנת */
+    border-radius: 0 6px 6px 0 / 0 15px 15px 0;
+    z-index: 1;
+    box-sizing: border-box;
+}
 
-    workspace.addEventListener('drop', (event) => {
-        event.preventDefault();
-        hideSnapIndicator(); // הסתר חיווי לפני הוספה
+/* בליטה ימנית (ויזואלי) - מותאם ל-LTR ולגובה 80px */
+#program-blocks .block::after {
+    content: '';
+    position: absolute;
+    right: -6px; /* מתאים לעומק השקע */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px; /* מתאים לרוחב השקע */
+    height: 30px; /* גובה הבליטה (מותאם) */
+    background-color: inherit; /* יורש את צבע הרקע של הבלוק */
+    border: 1px solid var(--default-block-border);
+    border-right: none;
+    /* צורת פאזל מעודכנת הפוכה */
+    border-radius: 6px 0 0 6px / 15px 0 0 15px;
+    z-index: 2; /* מעל שקע פוטנציאלי */
+    box-sizing: border-box;
+}
 
-        let elementToDrop;
+/* סגנון לבלוק באזור התכנות בזמן גרירה */
+#program-blocks .block.dragging {
+    opacity: 0.6;
+    cursor: grabbing;
+    box-shadow: 5px 5px 15px rgba(0,0,0,0.4);
+}
 
-        if (isDraggingFromPalette && draggedElement) {
-            // --- יצירת בלוק חדש מאלמנט שנגרר מהפאלט ---
-            elementToDrop = document.createElement('div');
-            elementToDrop.classList.add('block'); // הקלאס הראשי של בלוק באזור התכנות
-            elementToDrop.setAttribute('draggable', 'true');
-            elementToDrop.id = `prog-${draggedElement.dataset.type || 'block'}-${Date.now()}`; // ID ייחודי
+/* הסתרת קצוות הפאזל בבלוקים הראשון והאחרון */
+#program-blocks > .block.is-first::before,
+#program-blocks > .block:first-child::before { /* הוספת first-child ליתר ביטחון */
+    display: none;
+}
+#program-blocks > .block.is-last::after,
+#program-blocks > .block:last-child::after { /* הוספת last-child ליתר ביטחון */
+    display: none;
+}
 
-            // העתק מידע רלוונטי (טקסט, סוג, צבע וכו')
-            const blockType = event.dataTransfer.getData('blockType') || 'default';
-            const category = event.dataTransfer.getData('blockCategory') || 'unknown';
-            elementToDrop.dataset.type = blockType; // שמור את הסוג
-            elementToDrop.textContent = blockType.replace('-', ' '); // טקסט פשוט לדוגמה
-
-            // קבע צבע רקע וגבול בהתאם לקטגוריה (אם רוצים)
-            // דוגמה:
-             const solidColorVar = `--${category}-color-solid`;
-             const bgColor = getComputedStyle(document.documentElement).getPropertyValue(solidColorVar);
-             if (bgColor) {
-                 elementToDrop.style.backgroundColor = bgColor;
-                 // אפשר גם לשנות את צבע הגבול בהתאם
-                 // elementToDrop.style.borderColor = ...;
-             }
-             // אחרת ישתמש בברירת המחדל מה-CSS
-
-            console.log(`יצירת בלוק חדש מסוג: ${blockType} מקטגוריה: ${category}`);
-
-        } else if (draggedElement && workspace.contains(draggedElement)) {
-            // --- הזזת בלוק קיים בתוך אזור התכנות ---
-            elementToDrop = draggedElement; // הבלוק הקיים שנגרר
-             console.log(`הזזת בלוק קיים: ${elementToDrop.id}`);
-        } else {
-             console.log("שחרור לא רלוונטי או שגיאה");
-            return; // יציאה אם הגרירה לא מזוהה נכון
-        }
+/* --- סגנון חיווי החיבור (Snap Indicator) --- */
+.snap-indicator {
+    position: absolute; /* מיקום ביחס ל-#program-blocks */
+    width: 20px; /* רוחב אזור החיבור */
+    /* הגובה יקבע דינמית ב-JS */
+    border: 2px dashed orange;
+    background-color: rgba(255, 255, 0, 0.3); /* צהוב שקוף */
+    display: none; /* מוסתר כברירת מחדל */
+    pointer-events: none;
+    z-index: 10;
+    box-sizing: border-box;
+}
 
 
-        // --- לוגיקת ההכנסה (זהה לקוד המקורי, פועלת על elementToDrop) ---
-        if (potentialHost && snapSide && elementToDrop !== potentialHost) { // ודא שלא מחברים בלוק לעצמו
-            if (snapSide === 'left') {
-                workspace.insertBefore(elementToDrop, potentialHost);
-                 console.log(`חיבור: ${elementToDrop.id} לשמאל של ${potentialHost.id}`);
-            } else { // snapSide === 'right'
-                workspace.insertBefore(elementToDrop, potentialHost.nextSibling); // nextSibling מטפל גם במקרה האחרון
-                 console.log(`חיבור: ${elementToDrop.id} לימין של ${potentialHost.id}`);
-            }
-        } else {
-            // אם אין נקודת חיבור, פשוט הוסף לסוף (או מקם לפי העכבר - יותר מורכב)
-            // נבדוק אם האלמנט *כבר* נמצא באזור העבודה (למקרה של גרירה ללא חיבור)
-             if (!workspace.contains(elementToDrop)) {
-                 workspace.appendChild(elementToDrop);
-                 console.log(`הלבנה ${elementToDrop.id} הונחה בסוף אזור העבודה.`);
-             } else if (elementToDrop !== potentialHost) {
-                 // אם הבלוק כבר בפנים אבל לא התחבר, הוא יישאר במקומו הישן יחסית (אלא אם נזיז אותו ידנית)
-                 console.log(`הלבנה ${elementToDrop.id} שוחררה ללא חיבור חדש.`);
-             }
-        }
+/* --- צבעי רקע לקטגוריות (ללא שינוי) --- */
+.block-category[data-category="triggering"].active { background-color: var(--triggering-color) !important; }
+.block-category[data-category="motion"].active { background-color: var(--motion-color) !important; }
+.block-category[data-category="looks"].active { background-color: var(--looks-color) !important; }
+.block-category[data-category="sound"].active { background-color: var(--sound-color) !important; }
+.block-category[data-category="control"].active { background-color: var(--control-color) !important; }
+.block-category[data-category="end"].active { background-color: var(--end-color) !important; }
 
-        // עדכון ויזואלי של קצוות הפאזל
-        updatePuzzleEdges();
+.block-category.active { opacity: 1; } /* אין צורך בשקיפות נוספת */
 
-        // איפוס סופי (למקרה ש-dragend לא תפס)
-        if (elementToDrop.classList.contains('block')) {
-             elementToDrop.classList.remove('dragging');
-        }
-        draggedElement = null;
-        potentialHost = null;
-        snapSide = null;
-        isDraggingFromPalette = false;
-    });
+/* סגנון הדגשה (אם עדיין בשימוש למשהו אחר) */
+.snap-highlight {
+    outline: 3px dashed dodgerblue !important;
+    outline-offset: 2px;
+    box-shadow: 0 0 10px rgba(30, 144, 255, 0.7) !important;
+}
 
-    // --- פונקציה לעדכון ויזואלי של קצוות הפאזל ---
-    function updatePuzzleEdges() {
-        const blocksInWorkspace = workspace.querySelectorAll('.block');
-        blocksInWorkspace.forEach((block, index, arr) => {
-            // שימוש ב-classList.toggle לקיצור
-            block.classList.toggle('is-first', index === 0);
-            block.classList.toggle('is-last', index === arr.length - 1);
-        });
-    }
-
-     // קריאה ראשונית אם יש לבנים באזור העבודה בהתחלה
-    updatePuzzleEdges();
-
-    // --- הוספת כללי CSS להסתרת קצוות (כמו בקוד המקורי) ---
-    // (מומלץ לשים אותם ישירות בקובץ ה-CSS במקום להזריק עם JS)
-    /*
-    const styleSheet = document.styleSheets[0];
-    try {
-        // שים לב שהסלקטורים מתאימים ל-ID של אזור התכנות ולשמות הקלאסים שהגדרת
-        styleSheet.insertRule('#program-blocks > .block.is-first::before { display: none; }', styleSheet.cssRules.length);
-        styleSheet.insertRule('#program-blocks > .block.is-last::after { display: none; }', styleSheet.cssRules.length);
-    } catch (e) {
-        console.error("Could not insert CSS rules for puzzle edges:", e);
-    }
-    */
-    // ודא שהכללים האלה קיימים בקובץ style.css שלך:
-    // #program-blocks > .block.is-first::before { display: none; }
-    // #program-blocks > .block.is-last::after { display: none; }
-
-}); // סוף DOMContentLoaded
+/* --- END OF FILE style.css --- */
