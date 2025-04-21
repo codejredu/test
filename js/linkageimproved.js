@@ -6,8 +6,8 @@
     const HORIZONTAL_OVERLAP_THRESHOLD = 0.4;
     const SNAP_GAP = 0;
     const LINK_SOUND_SRC = 'assets/sound/link.mp3';
-    const DEBUG = true;
-    const INDICATOR_CLASS = 'snap-indicator'; // שם הקלאס לאינדיקטור
+    const DEBUG = true; // *** ודא שזה true ***
+    const INDICATOR_CLASS = 'snap-indicator';
 
     // ================= State Variables =================
     let programmingArea = null;
@@ -17,7 +17,7 @@
     let isDragging = false;
     let linkSound = null;
     let programmingAreaRect = null;
-    let currentIndicatorTarget = null; // בלוק המטרה הנוכחי שמסומן
+    let currentIndicatorTarget = null;
 
     // ================= Logging Helper =================
     function log(...args) {
@@ -29,18 +29,18 @@
     // ================= CSS for Indicator =================
     function addIndicatorStyles() {
         const styleId = 'linkage-styles';
-        if (document.getElementById(styleId)) return; // הוסף רק פעם אחת
-
+        if (document.getElementById(styleId)) return;
         const css = `
             .${INDICATOR_CLASS} {
-                outline: 2px dashed #007bff; /* Blue dashed outline */
+                outline: 2px dashed #007bff !important; /* !important למקרה שיש override */
                 outline-offset: 2px;
-                box-shadow: 0 0 10px rgba(0, 123, 255, 0.5); /* Optional glow */
+                box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
             }
-            /* Style for the block being dragged (optional) */
             .block-dragging {
                  opacity: 0.7;
                  cursor: grabbing !important;
+                 /* מניעת אירועי הצבעה על הבלוק הנגרר עצמו בזמן גרירה */
+                 pointer-events: none;
             }
         `;
         const style = document.createElement('style');
@@ -58,10 +58,8 @@
             return;
         }
         log("Programming area found.");
+        addIndicatorStyles();
 
-        addIndicatorStyles(); // הוספת סגנונות CSS
-
-        // Prepare link sound
         try {
             linkSound = new Audio(LINK_SOUND_SRC);
              linkSound.addEventListener('canplaythrough', () => log("Audio ready."), { once: true });
@@ -72,131 +70,149 @@
         }
 
         // Add global listeners for mouse move and up
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
+        document.addEventListener('mousemove', handleMouseMove); // חובה על document
+        document.addEventListener('mouseup', handleMouseUp);   // חובה על document
 
-        // Observe the programming area
         const observer = new MutationObserver(handleMutations);
         observer.observe(programmingArea, { childList: true });
         log("MutationObserver watching.");
 
-        // Add listeners to any blocks already present
         addListenersToExistingBlocks();
 
-        log("Block linkage system initialized (Version Basic Snap + Indicator)");
+        log("Block linkage system initialized (Version Basic Snap + Indicator v2)");
         log(`Configuration: Snap Threshold=${SNAP_THRESHOLD}px, Overlap=${HORIZONTAL_OVERLAP_THRESHOLD*100}%, Gap=${SNAP_GAP}px`);
     }
 
     // ================= Block Discovery & Listener Setup =================
-    // handleMutations, addListenersToExistingBlocks, generateUniqueId - ללא שינוי מהגרסה הקודמת
-
     function handleMutations(mutationsList) {
         for (const mutation of mutationsList) {
             if (mutation.type === 'childList') {
                 mutation.addedNodes.forEach(node => {
                     if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('block-container') && !node.classList.contains('in-palette')) {
-                        addBlockListeners(node); // הוסף מאזין רק לבלוקים באזור התכנות
-                        log("Listeners added to new block in area:", node.dataset.type, node.id);
+                        addBlockListeners(node);
+                        log("Listeners added to new block in area:", node.dataset.type, node.id || '(no id yet)');
                     }
                 });
-                 mutation.removedNodes.forEach(node => { /* ... טיפול בהסרה ... */ });
+                mutation.removedNodes.forEach(node => { /* ... */ });
             }
         }
     }
 
-     function addListenersToExistingBlocks() {
-        const existingBlocks = programmingArea.querySelectorAll('.block-container:not(.in-palette)'); // לא כולל בלוקים בפלטה
+    function addListenersToExistingBlocks() {
+        const existingBlocks = programmingArea.querySelectorAll('.block-container:not(.in-palette)');
         existingBlocks.forEach(block => addBlockListeners(block));
         log(`Listeners added to ${existingBlocks.length} existing blocks in area.`);
     }
 
-     function addBlockListeners(block) {
+    function addBlockListeners(block) {
         if (!block.id) {
             block.id = generateUniqueId(block.dataset.type);
             log("Generated ID:", block.id);
         }
-        block.removeEventListener('mousedown', handleMouseDown); // מניעת כפילות
-        block.addEventListener('mousedown', handleMouseDown);
-         // *** אין להפוך ל-draggable=true או להוסיף dragstart כאן ***
+        block.removeEventListener('mousedown', handleMouseDown);
+        block.addEventListener('mousedown', handleMouseDown); // הוסף מאזין לכל ה-div
     }
 
-     function generateUniqueId(prefix = 'block') {
-         return `${prefix}-${Math.random().toString(36).substring(2, 8)}`;
-     }
+    function generateUniqueId(prefix = 'block') {
+        return `${prefix}-${Math.random().toString(36).substring(2, 8)}`;
+    }
 
 
     // ================= Drag Handling (Mouse Events) =================
 
     function handleMouseDown(event) {
-        // Only drag with left mouse button
-        if (event.button !== 0) return;
+        if (event.button !== 0) return; // רק כפתור שמאלי
 
-        // Find the block container that was clicked on
+        // מצא את ה-div הראשי של הבלוק שעליו לחצו
         const block = event.target.closest('.block-container');
-        // Ensure it's a block within our programming area and not from the palette
+        // ודא שזה בלוק חוקי בתוך אזור התכנות
         if (!block || !programmingArea.contains(block) || block.classList.contains('in-palette')) {
+            // log("MouseDown ignored: Not a valid block in the programming area.");
             return;
         }
 
-        event.preventDefault(); // *** חשוב: מונע התנהגות ברירת מחדל כמו גרירת טקסט/תמונה וגם את ה-dragstart של HTML5 ***
+        // --- מנע התנהגויות ברירת מחדל שעלולות להפריע ---
+        event.preventDefault();
 
         currentlyDraggedBlock = block;
         isDragging = true;
 
+        programmingAreaRect = programmingArea.getBoundingClientRect(); // קבלת גבולות עדכניים
         const blockRect = currentlyDraggedBlock.getBoundingClientRect();
-        programmingAreaRect = programmingArea.getBoundingClientRect(); // עדכון גבולות האזור
 
-        // חישוב offset ביחס לאזור התכנות
+        // Offset של העכבר יחסית לפינה השמאלית-עליונה של הבלוק
         offsetX = event.clientX - blockRect.left;
         offsetY = event.clientY - blockRect.top;
 
+        // סגנונות ויזואליים לגרירה
         currentlyDraggedBlock.style.zIndex = 1000;
-        currentlyDraggedBlock.classList.add('block-dragging'); // הוספת קלאס לבלוק הנגרר
+        currentlyDraggedBlock.classList.add('block-dragging');
 
-        log(`[MouseDown] Start custom drag: ${currentlyDraggedBlock.id}`);
+        log(`[MouseDown] Start custom drag: ${currentlyDraggedBlock.id}`); // לוג קריטי
     }
 
     function handleMouseMove(event) {
-        if (!isDragging || !currentlyDraggedBlock) return;
-        // אין צורך ב-preventDefault כאן, זה יכול להפריע לגלילה וכו'
+        // קודם כל בדוק אם אנחנו בכלל גוררים
+        if (!isDragging || !currentlyDraggedBlock) {
+            return;
+        }
+        // אין צורך ב-preventDefault כאן בדרך כלל
 
-        let newLeft = event.clientX - programmingAreaRect.left - offsetX;
-        let newTop = event.clientY - programmingAreaRect.top - offsetY;
+        log("[MouseMove] Event triggered."); // *** לוג חשוב לבדיקה! ***
 
-        // Boundary checks
-        const blockWidth = currentlyDraggedBlock.offsetWidth;
-        const blockHeight = currentlyDraggedBlock.offsetHeight;
-        const maxLeft = programmingAreaRect.width - blockWidth;
-        const maxTop = programmingAreaRect.height - blockHeight;
-        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
-        newTop = Math.max(0, Math.min(newTop, maxTop));
+        try {
+            if (!programmingAreaRect) {
+                 log("[MouseMove] Warning: programmingAreaRect missing, recalculating.");
+                 programmingAreaRect = programmingArea.getBoundingClientRect();
+                 if (!programmingAreaRect) { console.error("Cannot get programming area bounds!"); return; }
+            }
 
-        currentlyDraggedBlock.style.left = `${newLeft}px`;
-        currentlyDraggedBlock.style.top = `${newTop}px`;
+            let newLeft = event.clientX - programmingAreaRect.left - offsetX;
+            let newTop = event.clientY - programmingAreaRect.top - offsetY;
 
-        // --- בדיקה והצגת אינדיקטור ---
-        const potentialTarget = findSnapTarget(currentlyDraggedBlock);
-        updateVisualIndicator(potentialTarget); // פונקציה חדשה לניהול האינדיקטור
+            // Boundary checks
+            const blockWidth = currentlyDraggedBlock.offsetWidth;
+            const blockHeight = currentlyDraggedBlock.offsetHeight;
+            const maxLeft = programmingAreaRect.width - blockWidth;
+            const maxTop = programmingAreaRect.height - blockHeight;
+            newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+            newTop = Math.max(0, Math.min(newTop, maxTop));
+
+            currentlyDraggedBlock.style.left = `${newLeft}px`;
+            currentlyDraggedBlock.style.top = `${newTop}px`;
+            // log(`[MouseMove] Updated position: L=${newLeft.toFixed(0)}, T=${newTop.toFixed(0)}`); // לוג מעט רועש, אפשר להפעיל אם צריך
+
+            // --- בדיקה והצגת אינדיקטור ---
+            const potentialTarget = findSnapTarget(currentlyDraggedBlock);
+            updateVisualIndicator(potentialTarget); // עדכון האינדיקטור
+
+        } catch (error) {
+            console.error("[LinkageImproved] Error in handleMouseMove:", error);
+            // אפשר לעצור את הגרירה במקרה של שגיאה
+            // isDragging = false; currentlyDraggedBlock = null;
+        }
     }
 
     function handleMouseUp(event) {
-        if (!isDragging || !currentlyDraggedBlock) return;
-        // אין צורך ב-preventDefault
+        if (!isDragging || !currentlyDraggedBlock) {
+            return;
+        }
+        // אין צורך ב-preventDefault כאן
 
         log(`[MouseUp] Releasing block ${currentlyDraggedBlock.id}. Checking for snap...`);
 
         // הסרת סגנונות גרירה ואינדיקטור
         currentlyDraggedBlock.style.zIndex = '';
         currentlyDraggedBlock.classList.remove('block-dragging');
-        updateVisualIndicator(null); // הסר את האינדיקטור הנוכחי
+        updateVisualIndicator(null); // נקה את האינדיקטור הנוכחי
 
-        // --- Find and Perform Snap ---
-        const snapTarget = findSnapTarget(currentlyDraggedBlock); // בדוק שוב בסיום הגרירה
+        // --- מצא והפעל הצמדה ---
+        const snapTarget = findSnapTarget(currentlyDraggedBlock); // בדוק שוב סופית
 
         if (snapTarget) {
             log(`[MouseUp] Found snap target: ${snapTarget.id}`);
             snapBlocks(currentlyDraggedBlock, snapTarget);
-            if (linkSound && linkSound.readyState >= 4) { // readyState 4 (HAVE_ENOUGH_DATA) is safer
+            if (linkSound && linkSound.readyState >= 4) {
                 linkSound.currentTime = 0;
                 linkSound.play().catch(e => console.warn("Audio play failed:", e));
                 log("Played link sound.");
@@ -205,92 +221,88 @@
             }
         } else {
             log(`[MouseUp] No valid snap target found.`);
-            // Block remains where it was dropped (position already updated in mousemove)
         }
 
         log(`[MouseUp] ----- End MouseUp for ${currentlyDraggedBlock.id} -----`);
 
-        // Clean up state
+        // ניקוי מצב
         isDragging = false;
         currentlyDraggedBlock = null;
-        programmingAreaRect = null;
+        programmingAreaRect = null; // נקה את המטמון של גבולות האזור
     }
 
     // ================= Snapping Logic & Indicator =================
 
     function findSnapTarget(draggedBlock) {
-        // ... (הלוגיקה נשארת זהה לגרסה הקודמת) ...
         let bestTarget = null;
         let minDistance = SNAP_THRESHOLD;
 
         const draggedRect = draggedBlock.getBoundingClientRect();
-        // חשוב לעדכן את גבולות האזור אם הם לא בתוקף
         if (!programmingAreaRect) programmingAreaRect = programmingArea.getBoundingClientRect();
 
-        const allBlocks = programmingArea.querySelectorAll('.block-container:not(.block-dragging)'); // חפש רק בלוקים שאינם נגררים כרגע
+        // חפש רק בבלוקים שאינם הבלוק הנגרר כרגע
+        const potentialTargets = programmingArea.querySelectorAll('.block-container:not(.block-dragging)');
 
-        allBlocks.forEach(potentialTarget => {
-            if (potentialTarget === draggedBlock || potentialTarget.id === draggedBlock.id) return;
-
+        potentialTargets.forEach(potentialTarget => {
+            // אין צורך לבדוק ש-ID שונה, כי הבלוק הנגרר מסונן כבר מהרשימה
             const targetRect = potentialTarget.getBoundingClientRect();
 
-            // 1. Vertical Check
+            // 1. בדיקה אנכית: האם החלק העליון של הנגרר קרוב לחלק התחתון של המטרה?
             const verticalDistance = Math.abs(draggedRect.top - (targetRect.bottom + SNAP_GAP));
 
             if (verticalDistance < minDistance) {
-                // 2. Horizontal Check
+                // 2. בדיקה אופקית: האם יש חפיפה מספקת?
                 const horizontalOverlap = Math.max(0, Math.min(draggedRect.right, targetRect.right) - Math.max(draggedRect.left, targetRect.left));
                 const requiredOverlap = Math.min(draggedRect.width, targetRect.width) * HORIZONTAL_OVERLAP_THRESHOLD;
 
                 if (horizontalOverlap >= requiredOverlap) {
-                     // 3. Compatibility Check (ניתן להרחיב)
-                     // const isTargetEnd = ...
-                     // const isDraggedEnd = ...
-                     // if (compatible) {
-                         minDistance = verticalDistance;
-                         bestTarget = potentialTarget;
-                         // log(`       Potential snap found for ${potentialTarget.id}`); // לוג מופעל רק ב-DEBUG
-                    // }
+                     // 3. בדיקת תאימות (אופציונלי, ניתן להרחיב)
+                     minDistance = verticalDistance;
+                     bestTarget = potentialTarget;
+                     // log(`       Potential snap: ${draggedBlock.id} under ${potentialTarget.id}`);
                 }
             }
         });
-
-        return bestTarget; // מחזיר את הבלוק עצמו או null
+        return bestTarget;
     }
 
      function snapBlocks(blockToSnap, targetBlock) {
-         // ... (הלוגיקה נשארת זהה) ...
         if (!programmingAreaRect) programmingAreaRect = programmingArea.getBoundingClientRect();
         const targetRect = targetBlock.getBoundingClientRect();
 
+        // חישוב מיקום חדש יחסית לאזור התכנות
         const newTop = targetRect.bottom - programmingAreaRect.top + SNAP_GAP;
-        const newLeft = targetRect.left - programmingAreaRect.top;
+        const newLeft = targetRect.left - programmingAreaRect.top; // יישור לשמאל של המטרה
 
         blockToSnap.style.top = `${newTop}px`;
         blockToSnap.style.left = `${newLeft}px`;
 
-        log(`Snapped ${blockToSnap.id} to L:${newLeft.toFixed(1)}, T:${newTop.toFixed(1)} (under ${targetBlock.id})`);
-        // Optional: Store connection data
+        log(`Snapped ${blockToSnap.id} to L:${newLeft.toFixed(0)}, T:${newTop.toFixed(0)} (under ${targetBlock.id})`);
     }
 
-    // פונקציה חדשה לניהול האינדיקטור
-    function updateVisualIndicator(targetBlockToShow) {
-         // אם יש בלוק ישן שמסומן והוא לא החדש, הסר ממנו את הסימון
-        if (currentIndicatorTarget && currentIndicatorTarget !== targetBlockToShow) {
-            currentIndicatorTarget.classList.remove(INDICATOR_CLASS);
-            // log(`   Indicator removed from ${currentIndicatorTarget.id}`);
+    // פונקציה מעודכנת ופשוטה יותר לניהול האינדיקטור
+    function updateVisualIndicator(newTarget) {
+        // log(`[UpdateIndicator] Target: ${newTarget ? newTarget.id : 'null'}. Current: ${currentIndicatorTarget ? currentIndicatorTarget.id : 'null'}`); // לוג רועש, הפעל אם צריך
+
+        // אם המטרה לא השתנתה, אין מה לעשות
+        if (newTarget === currentIndicatorTarget) {
+            return;
         }
 
-        // אם יש בלוק חדש לסמן והוא לא כבר מסומן, סמן אותו
-        if (targetBlockToShow && targetBlockToShow !== currentIndicatorTarget) {
-             targetBlockToShow.classList.add(INDICATOR_CLASS);
-             currentIndicatorTarget = targetBlockToShow; // עדכן מי מסומן כרגע
-             log(`   Showing indicator on ${targetBlockToShow.id}`);
+        // הסר את הסימון מהמטרה הקודמת (אם הייתה כזו)
+        if (currentIndicatorTarget) {
+            // log(`[UpdateIndicator] Removing indicator from ${currentIndicatorTarget.id}`);
+            currentIndicatorTarget.classList.remove(INDICATOR_CLASS);
         }
-         // אם אין בלוק חדש לסמן (targetBlockToShow is null), ודא שהקודם הוסר
-         else if (!targetBlockToShow) {
-             currentIndicatorTarget = null;
-         }
+
+        // הוסף סימון למטרה החדשה (אם יש כזו)
+        if (newTarget) {
+            log(`[UpdateIndicator] Adding indicator to ${newTarget.id}`); // לוג חשוב!
+            newTarget.classList.add(INDICATOR_CLASS);
+        }
+
+        // עדכן את המשתנה שמחזיק את המטרה הנוכחית
+        currentIndicatorTarget = newTarget;
     }
 
 
@@ -298,7 +310,7 @@
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initialize);
     } else {
-        initialize();
+        initialize(); // במקרה שהסקריפט נטען אחרי שה-DOM כבר מוכן
     }
 
 })();
