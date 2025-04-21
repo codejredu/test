@@ -1,183 +1,121 @@
 // --- START OF FILE linkageimproved.js ---
 (function() {
     'use strict';
-
-    // ================= Configuration =================
-    // ... (זהה)
-    const SNAP_THRESHOLD = 20;
-    const HORIZONTAL_OVERLAP_THRESHOLD = 0.4;
-    const SNAP_GAP = 0;
-    const LINK_SOUND_SRC = 'assets/sound/link.mp3';
-    const DEBUG = true;
-    const INDICATOR_CLASS = 'snap-indicator';
-
-
-    // ================= State Variables =================
-    // ... (זהה)
-    let programmingArea = null;
-    let currentlyDraggedBlock = null;
-    let offsetX = 0;
-    let offsetY = 0;
-    let isDragging = false;
-    let linkSound = null;
-    let programmingAreaRect = null;
-    let currentIndicatorTarget = null;
-    let observer = null;
-
-
-    // ================= Logging Helper =================
-    // ... (זהה)
+    // ... (Config, State Vars, Log Helper, Utilities, CSS) ...
+    const SNAP_THRESHOLD = 20, HORIZONTAL_OVERLAP_THRESHOLD = 0.4, SNAP_GAP = 0;
+    const LINK_SOUND_SRC = 'assets/sound/link.mp3', DEBUG = true, INDICATOR_CLASS = 'snap-indicator';
+    let programmingArea, currentlyDraggedBlock, offsetX, offsetY, isDragging, linkSound, programmingAreaRect, currentIndicatorTarget, observer;
     function log(...args) { if (DEBUG) console.log("[LinkageImproved]", ...args); }
-
-    // ================= Utility Functions =================
-    // ... (זהה)
-    function generateUniqueId(prefix = 'block') { return `${prefix}-${Math.random().toString(36).substring(2, 8)}`; }
-
-    // ================= CSS Injection =================
-    // ... (זהה)
+    function generateUniqueId(prefix = 'block') { /* ... */ }
     function addIndicatorStyles() { /* ... */ }
 
     // ================= Core Logic Functions =================
-    // findSnapTarget, snapBlocks, updateVisualIndicator - ללא שינוי
-
-    function findSnapTarget(draggedBlock) { /* ... (ללא שינוי מהגרסה הקודמת) ... */ return null; } // Return null for now for clarity
-    function snapBlocks(blockToSnap, targetBlock) { /* ... (ללא שינוי) ... */ }
-    function updateVisualIndicator(newTarget) { /* ... (ללא שינוי) ... */ }
-
+    function findSnapTarget(draggedBlock) { /* ... */ return null; }
+    function snapBlocks(blockToSnap, targetBlock) { /* ... */ }
+    function updateVisualIndicator(newTarget) { /* ... */ }
 
     // ================= Event Listener Setup =================
-    // addBlockListeners, addListenersToExistingBlocks - ללא שינוי
-
-    function addBlockListeners(block) { /* ... (ללא שינוי) ... */ }
-    function addListenersToExistingBlocks() { /* ... (ללא שינוי) ... */ }
+    function addBlockListeners(block) {
+        log(`   [addBlockListeners] Attempting listener for:`, block.id || block.dataset.type);
+        try {
+            if (!block || !block.addEventListener) { console.warn("Invalid block for listener."); return; }
+            if (!block.id) block.id = generateUniqueId(block.dataset.type);
+            log(`      Block ID: ${block.id}`);
+            block.removeEventListener('mousedown', handleMouseDown); // Prevent duplicates
+            block.addEventListener('mousedown', handleMouseDown); // Add listener
+            log(`      Mousedown listener added to ${block.id}`);
+        } catch (e) { console.error(`Error adding listener to ${block.id}:`, e); }
+    }
 
     // ================= Event Handlers =================
+    function handleMouseDown(event) { /* ... (כמו בגרסה הקודמת, מוסיף מאזינים גלובליים) ... */ }
+    function handleMouseMove(event) { /* ... (כמו בגרסה הקודמת) ... */ }
+    function handleMouseUp(event) { /* ... (כמו בגרסה הקודמת, מסיר מאזינים גלובליים) ... */ }
 
-    function handleMouseDown(event) {
-        log("[MouseDown] Event triggered on element:", event.target);
-        if (event.button !== 0) return; // רק כפתור שמאלי
-        const block = event.target.closest('.block-container');
-        if (!block || !programmingArea.contains(block) || block.classList.contains('in-palette')) {
-            log("[MouseDown] Ignored: Not a valid block in the programming area."); return;
-        }
-        event.preventDefault(); // מניעת ברירת מחדל
-
-        // אם כבר גוררים משהו, התעלם (למקרה של קליקים כפולים מהירים)
-        if (isDragging) return;
-
-        currentlyDraggedBlock = block;
-        isDragging = true; // *** סמן שהתחלנו לגרור ***
-
-        // חישוב מיקום והוספת סגנונות
-        programmingAreaRect = programmingArea.getBoundingClientRect();
-        const blockRect = currentlyDraggedBlock.getBoundingClientRect();
-        offsetX = event.clientX - blockRect.left;
-        offsetY = event.clientY - blockRect.top;
-        currentlyDraggedBlock.style.zIndex = 1000;
-        currentlyDraggedBlock.classList.add('block-dragging');
-
-        // *** הוספת מאזינים ל-document רק כשהגרירה מתחילה ***
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
-        log(`[MouseDown] Start custom drag: ${currentlyDraggedBlock.id}. Added global listeners.`);
-    }
-
-    function handleMouseMove(event) {
-        // הפונקציה תרוץ רק אם isDragging הוא true (מה שהוגדר ב-mousedown)
-        if (!isDragging || !currentlyDraggedBlock) return;
-
-        // אין צורך ב-preventDefault כאן, זה יכול לחסום גלילה
-
-        log("[MouseMove] Event triggered."); // *** הלוג הקריטי לבדיקה ***
-
+    // *** הגדרת פונקציית הקולבק של ה-Observer בתוך ה-Scope של ה-IIFE ***
+    function mutationCallback(mutationsList, obs) {
+        log("[mutationCallback] Fired! Mutations:", mutationsList.length); // לוג קריטי!
         try {
-            // עדכון מיקום הבלוק
-            if (!programmingAreaRect) programmingAreaRect = programmingArea.getBoundingClientRect();
-            let newLeft = event.clientX - programmingAreaRect.left - offsetX;
-            let newTop = event.clientY - programmingAreaRect.top - offsetY;
-            const blockWidth = currentlyDraggedBlock.offsetWidth; const blockHeight = currentlyDraggedBlock.offsetHeight;
-            const maxLeft = programmingAreaRect.width - blockWidth; const maxTop = programmingAreaRect.height - blockHeight;
-            newLeft = Math.max(0, Math.min(newLeft, maxLeft)); newTop = Math.max(0, Math.min(newTop, maxTop));
-            currentlyDraggedBlock.style.left = `${newLeft}px`; currentlyDraggedBlock.style.top = `${newTop}px`;
-
-            // בדיקה והצגת אינדיקטור
-            // const potentialTarget = findSnapTarget(currentlyDraggedBlock); // הפעל כשנרצה לבדוק הצמדה
-            // updateVisualIndicator(potentialTarget); // הפעל כשנרצה לבדוק הצמדה
-        } catch (error) {
-            console.error("[LinkageImproved] Error in handleMouseMove:", error);
-            // שקול להפסיק את הגרירה במקרה של שגיאה
-            // handleMouseUp(); // אפשר לקרוא ישירות לניקוי
+            mutationsList.forEach(mutation => {
+                if (mutation.type === 'childList') {
+                    mutation.addedNodes.forEach(node => {
+                        log(`   [mutationCallback] Checking added node:`, node);
+                        if (node.nodeType === Node.ELEMENT_NODE && node.classList && node.classList.contains('block-container') && !node.classList.contains('in-palette')) {
+                            log(`      Node is a valid block in area. Calling addBlockListeners...`);
+                            addBlockListeners(node); // קריאה לפונקציה שהוגדרה למעלה
+                        } else {
+                            log(`      Node is not a valid block in area.`);
+                        }
+                    });
+                }
+            });
+        } catch (e) {
+            console.error("Error inside mutationCallback:", e);
         }
     }
-
-    function handleMouseUp(event) {
-        // אם לא היינו באמצע גרירה, התעלם (למקרה שהמאזין נשאר בטעות)
-        if (!isDragging || !currentlyDraggedBlock) return;
-
-        log(`[MouseUp] Releasing block ${currentlyDraggedBlock.id}. Removing global listeners.`);
-
-        // *** הסרת המאזינים מ-document בסיום הגרירה ***
-        document.removeEventListener('mousemove', handleMouseMove);
-        document.removeEventListener('mouseup', handleMouseUp);
-
-        // ניקוי סגנונות
-        currentlyDraggedBlock.style.zIndex = '';
-        currentlyDraggedBlock.classList.remove('block-dragging');
-        // updateVisualIndicator(null); // הפעל כשנבדוק אינדיקטור
-
-        // בדיקה והצמדה
-        // const snapTarget = findSnapTarget(currentlyDraggedBlock); // הפעל כשנבדוק הצמדה
-        // if (snapTarget) { /* ... הצמד והשמע צליל ... */ }
-        // else { log(`[MouseUp] No valid snap target found.`); }
-
-        log(`[MouseUp] ----- End MouseUp for ${currentlyDraggedBlock.id} -----`);
-
-        // איפוס משתני מצב
-        isDragging = false;
-        currentlyDraggedBlock = null;
-        programmingAreaRect = null;
-    }
-
-    function handleMutations(mutationsList, obs) {
-        // (הפונקציה הזו נשארת כפי שהייתה)
-        log("[handleMutations] Callback triggered! Mutations count:", mutationsList.length);
-        try { /* ... קוד לזיהוי בלוקים חדשים והוספת מאזין mousedown ... */ }
-        catch (mutationError) { console.error("[LinkageImproved] Error inside handleMutations callback:", mutationError); }
-    }
-
 
     // ================= Initialization Function =================
     function initialize() {
         log("Attempting initialization...");
         try {
             programmingArea = document.getElementById("program-blocks");
-            if (!programmingArea) { console.error("[LinkageImproved] CRITICAL: Programming area not found!"); return; }
-            log("Programming area found.");
+            if (!programmingArea) { console.error("CRITICAL: Programming area not found!"); return; }
+            log("Programming area found:", programmingArea);
 
-            addIndicatorStyles();
-            try { /* Audio setup */ } catch (audioError) { /* ... */ }
+            // addIndicatorStyles(); // הפעל כשנצטרך
+            // try { /* Audio setup */ } catch (e) { /* ... */ }
 
-            // *** לא מוסיפים כאן מאזינים גלובליים ל-mousemove/mouseup ***
-            // document.removeEventListener('mousemove', handleMouseMove); // הסרה ליתר ביטחון אם נשארו
-            // document.removeEventListener('mouseup', handleMouseUp);   // הסרה ליתר ביטחון אם נשארו
-            log("Global mouse listeners will be added dynamically on mousedown.");
+            log("Dynamic global listeners will be added on mousedown.");
 
+            // --- Mutation Observer Setup - בדיקה ממוקדת ---
             log("Setting up MutationObserver...");
-            try { /* MutationObserver setup */ } catch (observerError) { /* ... */ }
+            try {
+                // ודא שהפונקציה mutationCallback מוגדרת וזמינה כאן
+                if (typeof mutationCallback !== 'function') {
+                    throw new Error("mutationCallback is not defined or not a function!");
+                }
+                log("   mutationCallback function found.");
 
-            addListenersToExistingBlocks(); // רק מוסיף mousedown לבלוקים קיימים
+                // יצירת ה-Observer עם הפונקציה שהוגדרה למעלה
+                observer = new MutationObserver(mutationCallback);
+                log("   MutationObserver instance created.");
 
-            log("Block linkage system initialized (Version - Dynamic Listeners)");
-            log(`Configuration: Snap Threshold=${SNAP_THRESHOLD}px, Overlap=${HORIZONTAL_OVERLAP_THRESHOLD*100}%, Gap=${SNAP_GAP}px`);
+                // התחלת ההאזנה לאלמנט אזור התכנות
+                observer.observe(programmingArea, { childList: true }); // האזן רק לשינויים בילדים הישירים
+                log("   MutationObserver is now actively watching programmingArea."); // אישור קריטי!
+
+                // בדיקה נוספת: האם ה-observer אכן מאזין? (לא דרך סטנדרטית, אבל לבדיקה)
+                // אין דרך פשוטה לבדוק אם הוא 'active' ב-API הסטנדרטי
+
+            } catch (observerError) {
+                console.error("CRITICAL: Failed to setup MutationObserver!", observerError);
+                observer = null;
+                return; // עצור אם ה-Observer נכשל
+            }
+
+            // --- הוספת מאזינים לבלוקים שכבר קיימים (אם יש) ---
+            // log("Running addListenersToExistingBlocks..."); // הפונקציה הזו קוראת ל-addBlockListeners
+            // try {
+            //     const existingBlocks = programmingArea.querySelectorAll('.block-container:not(.in-palette)');
+            //     existingBlocks.forEach(block => addBlockListeners(block));
+            //     log(`Listeners setup called for ${existingBlocks.length} existing blocks.`);
+            // } catch (e) { console.error("Error in initial addListenersToExistingBlocks:", e); }
+
+
+            log("Block linkage system initialized (Version - Observer Test)");
             log("Initialization function finished successfully.");
-        } catch (initError) { console.error("[LinkageImproved] CRITICAL ERROR during initialization:", initError); }
+
+        } catch (initError) { console.error("CRITICAL ERROR during initialization:", initError); }
     }
 
     // ================= Start Initialization =================
-    // ... (זהה)
     log("Script execution started. Waiting for DOMContentLoaded or initializing if ready.");
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialize);
-    else { log("DOM already loaded, initializing immediately."); initialize(); }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initialize);
+    } else {
+        log("DOM already loaded, initializing immediately.");
+        initialize();
+    }
 
 })();
 // --- END OF FILE linkageimproved.js ---
