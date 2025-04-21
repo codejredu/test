@@ -1,9 +1,8 @@
 // --- START OF FILE linkageimproved.js ---
-// --- Version 4.1: Protected Release (Snap only if close on MouseUp) ---
-// Based on v4.0 logic, cleaned up debug logs.
-// Snaps ONLY if a valid target is found within CONNECT_THRESHOLD distance *at release*.
-// No "jumping" behavior if released outside the threshold.
-// Visual feedback (highlight/indicator) is shown during drag based on proximity.
+// --- Version 4.2: Protected Release + Cleanup Highlight on Snap ---
+// Changes from v4.1:
+// 1. In performBlockSnap: Added code to explicitly remove the 'snap-target'
+//    class from the target block after a successful snap.
 
 (function() {
   // Module-level variables
@@ -107,86 +106,65 @@
 
   // ========================================================================
   // Audio Initialization and Playback
+  // (Code identical to v4.1 - No changes needed here)
   // ========================================================================
-  function initAudio() {
+  function initAudio() { /* ... v4.1 code ... */
     if (!CONFIG.PLAY_SOUND || soundInitialized) return;
     try {
-        // Reuse existing element if available
         const existingElement = document.getElementById('snap-sound-element');
         if (existingElement) {
             snapSound = existingElement;
-            soundInitialized = true; // Assume it's ready or will be soon
+            soundInitialized = true;
             if (CONFIG.DEBUG) console.log('Audio element reused.');
-            // Ensure the correct source is loaded if path changed
             if (!existingElement.querySelector(`source[src="${CONFIG.SOUND_PATH}"]`)) {
-                existingElement.innerHTML = ''; // Clear old sources
+                existingElement.innerHTML = '';
                 const source = document.createElement('source');
                 source.src = CONFIG.SOUND_PATH;
-                source.type = 'audio/mpeg'; // Adjust type if needed
+                source.type = 'audio/mpeg';
                 existingElement.appendChild(source);
-                existingElement.load(); // Reload the audio element
+                existingElement.load();
             }
             return;
         }
-
-        // Create new audio element
         snapSound = document.createElement('audio');
         snapSound.id = 'snap-sound-element';
         snapSound.preload = 'auto';
         snapSound.volume = CONFIG.SOUND_VOLUME;
-
         const source = document.createElement('source');
         source.src = CONFIG.SOUND_PATH;
-        source.type = 'audio/mpeg'; // Adjust type if necessary (e.g., 'audio/wav')
+        source.type = 'audio/mpeg';
         snapSound.appendChild(source);
-
-        // Error handling
         snapSound.addEventListener('error', (e) => {
             console.error(`Audio Error: Could not load sound "${CONFIG.SOUND_PATH}".`, e);
             const btn = document.getElementById('sound-test-button');
             if(btn) { btn.textContent='שגיאה בטעינת שמע'; btn.className='error'; btn.disabled=true; }
-            CONFIG.PLAY_SOUND = false;
-            snapSound = null;
-            soundInitialized = false;
+            CONFIG.PLAY_SOUND = false; snapSound = null; soundInitialized = false;
         });
-
-        // Ready handler
         snapSound.addEventListener('canplaythrough', () => {
             soundInitialized = true;
             if (CONFIG.DEBUG) console.log('Audio ready to play.');
             const btn = document.getElementById('sound-test-button');
             if (btn?.classList.contains('loading')) {
-                btn.textContent = 'בדוק צליל';
-                btn.classList.remove('loading');
-                btn.disabled = false;
+                btn.textContent = 'בדוק צליל'; btn.classList.remove('loading'); btn.disabled = false;
             }
         });
-
-        snapSound.style.display = 'none'; // Hide the element
+        snapSound.style.display = 'none';
         document.body.appendChild(snapSound);
         if (CONFIG.DEBUG) console.log(`Audio element created: ${CONFIG.SOUND_PATH}`);
-
     } catch (err) {
         console.error('Audio initialization failed:', err);
-        CONFIG.PLAY_SOUND = false;
-        snapSound = null;
-        soundInitialized = false;
+        CONFIG.PLAY_SOUND = false; snapSound = null; soundInitialized = false;
     }
   }
-
-  function addSoundTestButton() {
+  function addSoundTestButton() { /* ... v4.1 code ... */
       if (!CONFIG.PLAY_SOUND) return;
       try {
-          // Remove existing button first
           const existingButton = document.getElementById('sound-test-button');
           if (existingButton) existingButton.remove();
-
           const button = document.createElement('button');
           button.id = 'sound-test-button';
           button.title = 'בדוק צליל חיבור';
-          button.className = ''; // Base class
-
-          // Set initial state based on audio readiness
+          button.className = '';
           if (!snapSound) {
               button.textContent = 'שמע נכשל'; button.classList.add('error'); button.disabled = true;
           } else if (!soundInitialized) {
@@ -194,218 +172,101 @@
           } else {
               button.textContent = 'בדוק צליל'; button.disabled = false;
           }
-
-          // Apply basic styles (can be moved to CSS if preferred)
           Object.assign(button.style, {
-              position:'fixed', bottom:'15px', right:'15px', zIndex:'9999',
-              padding:'8px 12px', color:'white', border:'none', borderRadius:'4px',
-              cursor:'pointer', boxShadow:'0 2px 5px rgba(0,0,0,0.2)',
-              fontFamily:'Arial, sans-serif', fontSize:'14px', fontWeight:'bold',
-              transition:'background-color .2s, opacity .5s ease-out', opacity:'1'
+              position:'fixed', bottom:'15px', right:'15px', zIndex:'9999', padding:'8px 12px',
+              color:'white', border:'none', borderRadius:'4px', cursor:'pointer',
+              boxShadow:'0 2px 5px rgba(0,0,0,0.2)', fontFamily:'Arial, sans-serif',
+              fontSize:'14px', fontWeight:'bold', transition:'background-color .2s, opacity .5s ease-out', opacity:'1'
           });
-          // Default background color set by class later or manually
           if (!button.classList.contains('error') && !button.classList.contains('loading')) {
-             button.style.backgroundColor = '#2196F3'; // Default blue
+             button.style.backgroundColor = '#2196F3';
           }
-
-          // Hover effect
-          button.onmouseover = function() {
-              if (!this.disabled && !this.classList.contains('success') && !this.classList.contains('error')) this.style.backgroundColor = '#0b7dda'; // Darker blue
-          };
-          button.onmouseout = function() {
-              if (!this.disabled && !this.classList.contains('success') && !this.classList.contains('error')) this.style.backgroundColor = '#2196F3'; // Default blue
-          };
-
-          // Click handler
+          button.onmouseover = function() { if (!this.disabled && !this.classList.contains('success') && !this.classList.contains('error')) this.style.backgroundColor = '#0b7dda'; };
+          button.onmouseout = function() { if (!this.disabled && !this.classList.contains('success') && !this.classList.contains('error')) this.style.backgroundColor = '#2196F3'; };
           button.addEventListener('click', function() {
               if (this.disabled || !snapSound || !soundInitialized) return;
-
               snapSound.play()
                   .then(() => {
-                      button.textContent = 'צליל פועל ✓';
-                      button.classList.add('success');
-                      button.style.backgroundColor = '#4CAF50'; // Green for success
-                      audioContextAllowed = true; // Mark audio as allowed by user interaction
-                      // Fade out and remove after a delay
-                      setTimeout(() => {
-                          button.classList.add('hidden');
-                          button.style.opacity = '0';
-                          setTimeout(() => button.remove(), 500); // Remove from DOM after fade
-                      }, 3000);
-                      // Reset sound for next play
-                      snapSound.pause();
-                      snapSound.currentTime = 0;
+                      button.textContent = 'צליל פועל ✓'; button.classList.add('success'); button.style.backgroundColor = '#4CAF50'; audioContextAllowed = true;
+                      setTimeout(() => { button.classList.add('hidden'); button.style.opacity = '0'; setTimeout(() => button.remove(), 500); }, 3000);
+                      snapSound.pause(); snapSound.currentTime = 0;
                   })
                   .catch(err => {
                       console.warn('Sound test failed:', err.name, err.message);
                       if (err.name === 'NotAllowedError') {
-                          button.textContent = 'צליל נחסם - לחץ שוב';
-                          button.classList.add('error'); // Keep error state
-                          button.style.backgroundColor = '#f44336'; // Red
-                          audioContextAllowed = false;
-                          // Re-enable button to allow another attempt
-                          button.disabled = false;
-                          button.classList.remove('loading');
+                          button.textContent = 'צליל נחסם - לחץ שוב'; button.classList.add('error'); button.style.backgroundColor = '#f44336'; audioContextAllowed = false; button.disabled = false; button.classList.remove('loading');
                       } else {
-                          // Other errors
-                          button.textContent = 'שגיאת נגינה';
-                          button.classList.add('error');
-                          button.style.backgroundColor = '#f44336'; // Red
-                          button.disabled = true; // Disable on other errors
+                          button.textContent = 'שגיאת נגינה'; button.classList.add('error'); button.style.backgroundColor = '#f44336'; button.disabled = true;
                       }
                   });
           });
-
           document.body.appendChild(button);
           if (CONFIG.DEBUG) console.log('Sound test button added.');
-
-      } catch (err) {
-          console.error('Error adding sound test button:', err);
-      }
+      } catch (err) { console.error('Error adding sound test button:', err); }
   }
-
-  function playSnapSound() {
+  function playSnapSound() { /* ... v4.1 code ... */
       if (!CONFIG.PLAY_SOUND || !snapSound || !soundInitialized) return;
-
-      // Warn if trying to play before user interaction allowed it
-      if (!audioContextAllowed && CONFIG.DEBUG) {
-          console.warn('Attempting to play sound before user interaction.');
-          // Consider adding the test button if it's not there
-          if (!document.getElementById('sound-test-button')) {
-             // addSoundTestButton(); // Optionally force button display
-          }
-         // Don't return here, let the browser handle the first play attempt (might work or fail)
-      }
-
+      if (!audioContextAllowed && CONFIG.DEBUG) { console.warn('Attempting to play sound before user interaction.'); }
       try {
-          // Check if audio is ready (readyState 4 means enough data to play)
-          if (snapSound.readyState < HTMLMediaElement.HAVE_ENOUGH_DATA) { // HAVE_ENOUGH_DATA is 4
-              if (CONFIG.DEBUG) console.log('Snap sound skipped: audio not ready yet (readyState:', snapSound.readyState, ')');
-              return;
-          }
-
-          // Reset and play
-          snapSound.pause();
-          snapSound.currentTime = 0;
-          const playPromise = snapSound.play();
-
+          if (snapSound.readyState < HTMLMediaElement.HAVE_ENOUGH_DATA) { if (CONFIG.DEBUG) console.log('Snap sound skipped: audio not ready yet (readyState:', snapSound.readyState, ')'); return; }
+          snapSound.pause(); snapSound.currentTime = 0; const playPromise = snapSound.play();
           if (playPromise !== undefined) {
               playPromise
-                  .then(() => {
-                      audioContextAllowed = true; // Mark as allowed after successful play
-                      if (CONFIG.DEBUG > 1) console.log('Snap sound played successfully.');
-                  })
+                  .then(() => { audioContextAllowed = true; if (CONFIG.DEBUG > 1) console.log('Snap sound played successfully.'); })
                   .catch(error => {
-                      // Handle playback errors (especially NotAllowedError)
-                      if (error.name === 'NotAllowedError') {
-                          console.warn('Snap sound playback blocked by browser (needs user interaction).');
-                          audioContextAllowed = false;
-                          // Show the test button again if it was hidden
-                          if (!document.getElementById('sound-test-button')) {
-                             addSoundTestButton();
-                          }
-                      } else if (error.name !== 'AbortError') { // Ignore AbortError caused by rapid pause/play
-                          console.error('Error playing snap sound:', error);
-                      }
+                      if (error.name === 'NotAllowedError') { console.warn('Snap sound playback blocked by browser (needs user interaction).'); audioContextAllowed = false; if (!document.getElementById('sound-test-button')) { addSoundTestButton(); } }
+                      else if (error.name !== 'AbortError') { console.error('Error playing snap sound:', error); }
                   });
           }
-      } catch (err) {
-          console.error('Unexpected error during playSnapSound:', err);
-      }
+      } catch (err) { console.error('Unexpected error during playSnapSound:', err); }
   }
 
-
   // ========================================================================
-  // Event Listeners Setup (Programming Area, Blocks, Global)
+  // Event Listeners Setup
+  // (Code identical to v4.1 - No changes needed here)
   // ========================================================================
-  function initProgrammingAreaListeners() {
+  function initProgrammingAreaListeners() { /* ... v4.1 code ... */
       const programmingArea = document.getElementById('program-blocks');
-      if (!programmingArea) {
-          console.error("Programming area (#program-blocks) not found!");
-          return;
-      }
-      // Prevent default dragover behavior to allow dropping
+      if (!programmingArea) { console.error("Programming area (#program-blocks) not found!"); return; }
       programmingArea.addEventListener('dragover', (event) => event.preventDefault());
-      // Prevent default dragstart for blocks *within* the programming area
-      programmingArea.addEventListener('dragstart', (event) => {
-          if (event.target?.closest?.('#program-blocks .block-container')) {
-              event.preventDefault();
-          }
-      });
+      programmingArea.addEventListener('dragstart', (event) => { if (event.target?.closest?.('#program-blocks .block-container')) { event.preventDefault(); } });
       if (CONFIG.DEBUG) console.log("Programming area listeners initialized.");
   }
-
-  function observeNewBlocks() {
+  function observeNewBlocks() { /* ... v4.1 code ... */
       const programmingArea = document.getElementById('program-blocks');
-      if (!programmingArea) return; // Should have been caught earlier, but safe check
-
+      if (!programmingArea) return;
       const observer = new MutationObserver((mutationsList) => {
           for (const mutation of mutationsList) {
               if (mutation.type === 'childList') {
                   mutation.addedNodes.forEach(node => {
-                      // Check if the added node itself is a block container
-                      if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('block-container')) {
-                         if (!node.id) generateUniqueId(node);
-                         addBlockDragListeners(node);
-                         if (CONFIG.DEBUG > 1) console.log(`Observer: Added listener to new block ${node.id}`);
-                      }
-                      // Check if the added node contains block containers (e.g., if a wrapper div was added)
-                      else if (node.nodeType === Node.ELEMENT_NODE && node.querySelectorAll) {
-                          node.querySelectorAll('.block-container').forEach(block => {
-                             // Ensure it's directly within the observed area
-                             if (block.closest('#program-blocks') === programmingArea) {
-                                if (!block.id) generateUniqueId(block);
-                                addBlockDragListeners(block);
-                                if (CONFIG.DEBUG > 1) console.log(`Observer: Added listener to new block ${block.id} (found via querySelectorAll)`);
-                             }
-                          });
-                      }
+                      if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('block-container')) { if (!node.id) generateUniqueId(node); addBlockDragListeners(node); if (CONFIG.DEBUG > 1) console.log(`Observer: Added listener to new block ${node.id}`); }
+                      else if (node.nodeType === Node.ELEMENT_NODE && node.querySelectorAll) { node.querySelectorAll('.block-container').forEach(block => { if (block.closest('#program-blocks') === programmingArea) { if (!block.id) generateUniqueId(block); addBlockDragListeners(block); if (CONFIG.DEBUG > 1) console.log(`Observer: Added listener to new block ${block.id} (found via querySelectorAll)`); } }); }
                   });
               }
           }
       });
-
       observer.observe(programmingArea, { childList: true, subtree: true });
       if (CONFIG.DEBUG) console.log("MutationObserver watching programming area for new blocks.");
   }
-
-  function initExistingBlocks() {
+  function initExistingBlocks() { /* ... v4.1 code ... */
       const programmingArea = document.getElementById('program-blocks');
       if (!programmingArea) return;
       const blocks = programmingArea.querySelectorAll('.block-container');
-      blocks.forEach(block => {
-          if (!block.id) generateUniqueId(block);
-          addBlockDragListeners(block);
-      });
+      blocks.forEach(block => { if (!block.id) generateUniqueId(block); addBlockDragListeners(block); });
       if (CONFIG.DEBUG) console.log(`Listeners added to ${blocks.length} existing blocks in programming area.`);
   }
-
-  function addBlockDragListeners(blockElement) {
-      // Remove existing listeners first to prevent duplicates
+  function addBlockDragListeners(blockElement) { /* ... v4.1 code ... */
       blockElement.removeEventListener('mousedown', handleMouseDown);
       blockElement.removeEventListener('contextmenu', handleContextMenu);
-
-      // Add new listeners
       blockElement.addEventListener('mousedown', handleMouseDown);
       blockElement.addEventListener('contextmenu', handleContextMenu);
-
-      // Ensure draggable attribute is initially true for standalone blocks
-       if (!blockElement.hasAttribute('data-connected-to') &&
-           !blockElement.hasAttribute('data-connected-from-left') &&
-           !blockElement.hasAttribute('data-connected-from-right')) {
-             blockElement.draggable = true;
-        } else {
-            blockElement.draggable = false; // Connected blocks shouldn't be natively draggable
-        }
+       if (!blockElement.hasAttribute('data-connected-to') && !blockElement.hasAttribute('data-connected-from-left') && !blockElement.hasAttribute('data-connected-from-right')) { blockElement.draggable = true; }
+       else { blockElement.draggable = false; }
   }
-
-  function initGlobalMouseListeners() {
-      // Remove potential old listeners before adding new ones
+  function initGlobalMouseListeners() { /* ... v4.1 code ... */
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('mouseleave', handleMouseLeave); // Handles leaving the window
-
-      // Add global listeners
+      document.removeEventListener('mouseleave', handleMouseLeave);
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       document.addEventListener('mouseleave', handleMouseLeave);
@@ -413,324 +274,151 @@
   }
 
   // ========================================================================
-  // Drag Lifecycle Handlers (MouseDown, MouseMove, MouseUp, MouseLeave)
+  // Drag Lifecycle Handlers
+  // (Code identical to v4.1 - No changes needed here)
   // ========================================================================
-
-  function handleMouseDown(event) {
-      // Only handle left mouse button clicks
+  function handleMouseDown(event) { /* ... v4.1 code ... */
       if (event.button !== 0 || !event.target.closest) return;
-
-      // Ignore clicks on inputs/buttons inside a block if any exist
-      if (event.target.matches('input, button, select, textarea, a[href]')) {
-         return;
-      }
-
+      if (event.target.matches('input, button, select, textarea, a[href]')) { return; }
       const block = event.target.closest('.block-container');
-      // Ensure the block is directly within the programming area and not nested improperly
-      if (!block || !block.parentElement || block.parentElement.id !== 'program-blocks') {
-          return; // Click wasn't on a draggable block in the programming area
-      }
-
-      // Generate ID if missing (important for tracking connections)
-      if (!block.id) {
-          generateUniqueId(block);
-      }
-
-      event.preventDefault(); // Prevent default drag behaviors like text selection
-      block.draggable = false; // Use our custom dragging, disable native HTML drag
-
+      if (!block || !block.parentElement || block.parentElement.id !== 'program-blocks') { return; }
+      if (!block.id) { generateUniqueId(block); }
+      event.preventDefault(); block.draggable = false;
       if (CONFIG.DEBUG) console.log(`[MouseDown] Start drag on: ${block.id}`);
-
-      // --- Detach block from its neighbors before dragging ---
-      // Detach self from the block it was connected TO
       const connectedToId = block.getAttribute('data-connected-to');
-      if (connectedToId) {
-          detachBlock(block, false); // Detach self silently (no animation)
-      }
-      // Detach blocks connected TO this block (on its left/right)
+      if (connectedToId) { detachBlock(block, false); }
       const leftId = block.getAttribute('data-connected-from-left');
-      if (leftId) {
-          const leftBlock = document.getElementById(leftId);
-          if (leftBlock) detachBlock(leftBlock, false); // Detach the block on the left
-      }
+      if (leftId) { const leftBlock = document.getElementById(leftId); if (leftBlock) detachBlock(leftBlock, false); }
       const rightId = block.getAttribute('data-connected-from-right');
-      if (rightId) {
-          const rightBlock = document.getElementById(rightId);
-          if (rightBlock) detachBlock(rightBlock, false); // Detach the block on the right
-      }
-       // --- End Detach ---
-
-      currentDraggedBlock = block;
-      isDraggingBlock = true;
-
-      // Calculate offset from mouse pointer to block's top-left corner
+      if (rightId) { const rightBlock = document.getElementById(rightId); if (rightBlock) detachBlock(rightBlock, false); }
+      currentDraggedBlock = block; isDraggingBlock = true;
       const rect = block.getBoundingClientRect();
-      dragOffset.x = event.clientX - rect.left;
-      dragOffset.y = event.clientY - rect.top;
-
-      const programmingArea = document.getElementById('program-blocks');
-      const areaRect = programmingArea.getBoundingClientRect();
-
-      // Ensure the block is absolutely positioned *relative to the programming area*
-      // This might involve converting its current visual position if it wasn't absolute
+      dragOffset.x = event.clientX - rect.left; dragOffset.y = event.clientY - rect.top;
+      const programmingArea = document.getElementById('program-blocks'); const areaRect = programmingArea.getBoundingClientRect();
       if (window.getComputedStyle(block).position !== 'absolute') {
           block.style.position = 'absolute';
-          // Calculate position relative to programming area, considering scroll
           block.style.left = (rect.left - areaRect.left + programmingArea.scrollLeft) + 'px';
           block.style.top = (rect.top - areaRect.top + programmingArea.scrollTop) + 'px';
       }
-      block.style.margin = '0'; // Remove any margin that might interfere
-
-      // Apply dragging styles
-      block.style.zIndex = '1001'; // Bring to front
-      block.classList.add('snap-source');
-      document.body.classList.add('user-select-none'); // Prevent text selection globally
-
-      // Reset visual state from previous drags
-      potentialSnapTargetForVisuals = null;
-      snapDirectionForVisuals = null;
+      block.style.margin = '0'; block.style.zIndex = '1001'; block.classList.add('snap-source');
+      document.body.classList.add('user-select-none');
+      potentialSnapTargetForVisuals = null; snapDirectionForVisuals = null;
   }
-
- function handleMouseMove(event) {
+  function handleMouseMove(event) { /* ... v4.1 code ... */
       if (!isDraggingBlock || !currentDraggedBlock) return;
-
-      event.preventDefault(); // Prevent other default actions during drag
-
+      event.preventDefault();
       const programmingArea = document.getElementById('program-blocks');
-      if (!programmingArea) {
-          console.error("Programming area lost during drag!");
-          handleMouseUp(event); // Abort drag if area disappears
-          return;
-      }
+      if (!programmingArea) { console.error("Programming area lost during drag!"); handleMouseUp(event); return; }
       const areaRect = programmingArea.getBoundingClientRect();
-
-      // Calculate new top-left position based on mouse movement, offset, and container scroll
       let newLeft = event.clientX - areaRect.left - dragOffset.x + programmingArea.scrollLeft;
       let newTop = event.clientY - areaRect.top - dragOffset.y + programmingArea.scrollTop;
-
-      // Constrain block position within the programming area boundaries
-      const blockWidth = currentDraggedBlock.offsetWidth;
-      const blockHeight = currentDraggedBlock.offsetHeight;
-      const scrollWidth = programmingArea.scrollWidth; // Content width including overflow
-      const scrollHeight = programmingArea.scrollHeight; // Content height including overflow
-
+      const blockWidth = currentDraggedBlock.offsetWidth; const blockHeight = currentDraggedBlock.offsetHeight;
+      const scrollWidth = programmingArea.scrollWidth; const scrollHeight = programmingArea.scrollHeight;
       newLeft = Math.max(0, Math.min(newLeft, scrollWidth - blockWidth));
       newTop = Math.max(0, Math.min(newTop, scrollHeight - blockHeight));
-
-      // Apply the new position
-      currentDraggedBlock.style.left = Math.round(newLeft) + 'px';
-      currentDraggedBlock.style.top = Math.round(newTop) + 'px';
-
-      // Check for potential snap targets and update visual feedback (highlight/indicator)
+      currentDraggedBlock.style.left = Math.round(newLeft) + 'px'; currentDraggedBlock.style.top = Math.round(newTop) + 'px';
       checkAndHighlightForVisuals();
   }
-
-  function handleMouseUp(event) {
+  function handleMouseUp(event) { /* ... v4.1 code ... */
       if (!isDraggingBlock || !currentDraggedBlock) return;
-
-      const blockReleased = currentDraggedBlock;
-      const releasedRect = blockReleased.getBoundingClientRect(); // Get final position
+      const blockReleased = currentDraggedBlock; const releasedRect = blockReleased.getBoundingClientRect();
       const programmingArea = document.getElementById('program-blocks');
-
-      let finalTarget = null;
-      let finalDirection = null;
-      let finalMinDistance = CONFIG.CONNECT_THRESHOLD + 1; // Start above threshold
-
+      let finalTarget = null; let finalDirection = null; let finalMinDistance = CONFIG.CONNECT_THRESHOLD + 1;
       if (CONFIG.DEBUG) console.log(`[MouseUp - Protected] Releasing ${blockReleased.id}. Performing final proximity check...`);
-
-      // --- Perform Final Proximity Check at Release Position ---
       if (programmingArea) {
           const allVisibleBlocks = Array.from(programmingArea.querySelectorAll('.block-container:not(.snap-source)'))
-                                        .filter(block => block.offsetParent !== null && block !== blockReleased); // Exclude self
-
+                                        .filter(block => block.offsetParent !== null && block !== blockReleased);
           for (const targetBlock of allVisibleBlocks) {
               if (!targetBlock.id) generateUniqueId(targetBlock);
               const targetRect = targetBlock.getBoundingClientRect();
               const targetConnectedLeft = targetBlock.hasAttribute('data-connected-from-left');
               const targetConnectedRight = targetBlock.hasAttribute('data-connected-from-right');
-
-              // Use the utility function with the *released* block's final position
               const snapInfo = calculateSnapInfo(releasedRect, targetRect);
-
-              if (snapInfo) { // If within threshold and sufficient overlap
+              if (snapInfo) {
                   let connectionAllowed = true;
-                  // Check if target side is already occupied
                   if (snapInfo.direction === 'left' && targetConnectedLeft) connectionAllowed = false;
                   else if (snapInfo.direction === 'right' && targetConnectedRight) connectionAllowed = false;
-
-                  // If connection is allowed and this target is the closest so far
                   if (connectionAllowed && snapInfo.distance < finalMinDistance) {
-                      finalMinDistance = snapInfo.distance;
-                      finalTarget = targetBlock;
-                      finalDirection = snapInfo.direction;
+                      finalMinDistance = snapInfo.distance; finalTarget = targetBlock; finalDirection = snapInfo.direction;
                   }
               }
-          } // End loop through potential targets
-      }
-      // --- End Final Proximity Check ---
-
-
-      // --- Cleanup Drag State (Always perform) ---
-      isDraggingBlock = false;
-      currentDraggedBlock = null;
-      potentialSnapTargetForVisuals = null; // Clear visual state variables
-      snapDirectionForVisuals = null;
-      document.body.classList.remove('user-select-none');
-      blockReleased.classList.remove('snap-source');
-      blockReleased.style.zIndex = ''; // Reset z-index
-
-      // Remove any lingering visual highlights from all blocks
-      document.querySelectorAll('.snap-target').forEach(el => {
-          el.classList.remove('snap-target', 'snap-left', 'snap-right');
-      });
-      removeFuturePositionIndicator(); // Ensure blue indicator is hidden
-      // --- End Cleanup ---
-
-
-      // --- Decide and Perform Snap (Based on Final Check) ---
-      if (finalTarget && finalDirection) {
-          // Valid target found within threshold AT RELEASE
-          if (CONFIG.DEBUG) console.log(`[MouseUp - Protected] Final check PASSED. Snapping ${blockReleased.id} to ${finalTarget.id} (${finalDirection}). Distance: ${finalMinDistance.toFixed(1)}px`);
-
-          // Execute the snap (this function handles positioning and attribute setting)
-          const snapSuccess = performBlockSnap(blockReleased, finalTarget, finalDirection);
-
-          if (!snapSuccess) {
-              // Snap failed for some internal reason (e.g., target removed concurrently)
-              blockReleased.draggable = true; // Make it draggable again
-              if (CONFIG.DEBUG) console.warn(`[MouseUp - Protected] Snap attempt failed unexpectedly. Block ${blockReleased.id} remains draggable.`);
-          } else {
-              // Snap succeeded, block is now connected and should be non-draggable
-              if (CONFIG.DEBUG) console.log(`[MouseUp - Protected] Snap successful. Block ${blockReleased.id} is connected.`);
-              // performBlockSnap should set draggable = false
           }
+      }
+      isDraggingBlock = false; currentDraggedBlock = null; potentialSnapTargetForVisuals = null; snapDirectionForVisuals = null;
+      document.body.classList.remove('user-select-none'); blockReleased.classList.remove('snap-source'); blockReleased.style.zIndex = '';
+      document.querySelectorAll('.snap-target').forEach(el => { el.classList.remove('snap-target', 'snap-left', 'snap-right'); });
+      removeFuturePositionIndicator();
+      if (finalTarget && finalDirection) {
+          if (CONFIG.DEBUG) console.log(`[MouseUp - Protected] Final check PASSED. Snapping ${blockReleased.id} to ${finalTarget.id} (${finalDirection}). Distance: ${finalMinDistance.toFixed(1)}px`);
+          const snapSuccess = performBlockSnap(blockReleased, finalTarget, finalDirection);
+          if (!snapSuccess) { blockReleased.draggable = true; if (CONFIG.DEBUG) console.warn(`[MouseUp - Protected] Snap attempt failed unexpectedly. Block ${blockReleased.id} remains draggable.`); }
+          else { if (CONFIG.DEBUG) console.log(`[MouseUp - Protected] Snap successful. Block ${blockReleased.id} is connected.`); }
       } else {
-          // No valid target found within threshold at release
           if (CONFIG.DEBUG) console.log(`[MouseUp - Protected] Final check FAILED (No target within ${CONFIG.CONNECT_THRESHOLD}px at release). No snap performed.`);
-          // Ensure the released block is draggable if it's not connected
           blockReleased.draggable = true;
       }
-
       if (CONFIG.DEBUG) console.log(`[MouseUp - Protected] ----- End MouseUp for ${blockReleased.id} -----`);
   }
-
-  function handleMouseLeave(event) {
-      // If the mouse leaves the document element entirely while dragging
+  function handleMouseLeave(event) { /* ... v4.1 code ... */
       if (isDraggingBlock && event.target === document.documentElement && !event.relatedTarget) {
           if (CONFIG.DEBUG) console.warn("Mouse left document during drag, triggering MouseUp.");
-          handleMouseUp(event); // Treat as if the mouse button was released
+          handleMouseUp(event);
       }
   }
 
   // ========================================================================
   // Snap Calculation and Visual Feedback Logic
+  // (Code identical to v4.1 - No changes needed here)
   // ========================================================================
-
-  // Calculates potential snap based on proximity and overlap.
-  // Returns { direction, distance } if a potential snap is viable within CONNECT_THRESHOLD, else null.
-  function calculateSnapInfo(sourceRect, targetRect) {
-      // 1. Check for sufficient vertical overlap
-      const topOverlap = Math.max(sourceRect.top, targetRect.top);
-      const bottomOverlap = Math.min(sourceRect.bottom, targetRect.bottom);
+  function calculateSnapInfo(sourceRect, targetRect) { /* ... v4.1 code ... */
+      const topOverlap = Math.max(sourceRect.top, targetRect.top); const bottomOverlap = Math.min(sourceRect.bottom, targetRect.bottom);
       const verticalOverlap = Math.max(0, bottomOverlap - topOverlap);
       const minHeightReq = Math.min(sourceRect.height, targetRect.height) * CONFIG.VERTICAL_OVERLAP_REQ;
-
-      if (verticalOverlap < minHeightReq || verticalOverlap <= 0) {
-          return null; // Not enough vertical overlap
-      }
-
-      // 2. Calculate horizontal distances between relevant edges
+      if (verticalOverlap < minHeightReq || verticalOverlap <= 0) { return null; }
       let distance, direction;
-      // Distance from source's right edge to target's left edge
       const distRightToLeft = Math.abs(sourceRect.right - targetRect.left);
-      // Distance from source's left edge to target's right edge
       const distLeftToRight = Math.abs(sourceRect.left - targetRect.right);
-
-      // 3. Determine the closer connection possibility
-      if (distRightToLeft < distLeftToRight) {
-          distance = distRightToLeft;
-          direction = 'left'; // Source snaps to the LEFT of the target
-      } else {
-          distance = distLeftToRight;
-          direction = 'right'; // Source snaps to the RIGHT of the target
-      }
-
-      // 4. Check if the distance is within the connection threshold
-      if (distance <= CONFIG.CONNECT_THRESHOLD) {
-          // Potential connection is viable
-          return { direction, distance };
-      } else {
-          // Too far apart horizontally
-          return null;
-      }
+      if (distRightToLeft < distLeftToRight) { distance = distRightToLeft; direction = 'left'; }
+      else { distance = distLeftToRight; direction = 'right'; }
+      if (distance <= CONFIG.CONNECT_THRESHOLD) { return { direction, distance }; }
+      else { return null; }
   }
-
-  // Called during MouseMove to update visual highlights (yellow halo, blue indicator)
-  function checkAndHighlightForVisuals() {
+  function checkAndHighlightForVisuals() { /* ... v4.1 code ... */
       if (!currentDraggedBlock) return;
       const programmingArea = document.getElementById('program-blocks'); if (!programmingArea) return;
       const sourceRect = currentDraggedBlock.getBoundingClientRect();
       const allVisibleBlocks = Array.from(programmingArea.querySelectorAll('.block-container:not(.snap-source)'))
-                                    .filter(block => block.offsetParent !== null); // Only check visible blocks
-
-      let bestTarget = null;
-      let bestDirection = null;
-      let minDistance = CONFIG.CONNECT_THRESHOLD + 1; // Start above threshold
-
-      // --- Reset current visual state ---
-      // Remove halo from previously highlighted target (if any)
-      if (potentialSnapTargetForVisuals && document.body.contains(potentialSnapTargetForVisuals)) {
-         potentialSnapTargetForVisuals.classList.remove('snap-target', 'snap-left', 'snap-right');
-      }
-      potentialSnapTargetForVisuals = null; // Reset global state for visuals
-      snapDirectionForVisuals = null;
-      removeFuturePositionIndicator(); // Hide blue indicator by default
-      // --- End Reset ---
-
-      // --- Find the best potential target for visual feedback ---
+                                    .filter(block => block.offsetParent !== null);
+      let bestTarget = null; let bestDirection = null; let minDistance = CONFIG.CONNECT_THRESHOLD + 1;
+      if (potentialSnapTargetForVisuals && document.body.contains(potentialSnapTargetForVisuals)) { potentialSnapTargetForVisuals.classList.remove('snap-target', 'snap-left', 'snap-right'); }
+      potentialSnapTargetForVisuals = null; snapDirectionForVisuals = null; removeFuturePositionIndicator();
       for (const targetBlock of allVisibleBlocks) {
-          if (!targetBlock.id) generateUniqueId(targetBlock); // Ensure target has an ID
+          if (!targetBlock.id) generateUniqueId(targetBlock);
           const targetRect = targetBlock.getBoundingClientRect();
           const targetConnectedLeft = targetBlock.hasAttribute('data-connected-from-left');
           const targetConnectedRight = targetBlock.hasAttribute('data-connected-from-right');
-
-          const snapInfo = calculateSnapInfo(sourceRect, targetRect); // Check proximity and overlap
-
-          if (snapInfo) { // If within threshold and overlaps sufficiently
+          const snapInfo = calculateSnapInfo(sourceRect, targetRect);
+          if (snapInfo) {
               let connectionAllowed = true;
-              // Check if the target side is already occupied
               if (snapInfo.direction === 'left' && targetConnectedLeft) connectionAllowed = false;
               else if (snapInfo.direction === 'right' && targetConnectedRight) connectionAllowed = false;
-
-              // If connection is allowed and this target is the closest found so far
               if (connectionAllowed && snapInfo.distance < minDistance) {
-                  minDistance = snapInfo.distance;
-                  bestTarget = targetBlock;
-                  bestDirection = snapInfo.direction;
+                  minDistance = snapInfo.distance; bestTarget = targetBlock; bestDirection = snapInfo.direction;
               }
           }
-      } // --- End loop through potential targets ---
-
-      // --- Apply Visual Feedback if a best target was found ---
+      }
       if (bestTarget) {
-          // Store the best target for visuals (used for cleanup)
-          potentialSnapTargetForVisuals = bestTarget;
-          snapDirectionForVisuals = bestDirection;
-
-          // Add the yellow halo class to the best target
+          potentialSnapTargetForVisuals = bestTarget; snapDirectionForVisuals = bestDirection;
           bestTarget.classList.add('snap-target', bestDirection === 'left' ? 'snap-left' : 'snap-right');
           if (CONFIG.DEBUG > 1) console.log(`[Visuals] Highlight ON for ${bestTarget.id}`);
-
-          // Show the blue dashed indicator only if within the tighter threshold
           if (minDistance <= CONFIG.INDICATOR_TOUCH_THRESHOLD) {
               if (CONFIG.DEBUG > 1) console.log(`[Visuals] Indicator ON (dist ${minDistance.toFixed(1)} <= ${CONFIG.INDICATOR_TOUCH_THRESHOLD})`);
               updateFuturePositionIndicator(currentDraggedBlock, bestTarget, bestDirection, programmingArea.getBoundingClientRect());
           } else {
-              removeFuturePositionIndicator(); // Ensure it's hidden if not close enough
+              removeFuturePositionIndicator();
               if (CONFIG.DEBUG > 1) console.log(`[Visuals] Indicator OFF (dist ${minDistance.toFixed(1)} > ${CONFIG.INDICATOR_TOUCH_THRESHOLD})`);
           }
       } else {
-           // No suitable target found, ensure indicator is off
            removeFuturePositionIndicator();
            if (CONFIG.DEBUG > 1) console.log(`[Visuals] No target within ${CONFIG.CONNECT_THRESHOLD}px for highlight.`);
       }
@@ -747,7 +435,7 @@
           console.error("[PerformSnap] Invalid block(s) or target not visible. Snap cancelled.", { sourceBlock, targetBlock });
           return false; // Indicate failure
       }
-       // Final check for connection conflicts (important for race conditions)
+       // Final check for connection conflicts
        if ((direction === 'left' && targetBlock.hasAttribute('data-connected-from-left')) ||
            (direction === 'right' && targetBlock.hasAttribute('data-connected-from-right'))) {
            console.warn(`[PerformSnap] Snap cancelled: Target ${targetBlock.id} side '${direction}' became occupied just before snap.`);
@@ -757,299 +445,170 @@
       if (CONFIG.DEBUG) console.log(`[PerformSnap] Snapping ${sourceBlock.id} to ${targetBlock.id} (${direction})`);
 
       try {
-          const sourceRect = sourceBlock.getBoundingClientRect(); // Use current rect for width/height info
+          const sourceRect = sourceBlock.getBoundingClientRect();
           const targetRect = targetBlock.getBoundingClientRect();
           const programmingArea = document.getElementById('program-blocks');
           const areaRect = programmingArea.getBoundingClientRect();
 
-          // Calculate the final absolute position for the source block
+          // Calculate final position
           let finalPixelLeft, finalPixelTop;
-
-          if (direction === 'left') { // Source snaps to the LEFT of the target
+          if (direction === 'left') {
               finalPixelLeft = targetRect.left - sourceRect.width - CONFIG.BLOCK_GAP;
-          } else { // Source snaps to the RIGHT of the target
+          } else {
               finalPixelLeft = targetRect.right + CONFIG.BLOCK_GAP;
           }
-          // Align tops (can be adjusted for center alignment if needed)
           finalPixelTop = targetRect.top;
 
-          // Convert absolute screen pixels to style values relative to the programming area, including scroll
+          // Convert to style values
           let styleLeft = finalPixelLeft - areaRect.left + programmingArea.scrollLeft;
           let styleTop = finalPixelTop - areaRect.top + programmingArea.scrollTop;
 
-          // --- Apply final position and styles ---
-          sourceBlock.style.position = 'absolute'; // Ensure it's absolute
+          // Apply final position and styles
+          sourceBlock.style.position = 'absolute';
           sourceBlock.style.left = `${Math.round(styleLeft)}px`;
           sourceBlock.style.top = `${Math.round(styleTop)}px`;
-          sourceBlock.style.margin = '0'; // Remove margin
-          sourceBlock.style.zIndex = ''; // Reset z-index after snap
+          sourceBlock.style.margin = '0';
+          sourceBlock.style.zIndex = '';
 
-          // --- Update connection attributes ---
-          // Source block remembers what it connected TO
+          // Update connection attributes
           sourceBlock.setAttribute('data-connected-to', targetBlock.id);
-          sourceBlock.setAttribute('data-connection-direction', direction); // 'left' or 'right' relative to target
-
-          // Target block remembers what connected FROM its side
+          sourceBlock.setAttribute('data-connection-direction', direction);
           targetBlock.setAttribute(direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right', sourceBlock.id);
 
-          // --- Add CSS classes for potential styling ---
+          // Add CSS classes
           sourceBlock.classList.add('connected-block');
-          targetBlock.classList.add('has-connected-block'); // Target now has a neighbor
+          targetBlock.classList.add('has-connected-block');
 
           // --- Final steps ---
-          playSnapSound(); // Play the connection sound
-          addSnapEffectAnimation(sourceBlock); // Add visual snap animation
-          sourceBlock.draggable = false; // Make the source block non-draggable now it's connected
+          playSnapSound();
+          addSnapEffectAnimation(sourceBlock);
+          sourceBlock.draggable = false; // Block is now connected
+
+          // *** CHANGE V4.2: Remove highlight from target after successful snap ***
+          if (targetBlock) {
+              targetBlock.classList.remove('snap-target', 'snap-left', 'snap-right');
+              if (CONFIG.DEBUG > 1) console.log(`[PerformSnap] Removed snap-target class from target ${targetBlock.id}`);
+          }
+          // *** END CHANGE V4.2 ***
 
           if (CONFIG.DEBUG) console.log(`[PerformSnap] Success. ${sourceBlock.id} final pos: L=${styleLeft.toFixed(0)}, T=${styleTop.toFixed(0)}. Draggable: ${sourceBlock.draggable}`);
           return true; // Indicate success
 
       } catch (err) {
           console.error(`[PerformSnap] Error during snap (${sourceBlock.id} -> ${targetBlock.id}):`, err);
-          // Attempt to clean up if snap failed mid-way
-          try {
-              detachBlock(sourceBlock, false); // Try to detach silently
-          } catch (detachErr) {
-              console.error(`[PerformSnap] Error during cleanup detach:`, detachErr);
-          }
-          sourceBlock.draggable = true; // Ensure it's draggable after failure
+          try { detachBlock(sourceBlock, false); }
+          catch (detachErr) { console.error(`[PerformSnap] Error during cleanup detach:`, detachErr); }
+          sourceBlock.draggable = true; // Ensure draggable after failure
           return false; // Indicate failure
       }
   }
 
   // Detaches a block from its connected neighbor
   function detachBlock(blockToDetach, playAnimation = true) {
-      if (!blockToDetach) {
-        console.warn("[Detach] Attempted to detach null block.");
-        return;
-      }
-      // Find the block it was connected TO
+      // (Code identical to v4.1 - No changes needed here)
+      if (!blockToDetach) { console.warn("[Detach] Attempted to detach null block."); return; }
       const targetId = blockToDetach.getAttribute('data-connected-to');
       const direction = blockToDetach.getAttribute('data-connection-direction');
-
       if (!targetId || !direction) {
-          // Block wasn't actually connected, just ensure attributes are clean
-          blockToDetach.removeAttribute('data-connected-to');
-          blockToDetach.removeAttribute('data-connection-direction');
-          blockToDetach.classList.remove('connected-block');
-          blockToDetach.draggable = true; // Ensure free blocks are draggable
-          // console.warn(`[Detach] Block ${blockToDetach.id} had no connection data. Cleaned up.`);
-          return;
+          blockToDetach.removeAttribute('data-connected-to'); blockToDetach.removeAttribute('data-connection-direction');
+          blockToDetach.classList.remove('connected-block'); blockToDetach.draggable = true; return;
       }
-
       if (CONFIG.DEBUG) console.log(`[Detach] Detaching ${blockToDetach.id} from ${targetId} (direction: ${direction})`);
-
-      // 1. Clear connection attributes from the block being detached
-      blockToDetach.removeAttribute('data-connected-to');
-      blockToDetach.removeAttribute('data-connection-direction');
-      blockToDetach.classList.remove('connected-block');
-      blockToDetach.draggable = true; // Make it draggable again
-
-      // 2. Clear connection attribute from the target block
+      blockToDetach.removeAttribute('data-connected-to'); blockToDetach.removeAttribute('data-connection-direction');
+      blockToDetach.classList.remove('connected-block'); blockToDetach.draggable = true;
       const targetBlock = document.getElementById(targetId);
       if (targetBlock) {
           const attributeToRemove = (direction === 'left') ? 'data-connected-from-left' : 'data-connected-from-right';
           targetBlock.removeAttribute(attributeToRemove);
-
-          // Check if the target block still has any connections left
-          const stillHasConnections =
-              targetBlock.hasAttribute('data-connected-from-left') ||
-              targetBlock.hasAttribute('data-connected-from-right') ||
-              targetBlock.hasAttribute('data-connected-to'); // Check if it's connected TO another block
-
-          if (!stillHasConnections) {
-              targetBlock.classList.remove('has-connected-block');
-          }
+          const stillHasConnections = targetBlock.hasAttribute('data-connected-from-left') || targetBlock.hasAttribute('data-connected-from-right') || targetBlock.hasAttribute('data-connected-to');
+          if (!stillHasConnections) { targetBlock.classList.remove('has-connected-block'); }
           if (CONFIG.DEBUG > 1) console.log(`[Detach] Removed attribute ${attributeToRemove} from target ${targetId}. Target still connected: ${stillHasConnections}`);
-      } else {
-          console.warn(`[Detach] Target block with ID ${targetId} not found in DOM during detach.`);
-      }
-
-      // 3. Optionally play detach animation
-      if (playAnimation) {
-          addDetachEffectAnimation(blockToDetach);
-      }
-
+      } else { console.warn(`[Detach] Target block with ID ${targetId} not found in DOM during detach.`); }
+      if (playAnimation) { addDetachEffectAnimation(blockToDetach); }
       if (CONFIG.DEBUG) console.log(`[Detach] Finished detaching ${blockToDetach.id}. Draggable: ${blockToDetach.draggable}`);
   }
 
   // Updates the position and visibility of the blue dashed indicator
   function updateFuturePositionIndicator(sourceBlock, targetBlock, direction, programmingAreaRect) {
-      const programmingArea = document.getElementById('program-blocks');
-      if (!programmingArea) return;
-
-      // Create indicator if it doesn't exist
+      // (Code identical to v4.1 - No changes needed here)
+      const programmingArea = document.getElementById('program-blocks'); if (!programmingArea) return;
       if (!futureIndicator) {
-          futureIndicator = document.createElement('div');
-          futureIndicator.id = 'future-position-indicator';
-          futureIndicator.className = 'future-position-indicator'; // Base class from styles
-          programmingArea.appendChild(futureIndicator);
-          if (CONFIG.DEBUG > 1) console.log("Created future position indicator.");
+          futureIndicator = document.createElement('div'); futureIndicator.id = 'future-position-indicator'; futureIndicator.className = 'future-position-indicator';
+          programmingArea.appendChild(futureIndicator); if (CONFIG.DEBUG > 1) console.log("Created future position indicator.");
       }
-
       try {
-          const sourceRect = sourceBlock.getBoundingClientRect();
-          const targetRect = targetBlock.getBoundingClientRect();
-
-          // Calculate the theoretical final position (same logic as performBlockSnap)
+          const sourceRect = sourceBlock.getBoundingClientRect(); const targetRect = targetBlock.getBoundingClientRect();
           let desiredVisualLeft, desiredVisualTop;
-          if (direction === 'left') {
-              desiredVisualLeft = targetRect.left - sourceRect.width - CONFIG.BLOCK_GAP;
-          } else {
-              desiredVisualLeft = targetRect.right + CONFIG.BLOCK_GAP;
-          }
-          desiredVisualTop = targetRect.top; // Align tops
-
-          // Convert to style values relative to programming area with scroll
+          if (direction === 'left') { desiredVisualLeft = targetRect.left - sourceRect.width - CONFIG.BLOCK_GAP; }
+          else { desiredVisualLeft = targetRect.right + CONFIG.BLOCK_GAP; }
+          desiredVisualTop = targetRect.top;
           let indicatorStyleLeft = desiredVisualLeft - programmingAreaRect.left + programmingArea.scrollLeft;
           let indicatorStyleTop = desiredVisualTop - programmingAreaRect.top + programmingArea.scrollTop;
-
-          // Apply styles to the indicator div
-          futureIndicator.style.left = `${Math.round(indicatorStyleLeft)}px`;
-          futureIndicator.style.top = `${Math.round(indicatorStyleTop)}px`;
-          futureIndicator.style.width = `${Math.round(sourceRect.width)}px`;
-          futureIndicator.style.height = `${Math.round(sourceRect.height)}px`;
-
-          // Make it visible
+          futureIndicator.style.left = `${Math.round(indicatorStyleLeft)}px`; futureIndicator.style.top = `${Math.round(indicatorStyleTop)}px`;
+          futureIndicator.style.width = `${Math.round(sourceRect.width)}px`; futureIndicator.style.height = `${Math.round(sourceRect.height)}px`;
           futureIndicator.classList.add('visible');
-
-      } catch (err) {
-          console.error('Error updating future position indicator:', err);
-          removeFuturePositionIndicator(); // Hide indicator on error
-      }
+      } catch (err) { console.error('Error updating future position indicator:', err); removeFuturePositionIndicator(); }
   }
 
   // Hides the blue dashed indicator
   function removeFuturePositionIndicator() {
-      if (futureIndicator) {
-          futureIndicator.classList.remove('visible');
-          // Optional: Could set display:none after transition if needed
-          // setTimeout(() => {
-          //    if (!futureIndicator.classList.contains('visible')) futureIndicator.style.display = 'none';
-          // }, 200); // Match transition duration
-      }
+      // (Code identical to v4.1 - No changes needed here)
+      if (futureIndicator) { futureIndicator.classList.remove('visible'); }
   }
 
-  // Shows the context menu for detaching
-  function handleContextMenu(event) {
-      event.preventDefault(); // Prevent default browser context menu
-      const block = event.target.closest('.block-container');
-
-      // Show menu only if the block is actually connected to something
-      if (block && block.hasAttribute('data-connected-to')) {
-          showDetachMenu(event.clientX, event.clientY, block);
-      } else {
-          removeDetachMenu(); // Ensure no old menu is visible
-      }
+  // Context Menu Handling
+  function handleContextMenu(event) { /* ... v4.1 code ... */
+      event.preventDefault(); const block = event.target.closest('.block-container');
+      if (block && block.hasAttribute('data-connected-to')) { showDetachMenu(event.clientX, event.clientY, block); }
+      else { removeDetachMenu(); }
   }
-
-  function showDetachMenu(x, y, blockToDetach) {
-      removeDetachMenu(); // Remove any existing menu first
-
-      const menu = document.createElement('div');
-      menu.id = 'detach-menu';
-      menu.style.left = `${x}px`;
-      menu.style.top = `${y}px`;
-
-      const option = document.createElement('div');
-      option.textContent = 'נתק בלוק'; // "Detach Block"
-      option.onclick = (e) => {
-          e.stopPropagation(); // Prevent click from closing menu immediately
-          detachBlock(blockToDetach, true); // Detach with animation
-          removeDetachMenu();
-      };
-      menu.appendChild(option);
-
-      document.body.appendChild(menu);
-
-      // Add listeners to close the menu when clicking outside or scrolling
-      setTimeout(() => { // Use timeout to avoid immediate closing by the same click
-          document.addEventListener('click', closeMenuOutside, { capture: true, once: true });
-          window.addEventListener('scroll', removeDetachMenu, { capture: true, once: true });
-      }, 0);
+  function showDetachMenu(x, y, blockToDetach) { /* ... v4.1 code ... */
+      removeDetachMenu(); const menu = document.createElement('div'); menu.id = 'detach-menu';
+      menu.style.left = `${x}px`; menu.style.top = `${y}px`; const option = document.createElement('div');
+      option.textContent = 'נתק בלוק'; option.onclick = (e) => { e.stopPropagation(); detachBlock(blockToDetach, true); removeDetachMenu(); };
+      menu.appendChild(option); document.body.appendChild(menu);
+      setTimeout(() => { document.addEventListener('click', closeMenuOutside, { capture: true, once: true }); window.addEventListener('scroll', removeDetachMenu, { capture: true, once: true }); }, 0);
   }
-
-  // Closes the detach menu if a click occurs outside it
-  function closeMenuOutside(event) {
+  function closeMenuOutside(event) { /* ... v4.1 code ... */
       const menu = document.getElementById('detach-menu');
-      // Check if menu exists and the click was outside it
-      if (menu && !menu.contains(event.target)) {
-          removeDetachMenu();
-      } else if (menu) {
-          // If click was inside, re-attach listener for next click
-          // Need to remove the 'once:true' listener and add a new one
-          window.removeEventListener('scroll', removeDetachMenu, { capture: true }); // Remove scroll listener too
-          setTimeout(() => {
-            document.addEventListener('click', closeMenuOutside, { capture: true, once: true });
-            window.addEventListener('scroll', removeDetachMenu, { capture: true, once: true });
-          }, 0);
-      } else {
-         // Menu already removed, clean up listeners just in case
-         window.removeEventListener('scroll', removeDetachMenu, { capture: true });
-      }
+      if (menu && !menu.contains(event.target)) { removeDetachMenu(); }
+      else if (menu) { window.removeEventListener('scroll', removeDetachMenu, { capture: true }); setTimeout(() => { document.addEventListener('click', closeMenuOutside, { capture: true, once: true }); window.addEventListener('scroll', removeDetachMenu, { capture: true, once: true }); }, 0); }
+      else { window.removeEventListener('scroll', removeDetachMenu, { capture: true }); }
   }
-
-  // Removes the detach context menu from the DOM and cleans up listeners
-  function removeDetachMenu() {
+  function removeDetachMenu() { /* ... v4.1 code ... */
       const menu = document.getElementById('detach-menu');
-      if (menu) {
-          document.removeEventListener('click', closeMenuOutside, { capture: true });
-          window.removeEventListener('scroll', removeDetachMenu, { capture: true });
-          menu.remove();
-      }
+      if (menu) { document.removeEventListener('click', closeMenuOutside, { capture: true }); window.removeEventListener('scroll', removeDetachMenu, { capture: true }); menu.remove(); }
   }
 
-  // Adds a short snap animation class
-  function addSnapEffectAnimation(block) {
-      block.classList.remove('snap-animation'); // Remove first to allow re-triggering
-      void block.offsetWidth; // Force reflow to restart animation
-      block.classList.add('snap-animation');
+  // Animation Helpers
+  function addSnapEffectAnimation(block) { /* ... v4.1 code ... */
+      block.classList.remove('snap-animation'); void block.offsetWidth; block.classList.add('snap-animation');
       block.addEventListener('animationend', () => block.classList.remove('snap-animation'), { once: true });
   }
-
-  // Adds a short detach animation class
-  function addDetachEffectAnimation(block) {
-      block.classList.remove('detach-animation');
-      void block.offsetWidth;
-      block.classList.add('detach-animation');
+  function addDetachEffectAnimation(block) { /* ... v4.1 code ... */
+      block.classList.remove('detach-animation'); void block.offsetWidth; block.classList.add('detach-animation');
       block.addEventListener('animationend', () => block.classList.remove('detach-animation'), { once: true });
   }
 
   // ========================================================================
   // Utility Functions
   // ========================================================================
-
-  // Generates a unique ID for a block element if it doesn't have one
-  function generateUniqueId(blockElement) {
-      if (blockElement.id) return blockElement.id; // Return existing ID
-
-      const prefix = blockElement.dataset.type || 'block'; // Use block type or default
+  function generateUniqueId(blockElement) { /* ... v4.1 code ... */
+      if (blockElement.id) return blockElement.id;
+      const prefix = blockElement.dataset.type || 'block';
       let randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-      let newId = `${prefix}-${randomSuffix}`;
-      let attempts = 0;
-
-      // Ensure ID is truly unique within the document
-      while (document.getElementById(newId) && attempts < 10) {
-          newId = `${prefix}-${randomSuffix}-${attempts}`;
-          attempts++;
-      }
-      // Fallback if somehow still not unique
-      if (attempts >= 10) {
-         newId = `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-      }
-
-      blockElement.id = newId;
-      if (CONFIG.DEBUG > 1) console.log(`Generated unique ID: ${newId}`);
-      return newId;
+      let newId = `${prefix}-${randomSuffix}`; let attempts = 0;
+      while (document.getElementById(newId) && attempts < 10) { newId = `${prefix}-${randomSuffix}-${attempts}`; attempts++; }
+      if (attempts >= 10) { newId = `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`; }
+      blockElement.id = newId; if (CONFIG.DEBUG > 1) console.log(`Generated unique ID: ${newId}`); return newId;
   }
-
 
   // ========================================================================
   // System Initialization
   // ========================================================================
   function initializeSystem() {
       // Use a version-specific flag to prevent multiple initializations
-      const initFlag = 'blockLinkageInitialized_v4_1_Protected';
+      const initFlag = 'blockLinkageInitialized_v4_2_Protected'; // Updated version flag
       if (window[initFlag]) {
           if (CONFIG.DEBUG) console.log(`Block linkage system ${initFlag} already initialized. Skipping.`);
           return;
@@ -1066,8 +625,7 @@
 
       // Add the sound test button if sound is enabled
       if (CONFIG.PLAY_SOUND) {
-          // Delay slightly to ensure DOM is fully ready and styles applied
-          setTimeout(addSoundTestButton, 100);
+          setTimeout(addSoundTestButton, 100); // Delay slightly
       }
 
       window[initFlag] = true; // Mark this version as initialized
@@ -1079,10 +637,9 @@
   if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initializeSystem);
   } else {
-      // DOM is already ready, run immediately
-      initializeSystem();
+      initializeSystem(); // DOM is already ready
   }
 
-})(); // End of IIFE (Immediately Invoked Function Expression)
+})(); // End of IIFE
 
 // --- END OF FILE linkageimproved.js ---
