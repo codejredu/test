@@ -348,12 +348,7 @@ main {
 .block-category.active {
     opacity: 1; /* אין צורך בשקיפות נוספת כי הצבעים כבר מוגדרים עם שקיפות */
 }
-.snap-highlight {
-    outline: 3px dashed dodgerblue !important;
-    outline-offset: 2px;
-    box-shadow: 0 0 10px rgba(30, 144, 255, 0.7) !important;
-    /* ודא שאין כאן בטעות משהו כמו display: none; או visibility: hidden; */
-}
+
 /* הדגשה צהובה לבלוק הנגרר בעת קרבה גבוהה */
 .snap-highlight-yellow {
     /* ... outline ... */
