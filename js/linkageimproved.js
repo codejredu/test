@@ -1,12 +1,13 @@
 // ========================================================================
-// Block Linkage System using Transform (Pixel Offset)
-// Version: TRANSFORM-BASED CONNECTION
+// Block Linkage System using Safe Release Mechanism
+// Version: SAFE-RELEASE CONNECTION
 // ========================================================================
 (function() {
     // קונפיגורציה
     const PUZZLE_CONNECTOR_WIDTH = 8; // רוחב החיבור בפיקסלים
     const VERTICAL_ALIGNMENT_TOLERANCE = 30; // מרחק אנכי מקסימלי לחיבור
     const HORIZONTAL_SNAP_DISTANCE = 40; // מרחק אופקי מקסימלי לחיבור
+    const RELEASE_DELAY = 50; // השהייה בין שחרור לחיבור (במילישניות)
     const ENABLE_LOGGING = true; // האם להציג לוגים מפורטים
     
     // משתני מצב
@@ -21,41 +22,49 @@
     let nextBlockId = 1;
     let snapDirection = 'right';
     
-    // מעקב אחרי בלוקים מחוברים
-    let connectedBlocks = new Map(); // מפה שמכילה רשימת חיבורים לכל בלוק
+    // מניעת ריצוד ולולאות אינסופיות
+    let isProcessingConnection = false;
+    let lastConnectionTime = 0;
     
     // ========================================================================
     // אתחול המערכת
     // ========================================================================
-    function initTransformLinkageSystem() {
-        console.log("[Transform Linkage] אתחול מערכת חיבורים מבוססת Transform...");
+    function initSafeReleaseLinkageSystem() {
+        console.log("[Safe Release] אתחול מערכת חיבורים עם שחרור מוגן...");
         
         // איתור אזור התכנות
         programmingArea = document.getElementById("program-blocks");
         if (!programmingArea) {
-            console.error("[Transform Linkage] שגיאה: לא נמצא אזור #program-blocks");
+            console.error("[Safe Release] שגיאה: לא נמצא אזור #program-blocks");
             return;
         }
         
         // הוספת סגנונות
-        addTransformStyles();
+        addSafeReleaseStyles();
         
         // הגדרת מאזין ללחיצת עכבר
         programmingArea.addEventListener('mousedown', handleMouseDown);
-        console.log("[Transform Linkage] מאזין mousedown נוסף בהצלחה");
+        console.log("[Safe Release] מאזין mousedown נוסף בהצלחה");
         
         // הכנת בלוקים קיימים
         prepareExistingBlocks();
         
-        console.log("[Transform Linkage] מערכת אותחלה בהצלחה");
+        // הוספת מאזין חירום לניקוי מצב תקוע
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                recoverFromStuckState();
+            }
+        });
+        
+        console.log("[Safe Release] מערכת אותחלה בהצלחה");
     }
     
     // הוספת סגנונות CSS הנדרשים למערכת
-    function addTransformStyles() {
-        if (document.getElementById('transform-linkage-styles')) return;
+    function addSafeReleaseStyles() {
+        if (document.getElementById('safe-release-styles')) return;
         
         const styleElement = document.createElement('style');
-        styleElement.id = 'transform-linkage-styles';
+        styleElement.id = 'safe-release-styles';
         styleElement.textContent = `
             .snap-highlight {
                 box-shadow: 0 0 0 3px #4285f4 !important;
@@ -77,7 +86,7 @@
             
             .block-container {
                 cursor: grab;
-                transition: transform 0.2s ease-out;
+                transition: left 0.2s ease-out, top 0.2s ease-out;
             }
             
             .block-container.dragging {
@@ -86,18 +95,23 @@
                 transition: none;
             }
             
-            .block-parent {
-                position: absolute;
+            .connecting {
                 pointer-events: none;
             }
             
-            .block-child {
-                pointer-events: auto;
+            .connection-complete {
+                animation: connect-pulse 0.5s ease-out;
+            }
+            
+            @keyframes connect-pulse {
+                0% { box-shadow: 0 0 0 0px rgba(66, 133, 244, 0.5); }
+                50% { box-shadow: 0 0 0 10px rgba(66, 133, 244, 0.2); }
+                100% { box-shadow: 0 0 0 0px rgba(66, 133, 244, 0); }
             }
         `;
         
         document.head.appendChild(styleElement);
-        console.log("[Transform Linkage] סגנונות Transform נוספו");
+        console.log("[Safe Release] סגנונות נוספו");
     }
     
     // הכנת בלוקים קיימים
@@ -108,11 +122,13 @@
                 block.id = generateUniqueBlockId();
             }
             
-            // ודא שאין transform קיים
-            block.style.transform = '';
+            // ודא שכל בלוק במיקום אבסולוטי
+            if (block.style.position !== 'absolute') {
+                block.style.position = 'absolute';
+            }
         });
         
-        console.log(`[Transform Linkage] הוכנו ${blocks.length} בלוקים קיימים`);
+        console.log(`[Safe Release] הוכנו ${blocks.length} בלוקים קיימים`);
     }
     
     // יצירת מזהה ייחודי לבלוק
@@ -120,10 +136,39 @@
         return `block-${Date.now()}-${nextBlockId++}`;
     }
     
+    // ניקוי מצב תקוע
+    function recoverFromStuckState() {
+        console.log("[Safe Release] מבצע ניקוי מצב תקוע...");
+        
+        isProcessingConnection = false;
+        
+        // ניקוי הדגשות וסימונים
+        document.querySelectorAll('.snap-highlight, .snap-target, .connecting, .connection-complete, .dragging').forEach(el => {
+            el.classList.remove('snap-highlight', 'snap-target', 'connecting', 'connection-complete', 'dragging');
+        });
+        
+        // ודא שאירועי העכבר כבר לא מאזינים
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        
+        // איפוס משתני מצב
+        isDragging = false;
+        draggedElement = null;
+        potentialSnapTarget = null;
+        
+        console.log("[Safe Release] ניקוי מצב הושלם");
+    }
+    
     // ========================================================================
     // טיפול באירועי עכבר
     // ========================================================================
     function handleMouseDown(event) {
+        // אם אנחנו באמצע עיבוד חיבור, יש לדלג
+        if (isProcessingConnection) {
+            console.log("[Safe Release] דילוג על אירוע mousedown כי מתבצע חיבור");
+            return;
+        }
+        
         const targetBlock = event.target.closest('.block-container');
         if (!targetBlock || !programmingArea) return;
         
@@ -135,50 +180,33 @@
             draggedElement.id = generateUniqueBlockId();
         }
         
+        // וידוא שהבלוק במיקום אבסולוטי
+        if (draggedElement.style.position !== 'absolute') {
+            draggedElement.style.position = 'absolute';
+        }
+        
         // הוסף מחלקת גרירה
         draggedElement.classList.add('dragging');
         
-        // שמור מיקום התחלתי
+        // שמירת מיקום התחלתי
         initialMouseX = event.clientX;
         initialMouseY = event.clientY;
         
+        // מיקום התחלתי של הבלוק (נשתמש במיקום המוחלט)
         const rect = draggedElement.getBoundingClientRect();
-        const computedStyle = window.getComputedStyle(draggedElement);
-        let transform = computedStyle.transform;
+        const programRect = programmingArea.getBoundingClientRect();
+        initialElementX = rect.left - programRect.left;
+        initialElementY = rect.top - programRect.top;
         
-        // אם יש טרנספורם קיים, נשמור את המיקום האבסולוטי הנוכחי
-        if (transform && transform !== 'none') {
-            // מיקום אבסולוטי מחושב
-            const programRect = programmingArea.getBoundingClientRect();
-            initialElementX = rect.left - programRect.left;
-            initialElementY = rect.top - programRect.top;
-            
-            // איפוס הטרנספורם כך שנוכל לגרור מהמיקום האמיתי
-            draggedElement.style.transform = '';
-            
-            // עדכון המיקום האבסולוטי לאחר איפוס הטרנספורם
-            draggedElement.style.left = `${initialElementX}px`;
-            draggedElement.style.top = `${initialElementY}px`;
-        } else {
-            // אם אין טרנספורם, נשתמש במיקום ה-CSS הנוכחי
-            initialElementX = parseInt(computedStyle.left) || 0;
-            initialElementY = parseInt(computedStyle.top) || 0;
-        }
-        
-        // ברר אם הבלוק מחובר לבלוקים אחרים
-        const connections = getBlockConnections(draggedElement.id);
-        
-        // נתק את כל החיבורים של הבלוק
-        if (connections.length > 0) {
-            disconnectBlock(draggedElement.id);
-        }
+        // שבירת חיבורים קיימים
+        breakExistingConnections(draggedElement);
         
         // הוספת מאזינים זמניים
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
         
         if (ENABLE_LOGGING) {
-            console.log(`[Transform Linkage] התחלת גרירה: ${draggedElement.id}`);
+            console.log(`[Safe Release] התחלת גרירה: ${draggedElement.id}`);
         }
     }
     
@@ -202,31 +230,33 @@
     function handleMouseUp(event) {
         if (!isDragging || !draggedElement) return;
         
-        // הסרת מאזינים זמניים
+        // הסרת מאזינים זמניים מיד
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
         
-        // הסרת מחלקת גרירה
-        draggedElement.classList.remove('dragging');
-        
         const currentDraggedElement = draggedElement;
         const currentTarget = potentialSnapTarget;
+        const currentDirection = snapDirection;
         
-        // ניקוי הדגשות
-        clearHighlights();
+        // ניקוי הדגשות חזותיות
+        clearSnapHighlights();
         
         // בדיקה אם יש יעד הצמדה
         if (currentTarget && programmingArea && programmingArea.contains(currentTarget)) {
             if (ENABLE_LOGGING) {
-                console.log(`[Transform Linkage] ביצוע הצמדה - בלוק: ${currentDraggedElement.id}, יעד: ${currentTarget.id}, כיוון: ${snapDirection}`);
+                console.log(`[Safe Release] הכנה לשחרור מוגן - בלוק: ${currentDraggedElement.id}, יעד: ${currentTarget.id}, כיוון: ${currentDirection}`);
             }
             
-            // ביצוע חיבור באמצעות טרנספורם
-            connectBlocksWithTransform(currentDraggedElement, currentTarget, snapDirection);
+            // ביצוע שחרור מוגן
+            safeReleaseAndConnect(currentDraggedElement, currentTarget, currentDirection);
         } else {
+            // אין יעד הצמדה - הבלוק נשאר במקומו
             if (ENABLE_LOGGING) {
-                console.log(`[Transform Linkage] אין יעד הצמדה - הבלוק נשאר במיקומו הנוכחי`);
+                console.log(`[Safe Release] אין יעד הצמדה - הבלוק ${currentDraggedElement.id} נשאר במיקומו הנוכחי`);
             }
+            
+            // ניקוי הבלוק
+            currentDraggedElement.classList.remove('dragging');
         }
         
         // איפוס משתני מצב
@@ -239,8 +269,7 @@
     // חיפוש יעד הצמדה
     // ========================================================================
     function findSnapTarget() {
-        // ניקוי הדגשות קודמות
-        clearHighlights();
+        clearSnapHighlights();
         potentialSnapTarget = null;
         
         if (!isDragging || !draggedElement || !programmingArea) return;
@@ -285,218 +314,211 @@
             bestTarget.classList.add('snap-target');
             
             if (ENABLE_LOGGING) {
-                console.log(`[Transform Linkage] נמצא יעד הצמדה: ${bestTarget.id}, כיוון: ${snapDirection}, מרחק: ${closestDistance.toFixed(2)}px`);
+                console.log(`[Safe Release] נמצא יעד הצמדה: ${bestTarget.id}, כיוון: ${snapDirection}, מרחק: ${closestDistance.toFixed(2)}px`);
             }
         }
     }
     
     // ניקוי הדגשות
-    function clearHighlights() {
+    function clearSnapHighlights() {
         document.querySelectorAll('.snap-highlight, .snap-target').forEach(el => {
             el.classList.remove('snap-highlight', 'snap-target');
         });
     }
     
     // ========================================================================
-    // חיבור בלוקים באמצעות Transform
+    // מימוש שחרור מוגן וחיבור
     // ========================================================================
-    function connectBlocksWithTransform(draggedBlock, targetBlock, direction) {
+    function safeReleaseAndConnect(draggedBlock, targetBlock, direction) {
+        // וידוא שהבלוקים תקינים
+        if (!draggedBlock || !targetBlock || !programmingArea.contains(draggedBlock) || !programmingArea.contains(targetBlock)) {
+            console.error("[Safe Release] בלוקים לא תקינים לחיבור");
+            return;
+        }
+        
+        // וידוא שאנחנו לא באמצע חיבור אחר
+        if (isProcessingConnection) {
+            console.warn("[Safe Release] דילוג על חיבור כי כבר מתבצע חיבור אחר");
+            draggedBlock.classList.remove('dragging');
+            return;
+        }
+        
+        // וידוא שעבר מספיק זמן מהחיבור האחרון
+        const now = Date.now();
+        if (now - lastConnectionTime < 300) {
+            console.warn("[Safe Release] דילוג על חיבור כי לא עבר מספיק זמן מהחיבור האחרון");
+            draggedBlock.classList.remove('dragging');
+            return;
+        }
+        
+        lastConnectionTime = now;
+        isProcessingConnection = true;
+        
+        // סימון הבלוקים כבמצב חיבור
+        draggedBlock.classList.add('connecting');
+        targetBlock.classList.add('connecting');
+        
+        // הסרת מחלקת גרירה
+        draggedBlock.classList.remove('dragging');
+        
         try {
-            let leftBlock, rightBlock;
-            
-            // קביעת סדר הבלוקים לפי כיוון החיבור
-            if (direction === 'right') {
-                // הבלוק הנגרר יהיה מימין לבלוק היעד
-                leftBlock = targetBlock;
-                rightBlock = draggedBlock;
-            } else {
-                // הבלוק הנגרר יהיה משמאל לבלוק היעד
-                leftBlock = draggedBlock;
-                rightBlock = targetBlock;
-            }
-            
-            // חישוב ההסט
-            const leftRect = leftBlock.getBoundingClientRect();
-            const rightRect = rightBlock.getBoundingClientRect();
-            
-            // חישוב ההסט בפיקסלים שהבלוק הימני צריך לנוע כדי להיות בחפיפה עם הבלוק השמאלי
-            const offsetX = (leftRect.right - PUZZLE_CONNECTOR_WIDTH) - rightRect.left;
-            const offsetY = leftRect.top - rightRect.top;
-            
+            // שלב 1: הפסקת הגרירה - הבלוק כבר נמצא במיקום אחרי שחרור העכבר
             if (ENABLE_LOGGING) {
-                console.log(`[Transform Linkage] חישוב הסט: X=${offsetX}px, Y=${offsetY}px`);
-                console.log(`[Transform Linkage] מיקום לפני הסט - שמאל: ${leftRect.left}, ${leftRect.top}, ימין: ${rightRect.left}, ${rightRect.top}`);
+                console.log(`[Safe Release] שלב 1: הפסקת גרירה - בלוק ${draggedBlock.id} במיקום (${draggedBlock.style.left}, ${draggedBlock.style.top})`);
             }
             
-            // הגדרת טרנספורמציה לבלוק הימני
-            rightBlock.style.transition = 'transform 0.2s ease-out';
-            rightBlock.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
-            
-            // זיהוי חזותי לבלוקים מחוברים
-            leftBlock.classList.add('connected-left');
-            rightBlock.classList.add('connected-right');
-            
-            // יצירת קשר לוגי בין הבלוקים
-            leftBlock.dataset.rightBlockId = rightBlock.id;
-            rightBlock.dataset.leftBlockId = leftBlock.id;
-            
-            // שמירת החיבור במפת החיבורים
-            addConnection(leftBlock.id, rightBlock.id);
-            
-            // הפעלת אירוע לבדיקת חיבור תקין
+            // שלב 2: עיכוב קצר לפני ביצוע החיבור
             setTimeout(() => {
-                const newRightRect = rightBlock.getBoundingClientRect();
-                if (ENABLE_LOGGING) {
-                    console.log(`[Transform Linkage] מיקום אחרי הסט - ימין: ${newRightRect.left}, ${newRightRect.top}`);
-                    console.log(`[Transform Linkage] טרנספורם סופי: ${rightBlock.style.transform}`);
+                try {
+                    if (ENABLE_LOGGING) {
+                        console.log(`[Safe Release] שלב 2: ביצוע חיבור אחרי השהייה של ${RELEASE_DELAY}ms`);
+                    }
+                    
+                    // שלב 3: קביעת סדר הבלוקים
+                    let leftBlock, rightBlock;
+                    
+                    if (direction === 'right') {
+                        // הבלוק הנגרר יהיה מימין לבלוק היעד
+                        leftBlock = targetBlock;
+                        rightBlock = draggedBlock;
+                    } else {
+                        // הבלוק הנגרר יהיה משמאל לבלוק היעד
+                        leftBlock = draggedBlock;
+                        rightBlock = targetBlock;
+                    }
+                    
+                    // שלב 4: חישוב המיקום החדש
+                    // ה-leftBlock נשאר במקומו וה-rightBlock מוזז לפי הצורך
+                    const newX = leftBlock.offsetLeft + leftBlock.offsetWidth - PUZZLE_CONNECTOR_WIDTH;
+                    const newY = leftBlock.offsetTop;
+                    
+                    if (ENABLE_LOGGING) {
+                        console.log(`[Safe Release] שלב 4: חישוב מיקום - הבלוק ${rightBlock.id} יוזז למיקום (${newX}, ${newY})`);
+                    }
+                    
+                    // שלב 5: הגדרת אנימציה
+                    rightBlock.style.transition = 'left 0.2s ease-out, top 0.2s ease-out';
+                    
+                    // שלב 6: קביעת המיקום החדש
+                    rightBlock.style.left = `${newX}px`;
+                    rightBlock.style.top = `${newY}px`;
+                    
+                    // שלב 7: עדכון קשרים לוגיים
+                    leftBlock.dataset.rightBlockId = rightBlock.id;
+                    rightBlock.dataset.leftBlockId = leftBlock.id;
+                    
+                    // שלב 8: הוספת מחוונים חזותיים
+                    leftBlock.classList.add('connected-left');
+                    rightBlock.classList.add('connected-right');
+                    
+                    // שלב 9: אנימציית השלמת החיבור
+                    setTimeout(() => {
+                        // הסרת מצב חיבור
+                        leftBlock.classList.remove('connecting');
+                        rightBlock.classList.remove('connecting');
+                        
+                        // הוספת אנימציית השלמה
+                        leftBlock.classList.add('connection-complete');
+                        rightBlock.classList.add('connection-complete');
+                        
+                        // הסרת אנימציית השלמה אחרי סיום
+                        setTimeout(() => {
+                            leftBlock.classList.remove('connection-complete');
+                            rightBlock.classList.remove('connection-complete');
+                            
+                            // החזרת האפשרות לאינטראקציה
+                            isProcessingConnection = false;
+                            
+                            if (ENABLE_LOGGING) {
+                                console.log(`[Safe Release] שלב 9: חיבור הושלם בהצלחה בין ${leftBlock.id} ל-${rightBlock.id}`);
+                            }
+                        }, 600);
+                        
+                    }, 220);
+                    
+                } catch (innerError) {
+                    console.error("[Safe Release] שגיאה בזמן חיבור:", innerError);
+                    isProcessingConnection = false;
+                    draggedBlock.classList.remove('connecting');
+                    targetBlock.classList.remove('connecting');
                 }
-            }, 250);
+            }, RELEASE_DELAY);
             
-        } catch (e) {
-            console.error("[Transform Linkage] שגיאה בחיבור בלוקים:", e);
-            // איפוס הטרנספורם במקרה של שגיאה
-            draggedBlock.style.transform = '';
+        } catch (error) {
+            console.error("[Safe Release] שגיאה בתהליך השחרור המוגן:", error);
+            isProcessingConnection = false;
+            draggedBlock.classList.remove('connecting', 'dragging');
+            targetBlock.classList.remove('connecting');
         }
     }
     
-    // ========================================================================
-    // ניהול חיבורים
-    // ========================================================================
-    
-    // הוספת חיבור בין שני בלוקים
-    function addConnection(leftBlockId, rightBlockId) {
-        // אתחול המפה אם צריך
-        if (!connectedBlocks.has(leftBlockId)) {
-            connectedBlocks.set(leftBlockId, { left: null, right: rightBlockId });
-        } else {
-            connectedBlocks.get(leftBlockId).right = rightBlockId;
-        }
-        
-        if (!connectedBlocks.has(rightBlockId)) {
-            connectedBlocks.set(rightBlockId, { left: leftBlockId, right: null });
-        } else {
-            connectedBlocks.get(rightBlockId).left = leftBlockId;
-        }
-        
-        if (ENABLE_LOGGING) {
-            console.log(`[Transform Linkage] חיבור נוסף: ${leftBlockId} -> ${rightBlockId}`);
-        }
-    }
-    
-    // קבלת כל החיבורים של בלוק
-    function getBlockConnections(blockId) {
-        const connections = [];
-        
-        // אם לבלוק אין רשומה במפה, אין לו חיבורים
-        if (!connectedBlocks.has(blockId)) {
-            return connections;
-        }
-        
-        const blockConnections = connectedBlocks.get(blockId);
-        
-        // בדיקת חיבור שמאלי
-        if (blockConnections.left) {
-            connections.push({
-                type: 'left',
-                blockId: blockConnections.left
-            });
-        }
-        
-        // בדיקת חיבור ימני
-        if (blockConnections.right) {
-            connections.push({
-                type: 'right',
-                blockId: blockConnections.right
-            });
-        }
-        
-        return connections;
-    }
-    
-    // ניתוק בלוק מכל החיבורים שלו
-    function disconnectBlock(blockId) {
-        if (!connectedBlocks.has(blockId)) {
-            return;
-        }
-        
-        const block = document.getElementById(blockId);
-        if (!block) {
-            return;
-        }
-        
-        const connections = getBlockConnections(blockId);
-        
-        // ניתוק כל החיבורים של הבלוק
-        connections.forEach(connection => {
-            const connectedBlock = document.getElementById(connection.blockId);
-            if (!connectedBlock) return;
-            
-            if (connection.type === 'left') {
-                // הבלוק שמאלי לבלוק הנוכחי
-                if (connectedBlocks.has(connection.blockId)) {
-                    connectedBlocks.get(connection.blockId).right = null;
-                }
-                connectedBlocks.get(blockId).left = null;
-                delete block.dataset.leftBlockId;
-                delete connectedBlock.dataset.rightBlockId;
-                
-                // הסרת מחלקות חיבור
-                block.classList.remove('connected-right');
-                connectedBlock.classList.remove('connected-left');
-            } else {
-                // הבלוק ימני לבלוק הנוכחי
-                if (connectedBlocks.has(connection.blockId)) {
-                    connectedBlocks.get(connection.blockId).left = null;
-                }
-                connectedBlocks.get(blockId).right = null;
-                delete block.dataset.rightBlockId;
-                delete connectedBlock.dataset.leftBlockId;
-                
-                // הסרת מחלקות חיבור
-                block.classList.remove('connected-left');
-                connectedBlock.classList.remove('connected-right');
+    // פונקציה לשבירת חיבורים קיימים
+    function breakExistingConnections(block) {
+        // בדיקה אם הבלוק מחובר לבלוק שמאלי
+        const leftBlockId = block.dataset.leftBlockId;
+        if (leftBlockId) {
+            const leftBlock = document.getElementById(leftBlockId);
+            if (leftBlock) {
+                delete leftBlock.dataset.rightBlockId;
+                leftBlock.classList.remove('connected-left');
             }
-            
-            if (ENABLE_LOGGING) {
-                console.log(`[Transform Linkage] חיבור נותק: ${blockId} - ${connection.blockId}`);
-            }
-        });
+            delete block.dataset.leftBlockId;
+            block.classList.remove('connected-right');
+        }
         
-        // איפוס טרנספורם
-        block.style.transform = '';
+        // בדיקה אם הבלוק מחובר לבלוק ימני
+        const rightBlockId = block.dataset.rightBlockId;
+        if (rightBlockId) {
+            const rightBlock = document.getElementById(rightBlockId);
+            if (rightBlock) {
+                delete rightBlock.dataset.leftBlockId;
+                rightBlock.classList.remove('connected-right');
+            }
+            delete block.dataset.rightBlockId;
+            block.classList.remove('connected-left');
+        }
+        
+        if (ENABLE_LOGGING && (leftBlockId || rightBlockId)) {
+            console.log(`[Safe Release] חיבורים נשברו לבלוק ${block.id}`);
+        }
     }
     
     // ========================================================================
     // API ציבורי
     // ========================================================================
-    window.registerNewBlockForTransformLinkage = function(newBlockElement){
+    window.registerNewBlockForSafeReleaseLinkage = function(newBlockElement){
         if (!newBlockElement) return;
         
         if (!newBlockElement.id) {
             newBlockElement.id = generateUniqueBlockId();
         }
         
-        // ודא שאין טרנספורם קיים
-        newBlockElement.style.transform = '';
+        // וידוא שהבלוק במיקום אבסולוטי
+        if (newBlockElement.style.position !== 'absolute') {
+            newBlockElement.style.position = 'absolute';
+        }
         
         if (ENABLE_LOGGING) {
-            console.log(`[Transform Linkage] בלוק חדש נרשם: ${newBlockElement.id}`);
+            console.log(`[Safe Release] בלוק חדש נרשם: ${newBlockElement.id}`);
         }
     };
     
     // החלף את מערכת החיבורים הנוכחית
     if (window.registerNewBlockForLinkage) {
-        console.log("[Transform Linkage] מחליף את מערכת החיבורים הקודמת");
-        window.registerNewBlockForLinkage = window.registerNewBlockForTransformLinkage;
+        console.log("[Safe Release] מחליף את מערכת החיבורים הקודמת");
+        window.registerNewBlockForLinkage = window.registerNewBlockForSafeReleaseLinkage;
     }
+    
+    // הוסף לחלון פונקציית התאוששות
+    window.recoverFromBlockConnectionStuckState = recoverFromStuckState;
     
     // הפעלת המערכת
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initTransformLinkageSystem);
+        document.addEventListener('DOMContentLoaded', initSafeReleaseLinkageSystem);
     } else {
-        initTransformLinkageSystem();
+        initSafeReleaseLinkageSystem();
     }
     
 })();
 
-console.log("Transform-based linkage system loaded");
+console.log("Safe-release linkage system loaded");
