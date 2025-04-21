@@ -1,156 +1,356 @@
-// ========================================================================
-// Improved Block Linkage System (linkageimproved.js)
-// Version: Yellow Proximity Highlight for Dragged Block
-// ========================================================================
+/* style.css - עם צבעים מעודכנים לילדי גן */
+:root {
+    /* צבעים עם הרבה יותר שקיפות (0.25 במקום 0.85) */
+    --motion-color: rgba(102, 210, 255, 0.25);    /* כחול-תכלת בהיר עם שקיפות גבוהה */
+    --triggering-color: rgba(255, 232, 102, 0.25); /* צהוב בננה רך עם שקיפות גבוהה */
+    --looks-color: rgba(210, 149, 246, 0.25);     /* סגול לבנדר רך עם שקיפות גבוהה */
+    --sound-color: rgba(126, 217, 87, 0.25);     /* ירוק תפוח בהיר עם שקיפות גבוהה */
+    --control-color: rgba(255, 189, 103, 0.25);   /* כתום אפרסק עם שקיפות גבוהה */
+    --end-color: rgba(255, 107, 107, 0.25);       /* אדום קורל רך עם שקיפות גבוהה */
+    
+    /* צבעים מלאים לאלמנטים אחרים שצריכים להיות פחות שקופים */
+    --motion-color-solid: #66D2FF;
+    --triggering-color-solid: #FFE866;
+    --looks-color-solid: #D295F6;
+    --sound-color-solid: #7ED957;
+    --control-color-solid: #FFBD67;
+    --end-color-solid: #FF6B6B;
+}
 
-(function() {
-    // Configuration
-    const HORIZONTAL_SNAP_DISTANCE = 40; // טווח לקביעת יעד הצמדה פוטנציאלי
-    const VERTICAL_ALIGNMENT_TOLERANCE = 30; // יישור אנכי כללי ליעד פוטנציאלי
-    const HORIZONTAL_PROXIMITY_THRESHOLD = 15; // *** סף קרבה *אופקית* להדגשה צהובה ***
-    const VERTICAL_PROXIMITY_THRESHOLD = 10;  // *** סף קרבה *אנכית* להדגשה צהובה ***
-    const HORIZONTAL_SNAP_OFFSET = 0; // היסט בהצמדה עצמה
-    const ENABLE_DETAILED_SNAP_LOGGING = true; // אפשר להפעיל לבדיקה
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f4ff;
+    direction: ltr; /* כיוון משמאל לימין */
+}
 
-    // State Variables
-    let isDragging = false; let draggedElement = null;
-    let potentialSnapTarget = null; let initialMouseX = 0; let initialMouseY = 0;
-    let initialElementX = 0; let initialElementY = 0; let programmingArea = null;
-    let nextBlockId = 1;
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
 
-    // Initialization (זהה לגרסה הקודמת)
-    function initializeLinkageSystem(){ console.log("[Linkage] Attempting Init..."); programmingArea = document.getElementById("program-blocks"); if (!programmingArea) { console.error("[Linkage] ERROR: #program-blocks not found!"); return; } programmingArea.addEventListener('mousedown', handleMouseDown); console.log("[Linkage] System Initialized."); prepareExistingBlocks(); }
-    function prepareExistingBlocks(){ const blocksInArea = programmingArea.querySelectorAll('.block-container'); blocksInArea.forEach(block => { if (!block.id) { block.id = generateUniqueBlockId(); } if (!block.style.position || block.style.position === 'static') { block.style.position = 'absolute'; } }); if(blocksInArea.length > 0) console.log(`[Linkage] Prepared ${blocksInArea.length} existing blocks.`); }
-    function runInitialization(){ if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initializeLinkageSystem); } else { initializeLinkageSystem(); } }
-    runInitialization();
+header {
+    background-color: #fff;
+    padding: 10px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-bottom: 1px solid #e0e0e0;
+}
 
-    // Unique ID Generation (זהה)
-    function generateUniqueBlockId() { return `block-proximity-${Date.now()}-${nextBlockId++}`; }
+main {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
 
-    // Event Handlers (זהה לגרסה הקודמת - ללא קבוצה)
-    function handleMouseDown(event) { const targetBlock = event.target.closest('.block-container'); if (!targetBlock || !programmingArea || !programmingArea.contains(targetBlock)) return; event.preventDefault(); isDragging = true; draggedElement = targetBlock; if (!draggedElement.id) { draggedElement.id = generateUniqueBlockId(); } const prevBlockId = draggedElement.dataset.prevBlockId; if (prevBlockId) { const pb = document.getElementById(prevBlockId); if (pb) delete pb.dataset.nextBlockId; delete draggedElement.dataset.prevBlockId; } const leftBlockId = draggedElement.dataset.leftBlockId; if (leftBlockId) { const lb = document.getElementById(leftBlockId); if (lb) delete lb.dataset.rightBlockId; delete draggedElement.dataset.leftBlockId; } initialMouseX = event.clientX; initialMouseY = event.clientY; initialElementX = draggedElement.offsetLeft; initialElementY = draggedElement.offsetTop; draggedElement.style.zIndex = 1000; draggedElement.style.cursor = 'grabbing'; document.addEventListener('mousemove', handleMouseMove); document.addEventListener('mouseup', handleMouseUp); document.addEventListener('mouseleave', handleMouseLeave); }
-    function handleMouseMove(event) { if (!isDragging || !draggedElement) return; const deltaX = event.clientX - initialMouseX; const deltaY = event.clientY - initialMouseY; const newX = initialElementX + deltaX; const newY = initialElementY + deltaY; draggedElement.style.left = `${newX}px`; draggedElement.style.top = `${newY}px`; findAndHighlightSnapTarget(); }
-    function handleMouseUp(event) { if (!isDragging || !draggedElement) return; const currentDraggedElement = draggedElement; const currentTarget = potentialSnapTarget; const isValidSnapTarget = currentTarget && programmingArea && programmingArea.contains(currentTarget); document.removeEventListener('mousemove', handleMouseMove); document.removeEventListener('mouseup', handleMouseUp); document.removeEventListener('mouseleave', handleMouseLeave); isDragging = false; draggedElement = null; potentialSnapTarget = null; if (isValidSnapTarget) { linkBlocksHorizontally(currentTarget, currentDraggedElement); } clearSnapHighlighting(); if(currentDraggedElement) { currentDraggedElement.style.zIndex = ''; currentDraggedElement.style.cursor = ''; } console.log("--- MouseUp Finished ---"); }
-    function handleMouseLeave(event) { if (isDragging) { handleMouseUp(event); } }
+.stage-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+}
 
-    // ========================================================================
-    // Snapping Logic ( *** הדגשה צהובה בקרבה גבוהה *** )
-    // ========================================================================
-    function findAndHighlightSnapTarget() {
-        const shouldLog = ENABLE_DETAILED_SNAP_LOGGING && isDragging && draggedElement;
-        clearSnapHighlighting(); // מנקה את ההדגשה הצהובה מהפעם הקודמת
-        potentialSnapTarget = null; // מאפס את היעד הפוטנציאלי הכללי
-        let showYellowHighlight = false; // דגל להדגשה הצהובה
+#stage {
+    flex: 0 0 auto;
+    width: 550px;
+    height: 450px;
+    background-color: #f5f5f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    position: relative;
+    gap: 1px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
 
-        if (!isDragging || !draggedElement || !programmingArea) return;
+#stage::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background: none;
+}
 
-        const dragRect = draggedElement.getBoundingClientRect();
-        if (dragRect.height <= 0 || dragRect.width <= 0) return;
-        const dragLeftConnector = { x: dragRect.left, y: dragRect.top + dragRect.height / 2 };
+#stage.show-grid {
+  background-image:
+    linear-gradient(to right, lightgrey 1px, transparent 1px),
+    linear-gradient(to bottom, lightgrey 1px, transparent 1px);
+  background-size: 56px 46px; /* גודל קווי הרשת */
+  background-position: top left;
+}
 
-        let closestOverallDistance = HORIZONTAL_SNAP_DISTANCE; // למציאת היעד הכללי
-        let bestOverallTarget = null;
+#character {
+    width: 100px;
+    height: 100px;
+    position: absolute;
+    object-fit: contain;
+    cursor: grab;
+    transition: all 0.1s ease-out;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
 
-        const allBlocks = programmingArea.querySelectorAll('.block-container');
-        if (shouldLog) console.log(`Checking ${allBlocks.length} blocks. H_SNAP=${HORIZONTAL_SNAP_DISTANCE}, V_TOL=${VERTICAL_ALIGNMENT_TOLERANCE}, H_PROX=${HORIZONTAL_PROXIMITY_THRESHOLD}, V_PROX=${VERTICAL_PROXIMITY_THRESHOLD}`);
+.palette-and-programming {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
 
-        allBlocks.forEach(block => {
-            const targetId = block.id || 'no-id';
-            if (block === draggedElement || block.dataset.rightBlockId) return;
-            const targetRect = block.getBoundingClientRect();
-            if (targetRect.height <= 0 || targetRect.width <= 0) return;
+#block-palette {
+    background-color: #f0f0f0;
+    border: 1px solid #e0e0e0;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    height: 130px;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    overflow: hidden;
+    transition: border-color 0.3s ease;
+}
 
-            const targetRightConnector = { x: targetRect.right - HORIZONTAL_SNAP_OFFSET, y: targetRect.top + targetRect.height / 2 };
-            const dx = dragLeftConnector.x - targetRightConnector.x; const dy = dragLeftConnector.y - targetRightConnector.y;
-            const horizontalDistance = Math.abs(dx); const verticalDistance = Math.abs(dy);
+.category-tabs {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-bottom: 0;
+    height: 100%;
+    align-content: flex-start;
+    background-color: #f0f0f0;
+}
 
-            if (shouldLog) console.log(` Target ${targetId}: H:${horizontalDistance.toFixed(1)}, V:${verticalDistance.toFixed(1)}`);
+/* סגנון לכפתורי הקטגוריות */
+.category-tab {
+    border: none;
+    padding: 0;
+    margin-left: 5px;
+    margin-bottom: 5px;
+    border-radius: 10px;
+    cursor: pointer;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: transparent;
+}
 
-            // שלב 1: בדיקה אם הבלוק הזה הוא יעד *פוטנציאלי* להצמדה (טווח רחב יותר)
-            if (horizontalDistance < closestOverallDistance && verticalDistance < VERTICAL_ALIGNMENT_TOLERANCE) {
-                closestOverallDistance = horizontalDistance; // עדכון המרחק הקרוב ביותר שנמצא *עד כה*
-                bestOverallTarget = block; // שמירת היעד הפוטנציאלי
-                if (shouldLog) console.log(`  -> Potential Target Found: ${targetId}`);
+.category-tab img {
+    max-width: 80px;
+    max-height: 80px;
+    pointer-events: none;
+}
 
-                // שלב 2: בדיקה אם הבלוק הזה *מאוד קרוב* כדי להפעיל הדגשה צהובה
-                if (horizontalDistance < HORIZONTAL_PROXIMITY_THRESHOLD && verticalDistance < VERTICAL_PROXIMITY_THRESHOLD) {
-                    showYellowHighlight = true; // מצאנו לפחות אחד קרוב מספיק להדגשה
-                    if (shouldLog) console.log(`  ==> VERY CLOSE! Enabling Yellow Highlight for ${targetId}`);
-                }
-            }
-        });
+/* סגנון לכפתור קטגוריה פעיל */
+.category-tab.active {
+    outline: 3px solid #4a90e2;
+    box-shadow: 0 0 10px rgba(74, 144, 226, 0.5);
+}
 
-        // אחרי שבדקנו את כל הבלוקים:
-        potentialSnapTarget = bestOverallTarget; // קובעים את היעד הפוטנציאלי הכללי (אם נמצא)
+/* עדכון איזור הבלוקים */
+.block-category {
+    display: none;
+    padding: 10px;
+    flex-grow: 1;
+    height: 100%;
+    margin-left: 0px;
+    background-color: #f0f0f0;
+    overflow-x: auto;
+    transition: background-color 0.3s ease;
+}
 
-        // מפעילים/מכבים את ההדגשה הצהובה *רק* על הבלוק הנגרר
-        if (showYellowHighlight) {
-            highlightSnapTargetYellow(draggedElement, true);
-            if (shouldLog && bestOverallTarget) console.log(`--- Final decision: Best Target is ${bestOverallTarget.id}. YELLOW HIGHLIGHT ON for ${draggedElement.id}. ---`);
-            else if (shouldLog) console.log(`--- Final decision: YELLOW HIGHLIGHT ON for ${draggedElement.id} (target might be slightly further). ---`);
-        } else {
-            highlightSnapTargetYellow(draggedElement, false);
-            if (shouldLog && bestOverallTarget) console.log(`--- Final decision: Best Target is ${bestOverallTarget.id}. Yellow highlight OFF. ---`);
-            else if (shouldLog) console.log(`--- Final decision: No suitable target found OR not close enough for yellow highlight. ---`);
-        }
-    }
+.block-category.active {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 10px;
+    border-radius: 0 10px 10px 0;
+}
 
-    // *** פונקציה חדשה להדגשה צהובה ***
-    function highlightSnapTargetYellow(block, shouldHighlight) {
-         if (block) {
-             try {
-                 if (shouldHighlight) {
-                     block.classList.add('snap-highlight-yellow'); // שימוש בקלאס החדש
-                 } else {
-                     block.classList.remove('snap-highlight-yellow'); // הסרת הקלאס החדש
-                 }
-             } catch (e) { console.error("Yellow highlight error", e); }
-         }
-    }
+#programming-area {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    flex: 2;
+    min-height: 200px;
+}
 
-    // *** עדכון פונקציית הניקוי ***
-     function clearSnapHighlighting() {
-         if (!programmingArea) return;
-         // הסר את כל סוגי ההדגשות האפשריים
-         const highlighted = programmingArea.querySelectorAll('.snap-highlight-yellow, .snap-highlight, .snap-target, .snap-direction-left, .snap-direction-right');
-         highlighted.forEach(el => {
-             try { el.classList.remove('snap-highlight-yellow', 'snap-highlight', 'snap-target', 'snap-direction-left', 'snap-direction-right'); }
-             catch(e) { /* ignore */ }
-         });
-     }
+.program-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
 
-    // ========================================================================
-    // Linking Logic (זהה לגרסה הקודמת - משתמש ב-left/top)
-    // ========================================================================
-    function linkBlocksHorizontally(leftBlock, rightBlock) {
-        if (!leftBlock || !rightBlock || leftBlock === rightBlock || !programmingArea) return;
-        if (leftBlock.dataset.rightBlockId || rightBlock.dataset.leftBlockId) return;
+#clear-all {
+    color: #e74c3c;
+    cursor: pointer;
+}
 
-        console.log(`[Linkage] Linking ${leftBlock.id} -> ${rightBlock.id} (Using Left/Top)`);
-        // ... לוגים של Before ... (ניתן להסיר אם רוצים פחות רעש)
-        // console.log(`[Linkage]   Before - Left [${leftBlock.id}]: L=${leftBlock.offsetLeft}, T=${leftBlock.offsetTop}, W=${leftBlock.offsetWidth}`);
-        // console.log(`[Linkage]   Before - Right [${rightBlock.id}]: L=${rightBlock.offsetLeft}, T=${rightBlock.offsetTop}`);
+#program-blocks {
+    min-height: 180px;
+    border: 1px dashed #ccc;
+    padding: 10px;
+    position: relative;
+}
 
-        leftBlock.dataset.rightBlockId = rightBlock.id; rightBlock.dataset.leftBlockId = rightBlock.id;
-        const leftWidth = leftBlock.offsetWidth;
-        const targetX = leftBlock.offsetLeft + leftWidth - HORIZONTAL_SNAP_OFFSET;
-        const targetY = leftBlock.offsetTop;
-        // console.log(`[Linkage]   Calculated Target: X=${targetX.toFixed(0)}, Y=${targetY.toFixed(0)} (Offset: ${HORIZONTAL_SNAP_OFFSET})`);
+#program-blocks .block-container {
+    position: absolute;
+}
 
-        rightBlock.style.left = `${targetX}px`;
-        rightBlock.style.top = `${targetY}px`;
-        // console.log(`[Linkage]   Set Left/Top Style for ${rightBlock.id}`);
+.logo {
+    font-size: 20px;
+    font-weight: bold;
+    color: #4a90e2;
+    margin-bottom: 5px;
+}
 
-        // הסרתי את הבדיקה האסינכרונית כי הבעיה כנראה נפתרה
-        // setTimeout(() => { ... }, 50);
+/* עיצוב לאזור האייקונים בכותרת */
+.header-icons {
+    display: flex;
+    align-items: center;
+}
 
-        console.log(`[Linkage] Linked HORIZONTALLY ${leftBlock.id} -> ${rightBlock.id}.`);
-    }
+/* עיצוב לכל אייקון בכותרת */
+.icon {
+    margin-left: 13px;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    border: none;
+    outline: none;
+    position: relative;
+    background-color: transparent;
+    box-shadow: none;
+}
 
-    // ========================================================================
-    // Public API (זהה)
-    // ========================================================================
-    window.registerNewBlockForLinkage = function(newBlockElement){ if (!newBlockElement) return; if (!newBlockElement.id) { newBlockElement.id = generateUniqueBlockId(); } try { newBlockElement.style.position = 'absolute'; } catch (e) { console.error("Reg Error", e); } if (ENABLE_DETAILED_SNAP_LOGGING) console.log(`[Linkage] Registered ${newBlockElement.id}.`); };
+/* עיצוב ספציפי לאייקון הרשת (grid) */
+#grid-toggle {
+    margin-left: 13px;
+    width: 50px;
+    height: 50px;
+    border: none;
+    outline: none;
+    padding: 0;
+    background-color: transparent;
+    border-radius: 0;
+}
 
-})();
-console.log("linkageimproved.js script finished execution (Yellow Proximity Highlight).");
+/* עיצוב לתמונות בתוך האייקונים */
+.header-icon-img {
+    width: 45px;
+    height: 45px;
+    object-fit: contain;
+    border: none;
+    outline: none;
+}
+
+/* עיצוב כשהעכבר מרחף מעל האייקון */
+.icon:hover {
+    background-color: #f0f0f0;
+    border-radius: 8px;
+}
+
+#grid-toggle:hover {
+    background-color: #f0f0f0;
+    border-radius: 8px;
+}
+
+/* סגנון לתמונות SVG של הבלוקים - הסרת רקע */
+.block-svg-image {
+    width: 100px;
+    height: 80px;
+    user-select: none;
+    pointer-events: none;
+    -webkit-user-drag: none;
+    background-color: transparent !important;
+}
+
+/* עדכון מיכל הבלוק - הסרת הרקע המלבני */
+#block-palette .block-container,
+#programming-area .block-container {
+    position: relative;
+    width: 100px;
+    height: 80px;
+    margin: 8px;
+    cursor: grab;
+    background-color: transparent !important; /* רקע שקוף */
+    box-shadow: none !important; /* הסרת הצל */
+    border: none !important; /* הסרת מסגרת אם קיימת */
+}
+
+#block-palette .block-container:active,
+#programming-area .block-container:active {
+    cursor: grabbing;
+}
+
+/* הסרת רקעים נוספים שעלולים להיות */
+#block-palette .block-container::before,
+#block-palette .block-container::after,
+#programming-area .block-container::before,
+#programming-area .block-container::after {
+    display: none !important;
+    background: transparent !important;
+}
+
+/* סגנון מיוחד לבלוק repeat */
+#block-palette .block-container[data-type="repeat"] .block-svg-image,
+#programming-area .block-container[data-type="repeat"] .block-svg-image {
+    width: 256px !important;
+    height: 118px !important;
+}
+
+#block-palette .block-container[data-type="repeat"],
+#programming-area .block-container[data-type="repeat"] {
+    width: 256px !important;
+    height: 118px !important;
+    background-color: transparent !important;
+}
+
+/* צבעי רקע לקטגוריות השונות */
+.block-category[data-category="triggering"].active {
+    background-color: var(--triggering-color) !important;
+}
+
+.block-category[data-category="motion"].active {
+    background-color: var(--motion-color) !important;
+}
+
+.block-category[data-category="looks"].active {
+    background-color: var(--looks-color) !important;
+}
+
+.block-category[data-category="sound"].active {
+    background-color: var(--sound-color) !important;
+}
+
+.block-category[data-category="control"].active {
+    background-color: var(--control-color) !important;
+}
+
+.block-category[data-category="end"].active {
+    background-color: var(--end-color) !important;
+}
+
+/* הסרת שקיפות נוספת שהייתה קיימת */
+.block-category.active {
+    opacity: 1; /* אין צורך בשקיפות נוספת כי הצבעים כבר מוגדרים עם שקיפות */
+}
+.snap-highlight {
+    outline: 3px dashed dodgerblue !important;
+    outline-offset: 2px;
+    box-shadow: 0 0 10px rgba(30, 144, 255, 0.7) !important;
+    /* ודא שאין כאן בטעות משהו כמו display: none; או visibility: hidden; */
+}
