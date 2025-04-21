@@ -1,6 +1,6 @@
 // ========================================================================
 // Block Linkage System using Transform - FIXED DIRECTION
-// Version: TRANSFORM-BASED CONNECTION v3
+// Version: TRANSFORM-BASED CONNECTION v4
 // ========================================================================
 (function() {
     // קונפיגורציה
@@ -118,6 +118,20 @@
                 transform: translateY(-50%);
                 color: #4285f4;
                 font-size: 14px;
+            }
+            
+            /* סגנון חדש להצגת חיבור הפאזל */
+            .connected-blocks {
+                position: relative;
+            }
+            
+            .overlap-indicator {
+                position: absolute;
+                width: 8px;
+                height: 100%;
+                background-color: rgba(255, 255, 0, 0.3);
+                z-index: 100;
+                pointer-events: none;
             }
         `;
         
@@ -368,6 +382,12 @@
             block.classList.remove('connected-left');
         }
         
+        // הסרת סממני חיבור חזותיים
+        const overlapIndicator = block.querySelector('.overlap-indicator');
+        if (overlapIndicator) {
+            overlapIndicator.remove();
+        }
+        
         // איפוס כל טרנספורם
         block.style.transform = '';
         
@@ -404,7 +424,7 @@
                 leftBlock = draggedBlock;
                 rightBlock = targetBlock;
                 
-                // חישוב מיקום חדש לבלוק הימני (היעד)
+                // חישוב מיקום חדש לבלוק הימני (היעד) - כך שיהיה חפיפה של PUZZLE_CONNECTOR_WIDTH פיקסלים
                 newX = draggedBlock.offsetLeft + draggedRect.width - PUZZLE_CONNECTOR_WIDTH;
                 newY = draggedBlock.offsetTop;
                 
@@ -416,12 +436,15 @@
                 rightBlock.style.left = `${newX}px`;
                 rightBlock.style.top = `${newY}px`;
                 
+                // הוספת אינדיקטור חפיפה
+                addOverlapIndicator(leftBlock, 'right');
+                
             } else if (direction === 'toLeft') {
                 // הבלוק הנגרר צריך לזוז שמאלה - יהיה מימין ליעד
                 leftBlock = targetBlock;
                 rightBlock = draggedBlock;
                 
-                // חישוב מיקום חדש לבלוק הימני (הנגרר)
+                // חישוב מיקום חדש לבלוק הימני (הנגרר) - כך שיהיה חפיפה של PUZZLE_CONNECTOR_WIDTH פיקסלים
                 newX = targetBlock.offsetLeft + targetRect.width - PUZZLE_CONNECTOR_WIDTH;
                 newY = targetBlock.offsetTop;
                 
@@ -432,6 +455,9 @@
                 // עדכון מיקום הבלוק הימני
                 rightBlock.style.left = `${newX}px`;
                 rightBlock.style.top = `${newY}px`;
+                
+                // הוספת אינדיקטור חפיפה
+                addOverlapIndicator(leftBlock, 'right');
             }
             
             // יצירת קשר לוגי בין הבלוקים
@@ -460,6 +486,29 @@
         } catch (e) {
             console.error("[FixedDirection] שגיאה בחיבור בלוקים:", e);
         }
+    }
+    
+    // פונקציה להוספת אינדיקטור חפיפה ויזואלי
+    function addOverlapIndicator(block, position) {
+        // ודא שאין אינדיקטור קיים
+        const existingIndicator = block.querySelector('.overlap-indicator');
+        if (existingIndicator) {
+            existingIndicator.remove();
+        }
+        
+        // יצירת אינדיקטור חדש
+        const indicator = document.createElement('div');
+        indicator.className = 'overlap-indicator';
+        
+        // מיקום האינדיקטור בהתאם לכיוון
+        if (position === 'right') {
+            indicator.style.right = '0';
+        } else {
+            indicator.style.left = '0';
+        }
+        
+        // הוספת האינדיקטור לבלוק
+        block.appendChild(indicator);
     }
     
     // ========================================================================
