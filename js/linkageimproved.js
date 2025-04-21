@@ -1,8 +1,7 @@
  // ========================================================================
 // Improved Block Linkage System (linkageimproved.js)
-// Version: DIRECT DOM MANIPULATION - HARDCORE CONNECTION
+// Version: DIRECT DOM MANIPULATION - FIXED CONNECTION
 // ========================================================================
-
 (function() {
     // Configuration
     const HORIZONTAL_SNAP_DISTANCE = 40;
@@ -12,11 +11,15 @@
     
     // קבועים לחיבור מושלם של פאזל
     const PUZZLE_CONNECTOR_WIDTH = 8; // הרוחב של חיבור הפאזל
-
     // State Variables
-    let isDragging = false; let draggedElement = null;
-    let potentialSnapTarget = null; let initialMouseX = 0; let initialMouseY = 0;
-    let initialElementX = 0; let initialElementY = 0; let programmingArea = null;
+    let isDragging = false; 
+    let draggedElement = null;
+    let potentialSnapTarget = null; 
+    let initialMouseX = 0; 
+    let initialMouseY = 0;
+    let initialElementX = 0; 
+    let initialElementY = 0; 
+    let programmingArea = null;
     let nextBlockId = 1;
     
     // מצב הצימוד - שמאלה או ימינה
@@ -24,14 +27,17 @@
     
     // מאזין לשינויים ב-DOM
     let observer = null;
-
+    
     // ========================================================================
     // Initialization
     // ========================================================================
     function initializeLinkageSystem() {
         console.log("[Linkage] Attempting Init with direct DOM approach...");
         programmingArea = document.getElementById("program-blocks");
-        if (!programmingArea) { console.error("[Linkage] ERROR: #program-blocks not found!"); return; }
+        if (!programmingArea) { 
+            console.error("[Linkage] ERROR: #program-blocks not found!"); 
+            return; 
+        }
         
         // הוספת CSS לחיווי חזותי
         addVisualIndicationStyles();
@@ -40,9 +46,11 @@
         if (currentPosition !== 'relative' && currentPosition !== 'absolute' && currentPosition !== 'fixed') {
              console.warn(`[Linkage] WARN: #program-blocks position is ${currentPosition}. Consider 'relative'.`);
         }
+        
         programmingArea.addEventListener('mousedown', handleMouseDown);
         console.log("[Linkage] Mousedown listener ATTACHED.");
         console.log("[Linkage] System Initialized with DIRECT DOM MANIPULATION for puzzle connection");
+        
         prepareExistingBlocks();
         
         // הוספת observer לזיהוי שינויים בתכונות החזותיות
@@ -111,7 +119,7 @@
     function addVisualIndicationStyles() {
         // בדוק קודם אם הסגנונות כבר קיימים
         if (document.getElementById('linkage-styles')) return;
-
+        
         const styleElement = document.createElement('style');
         styleElement.id = 'linkage-styles';
         styleElement.textContent = `
@@ -133,6 +141,15 @@
                 z-index: 999;
                 transition: opacity 0.2s ease-in-out;
             }
+            
+            /* Add styles for connected blocks */
+            .connected-left {
+                box-shadow: -2px 0 0 1px #34a853 !important;
+            }
+            
+            .connected-right {
+                box-shadow: 2px 0 0 1px #4285f4 !important;
+            }
         `;
         document.head.appendChild(styleElement);
         console.log("[Linkage] Added visual indication styles");
@@ -141,91 +158,135 @@
     function prepareExistingBlocks() {
         const blocksInArea = programmingArea.querySelectorAll('.block-container');
         blocksInArea.forEach(block => {
-            if (!block.id) { block.id = generateUniqueBlockId(); }
-             if (!block.style.position || block.style.position === 'static') { block.style.position = 'absolute'; }
+            if (!block.id) { 
+                block.id = generateUniqueBlockId(); 
+            }
+            
+            if (!block.style.position || block.style.position === 'static') { 
+                block.style.position = 'absolute'; 
+            }
         });
-        if(blocksInArea.length > 0) console.log(`[Linkage] Prepared ${blocksInArea.length} existing blocks.`);
+        
+        if(blocksInArea.length > 0) {
+            console.log(`[Linkage] Prepared ${blocksInArea.length} existing blocks.`);
+        }
     }
+    
     function runInitialization() {
-        if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', initializeLinkageSystem); }
-        else { initializeLinkageSystem(); }
+        if (document.readyState === 'loading') { 
+            document.addEventListener('DOMContentLoaded', initializeLinkageSystem); 
+        }
+        else { 
+            initializeLinkageSystem(); 
+        }
     }
+    
     runInitialization();
-
+    
     // ========================================================================
     // Unique ID Generation
     // ========================================================================
-    function generateUniqueBlockId() { return `block-${Date.now()}-${nextBlockId++}`; }
-
+    function generateUniqueBlockId() { 
+        return `block-${Date.now()}-${nextBlockId++}`; 
+    }
+    
     // ========================================================================
     // Event Handlers
     // ========================================================================
     function handleMouseDown(event) {
         const targetBlock = event.target.closest('.block-container');
         if (!targetBlock || !programmingArea || !programmingArea.contains(targetBlock)) return;
-        event.preventDefault(); isDragging = true; draggedElement = targetBlock;
-        if (!draggedElement.id) { draggedElement.id = generateUniqueBlockId(); }
-
+        
+        event.preventDefault(); 
+        isDragging = true; 
+        draggedElement = targetBlock;
+        
+        if (!draggedElement.id) { 
+            draggedElement.id = generateUniqueBlockId(); 
+        }
+        
         if (ENABLE_DETAILED_SNAP_LOGGING) {
             console.log(`[Linkage] Started dragging block: ${draggedElement.id}`);
         }
-
+        
         // איפוס כל טרנספורמציה קודמת
         draggedElement.style.transform = '';
-
+        
         // הסרת קשרים קודמים
-        const prevBlockId = draggedElement.dataset.prevBlockId;
-        if (prevBlockId) { const pb = document.getElementById(prevBlockId); if (pb) delete pb.dataset.nextBlockId; delete draggedElement.dataset.prevBlockId; }
+        removeExistingConnections(draggedElement);
         
-        // קשרים שמאלה-ימינה
-        const leftBlockId = draggedElement.dataset.leftBlockId;
-        if (leftBlockId) { 
-            const lb = document.getElementById(leftBlockId); 
-            if (lb) delete lb.dataset.rightBlockId; 
-            delete draggedElement.dataset.leftBlockId; 
-        }
+        initialMouseX = event.clientX; 
+        initialMouseY = event.clientY;
+        initialElementX = draggedElement.offsetLeft; 
+        initialElementY = draggedElement.offsetTop;
         
-        // קשרים ימינה-שמאלה
-        const rightBlockId = draggedElement.dataset.rightBlockId;
-        if (rightBlockId) { 
-            const rb = document.getElementById(rightBlockId); 
-            if (rb) delete rb.dataset.leftBlockId; 
-            delete draggedElement.dataset.rightBlockId; 
-        }
-
-        initialMouseX = event.clientX; initialMouseY = event.clientY;
-        initialElementX = draggedElement.offsetLeft; initialElementY = draggedElement.offsetTop;
-        draggedElement.style.zIndex = 1000; draggedElement.style.cursor = 'grabbing';
+        draggedElement.style.zIndex = 1000; 
+        draggedElement.style.cursor = 'grabbing';
+        
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleMouseUp);
         document.addEventListener('mouseleave', handleMouseLeave);
     }
-
+    
+    // פונקציה חדשה להסרת חיבורים קיימים
+    function removeExistingConnections(element) {
+        // קשרים שמאלה-ימינה
+        const leftBlockId = element.dataset.leftBlockId;
+        if (leftBlockId) { 
+            const lb = document.getElementById(leftBlockId); 
+            if (lb) {
+                delete lb.dataset.rightBlockId;
+                lb.classList.remove('connected-left');
+            }
+            delete element.dataset.leftBlockId;
+            element.classList.remove('connected-right');
+        }
+        
+        // קשרים ימינה-שמאלה
+        const rightBlockId = element.dataset.rightBlockId;
+        if (rightBlockId) { 
+            const rb = document.getElementById(rightBlockId); 
+            if (rb) {
+                delete rb.dataset.leftBlockId;
+                rb.classList.remove('connected-right');
+            }
+            delete element.dataset.rightBlockId;
+            element.classList.remove('connected-left');
+        }
+    }
+    
     function handleMouseMove(event) {
         if (!isDragging || !draggedElement) return;
-        const deltaX = event.clientX - initialMouseX; const deltaY = event.clientY - initialMouseY;
-        const newX = initialElementX + deltaX; const newY = initialElementY + deltaY;
-        draggedElement.style.left = `${newX}px`; draggedElement.style.top = `${newY}px`;
+        
+        const deltaX = event.clientX - initialMouseX; 
+        const deltaY = event.clientY - initialMouseY;
+        const newX = initialElementX + deltaX; 
+        const newY = initialElementY + deltaY;
+        
+        draggedElement.style.left = `${newX}px`; 
+        draggedElement.style.top = `${newY}px`;
+        
         findAndHighlightSnapTarget();
     }
-
+    
     function handleMouseUp(event) {
         if (!isDragging || !draggedElement) return;
+        
         const currentDraggedElement = draggedElement;
         const currentTarget = potentialSnapTarget;
         const isValidSnapTarget = currentTarget && programmingArea && programmingArea.contains(currentTarget);
         const currentDirection = snapDirection;
-
+        
         // הסר מאזינים גלובליים מיד
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
         document.removeEventListener('mouseleave', handleMouseLeave);
-
+        
         // אפס מצב גרירה
         isDragging = false;
         draggedElement = null;
         potentialSnapTarget = null;
-
+        
         // בצע הצמדה או מיקום סופי
         if (isValidSnapTarget) {
             if (ENABLE_DETAILED_SNAP_LOGGING) {
@@ -245,7 +306,7 @@
                  console.log(`[Linkage] Placed single block ${currentDraggedElement.id} (no snap)`);
             }
         }
-
+        
         // ניקוי סופי
         clearSnapHighlighting();
         if(currentDraggedElement) {
@@ -258,9 +319,13 @@
         
         console.log("--- MouseUp Finished ---");
     }
-
-    function handleMouseLeave(event) { if (isDragging) { handleMouseUp(event); } }
-
+    
+    function handleMouseLeave(event) { 
+        if (isDragging) { 
+            handleMouseUp(event); 
+        } 
+    }
+    
     // ========================================================================
     // Snapping Logic (Bi-Directional with Improved Visual Indication)
     // ========================================================================
@@ -420,105 +485,93 @@
             existingIndicator.remove();
         }
     }
-
+    
     // ========================================================================
-    // Linking Logic (DIRECT DOM MANIPULATION)
+    // Linking Logic (FIXED DIRECT DOM MANIPULATION)
     // ========================================================================
     function directlySetPuzzleConnection(leftBlock, rightBlock) {
         if (!leftBlock || !rightBlock || leftBlock === rightBlock || !programmingArea) return;
         
-        console.log(`[Linkage] Connecting with direct DOM manipulation: ${leftBlock.id} -> ${rightBlock.id}`);
-        console.log(`[Linkage]   Before - Left [${leftBlock.id}]: L=${leftBlock.offsetLeft}, T=${leftBlock.offsetTop}, W=${leftBlock.offsetWidth}`);
-        console.log(`[Linkage]   Before - Right [${rightBlock.id}]: L=${rightBlock.offsetLeft}, T=${rightBlock.offsetTop}`);
-
-        // 1. הגדרת קשרים בין הבלוקים
+        console.log(`[Linkage] Connecting blocks: ${leftBlock.id} -> ${rightBlock.id}`);
+        
+        // Log initial positions
+        console.log(`[Linkage] Before - Left [${leftBlock.id}]: L=${leftBlock.offsetLeft}, T=${leftBlock.offsetTop}, W=${leftBlock.offsetWidth}`);
+        console.log(`[Linkage] Before - Right [${rightBlock.id}]: L=${rightBlock.offsetLeft}, T=${rightBlock.offsetTop}`);
+        
+        // 1. Establish relationship between blocks
         leftBlock.dataset.rightBlockId = rightBlock.id;
         rightBlock.dataset.leftBlockId = leftBlock.id;
-
-        // 2. ביטול המעקב באופן זמני כדי למנוע לולאות
+        
+        // 2. Temporarily disable observer to prevent infinite loops
         if (observer) observer.disconnect();
         
         try {
-            // 3. חישוב המיקום הרצוי עם החפיפה
+            // 3. Calculate the desired position with overlap
             const leftWidth = leftBlock.offsetWidth;
             const targetX = leftBlock.offsetLeft + leftWidth - PUZZLE_CONNECTOR_WIDTH;
             const targetY = leftBlock.offsetTop;
             
-            console.log(`[Linkage] Direct DOM Approach - Setting to: X=${targetX}, Y=${targetY} (overlap=${PUZZLE_CONNECTOR_WIDTH}px)`);
-
-            // 4. הסרת כל תכונות העלולות להפריע
+            console.log(`[Linkage] Setting position: X=${targetX}, Y=${targetY} (overlap=${PUZZLE_CONNECTOR_WIDTH}px)`);
+            
+            // 4. Clear any interfering properties
             rightBlock.style.transition = 'none';
             rightBlock.style.transform = '';
             
-            // 5. קביעת מיקום בסיסי
+            // 5. Set basic positioning directly
             rightBlock.style.position = 'absolute';
             rightBlock.style.left = targetX + 'px';
             rightBlock.style.top = targetY + 'px';
             
-            // 6. אכיפת מיקום ב-ATOMIC OPERATION - נוצר HTML חדש ומחליף את הקיים
-            const tempContainer = document.createElement('div');
-            tempContainer.innerHTML = rightBlock.outerHTML;
-            const newRightBlock = tempContainer.firstChild;
+            // 6. Add visual connection indicators
+            leftBlock.classList.add('connected-left');
+            rightBlock.classList.add('connected-right');
             
-            // עדכון סגנונות ותכונות
-            newRightBlock.style.position = 'absolute';
-            newRightBlock.style.left = targetX + 'px';
-            newRightBlock.style.top = targetY + 'px';
+            // 7. Force a layout reflow to ensure the browser applies our changes
+            void rightBlock.offsetWidth;
             
-            // אני מעדיף להשתמש במניפולציה ישירה של ה-inlineStyle במקום setAttribute
-            // כדי להימנע משכתוב של תכונות אחרות שעלולות להיות בשימוש
-            programmingArea.removeChild(rightBlock);
-            programmingArea.appendChild(newRightBlock);
+            // 8. Check position after setting
+            console.log(`[Linkage] After positioning: L=${rightBlock.offsetLeft}, T=${rightBlock.offsetTop}`);
             
-            // מיד לאחר ההחלפה - וידוא שהתכונות נשמרו והמיקום נכון
+            // 9. Add brief visual feedback
+            rightBlock.classList.add('snap-highlight');
+            leftBlock.classList.add('snap-target');
+            
             setTimeout(() => {
-                const replacedBlock = document.getElementById(rightBlock.id);
-                if (replacedBlock) {
-                    console.log(`[Linkage] Block replaced and repositioned: ${replacedBlock.id}`);
-                    console.log(`[Linkage] Final position: L=${replacedBlock.offsetLeft}, T=${replacedBlock.offsetTop}`);
-                    
-                    // החזרת המעקב
-                    if (observer) {
-                        setupDOMObserver();
-                    }
-                    
-                    // בדיקה נוספת והבלטה חזותית לרגע קצר
-                    replacedBlock.classList.add('snap-highlight');
-                    leftBlock.classList.add('snap-target');
-                    
-                    setTimeout(() => {
-                        replacedBlock.classList.remove('snap-highlight');
-                        leftBlock.classList.remove('snap-target');
-                    }, 300);
-                }
-            }, 50);
+                rightBlock.classList.remove('snap-highlight');
+                leftBlock.classList.remove('snap-target');
+            }, 300);
         }
         catch(e) {
-            console.error("[Linkage] Error in direct DOM manipulation:", e);
+            console.error("[Linkage] Error in direct positioning:", e);
             
-            // ניסיון חילופי - בסיסי יותר
+            // Fallback - simpler approach
             const leftWidth = leftBlock.offsetWidth;
             const targetX = leftBlock.offsetLeft + leftWidth - PUZZLE_CONNECTOR_WIDTH;
             const targetY = leftBlock.offsetTop;
             
             rightBlock.style.left = targetX + 'px';
             rightBlock.style.top = targetY + 'px';
-            
-            // החזרת המעקב
+        }
+        finally {
+            // Always restore the observer
             if (observer) {
                 setupDOMObserver();
             }
         }
         
-        console.log(`[Linkage] Direct DOM Connection completed: ${leftBlock.id} -> ${rightBlock.id}`);
+        console.log(`[Linkage] Connection completed: ${leftBlock.id} -> ${rightBlock.id}`);
     }
-
+    
     // ========================================================================
     // Public API
     // ========================================================================
-    window.registerNewBlockForLinkage = function(newBlockElement){
+    window.registerNewBlockForLinkage = function(newBlockElement) {
          if (!newBlockElement) return;
-         if (!newBlockElement.id) { newBlockElement.id = generateUniqueBlockId(); }
+         
+         if (!newBlockElement.id) { 
+             newBlockElement.id = generateUniqueBlockId(); 
+         }
+         
          try { 
              newBlockElement.style.position = 'absolute'; 
              // איפוס כל טרנספורם שעלול להשפיע
@@ -531,6 +584,6 @@
     // Expose direct methods for external use
     window.directlySetPuzzleConnection = directlySetPuzzleConnection;
     window.enforceConnectionPosition = enforceConnectionPosition;
-
 })();
-console.log("linkageimproved.js script finished execution (DIRECT DOM MANIPULATION).");
+
+console.log("linkageimproved.js script finished execution (FIXED DIRECT DOM MANIPULATION).");
