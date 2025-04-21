@@ -1,4 +1,4 @@
- // ========================================================================
+// ========================================================================
 // Improved Block Linkage System (linkageimproved.js)
 // Version: DIRECT DOM MANIPULATION - FIXED CONNECTION
 // ========================================================================
@@ -282,29 +282,30 @@
         document.removeEventListener('mouseup', handleMouseUp);
         document.removeEventListener('mouseleave', handleMouseLeave);
         
-        // אפס מצב גרירה
-        isDragging = false;
-        draggedElement = null;
-        potentialSnapTarget = null;
+        console.log(`[Linkage] Mouse released. Target: ${currentTarget ? currentTarget.id : 'none'}, Direction: ${currentDirection}`);
         
         // בצע הצמדה או מיקום סופי
         if (isValidSnapTarget) {
-            if (ENABLE_DETAILED_SNAP_LOGGING) {
-                console.log(`[Linkage] Attempting to link with valid target in direction: ${currentDirection}`);
-            }
+            console.log(`[Linkage] SNAP: Connecting blocks in direction: ${currentDirection}`);
             
-            if (currentDirection === 'right') {
-                // הלבנה הנגררת מימין, היעד משמאל
-                directlySetPuzzleConnection(currentTarget, currentDraggedElement);
-            } else {
-                // הלבנה הנגררת משמאל, היעד מימין
-                directlySetPuzzleConnection(currentDraggedElement, currentTarget);
+            try {
+                if (currentDirection === 'right') {
+                    // בלוק היעד משמאל והבלוק הנגרר מימין
+                    // כלומר, הבלוק הנגרר צריך להיות ממוקם מימין לבלוק היעד
+                    directlySetPuzzleConnection(currentTarget, currentDraggedElement);
+                    console.log(`[Linkage] Connected left-to-right: ${currentTarget.id} -> ${currentDraggedElement.id}`);
+                } else {
+                    // בלוק היעד מימין והבלוק הנגרר משמאל
+                    // כלומר, הבלוק הנגרר צריך להיות ממוקם משמאל לבלוק היעד
+                    directlySetPuzzleConnection(currentDraggedElement, currentTarget);
+                    console.log(`[Linkage] Connected left-to-right: ${currentDraggedElement.id} -> ${currentTarget.id}`);
+                }
+            } catch (e) {
+                console.error("[Linkage] Error connecting blocks:", e);
             }
         } else {
             // אין הצמדה - המיקום האחרון מ-mousemove נשאר
-            if (ENABLE_DETAILED_SNAP_LOGGING && currentDraggedElement) {
-                 console.log(`[Linkage] Placed single block ${currentDraggedElement.id} (no snap)`);
-            }
+            console.log(`[Linkage] No snap target - block will remain at current position`);
         }
         
         // ניקוי סופי
@@ -316,6 +317,11 @@
         
         // הסר את אזור החיווי אם קיים
         removeSnapAreaIndicator();
+        
+        // אפס מצב גרירה - חשוב לעשות זאת רק בסוף כדי שלא נאבד התייחסות
+        isDragging = false;
+        draggedElement = null;
+        potentialSnapTarget = null;
         
         console.log("--- MouseUp Finished ---");
     }
@@ -342,8 +348,9 @@
         if (dragRect.height <= 0 || dragRect.width <= 0) return;
         
         // נקודות חיבור - שמאל וימין של הלבנה הנגררת
-        const dragLeftConnector = { x: dragRect.left, y: dragRect.top + dragRect.height / 2 }; 
-        const dragRightConnector = { x: dragRect.right, y: dragRect.top + dragRect.height / 2 };
+        const dragLeftEdge = dragRect.left;
+        const dragRightEdge = dragRect.right;
+        const dragVerticalCenter = dragRect.top + dragRect.height / 2;
         
         let closestDistance = HORIZONTAL_SNAP_DISTANCE; 
         let bestTarget = null;
@@ -355,51 +362,43 @@
             const targetRect = block.getBoundingClientRect(); 
             if (targetRect.height <= 0 || targetRect.width <= 0) return;
             
-            // נקודות חיבור - שמאל וימין של הלבנה הפוטנציאלית לחיבור
-            const targetLeftConnector = { 
-                x: targetRect.left, 
-                y: targetRect.top + targetRect.height / 2 
-            };
+            // נקודות חיבור של הבלוק הפוטנציאלי
+            const targetLeftEdge = targetRect.left;
+            const targetRightEdge = targetRect.right;
+            const targetVerticalCenter = targetRect.top + targetRect.height / 2;
             
-            const targetRightConnector = { 
-                x: targetRect.right - HORIZONTAL_SNAP_OFFSET, 
-                y: targetRect.top + targetRect.height / 2 
-            };
+            // בדיקה אנכית - האם הבלוקים באותו גובה בערך
+            const verticalDistance = Math.abs(dragVerticalCenter - targetVerticalCenter);
+            if (verticalDistance >= VERTICAL_ALIGNMENT_TOLERANCE) return;
             
-            // בדיקת מרחק ימינה (הלבנה הנגררת מימין ליעד)
-            // אם הלבנה הנגררת היא מימין והלבנה היעד לא מחוברת כבר ללבנה אחרת מימין
-            if (!block.dataset.rightBlockId) {
-                const rightDx = dragLeftConnector.x - targetRightConnector.x; 
-                const rightDy = dragLeftConnector.y - targetRightConnector.y; 
-                const rightHorizontalDistance = Math.abs(rightDx); 
-                const rightVerticalDistance = Math.abs(rightDy);
+            // בדיקת חיבור מימין (דהיינו, הלבנה הנגררת משמאל לבלוק היעד)
+            // בתצורה כזו, הצד הימני של הנגרר צריך להיות קרוב לצד השמאלי של היעד
+            if (!block.dataset.leftBlockId) {
+                const rightDistance = Math.abs(dragRightEdge - targetLeftEdge);
                 
-                if (rightHorizontalDistance < closestDistance && rightVerticalDistance < VERTICAL_ALIGNMENT_TOLERANCE) { 
-                    closestDistance = rightHorizontalDistance; 
+                if (rightDistance < closestDistance) {
+                    closestDistance = rightDistance;
                     bestTarget = block;
-                    snapDirection = 'right';
+                    snapDirection = 'left';  // הכיוון מציין את כיוון החיבור ביחס לבלוק היעד
                     
                     if (shouldLog) {
-                        console.log(`[Linkage] Found potential RIGHT target: ${block.id}, distance H=${rightHorizontalDistance.toFixed(2)}, V=${rightVerticalDistance.toFixed(2)}`);
+                        console.log(`[Linkage] Found potential connection: ${draggedElement.id} LEFT OF ${block.id}, distance=${rightDistance.toFixed(2)}px`);
                     }
                 }
             }
             
-            // בדיקת מרחק שמאלה (הלבנה הנגררת משמאל ליעד)
-            // אם הלבנה הנגררת היא משמאל והלבנה היעד לא מחוברת כבר ללבנה אחרת משמאל
-            if (!block.dataset.leftBlockId) {
-                const leftDx = dragRightConnector.x - targetLeftConnector.x; 
-                const leftDy = dragRightConnector.y - targetLeftConnector.y; 
-                const leftHorizontalDistance = Math.abs(leftDx); 
-                const leftVerticalDistance = Math.abs(leftDy);
+            // בדיקת חיבור משמאל (דהיינו, הלבנה הנגררת מימין לבלוק היעד)
+            // בתצורה כזו, הצד השמאלי של הנגרר צריך להיות קרוב לצד הימני של היעד
+            if (!block.dataset.rightBlockId) {
+                const leftDistance = Math.abs(dragLeftEdge - targetRightEdge);
                 
-                if (leftHorizontalDistance < closestDistance && leftVerticalDistance < VERTICAL_ALIGNMENT_TOLERANCE) { 
-                    closestDistance = leftHorizontalDistance; 
+                if (leftDistance < closestDistance) {
+                    closestDistance = leftDistance;
                     bestTarget = block;
-                    snapDirection = 'left';
+                    snapDirection = 'right';  // הכיוון מציין את כיוון החיבור ביחס לבלוק היעד
                     
                     if (shouldLog) {
-                        console.log(`[Linkage] Found potential LEFT target: ${block.id}, distance H=${leftHorizontalDistance.toFixed(2)}, V=${leftVerticalDistance.toFixed(2)}`);
+                        console.log(`[Linkage] Found potential connection: ${draggedElement.id} RIGHT OF ${block.id}, distance=${leftDistance.toFixed(2)}px`);
                     }
                 }
             }
@@ -410,12 +409,17 @@
             highlightSnapTarget(draggedElement, bestTarget); 
             
             // הוסף חיווי חזותי לאזור הצימוד
-            showSnapAreaIndicator(snapDirection === 'right' ? bestTarget : draggedElement, 
-                                  snapDirection === 'right' ? draggedElement : bestTarget);
+            if (snapDirection === 'right') {
+                // הלבנה הנגררת אמורה להיות מימין לבלוק היעד
+                showSnapAreaIndicator(bestTarget, draggedElement);
+            } else {
+                // הלבנה הנגררת אמורה להיות משמאל לבלוק היעד
+                showSnapAreaIndicator(draggedElement, bestTarget);
+            }
             
-            if (shouldLog) console.log(`[Linkage] Best target found: ${bestTarget.id} in direction: ${snapDirection}. Added visual indicators.`); 
+            if (shouldLog) console.log(`[Linkage] Best snap target: ${bestTarget.id}, direction: ${snapDirection}`); 
         } else { 
-            if (shouldLog) console.log(`[Linkage] No target found within range.`); 
+            if (shouldLog) console.log(`[Linkage] No suitable snap target found.`); 
         } 
     }
     
@@ -506,18 +510,25 @@
         if (observer) observer.disconnect();
         
         try {
-            // 3. Calculate the desired position with overlap
-            const leftWidth = leftBlock.offsetWidth;
-            const targetX = leftBlock.offsetLeft + leftWidth - PUZZLE_CONNECTOR_WIDTH;
+            // 3. Calculate the correct connecting position
+            // Get the left block's dimensions and position
+            const leftRect = leftBlock.getBoundingClientRect();
+            const rightRect = rightBlock.getBoundingClientRect();
+            
+            // Calculate the snap position with proper overlap
+            // The right block should overlap the left block by exactly PUZZLE_CONNECTOR_WIDTH pixels
+            const targetX = leftBlock.offsetLeft + leftBlock.offsetWidth - PUZZLE_CONNECTOR_WIDTH;
+            
+            // For vertical alignment, we keep blocks at the same level
             const targetY = leftBlock.offsetTop;
             
-            console.log(`[Linkage] Setting position: X=${targetX}, Y=${targetY} (overlap=${PUZZLE_CONNECTOR_WIDTH}px)`);
+            console.log(`[Linkage] Positioning right block at X=${targetX}, Y=${targetY} (overlap=${PUZZLE_CONNECTOR_WIDTH}px)`);
             
             // 4. Clear any interfering properties
             rightBlock.style.transition = 'none';
             rightBlock.style.transform = '';
             
-            // 5. Set basic positioning directly
+            // 5. Set basic positioning directly with absolute positioning
             rightBlock.style.position = 'absolute';
             rightBlock.style.left = targetX + 'px';
             rightBlock.style.top = targetY + 'px';
@@ -526,13 +537,13 @@
             leftBlock.classList.add('connected-left');
             rightBlock.classList.add('connected-right');
             
-            // 7. Force a layout reflow to ensure the browser applies our changes
+            // 7. Force a layout reflow to ensure the browser applies our changes immediately
             void rightBlock.offsetWidth;
             
-            // 8. Check position after setting
-            console.log(`[Linkage] After positioning: L=${rightBlock.offsetLeft}, T=${rightBlock.offsetTop}`);
+            // 8. Check position after setting to verify
+            console.log(`[Linkage] After positioning - Right block: L=${rightBlock.offsetLeft}, T=${rightBlock.offsetTop}`);
             
-            // 9. Add brief visual feedback
+            // 9. Add brief visual feedback to indicate successful connection
             rightBlock.classList.add('snap-highlight');
             leftBlock.classList.add('snap-target');
             
@@ -540,17 +551,28 @@
                 rightBlock.classList.remove('snap-highlight');
                 leftBlock.classList.remove('snap-target');
             }, 300);
+            
+            // 10. Show success message
+            if (ENABLE_DETAILED_SNAP_LOGGING) {
+                console.log(`[Linkage] Successfully connected blocks with ${PUZZLE_CONNECTOR_WIDTH}px overlap`);
+            }
         }
         catch(e) {
             console.error("[Linkage] Error in direct positioning:", e);
             
-            // Fallback - simpler approach
-            const leftWidth = leftBlock.offsetWidth;
-            const targetX = leftBlock.offsetLeft + leftWidth - PUZZLE_CONNECTOR_WIDTH;
-            const targetY = leftBlock.offsetTop;
-            
-            rightBlock.style.left = targetX + 'px';
-            rightBlock.style.top = targetY + 'px';
+            // Fallback - simpler approach if the main approach fails
+            try {
+                const leftWidth = leftBlock.offsetWidth;
+                const targetX = leftBlock.offsetLeft + leftWidth - PUZZLE_CONNECTOR_WIDTH;
+                const targetY = leftBlock.offsetTop;
+                
+                rightBlock.style.left = targetX + 'px';
+                rightBlock.style.top = targetY + 'px';
+                
+                console.log(`[Linkage] Used fallback positioning method: X=${targetX}, Y=${targetY}`);
+            } catch (fallbackError) {
+                console.error("[Linkage] Even fallback positioning failed:", fallbackError);
+            }
         }
         finally {
             // Always restore the observer
