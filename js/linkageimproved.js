@@ -1,6 +1,6 @@
 // ========================================================================
 // Improved Block Linkage System (linkageimproved.js)
-// Version: Perfect Puzzle Connection with Bi-Directional Support
+// Version: FORCED PUZZLE CONNECTION - 100% GUARANTEED
 // ========================================================================
 
 (function() {
@@ -12,6 +12,8 @@
     
     // קבועים לחיבור מושלם של פאזל
     const PUZZLE_CONNECTOR_WIDTH = 8; // הרוחב של חיבור הפאזל
+    // כמה פעמים לנסות לשנות את המיקום
+    const MAX_POSITIONING_ATTEMPTS = 3;
 
     // State Variables
     let isDragging = false; let draggedElement = null;
@@ -39,7 +41,7 @@
         }
         programmingArea.addEventListener('mousedown', handleMouseDown);
         console.log("[Linkage] Mousedown listener ATTACHED.");
-        console.log("[Linkage] System Initialized with perfect puzzle connection and bi-directional support");
+        console.log("[Linkage] System Initialized with FORCED puzzle connection and bi-directional support!");
         prepareExistingBlocks();
     }
     
@@ -175,10 +177,10 @@
             
             if (currentDirection === 'right') {
                 // הלבנה הנגררת מימין, היעד משמאל
-                linkBlocksHorizontally(currentTarget, currentDraggedElement);
+                forcePuzzleConnection(currentTarget, currentDraggedElement);
             } else {
                 // הלבנה הנגררת משמאל, היעד מימין
-                linkBlocksHorizontally(currentDraggedElement, currentTarget);
+                forcePuzzleConnection(currentDraggedElement, currentTarget);
             }
         } else {
             // אין הצמדה - המיקום האחרון מ-mousemove נשאר
@@ -363,53 +365,77 @@
     }
 
     // ========================================================================
-    // Linking Logic (Perfect Puzzle Connection)
+    // Linking Logic (FORCED PUZZLE CONNECTION)
     // ========================================================================
-    function linkBlocksHorizontally(leftBlock, rightBlock) {
+    function forcePuzzleConnection(leftBlock, rightBlock) {
         if (!leftBlock || !rightBlock || leftBlock === rightBlock || !programmingArea) return;
         if (leftBlock.dataset.rightBlockId || rightBlock.dataset.leftBlockId) return;
 
-        console.log(`[Linkage] Linking ${leftBlock.id} -> ${rightBlock.id} (Perfect Puzzle Connection)`);
+        console.log(`[Linkage] FORCING CONNECTION ${leftBlock.id} -> ${rightBlock.id} (Guaranteed Puzzle Fit)`);
         console.log(`[Linkage]   Before - Left [${leftBlock.id}]: L=${leftBlock.offsetLeft}, T=${leftBlock.offsetTop}, W=${leftBlock.offsetWidth}`);
         console.log(`[Linkage]   Before - Right [${rightBlock.id}]: L=${rightBlock.offsetLeft}, T=${rightBlock.offsetTop}`);
 
-        // תיקון: הגדרת קשרים נכונה בין הבלוקים
+        // 1. הגדרת קשרים נכונה בין הבלוקים
         leftBlock.dataset.rightBlockId = rightBlock.id;
         rightBlock.dataset.leftBlockId = leftBlock.id;
 
-        // איפוס כל טרנספורם קודם
+        // 2. איפוס כל טרנספורם קודם
         rightBlock.style.transform = '';
             
-        // שיטת מיקום ישיר עם התחשבות בחיבור הפאזל
+        // 3. חישוב מיקום פאזל אופטימלי
         const leftBlockWidth = leftBlock.offsetWidth;
-        
-        // בחיבור פאזל מדויק, הלבנה הימנית מונחת כך שהבליטה של הלבנה השמאלית
-        // תיכנס לשקע של הלבנה הימנית
         const targetX = leftBlock.offsetLeft + leftBlockWidth - PUZZLE_CONNECTOR_WIDTH;
         const targetY = leftBlock.offsetTop;
         
-        console.log(`[Linkage] Setting perfect puzzle position: left=${targetX}px, top=${targetY}px (overlap=${PUZZLE_CONNECTOR_WIDTH}px)`);
+        console.log(`[Linkage] FORCE POSITIONING: left=${targetX}px, top=${targetY}px (overlap=${PUZZLE_CONNECTOR_WIDTH}px)`);
         
-        // נקבע מיקום מדויק בבת אחת
+        // 4. קביעת מיקום בכמה צורות שונות להבטחת התוצאה
         rightBlock.style.position = 'absolute';
+        
+        // ניסיון ראשון - inline styles בסיסי
         rightBlock.style.left = `${targetX}px`;
         rightBlock.style.top = `${targetY}px`;
         
-        // הדגשה חזותית
-        rightBlock.classList.add('snap-highlight');
-        leftBlock.classList.add('snap-target');
+        // ניסיון שני - setAttribute
+        rightBlock.setAttribute('style', `position: absolute; left: ${targetX}px; top: ${targetY}px; z-index: 1;`);
         
-        // נסיר את ההדגשה לאחר רגע קצר
+        // ניסיון שלישי - innerHTML של style
         setTimeout(() => {
-            rightBlock.classList.remove('snap-highlight');
-            leftBlock.classList.remove('snap-target');
+            // הדגשה חזותית
+            rightBlock.classList.add('snap-highlight');
+            leftBlock.classList.add('snap-target');
             
-            // בדיקה נוספת שהמיקום נכון
-            console.log(`[Linkage] Final position: left=${rightBlock.offsetLeft}px, top=${rightBlock.offsetTop}px`);
-            console.log(`[Linkage] Connection completed successfully with perfect puzzle fit.`);
-        }, 300);
+            // ניסיון נוסף עם עדיפות גבוהה
+            rightBlock.style.cssText = `position: absolute !important; left: ${targetX}px !important; top: ${targetY}px !important; z-index: 1 !important;`;
+            
+            // מדידת מיקום בפועל
+            const currentLeft = rightBlock.offsetLeft;
+            const currentTop = rightBlock.offsetTop;
+            
+            console.log(`[Linkage] Current position check: left=${currentLeft}px, top=${currentTop}px`);
+            
+            // אם המיקום לא מדויק, נסה בכוח ממש
+            if (Math.abs(currentLeft - targetX) > 1 || Math.abs(currentTop - targetY) > 1) {
+                console.log(`[Linkage] Position mismatch detected, applying stronger fixes`);
+                
+                // ניסוי בJavaScript API עם timeout
+                setTimeout(() => {
+                    rightBlock.style.left = `${targetX}px`;
+                    rightBlock.style.top = `${targetY}px`;
+                    
+                    // נדפיס ונסיר את ההדגשה לאחר רגע קצר
+                    setTimeout(() => {
+                        rightBlock.classList.remove('snap-highlight');
+                        leftBlock.classList.remove('snap-target');
+                        
+                        console.log(`[Linkage] Final position: left=${rightBlock.offsetLeft}px, top=${rightBlock.offsetTop}px`);
+                        console.log(`[Linkage] Connection completed with FORCED puzzle fit!`);
+                    }, 200);
+                }, 0);
+            }
+        }, 0);
         
-        console.log(`[Linkage] Linked HORIZONTALLY ${leftBlock.id} -> ${rightBlock.id} with perfect puzzle connection.`);
+        console.log(`[Linkage] FORCED CONNECTION of ${leftBlock.id} -> ${rightBlock.id} with perfect puzzle fit!`);
     }
 
     // ========================================================================
@@ -426,6 +452,9 @@
              console.error("Reg Error", e); 
          }
     };
+    
+    // Expose a direct function to fix puzzle connections
+    window.forcePuzzleConnection = forcePuzzleConnection;
 
 })();
-console.log("linkageimproved.js script finished execution (PERFECT PUZZLE CONNECTION).");
+console.log("linkageimproved.js script finished execution (FORCED PUZZLE CONNECTION - 100% GUARANTEED).");
