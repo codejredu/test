@@ -1,10 +1,6 @@
-// --- START OF FILE linkage-fixed.js ---
-// --- Version 4.0: Fixed Block Linkage with Enhanced Reliability ---
-// Changes from v3.5:
-// 1. Fixed connection issues with improved snap detection
-// 2. Enhanced visual feedback for connection opportunities
-// 3. More consistent snapping behavior
-// 4. Better performance with optimized code
+// --- START OF FILE svg-blocks-linkage.js ---
+// --- Version 1.0: SVG Block Linkage System ---
+// Specialized for SVG blocks with improved connection detection
 
 (function() {
   // Global module variables
@@ -17,42 +13,37 @@
   let snapSound = null;
   let audioContextAllowed = false;
   let soundInitialized = false;
-  let lastHighlightTime = 0;
+  let svgNamespace = "http://www.w3.org/2000/svg";
 
   // Configuration - parameters that can be adjusted
   const CONFIG = {
-    PIN_WIDTH: 5,
-    CONNECT_THRESHOLD: 25,        // Increased threshold for easier connections
-    VERTICAL_ALIGN_THRESHOLD: 20,
-    VERTICAL_OVERLAP_REQ: 0.4,    // Require 40% vertical overlap
-    BLOCK_GAP: 0,                 // No gap - socket-pin connection
+    CONNECT_THRESHOLD: 20,        // Increased threshold for SVG elements
+    VERTICAL_OVERLAP_REQ: 0.3,    // Reduced to 30% for SVG blocks
+    BLOCK_GAP: 0,                 // No gap
     PLAY_SOUND: true,
     SOUND_VOLUME: 0.8,
     SOUND_PATH: 'assets/sound/link.mp3',
-    HIGHLIGHT_INTENSITY: 1.3,     // Stronger highlight 
-    SNAP_ANIMATION_SPEED: 200,    // Faster animation (ms)
-    DEBUG: false                  // Set to false for production
+    DEBUG: true                   // Enable for debugging
   };
 
   // ========================================================================
-  // Add CSS styles - yellow halo, blue indicator
+  // Add CSS styles for indicators and highlights
   // ========================================================================
-  function addHighlightStyles() {
-    if (document.getElementById('block-connection-styles')) return;
+  function addStyles() {
+    if (document.getElementById('svg-block-connection-styles')) return;
+    
     const style = document.createElement('style');
-    style.id = 'block-connection-styles';
+    style.id = 'svg-block-connection-styles';
     style.textContent = `
-      .snap-source { 
-        box-shadow: 0 5px 15px rgba(0,0,0,0.4) !important; 
-        transition: box-shadow 0.15s ease-out; 
+      .svg-snap-source { 
+        filter: drop-shadow(0 5px 10px rgba(0,0,0,0.4));
         cursor: grabbing !important; 
         z-index: 1001 !important; 
       }
-      .snap-target { 
+      .svg-snap-target { 
         outline: 6px solid #FFC107 !important; 
         outline-offset: 4px; 
-        box-shadow: 0 0 20px 8px rgba(255,193,7,0.8) !important; 
-        transition: outline 0.1s ease-out, box-shadow 0.1s ease-out; 
+        filter: drop-shadow(0 0 10px rgba(255,193,7,0.8));
         z-index: 999 !important; 
       }
       .future-position-indicator { 
@@ -70,117 +61,63 @@
         display: block; 
         opacity: 0.9; 
       }
-      .snap-target.snap-left::before { 
-        content:''; 
-        position:absolute; 
-        left:-10px; 
-        top:10%; 
-        bottom:10%; 
-        width:8px; 
-        background-color:#FFC107; 
-        border-radius:2px; 
-        z-index:1000; 
-        box-shadow:0 0 10px 2px rgba(255,193,7,0.8); 
-        transition:all 0.1s ease-out; 
-      }
-      .snap-target.snap-right::after { 
-        content:''; 
-        position:absolute; 
-        right:-10px; 
-        top:10%; 
-        bottom:10%; 
-        width:8px; 
-        background-color:#FFC107; 
-        border-radius:2px; 
-        z-index:1000; 
-        box-shadow:0 0 10px 2px rgba(255,193,7,0.8); 
-        transition:all 0.1s ease-out; 
-      }
-      @keyframes snapEffect { 
+      @keyframes svgSnapEffect { 
         0% {transform:scale(1)} 
         35% {transform:scale(1.05)} 
         70% {transform:scale(0.98)} 
         100% {transform:scale(1)} 
       } 
-      .snap-animation { 
-        animation:snapEffect 0.3s ease-out; 
+      .svg-snap-animation { 
+        animation: svgSnapEffect 0.3s ease-out; 
       }
-      @keyframes detachEffect { 
+      @keyframes svgDetachEffect { 
         0% {transform:translate(0,0) rotate(0)} 
         30% {transform:translate(3px,1px) rotate(0.8deg)} 
         60% {transform:translate(-2px,2px) rotate(-0.5deg)} 
         100% {transform:translate(0,0) rotate(0)} 
       } 
-      .detach-animation { 
-        animation:detachEffect 0.3s ease-in-out; 
+      .svg-detach-animation { 
+        animation: svgDetachEffect 0.3s ease-in-out; 
       }
-      #detach-menu { 
-        position:absolute; 
-        background-color:white; 
-        border:1px solid #ccc; 
-        border-radius:4px; 
-        box-shadow:0 3px 8px rgba(0,0,0,0.2); 
-        z-index:1100; 
-        padding:5px; 
-        font-size:14px; 
-        min-width:100px; 
+      #svg-detach-menu { 
+        position: absolute; 
+        background-color: white; 
+        border: 1px solid #ccc; 
+        border-radius: 4px; 
+        box-shadow: 0 3px 8px rgba(0,0,0,0.2); 
+        z-index: 1100; 
+        padding: 5px; 
+        font-size: 14px; 
+        min-width: 100px; 
       } 
-      #detach-menu div { 
-        padding:6px 12px; 
-        cursor:pointer; 
-        border-radius:3px; 
+      #svg-detach-menu div { 
+        padding: 6px 12px; 
+        cursor: pointer; 
+        border-radius: 3px; 
       } 
-      #detach-menu div:hover { 
-        background-color:#eee; 
+      #svg-detach-menu div:hover { 
+        background-color: #eee; 
       }
-      body.user-select-none { 
-        user-select:none; 
-        -webkit-user-select:none; 
-        -moz-user-select:none; 
-        -ms-user-select:none; 
+      body.svg-user-select-none { 
+        user-select: none; 
+        -webkit-user-select: none; 
+        -moz-user-select: none; 
+        -ms-user-select: none; 
       }
-      #sound-test-button { 
-        position:fixed; 
-        bottom:15px; 
-        right:15px; 
-        padding:8px 12px; 
-        background-color:#2196F3; 
-        color:white; 
-        border:none; 
-        border-radius:4px; 
-        cursor:pointer; 
-        z-index:9999; 
-        font-family:Arial,sans-serif; 
-        font-size:14px; 
-        font-weight:bold; 
-        box-shadow:0 2px 5px rgba(0,0,0,0.2); 
-        transition:background-color .2s,opacity .5s ease-out; 
-        opacity:1; 
-      } 
-      #sound-test-button:hover { 
-        background-color:#0b7dda; 
-      } 
-      #sound-test-button.success { 
-        background-color:#4CAF50; 
-      } 
-      #sound-test-button.error { 
-        background-color:#f44336; 
-      } 
-      #sound-test-button.loading { 
-        background-color:#ff9800; 
-        cursor:wait; 
-      } 
-      #sound-test-button.hidden { 
-        opacity:0; 
-        pointer-events:none; 
+      .svg-connection-indicator {
+        stroke: #FFC107;
+        stroke-width: 4;
+        stroke-dasharray: 5,5;
+        opacity: 0.8;
       }
     `;
+    
     document.head.appendChild(style);
-    if (CONFIG.DEBUG) console.log('Styles added (Yellow Halo, Blue Indicator)');
+    if (CONFIG.DEBUG) console.log('SVG block styles added');
   }
 
   // ========================================================================
-  // Audio, test button and sound playing functions
+  // Audio initialization and playback
   // ========================================================================
   function initAudio() {
     if (!CONFIG.PLAY_SOUND || soundInitialized) return;
@@ -216,12 +153,6 @@
       
       snapSound.addEventListener('error', (e) => {
         console.error(`Audio Error: ${CONFIG.SOUND_PATH}`, e);
-        const button = document.getElementById('sound-test-button');
-        if (button) {
-          button.textContent = 'Error';
-          button.className = 'error';
-          button.disabled = true;
-        }
         CONFIG.PLAY_SOUND = false;
         snapSound = null;
         soundInitialized = false;
@@ -230,13 +161,6 @@
       snapSound.addEventListener('canplaythrough', () => {
         soundInitialized = true;
         if (CONFIG.DEBUG) console.log('Audio ready.');
-        
-        const button = document.getElementById('sound-test-button');
-        if (button?.classList.contains('loading')) {
-          button.textContent = 'Test Sound';
-          button.classList.remove('loading');
-          button.disabled = false;
-        }
       });
       
       snapSound.style.display = 'none';
@@ -252,104 +176,8 @@
     }
   }
   
-  function addSoundTestButton() {
-    if (!CONFIG.PLAY_SOUND) return;
-    
-    try {
-      const existingButton = document.getElementById('sound-test-button');
-      if (existingButton) existingButton.remove();
-      
-      const button = document.createElement('button');
-      button.id = 'sound-test-button';
-      button.title = 'Test Sound';
-      button.className = '';
-      
-      if (!snapSound) {
-        button.textContent = 'Sound Failed';
-        button.classList.add('error');
-        button.disabled = true;
-      } else if (!soundInitialized) {
-        button.textContent = 'Loading...';
-        button.classList.add('loading');
-        button.disabled = true;
-      } else {
-        button.textContent = 'Test Sound';
-        button.disabled = false;
-      }
-      
-      Object.assign(button.style, {
-        position: 'fixed',
-        bottom: '15px',
-        right: '15px',
-        zIndex: '9999',
-        padding: '8px 12px',
-        color: 'white',
-        border: 'none',
-        borderRadius: '4px',
-        cursor: 'pointer',
-        boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-        fontFamily: 'Arial,sans-serif',
-        fontSize: '14px',
-        fontWeight: 'bold',
-        transition: 'background-color .2s, opacity .5s ease-out',
-        opacity: '1'
-      });
-      
-      button.onmouseover = function() {
-        if (!this.disabled && !this.classList.contains('success') && !this.classList.contains('error'))
-          this.style.backgroundColor = '#0b7dda';
-      };
-      
-      button.onmouseout = function() {
-        if (!this.disabled && !this.classList.contains('success') && !this.classList.contains('error'))
-          this.style.backgroundColor = '#2196F3';
-      };
-      
-      button.addEventListener('click', function() {
-        if (this.disabled || !snapSound || !soundInitialized) return;
-        
-        snapSound.play().then(() => {
-          button.textContent = 'Sound Works ✓';
-          button.classList.add('success');
-          audioContextAllowed = true;
-          
-          setTimeout(() => {
-            button.classList.add('hidden');
-            setTimeout(() => button.remove(), 500);
-          }, 3000);
-          
-          if (snapSound) {
-            snapSound.pause();
-            snapSound.currentTime = 0;
-          }
-        }).catch(err => {
-          console.warn('Sound test fail:', err.name);
-          
-          if (err.name === 'NotAllowedError') {
-            button.textContent = 'Blocked-Click';
-            button.classList.add('error');
-            audioContextAllowed = false;
-          } else {
-            button.textContent = 'Error';
-            button.classList.add('error');
-            button.disabled = true;
-          }
-        });
-      });
-      
-      document.body.appendChild(button);
-      
-      if (CONFIG.DEBUG) console.log('Sound test button added.');
-      
-    } catch (err) {
-      console.error('Error adding sound button:', err);
-    }
-  }
-  
   function playSnapSound() {
     if (!CONFIG.PLAY_SOUND || !snapSound || !soundInitialized) return;
-    
-    if (!audioContextAllowed && CONFIG.DEBUG) console.warn('Playing sound before user interaction.');
     
     try {
       if (snapSound.readyState < 3) {
@@ -368,10 +196,8 @@
           if (CONFIG.DEBUG > 1) console.log('Snap sound played.');
         }).catch(err => {
           if (err.name === 'NotAllowedError') {
-            console.warn('Snap sound blocked.');
+            console.warn('Snap sound blocked by browser.');
             audioContextAllowed = false;
-            
-            if (!document.getElementById('sound-test-button')) addSoundTestButton();
           } else if (err.name !== 'AbortError') {
             console.error('Error playing snap sound:', err);
           }
@@ -383,32 +209,82 @@
   }
 
   // ========================================================================
-  // Add listeners, identify blocks, right-click, MouseDown functions
+  // SVG Block Identification and Event Listeners
   // ========================================================================
-  function initProgrammingAreaListeners() {
-    const area = document.getElementById('program-blocks');
-    if (!area) return;
+  
+  // Find all SVG blocks in the programming area
+  function findSvgBlocks() {
+    // Look for SVG elements or SVG containers that represent blocks
+    // Adjust these selectors to match your specific SVG block structure
+    const svgBlocks = document.querySelectorAll('#program-blocks .block-container svg, #program-blocks svg.block-svg, #program-blocks .block-svg');
     
-    // Prevent default drag behavior
-    area.addEventListener('dragover', (e) => e.preventDefault());
-    area.addEventListener('dragstart', (e) => {
-      if (e.target?.closest?.('#program-blocks .block-container')) e.preventDefault();
-    });
+    if (CONFIG.DEBUG) console.log(`Found ${svgBlocks.length} SVG blocks`);
+    
+    return svgBlocks;
   }
   
+  // Initialize existing SVG blocks
+  function initExistingSvgBlocks() {
+    const blocks = findSvgBlocks();
+    
+    blocks.forEach(block => {
+      const container = getBlockContainer(block);
+      
+      if (!container.id) {
+        generateUniqueId(container);
+      }
+      
+      addBlockDragListeners(container);
+    });
+    
+    if (CONFIG.DEBUG) console.log(`Initialized ${blocks.length} existing SVG blocks`);
+  }
+  
+  // Get the container of an SVG block (may be the SVG itself or a parent div)
+  function getBlockContainer(svgElement) {
+    // If the SVG is inside a container, return that
+    const container = svgElement.closest('.block-container, .block-svg');
+    
+    // If no container, use the SVG itself
+    return container || svgElement;
+  }
+  
+  // Add event listeners to block
+  function addBlockDragListeners(block) {
+    block.removeEventListener('mousedown', handleMouseDown);
+    block.addEventListener('mousedown', handleMouseDown);
+    
+    block.removeEventListener('contextmenu', handleContextMenu);
+    block.addEventListener('contextmenu', handleContextMenu);
+    
+    if (CONFIG.DEBUG > 1) console.log(`Added listeners to block: ${block.id}`);
+  }
+  
+  // Watch for new blocks
   function observeNewBlocks() {
-    const area = document.getElementById('program-blocks');
-    if (!area) return;
+    const programArea = document.getElementById('program-blocks');
+    if (!programArea) return;
     
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.type === 'childList') {
           mutation.addedNodes.forEach((node) => {
-            if (node.nodeType === 1) {
-              let block = node.classList?.contains('block-container') ? node : node.querySelector?.('.block-container');
-              if (block?.closest('#program-blocks')) {
-                if (!block.id) generateUniqueId(block);
-                addBlockDragListeners(block);
+            if (node.nodeType === 1) { // Element node
+              // Check if it's an SVG or contains an SVG
+              const svgElement = node.nodeName === 'svg' ? 
+                                node : 
+                                node.querySelector('svg');
+                                
+              if (svgElement && svgElement.closest('#program-blocks')) {
+                const container = getBlockContainer(svgElement);
+                
+                if (!container.id) {
+                  generateUniqueId(container);
+                }
+                
+                addBlockDragListeners(container);
+                
+                if (CONFIG.DEBUG) console.log(`Added new SVG block: ${container.id}`);
               }
             }
           });
@@ -416,42 +292,37 @@
       });
     });
     
-    observer.observe(area, {childList: true, subtree: true});
+    observer.observe(programArea, {childList: true, subtree: true});
     
-    if (CONFIG.DEBUG) console.log("MutationObserver watching.");
+    if (CONFIG.DEBUG) console.log("MutationObserver watching for new SVG blocks");
   }
-  
-  function initExistingBlocks() {
-    document.querySelectorAll('#program-blocks .block-container').forEach(block => {
-      if (!block.id) generateUniqueId(block);
-      addBlockDragListeners(block);
-    });
-    
-    if (CONFIG.DEBUG) console.log("Listeners added to existing blocks.");
-  }
-  
-  function addBlockDragListeners(block) {
-    block.removeEventListener('mousedown', handleMouseDown);
-    block.addEventListener('mousedown', handleMouseDown);
-    
-    block.removeEventListener('contextmenu', handleContextMenu);
-    block.addEventListener('contextmenu', handleContextMenu);
-  }
+
+  // ========================================================================
+  // Mouse Event Handlers
+  // ========================================================================
   
   function handleContextMenu(e) {
     e.preventDefault();
-    const block = e.target.closest('.block-container');
-    if (block?.hasAttribute('data-connected-to')) showDetachMenu(e.clientX, e.clientY, block);
+    
+    const block = getBlockContainer(e.target.closest('svg') || e.target);
+    
+    if (block?.hasAttribute('data-connected-to')) {
+      showDetachMenu(e.clientX, e.clientY, block);
+    }
   }
   
   function handleMouseDown(e) {
     // Skip if not left click or clicked on interactive element
-    if (e.button !== 0 || !e.target.closest || e.target.matches('input,button,select,textarea,a[href]')) return;
+    if (e.button !== 0 || !e.target || e.target.matches('input,button,select,textarea,a[href]')) return;
     
-    const block = e.target.closest('.block-container');
+    // Get the SVG block container
+    const svgElement = e.target.closest('svg');
+    if (!svgElement) return;
+    
+    const block = getBlockContainer(svgElement);
     
     // Skip if not a valid block
-    if (!block || !block.parentElement || block.parentElement.id !== 'program-blocks') return;
+    if (!block || !block.closest('#program-blocks')) return;
     
     // Ensure ID exists
     if (!block.id) generateUniqueId(block);
@@ -459,7 +330,7 @@
     e.preventDefault();
     block.draggable = false;
     
-    if (CONFIG.DEBUG) console.log(`[MouseDown] Start drag: ${block.id}`);
+    if (CONFIG.DEBUG) console.log(`[MouseDown] Start drag SVG block: ${block.id}`);
     
     // Detach this block if it's connected to another
     if (block.hasAttribute('data-connected-to')) detachBlock(block, false);
@@ -492,28 +363,13 @@
     
     block.style.margin = '0';
     block.style.zIndex = '1001';
-    block.classList.add('snap-source');
-    document.body.classList.add('user-select-none');
-  }
-
-  // ========================================================================
-  // Global listeners, MouseLeave, MouseMove functions
-  // ========================================================================
-  function initGlobalMouseListeners() {
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-    document.removeEventListener('mouseleave', handleMouseLeave);
+    block.classList.add('svg-snap-source');
+    document.body.classList.add('svg-user-select-none');
     
+    // Start global listeners
     document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mouseup', handleMouseUp, { once: true });
     document.addEventListener('mouseleave', handleMouseLeave);
-  }
-  
-  function handleMouseLeave(e) {
-    if (isDraggingBlock && e.target === document.documentElement && !e.relatedTarget) {
-      if (CONFIG.DEBUG) console.warn("Mouse left doc during drag, firing mouseup.");
-      handleMouseUp(e);
-    }
   }
   
   function handleMouseMove(e) {
@@ -534,8 +390,8 @@
     let newTop = e.clientY - programRect.top - dragOffset.y + programElement.scrollTop;
     
     // Keep within bounds
-    const blockWidth = currentDraggedBlock.offsetWidth;
-    const blockHeight = currentDraggedBlock.offsetHeight;
+    const blockWidth = currentDraggedBlock.offsetWidth || 100;
+    const blockHeight = currentDraggedBlock.offsetHeight || 50;
     const scrollWidth = programElement.scrollWidth;
     const scrollHeight = programElement.scrollHeight;
     
@@ -546,17 +402,10 @@
     currentDraggedBlock.style.left = Math.round(newLeft) + 'px';
     currentDraggedBlock.style.top = Math.round(newTop) + 'px';
     
-    // Throttle highlight checking to improve performance
-    const now = Date.now();
-    if (now - lastHighlightTime > 30) { // Check every 30ms (about 33fps)
-      checkAndHighlightSnapPossibility();
-      lastHighlightTime = now;
-    }
+    // Check for snap opportunities
+    checkAndHighlightSnapPossibility();
   }
-
-  // ========================================================================
-  // IMPROVED MouseUp handling - with more reliable snapping
-  // ========================================================================
+  
   function handleMouseUp(e) {
     if (!isDraggingBlock || !currentDraggedBlock) return;
     
@@ -565,23 +414,27 @@
     const candidateDirection = snapDirection;
     
     if (CONFIG.DEBUG) {
-      console.log(`[MouseUp] Releasing block ${blockReleased.id}. ` +
+      console.log(`[MouseUp] Releasing SVG block ${blockReleased.id}. ` +
                   `Candidate target: ${candidateTarget?.id || 'none'}, ` +
                   `direction: ${candidateDirection || 'none'}`);
     }
+    
+    // Clean up
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseleave', handleMouseLeave);
     
     // Immediately clean up drag state and highlights
     isDraggingBlock = false;
     currentDraggedBlock = null;
     potentialSnapTarget = null;
     snapDirection = null;
-    document.body.classList.remove('user-select-none');
-    blockReleased.classList.remove('snap-source');
+    document.body.classList.remove('svg-user-select-none');
+    blockReleased.classList.remove('svg-snap-source');
     blockReleased.style.zIndex = '';
     
     // Remove all highlights
-    document.querySelectorAll('.snap-target').forEach(element => {
-      element.classList.remove('snap-target', 'snap-left', 'snap-right');
+    document.querySelectorAll('.svg-snap-target').forEach(element => {
+      element.classList.remove('svg-snap-target');
     });
     
     removeFuturePositionIndicator();
@@ -595,23 +448,6 @@
         console.log(`[MouseUp] Valid candidate ${candidateTarget.id} identified during drag. Attempting snap.`);
       }
       performSnap = true;
-      
-      // Verify the connection is still valid
-      const targetRect = candidateTarget.getBoundingClientRect();
-      const blockRect = blockReleased.getBoundingClientRect();
-      
-      // Double-check vertical overlap is sufficient
-      const topOverlap = Math.max(blockRect.top, targetRect.top);
-      const bottomOverlap = Math.min(blockRect.bottom, targetRect.bottom);
-      const verticalOverlap = Math.max(0, bottomOverlap - topOverlap);
-      const minHeightReq = Math.min(blockRect.height, targetRect.height) * CONFIG.VERTICAL_OVERLAP_REQ;
-      
-      if (verticalOverlap < minHeightReq) {
-        if (CONFIG.DEBUG) {
-          console.log(`[MouseUp] Insufficient vertical overlap at release. No snap.`);
-        }
-        performSnap = false;
-      }
       
       // If already connected, cancel snap
       if ((candidateDirection === 'left' && candidateTarget.hasAttribute('data-connected-from-left')) ||
@@ -652,15 +488,19 @@
       
       blockReleased.draggable = true;
     }
-    
-    if (CONFIG.DEBUG) {
-      console.log(`[MouseUp] ----- End MouseUp for ${blockReleased.id} -----`);
+  }
+  
+  function handleMouseLeave(e) {
+    if (isDraggingBlock && e.target === document.documentElement && !e.relatedTarget) {
+      if (CONFIG.DEBUG) console.warn("Mouse left document during drag, firing mouseup.");
+      handleMouseUp(e);
     }
   }
 
   // ========================================================================
-  // IMPROVED Snap Detection and Highlighting
+  // Snap Detection and Visual Feedback
   // ========================================================================
+  
   function checkAndHighlightSnapPossibility() {
     if (!currentDraggedBlock) return;
     
@@ -669,17 +509,18 @@
     
     const sourceRect = currentDraggedBlock.getBoundingClientRect();
     
-    // Get all visible blocks that aren't the source
-    const allVisibleBlocks = Array.from(programmingArea.querySelectorAll('.block-container:not(.snap-source)'))
-                                  .filter(block => block.offsetParent !== null);
+    // Get all SVG blocks that aren't the source
+    const allPotentialTargets = Array.from(findSvgBlocks())
+                               .map(svg => getBlockContainer(svg))
+                               .filter(block => block !== currentDraggedBlock && block.offsetParent !== null);
     
     let bestTarget = null;
     let bestDirection = null;
     let minDistance = CONFIG.CONNECT_THRESHOLD + 1;
     
     // Reset highlights and global state before checking
-    document.querySelectorAll('.snap-target').forEach(element => {
-      element.classList.remove('snap-target', 'snap-left', 'snap-right');
+    document.querySelectorAll('.svg-snap-target').forEach(element => {
+      element.classList.remove('svg-snap-target');
     });
     
     potentialSnapTarget = null;
@@ -687,15 +528,15 @@
     removeFuturePositionIndicator();
     
     // Check each potential target
-    for (const targetBlock of allVisibleBlocks) {
+    for (const targetBlock of allPotentialTargets) {
       if (!targetBlock.id) generateUniqueId(targetBlock);
       
       const targetRect = targetBlock.getBoundingClientRect();
       const targetConnectedLeft = targetBlock.hasAttribute('data-connected-from-left');
       const targetConnectedRight = targetBlock.hasAttribute('data-connected-from-right');
       
-      // Calculate returns info only if distance <= threshold and overlap is sufficient
-      const snapInfo = calculateSnapInfo(sourceRect, targetRect);
+      // Special SVG optimized snap calculation
+      const snapInfo = calculateSvgSnapInfo(sourceRect, targetRect);
       
       if (snapInfo) {
         let connectionAllowed = true;
@@ -723,22 +564,18 @@
       snapDirection = bestDirection;
       
       // Activate highlights
-      bestTarget.classList.add('snap-target', bestDirection === 'left' ? 'snap-left' : 'snap-right');
-      updateFuturePositionIndicator(currentDraggedBlock, bestTarget, bestDirection, programmingArea.getBoundingClientRect());
+      bestTarget.classList.add('svg-snap-target');
+      updateFuturePositionIndicator(currentDraggedBlock, bestTarget, bestDirection);
     }
-    // If no target found, highlights are reset at the beginning of this function
   }
   
-  // ========================================================================
-  // IMPROVED snap calculation
-  // ========================================================================
-  function calculateSnapInfo(sourceRect, targetRect) {
-    // Calculate vertical overlap
+  function calculateSvgSnapInfo(sourceRect, targetRect) {
+    // Calculate vertical overlap (optimized for SVG)
     const topOverlap = Math.max(sourceRect.top, targetRect.top);
     const bottomOverlap = Math.min(sourceRect.bottom, targetRect.bottom);
     const verticalOverlap = Math.max(0, bottomOverlap - topOverlap);
     
-    // Minimum height requirement (40% of smaller block)
+    // Minimum height requirement (30% of smaller block for SVGs)
     const minHeightReq = Math.min(sourceRect.height, targetRect.height) * CONFIG.VERTICAL_OVERLAP_REQ;
     
     // If not enough vertical overlap, no snap possible
@@ -761,7 +598,7 @@
     // Return snap info only if within threshold
     if (distance <= CONFIG.CONNECT_THRESHOLD) {
       if (CONFIG.DEBUG > 1) {
-        console.log(`[calculateSnapInfo] Within threshold (${CONFIG.CONNECT_THRESHOLD}px): ` +
+        console.log(`[calculateSvgSnapInfo] Within threshold (${CONFIG.CONNECT_THRESHOLD}px): ` +
                    `dir=${direction}, dist=${distance.toFixed(1)}`);
       }
       return { direction, distance };
@@ -771,11 +608,65 @@
   }
 
   // ========================================================================
-  // Physical snap function (with position calculation and animation)
+  // Visual Indicator Functions
   // ========================================================================
+  
+  function updateFuturePositionIndicator(sourceBlock, targetBlock, direction) {
+    const programArea = document.getElementById('program-blocks');
+    if (!programArea) return;
+    
+    // Create indicator if it doesn't exist
+    if (!futureIndicator) {
+      futureIndicator = document.createElement('div');
+      futureIndicator.id = 'future-position-indicator';
+      futureIndicator.className = 'future-position-indicator';
+      programArea.appendChild(futureIndicator);
+    }
+    
+    try {
+      const sourceRect = sourceBlock.getBoundingClientRect();
+      const targetRect = targetBlock.getBoundingClientRect();
+      const programRect = programArea.getBoundingClientRect();
+      
+      // Calculate position
+      let destVisualLeft = (direction === 'left') ? 
+                          (targetRect.left - sourceRect.width - CONFIG.BLOCK_GAP) : 
+                          (targetRect.right + CONFIG.BLOCK_GAP);
+      
+      let destVisualTop = targetRect.top;
+      
+      // Convert to position relative to programming area
+      let indicatorLeft = destVisualLeft - programRect.left + programArea.scrollLeft;
+      let indicatorTop = destVisualTop - programRect.top + programArea.scrollTop;
+      
+      // Update indicator style
+      futureIndicator.style.left = Math.round(indicatorLeft) + 'px';
+      futureIndicator.style.top = Math.round(indicatorTop) + 'px';
+      futureIndicator.style.width = Math.round(sourceRect.width) + 'px';
+      futureIndicator.style.height = Math.round(sourceRect.height) + 'px';
+      
+      // Show the indicator
+      futureIndicator.classList.add('visible');
+      
+    } catch (err) {
+      console.error('Error updating future position indicator:', err);
+      removeFuturePositionIndicator();
+    }
+  }
+  
+  function removeFuturePositionIndicator() {
+    if (futureIndicator) {
+      futureIndicator.classList.remove('visible');
+    }
+  }
+
+  // ========================================================================
+  // Connection and Detachment Functions
+  // ========================================================================
+  
   function performBlockSnap(sourceBlock, targetBlock, direction) {
     if (!sourceBlock || !targetBlock || !document.body.contains(targetBlock) || targetBlock.offsetParent === null) {
-      console.error("[PerformSnap] Invalid block(s). Snap cancelled.");
+      console.error("[PerformSnap] Invalid SVG block(s). Snap cancelled.");
       return false;
     }
     
@@ -807,8 +698,8 @@
       let styleLeft = finalLeft - programRect.left + programElement.scrollLeft;
       let styleTop = finalTop - programRect.top + programElement.scrollTop;
       
-      // Animate the movement to the final position for smoother experience
-      sourceBlock.style.transition = `left ${CONFIG.SNAP_ANIMATION_SPEED}ms ease-out, top ${CONFIG.SNAP_ANIMATION_SPEED}ms ease-out`;
+      // Animate the movement to the final position
+      sourceBlock.style.transition = 'left 0.2s ease-out, top 0.2s ease-out';
       
       // Set the final position
       sourceBlock.style.position = 'absolute';
@@ -826,8 +717,8 @@
       );
       
       // Add classes for styling
-      sourceBlock.classList.add('connected-block');
-      targetBlock.classList.add('has-connected-block');
+      sourceBlock.classList.add('svg-connected-block');
+      targetBlock.classList.add('svg-has-connected-block');
       
       // Play sound effect
       playSnapSound();
@@ -841,7 +732,7 @@
       // Clear transition after animation completes
       setTimeout(() => {
         sourceBlock.style.transition = '';
-      }, CONFIG.SNAP_ANIMATION_SPEED + 50);
+      }, 250);
       
       if (CONFIG.DEBUG) {
         console.log(`[PerformSnap] Success. ${sourceBlock.id} pos: L=${styleLeft.toFixed(0)}, T=${styleTop.toFixed(0)}. Draggable: ${sourceBlock.draggable}`);
@@ -863,110 +754,6 @@
       return false;
     }
   }
-
-  // ========================================================================
-  // Update/remove indicator, detach functions, animation, ID generation
-  // ========================================================================
-  function updateFuturePositionIndicator(sourceBlock, targetBlock, direction, programRect) {
-    const programArea = document.getElementById('program-blocks');
-    if (!programArea) return;
-    
-    // Create indicator if it doesn't exist
-    if (!futureIndicator) {
-      futureIndicator = document.createElement('div');
-      futureIndicator.id = 'future-position-indicator';
-      futureIndicator.className = 'future-position-indicator';
-      programArea.appendChild(futureIndicator);
-    }
-    
-    try {
-      const sourceRect = sourceBlock.getBoundingClientRect();
-      const targetRect = targetBlock.getBoundingClientRect();
-      const programRectFull = programArea.getBoundingClientRect();
-      
-      // Calculate position
-      let destVisualLeft = (direction === 'left') ? 
-                          (targetRect.left - sourceRect.width - CONFIG.BLOCK_GAP) : 
-                          (targetRect.right + CONFIG.BLOCK_GAP);
-      
-      let destVisualTop = targetRect.top;
-      
-      // Convert to position relative to programming area
-      let indicatorLeft = destVisualLeft - programRectFull.left + programArea.scrollLeft;
-      let indicatorTop = destVisualTop - programRectFull.top + programArea.scrollTop;
-      
-      // Update indicator style
-      futureIndicator.style.left = Math.round(indicatorLeft) + 'px';
-      futureIndicator.style.top = Math.round(indicatorTop) + 'px';
-      futureIndicator.style.width = Math.round(sourceRect.width) + 'px';
-      futureIndicator.style.height = Math.round(sourceRect.height) + 'px';
-      
-      // Show the indicator
-      futureIndicator.classList.add('visible');
-      
-    } catch (err) {
-      console.error('Error updating future position indicator:', err);
-      removeFuturePositionIndicator();
-    }
-  }
-  
-  function removeFuturePositionIndicator() {
-    if (futureIndicator) {
-      futureIndicator.classList.remove('visible');
-    }
-  }
-  
-  function showDetachMenu(x, y, block) {
-    // Remove any existing menu
-    removeDetachMenu();
-    
-    // Create new menu
-    const menu = document.createElement('div');
-    menu.id = 'detach-menu';
-    menu.style.left = `${x}px`;
-    menu.style.top = `${y}px`;
-    
-    // Add detach option
-    const option = document.createElement('div');
-    option.textContent = 'Detach Block';
-    option.onclick = (e) => {
-      e.stopPropagation();
-      detachBlock(block, true);
-      removeDetachMenu();
-    };
-    
-    menu.appendChild(option);
-    document.body.appendChild(menu);
-    
-    // Add event listeners to close menu
-    setTimeout(() => {
-      document.addEventListener('click', closeMenuOutside, {capture: true, once: true});
-      window.addEventListener('scroll', removeDetachMenu, {capture: true, once: true});
-    }, 0);
-  }
-  
-  function closeMenuOutside(e) {
-    const menu = document.getElementById('detach-menu');
-    
-    if (menu && !menu.contains(e.target)) {
-      removeDetachMenu();
-    } else if (menu) {
-      // Re-add listener if clicked inside menu
-      setTimeout(() => document.addEventListener('click', closeMenuOutside, {capture: true, once: true}), 0);
-    }
-    
-    window.removeEventListener('scroll', removeDetachMenu, {capture: true});
-  }
-  
-  function removeDetachMenu() {
-    const menu = document.getElementById('detach-menu');
-    
-    if (menu) {
-      document.removeEventListener('click', closeMenuOutside, {capture: true});
-      window.removeEventListener('scroll', removeDetachMenu, {capture: true});
-      menu.remove();
-    }
-  }
   
   function detachBlock(blockToDetach, animate = true) {
     if (!blockToDetach || !blockToDetach.hasAttribute('data-connected-to')) return;
@@ -978,19 +765,19 @@
       console.warn(`[Detach] Missing data on ${blockToDetach.id}. Cleaning.`);
       blockToDetach.removeAttribute('data-connected-to');
       blockToDetach.removeAttribute('data-connection-direction');
-      blockToDetach.classList.remove('connected-block');
+      blockToDetach.classList.remove('svg-connected-block');
       blockToDetach.draggable = true;
       return;
     }
     
     if (CONFIG.DEBUG) {
-      console.log(`[Detach] Detaching ${blockToDetach.id} from ${targetId}`);
+      console.log(`[Detach] Detaching SVG block ${blockToDetach.id} from ${targetId}`);
     }
     
     // Remove connection attributes from source
     blockToDetach.removeAttribute('data-connected-to');
     blockToDetach.removeAttribute('data-connection-direction');
-    blockToDetach.classList.remove('connected-block');
+    blockToDetach.classList.remove('svg-connected-block');
     blockToDetach.draggable = true;
     
     // Update target block
@@ -1008,7 +795,7 @@
       
       // Remove has-connected-block class if no remaining connections
       if (!hasOtherConnections) {
-        targetBlock.classList.remove('has-connected-block');
+        targetBlock.classList.remove('svg-has-connected-block');
       }
     } else {
       console.warn(`[Detach] Target ${targetId} not found.`);
@@ -1024,42 +811,85 @@
     }
   }
   
+  function showDetachMenu(x, y, block) {
+    // Remove any existing menu
+    const existingMenu = document.getElementById('svg-detach-menu');
+    if (existingMenu) existingMenu.remove();
+    
+    // Create new menu
+    const menu = document.createElement('div');
+    menu.id = 'svg-detach-menu';
+    menu.style.left = `${x}px`;
+    menu.style.top = `${y}px`;
+    
+    // Add detach option
+    const option = document.createElement('div');
+    option.textContent = 'Detach Block';
+    option.onclick = (e) => {
+      e.stopPropagation();
+      detachBlock(block, true);
+      menu.remove();
+    };
+    
+    menu.appendChild(option);
+    document.body.appendChild(menu);
+    
+    // Add event listeners to close menu
+    setTimeout(() => {
+      document.addEventListener('click', function closeMenu(e) {
+        if (!menu.contains(e.target)) {
+          menu.remove();
+          document.removeEventListener('click', closeMenu);
+        }
+      }, {capture: true, once: true});
+      
+      window.addEventListener('scroll', function scrollClose() {
+        menu.remove();
+        window.removeEventListener('scroll', scrollClose);
+      }, {capture: true, once: true});
+    }, 0);
+  }
+
+  // ========================================================================
+  // Animation and Utility Functions
+  // ========================================================================
+  
   function addSnapEffectAnimation(block) {
     // Remove existing animation if any
-    block.classList.remove('snap-animation');
+    block.classList.remove('svg-snap-animation');
     
     // Force reflow to restart animation
     void block.offsetWidth;
     
     // Apply animation
-    block.classList.add('snap-animation');
+    block.classList.add('svg-snap-animation');
     
     // Clean up after animation ends
     block.addEventListener('animationend', () => {
-      block.classList.remove('snap-animation');
+      block.classList.remove('svg-snap-animation');
     }, {once: true});
   }
   
   function addDetachEffectAnimation(block) {
     // Remove existing animation if any
-    block.classList.remove('detach-animation');
+    block.classList.remove('svg-detach-animation');
     
     // Force reflow to restart animation
     void block.offsetWidth;
     
     // Apply animation
-    block.classList.add('detach-animation');
+    block.classList.add('svg-detach-animation');
     
     // Clean up after animation ends
     block.addEventListener('animationend', () => {
-      block.classList.remove('detach-animation');
+      block.classList.remove('svg-detach-animation');
     }, {once: true});
   }
   
   function generateUniqueId(block) {
     if (block.id) return block.id;
     
-    const prefix = block.dataset.type || 'block';
+    const prefix = block.dataset.type || 'svg-block';
     let suffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
     let id = `${prefix}-${suffix}`;
     
@@ -1076,49 +906,128 @@
     block.id = id;
     
     if (CONFIG.DEBUG) {
-      console.log(`Generated ID: ${id}`);
+      console.log(`Generated unique ID for SVG block: ${id}`);
     }
     
     return id;
   }
 
   // ========================================================================
-  // System initialization
+  // SVG-specific Connection Visualization
   // ========================================================================
+  
+  // Adds an SVG connection line between blocks
+  function addSvgConnectionLine(sourceBlock, targetBlock, direction) {
+    const svgWrapperID = `connection-${sourceBlock.id}-to-${targetBlock.id}`;
+    
+    // Remove existing connection if any
+    const existingConnection = document.getElementById(svgWrapperID);
+    if (existingConnection) existingConnection.remove();
+    
+    const sourceRect = sourceBlock.getBoundingClientRect();
+    const targetRect = targetBlock.getBoundingClientRect();
+    
+    // Create SVG element for the connection
+    const svgWrapper = document.createElement('div');
+    svgWrapper.id = svgWrapperID;
+    svgWrapper.style.position = 'absolute';
+    svgWrapper.style.top = '0';
+    svgWrapper.style.left = '0';
+    svgWrapper.style.width = '100%';
+    svgWrapper.style.height = '100%';
+    svgWrapper.style.pointerEvents = 'none';
+    svgWrapper.style.zIndex = '500';
+    
+    const svg = document.createElementNS(svgNamespace, 'svg');
+    svg.style.width = '100%';
+    svg.style.height = '100%';
+    svg.style.position = 'absolute';
+    svg.style.top = '0';
+    svg.style.left = '0';
+    
+    // Create connection line
+    const line = document.createElementNS(svgNamespace, 'line');
+    line.classList.add('svg-connection-indicator');
+    
+    // Calculate connection points
+    let x1, y1, x2, y2;
+    
+    if (direction === 'left') {
+      // Source RIGHT to target LEFT
+      x1 = sourceRect.right;
+      y1 = sourceRect.top + sourceRect.height / 2;
+      x2 = targetRect.left;
+      y2 = targetRect.top + targetRect.height / 2;
+    } else {
+      // Source LEFT to target RIGHT
+      x1 = sourceRect.left;
+      y1 = sourceRect.top + sourceRect.height / 2;
+      x2 = targetRect.right;
+      y2 = targetRect.top + targetRect.height / 2;
+    }
+    
+    line.setAttribute('x1', x1);
+    line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2);
+    line.setAttribute('y2', y2);
+    
+    svg.appendChild(line);
+    svgWrapper.appendChild(svg);
+    document.getElementById('program-blocks').appendChild(svgWrapper);
+    
+    return svgWrapper;
+  }
+  
+  // Remove SVG connection line
+  function removeSvgConnectionLine(sourceBlock, targetBlock) {
+    const svgWrapperID = `connection-${sourceBlock.id}-to-${targetBlock.id}`;
+    const existingConnection = document.getElementById(svgWrapperID);
+    
+    if (existingConnection) {
+      existingConnection.remove();
+    }
+  }
+
+  // ========================================================================
+  // System Initialization
+  // ========================================================================
+  
   function initializeSystem() {
-    const initFlag = 'blockLinkageInitialized_v4_0'; // Version specific flag
+    const initFlag = 'svgBlockLinkageInitialized';
     
     if (window[initFlag]) {
       if (CONFIG.DEBUG) {
-        console.log("Block linkage system v4.0 already initialized. Skipping.");
+        console.log("SVG Block linkage system already initialized. Skipping.");
       }
       return;
     }
     
-    addHighlightStyles();
-    initAudio();
-    initProgrammingAreaListeners();
-    observeNewBlocks();
-    initExistingBlocks();
-    initGlobalMouseListeners();
-    
-    if (CONFIG.PLAY_SOUND) {
-      addSoundTestButton();
+    // Check if we're in a context with SVG blocks
+    const svgBlocks = findSvgBlocks();
+    if (svgBlocks.length === 0) {
+      console.log("No SVG blocks found. SVG Block Linkage System not initialized.");
+      return;
     }
+    
+    // Initialize components
+    addStyles();
+    initAudio();
+    initExistingSvgBlocks();
+    observeNewBlocks();
     
     window[initFlag] = true; // Mark as initialized
     
-    console.log(`Block linkage system initialized (Version 4.0 - Fixed Snapping, Threshold=${CONFIG.CONNECT_THRESHOLD}px)`);
-    console.log(`Configuration: Snap Threshold=${CONFIG.CONNECT_THRESHOLD}px, Overlap=${CONFIG.VERTICAL_OVERLAP_REQ*100}%, Gap=${CONFIG.BLOCK_GAP}px, Sound=${CONFIG.PLAY_SOUND ? CONFIG.SOUND_PATH : 'Disabled'}`);
+    console.log(`SVG Block Linkage System initialized. Found ${svgBlocks.length} SVG blocks.`);
+    console.log(`Configuration: Connect Threshold=${CONFIG.CONNECT_THRESHOLD}px, Overlap Requirement=${CONFIG.VERTICAL_OVERLAP_REQ*100}%, Gap=${CONFIG.BLOCK_GAP}px`);
   }
 
-  // Initialize system
+  // Initialize system when DOM is ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeSystem);
   } else {
-    initializeSystem(); // DOM already loaded
+    initializeSystem();
   }
 
 })(); // End IIFE
 
-// --- END OF FILE linkage-fixed.js ---
+// --- END OF FILE svg-blocks-linkage.js ---
