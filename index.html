@@ -8,68 +8,66 @@
 </head>
 <body>
 
-    <div class="container">
-        <header>
-            <div class="logo">ScratchJr</div>
-            <div class="header-icons">
-                <span class="icon">💾</span>
-                <span class="icon">📄</span>
-                <span class="icon">▶️</span> <!-- מצב מצגת -->
-                <span class="icon">➕</span> <!-- הוסף עמוד -->
-                <span class="icon">ℹ️</span> <!-- מידע על הפרויקט -->
-                <span class="icon" id="grid-toggle">GRID</span> <!-- כפתור קווי GRID -->
+<div class="container">
+    <header>
+        <div class="logo">ScratchJr</div>
+        <div class="header-icons">
+            <div class="icon" id="background-button"><img src="assets/images/background.svg" alt="רקע" class="header-icon-img"></div>
+            <div class="icon"><img src="assets/images/save.svg" alt="שמור" class="header-icon-img"></div>
+            <div class="icon"><img src="assets/images/new.svg" alt="חדש" class="header-icon-img"></div>
+             <div class="icon"><img src="assets/images/add.svg" alt="הוסף" class="header-icon-img"></div>
+            <div class="icon"><img src="assets/images/info.svg" alt="מידע" class="header-icon-img"></div>
+            <div class="icon" id="grid-toggle"><img src="assets/images/grid.svg" alt="רשת" class="header-icon-img"></div>
+        </div>
+    </header>
+
+    <main>
+        <div class="stage-container">
+            <div id="stage">
+                <img id="character" src="assets/images/CAT.svg" alt="Cat" draggable="true">
             </div>
-        </header>
-
-        <main>
-            <div class="stage-container">
-              <div id="stage">
-                  <!-- כאן הדמויות והרקע יוצגו -->
-                  <img id="character" src="assets/images/CAT.svg" alt="Cat">
-              </div>
-            </div>
-            <div class="palette-and-programming">
-
-                <div id="block-palette">
-                    <!-- כאן יוצגו הבלוקים השונים -->
-                    <div class="category-tabs">
-                        <button class="category-tab" data-category="end">
-                            <img src="assets/images/end.svg" alt="End">
-                        </button>
-                        <button class="category-tab" data-category="control">
-                            <img src="assets/images/control.svg" alt="Control">
-                        </button>
-                        <button class="category-tab" data-category="sound">
-                            <img src="assets/images/sound.svg" alt="Sound">
-                        </button>
-                        <button class="category-tab" data-category="looks">
-                            <img src="assets/images/looks.svg" alt="Looks">
-                        </button>
-                        <button class="category-tab" data-category="motion">
-                            <img src="assets/images/motion.svg" alt="Motion">
-                        </button>
-                        <button class="category-tab active" data-category="triggering">
-                            <img src="assets/images/triggering.svg" alt="Triggers">
-                        </button>
-                    </div>
-                    <div id="end-blocks" class="block-category" data-category="end"></div>
-                    <div id="control-blocks" class="block-category" data-category="control"></div>
-                    <div id="sound-blocks" class="block-category" data-category="sound"></div>
-                    <div id="looks-blocks" class="block-category" data-category="looks"></div>
-                    <div id="motion-blocks" class="block-category" data-category="motion"></div>
-                    <div id="triggering-blocks" class="block-category active" data-category="triggering"></div>
-
+        </div>
+        <div class="palette-and-programming">
+            <div id="block-palette">
+                <div class="category-tabs">
+                    <button class="category-tab" data-category="end">
+                        <img src="assets/Categories/end.svg" alt="End">
+                    </button>
+                    <button class="category-tab" data-category="control">
+                        <img src="assets/Categories/control.svg" alt="Control">
+                    </button>
+                    <button class="category-tab" data-category="sound">
+                        <img src="assets/Categories/Sound.svg" alt="Sound">
+                    </button>
+                    <button class="category-tab" data-category="looks">
+                        <img src="assets/Categories/Looks.svg" alt="Looks">
+                    </button>
+                    <button class="category-tab" data-category="motion">
+                        <img src="assets/Categories/Motion.svg" alt="Motion">
+                    </button>
+                    <button class="category-tab active" data-category="triggering">
+                        <img src="assets/Categories/Trigger.svg" alt="Triggers">
+                    </button>
                 </div>
-
-                <div id="programming-area">
-                    <!-- כאן המשתמש יגרור ויחבר בלוקים -->
-                    <div class="program-header">Program <span id="clear-all">Clear All</span></div>
-                    <div id="program-blocks"></div>
-                </div>
+                <div id="end-blocks" class="block-category" data-category="end"></div>
+                <div id="control-blocks" class="block-category" data-category="control"></div>
+                <div id="sound-blocks" class="block-category" data-category="sound"></div>
+                <div id="looks-blocks" class="block-category" data-category="looks"></div>
+                <div id="motion-blocks" class="block-category" data-category="motion"></div>
+                <div id="triggering-blocks" class="block-category active" data-category="triggering"></div>
             </div>
-        </main>
-    </div>
 
-    <script src="js/script.js"></script>
+            <div id="programming-area">
+                <div class="program-header">Program <span id="clear-all">Clear All</span></div>
+                <div id="program-blocks"></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="js/script.js"></script>
+<script src="js/background-manager.js"></script>
+<script src="js/linkageimproved.js"></script>
+    
 </body>
 </html>
