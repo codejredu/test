@@ -1,420 +1,495 @@
 // ========================================================================
-// הגדרת בלוקים (Blocks)
+// הגדרת בלוקים (Blocks) עם שמות הקבצים המדויקים
 // ========================================================================
 
 const blocks = {
     triggering: [
         {
             name: "Green Flag",
-            color: "yellow",
             type: "startOnGreenFlag",
-            icon: "assets/images/green-flag.svg",
+            svgFile: "Start on Green Flag.svg"
         },
         {
             name: "Tap",
-            color: "yellow",
             type: "startOnTap",
-            icon: "assets/images/blocks/tap.svg",
+            svgFile: "Start on Tap.svg"
         },
         {
             name: "Bump",
-            color: "yellow",
             type: "startOnBump",
-            icon: "assets/images/blocks/bump.svg",
+            svgFile: "Start on Bump.svg"
         },
         {
             name: "Send Message",
-            color: "yellow",
             type: "sendMessage",
-            icon: "assets/images/blocks/send-message.svg",
+            svgFile: "Send Message blue.svg"
         },
         {
             name: "Receive Message",
-            color: "yellow",
             type: "startOnMessage",
-            icon: "assets/images/blocks/receive-message.svg",
+            svgFile: "Send Message orange.svg"
         },
     ],
     motion: [
         {
             name: "Move Right",
-            color: "#43D3FF",
             type: "moveRight",
-            icon: "assets/images/blocks/move-right.svg",
+            svgFile: "Move Right.svg"
         },
         {
             name: "Move Left",
-            color: "#43D3FF",
             type: "moveLeft",
-            icon: "assets/images/blocks/move-left.svg",
+            svgFile: "Move Left.svg"
         },
         {
             name: "Move Up",
-            color: "#43D3FF",
             type: "moveUp",
-            icon: "assets/images/blocks/move-up.svg",
+            svgFile: "Move Up.svg"
         },
         {
             name: "Move Down",
-            color: "#43D3FF",
             type: "moveDown",
-            icon: "assets/images/blocks/move-down.svg",
+            svgFile: "Move Down.svg"
         },
         {
             name: "Turn Right",
-            color: "#43D3FF",
             type: "turnRight",
-            icon: "assets/images/blocks/turn-right.svg",
+            svgFile: "Turn Right.svg"
         },
         {
             name: "Turn Left",
-            color: "#43D3FF",
             type: "turnLeft",
-            icon: "assets/images/blocks/turn-left.svg",
+            svgFile: "Turn Left.svg"
         },
         {
             name: "Hop",
-            color: "#43D3FF",
             type: "hop",
-            icon: "assets/images/blocks/hop.svg",
+            svgFile: "Hop.svg"
         },
         {
             name: "Go Home",
-            color: "#43D3FF",
             type: "goHome",
-            icon: "assets/images/blocks/reset.svg",
+            svgFile: "Go home.svg"
         },
     ],
     looks: [
         {
             name: "Say",
-            color: "purple",
             type: "say",
-            icon: "assets/images/blocks/say.svg",
+            svgFile: "say.svg"
         },
         {
             name: "Grow",
-            color: "purple",
             type: "grow",
-            icon: "assets/images/blocks/grow.svg",
+            svgFile: "reset-size.svg"
         },
         {
             name: "Shrink",
-            color: "purple",
             type: "shrink",
-            icon: "assets/images/blocks/shrink.svg",
+            svgFile: "Shrink.svg"
         },
         {
             name: "Reset Size",
-            color: "purple",
             type: "resetSize",
-            icon: "assets/images/blocks/reset-size.svg",
+            svgFile: "reset-size.svg"
         },
         {
             name: "Hide",
-            color: "purple",
             type: "hide",
-            icon: "assets/images/blocks/hide.svg",
+            svgFile: "hide.svg"
         },
         {
             name: "Show",
-            color: "purple",
             type: "show",
-            icon: "assets/images/blocks/show.svg",
+            svgFile: "show.svg"
         },
     ],
     sound: [
         {
             name: "Play Sound",
-            color: "green",
             type: "popSound",
-            icon: "assets/images/blocks/sound.svg",
+            svgFile: "pop.svg"
         },
         {
             name: "Play Recorded Sound",
-            color: "green",
             type: "playRecordedSound",
-            icon: "assets/images/blocks/record-sound.svg",
+            svgFile: "Play Recorded Sound.svg"
         },
     ],
     control: [
         {
+            name: "Stop",
+            type: "stop",
+            svgFile: "Stop.svg"
+        },
+        {
             name: "Wait",
-            color: "orange",
             type: "wait",
-            icon: "assets/images/blocks/wait.svg",
+            svgFile: "Wait.svg"
         },
         {
             name: "Set Speed",
-            color: "orange",
             type: "setSpeed",
-            icon: "assets/images/blocks/speed.svg",
+            svgFile: "Set Speed.svg"
         },
         {
             name: "Repeat",
             type: "repeat",
-            icon: "assets/images/blocks/repeat.svg",
-            color: "orange"
-        },
-        {
-            name: "Stop",
-            color: "orange",
-            type: "stop",
-            icon: "assets/images/blocks/stop.svg",
+            svgFile: "repeat.svg",
+            isSpecial: true
         },
     ],
     end: [
         {
             name: "End",
-            color: "red",
             type: "end",
-            icon: "assets/images/blocks/end.svg",
-        },
-        {
-            name: "Go To Page",
-            color: "red",
-            type: "goToPage",
-            icon: "assets/images/blocks/go-to-page.svg",
+            svgFile: "end.svg"
         },
         {
             name: "Repeat Forever",
             type: "repeatForever",
-            icon: "assets/images/blocks/repeat-forever.svg",
-            color: "red"
+            svgFile: "repeat-forever.svg"
+        },
+        {
+            name: "Go To Page",
+            type: "goToPage",
+            svgFile: "Go to page.svg"
         },
     ],
 };
 
 // ========================================================================
-// פונקציות ליצירת אלמנטים
+// פונקציה ליצירת אלמנט בלוק
 // ========================================================================
-
-// פונקציה ליצירת מחבר ימני
-function createRightConnector(color) {
-    const rightConnector = document.createElement("div");
-    rightConnector.classList.add("right-connector");
-    rightConnector.style.backgroundColor = color;
-    return rightConnector;
-}
-
-// פונקציה ליצירת מחבר שמאלי
-function createLeftConnector() {
-    const leftConnectorWrapper = document.createElement("div");
-    leftConnectorWrapper.classList.add("left-connector-wrapper");
-
-    const leftConnector = document.createElement("div");
-    leftConnector.classList.add("left-connector");
-
-    leftConnectorWrapper.appendChild(leftConnector);
-    return leftConnectorWrapper;
-}
-
-// פונקציה ליצירת בלוק גרפי - עודכנה להוספת תמונות SVG
-function createScratchBlock(block) {
-    const scratchBlock = document.createElement("div");
-    scratchBlock.classList.add("scratch-block");
-    scratchBlock.style.backgroundColor = block.color;
-    
-    // יצירת אלמנט תמונה עבור האיקון
-    const iconImg = document.createElement("img");
-    iconImg.src = block.icon;
-    iconImg.alt = block.name;
-    iconImg.classList.add("block-icon-img");
-    
-    scratchBlock.appendChild(iconImg);
-    return scratchBlock;
-}
-
-// פונקציה ליצירת HTML עבור בלוק
 function createBlockElement(block, category) {
     const blockContainer = document.createElement("div");
     blockContainer.classList.add("block-container");
-
-    const scratchBlock = createScratchBlock(block);
-    const rightConnector = createRightConnector(block.color);
-    const leftConnectorWrapper = createLeftConnector();
-
-    blockContainer.appendChild(scratchBlock);
-    blockContainer.appendChild(rightConnector);
-    blockContainer.appendChild(leftConnectorWrapper);
-
     blockContainer.dataset.type = block.type;
+    blockContainer.dataset.category = category;
+
+    // יצירת אלמנט תמונה לבלוק
+    const blockImage = document.createElement("img");
+    blockImage.src = `assets/block/${block.svgFile}`;
+    blockImage.alt = block.name;
+    blockImage.classList.add("block-svg-image");
+    
+    // טיפול בשגיאות טעינת תמונה
+    blockImage.onerror = function() {
+        console.warn(`SVG image not found: assets/block/${block.svgFile}`);
+        this.style.border = "2px dashed red";
+        this.style.background = "#ffeeee";
+    };
+    
+    blockContainer.appendChild(blockImage);
+
+    // הוספת מאפייני גרירה
     blockContainer.draggable = true;
-
-    // טיפול באירוע התחלת גרירה (dragstart)
     blockContainer.addEventListener("dragstart", (event) => {
-        handleDragStart(event, block, category);
+        event.dataTransfer.setData("text/plain", JSON.stringify({
+            type: block.type,
+            category: category,
+            name: block.name
+        }));
+        event.dataTransfer.effectAllowed = "move";
     });
-
+    
     return blockContainer;
 }
 
 // ========================================================================
-// פונקציות טיפול באירועים
+// פונקציה למילוי הקטגוריה בבלוקים
 // ========================================================================
-
-// פונקציה לטיפול בהתחלת גרירה
-function handleDragStart(event, block, category) {
-    const data = {
-        type: block.type,
-        icon: block.icon,
-        color: block.color,
-        category: category,
-        name: block.name
-    };
-    event.dataTransfer.setData("text/plain", JSON.stringify(data));
-    event.dataTransfer.effectAllowed = "move";
-}
-
-// פונקציה לטיפול בשחרור באזור התכנות
-function handleDrop(event) {
-    event.preventDefault();
-
-    const data = JSON.parse(event.dataTransfer.getData("text/plain"));
-    const blockType = data.type;
-    const blockCategory = data.category;
-    const blockIcon = data.icon;
-    const blockColor = data.color;
-    const blockName = data.name;
-
-    // יצירת אלמנט בלוק חדש (שיבוט)
-    const newBlock = document.createElement("div");
-    newBlock.classList.add("block-container");
-
-    const scratchBlock = document.createElement("div");
-    scratchBlock.classList.add("scratch-block");
-    scratchBlock.style.backgroundColor = blockColor; //הצבע
-
-    // יצירת אלמנט תמונה עבור האיקון
-    const iconImg = document.createElement("img");
-    iconImg.src = blockIcon;
-    iconImg.alt = blockName;
-    iconImg.classList.add("block-icon-img");
-    
-    scratchBlock.appendChild(iconImg);
-
-    //יצירת אלמנט right-connector
-    const rightConnector = document.createElement("div");
-    rightConnector.classList.add("right-connector");
-    rightConnector.style.backgroundColor = blockColor;
-
-    //יצירת אלמנט left-connector-wrapper
-    const leftConnectorWrapper = document.createElement("div");
-    leftConnectorWrapper.classList.add("left-connector-wrapper");
-
-     //יצירת אלמנט left-connector
-    const leftConnector = document.createElement("div");
-    leftConnector.classList.add("left-connector");
-
-    leftConnectorWrapper.appendChild(leftConnector);
-
-    // הוספת הכל ל container
-    newBlock.appendChild(scratchBlock);
-    newBlock.appendChild(rightConnector);
-    newBlock.appendChild(leftConnectorWrapper);
-    newBlock.dataset.type = blockType;
-    newBlock.draggable = false;
-
-    // הוספת הבלוק החדש לאזור התכנות
-    programmingArea.appendChild(newBlock);
-
-    // מיקום הבלוק החדש יחסי לאזור התכנות
-    const rect = programmingArea.getBoundingClientRect();
-    newBlock.style.position = "absolute";
-    newBlock.style.left = `${event.clientX - rect.left}px`;
-    newBlock.style.top = `${event.clientY - rect.top}px`;
-}
-
-// ========================================================================
-// פונקציות אתחול
-// ========================================================================
-
-// הוספת הבלוקים ללוח הלבנים
 function populateBlockPalette(category) {
     const categoryDiv = document.getElementById(`${category}-blocks`);
+    if (!categoryDiv) {
+        console.error(`Category div not found for ${category}`);
+        return;
+    }
+    
+    // ניקוי הבלוקים הקיימים
     categoryDiv.innerHTML = "";
 
+    // בדיקה אם יש בלוקים לקטגוריה
+    if (!blocks[category] || blocks[category].length === 0) {
+        console.warn(`No blocks defined for category ${category}`);
+        return;
+    }
+
+    console.log(`Populating category: ${category} with ${blocks[category].length} blocks`);
+
+    // יצירת הבלוקים והוספתם לקטגוריה
     blocks[category].forEach(block => {
+        console.log(`Creating block: ${block.name} (${block.svgFile})`);
         const blockElement = createBlockElement(block, category);
         categoryDiv.appendChild(blockElement);
     });
 }
 
-// פונקציה לטיפול בשינוי קטגוריה
+// ========================================================================
+// פונקציה לטיפול בשינוי קטגוריה עם עדכון צבע הרקע
+// ========================================================================
 function handleCategoryChange(category) {
+    console.log(`Changing category to: ${category}`);
+    
+    // הסרת מחלקת active מכל הקטגוריות והכרטיסיות
+    const categoryTabs = document.querySelectorAll(".category-tab");
+    const blockCategories = document.querySelectorAll(".block-category");
+
     blockCategories.forEach(element => element.classList.remove("active"));
     categoryTabs.forEach(tab => tab.classList.remove("active"));
 
+    // הוספת מחלקת active לקטגוריה שנבחרה
     const tab = document.querySelector(`.category-tab[data-category="${category}"]`);
-    tab.classList.add("active");
-    document.getElementById(`${category}-blocks`).classList.add("active");
-    populateBlockPalette(category);
+    const categoryDiv = document.getElementById(`${category}-blocks`);
+
+    if (tab) {
+        tab.classList.add("active");
+        console.log('Activated tab:', tab.getAttribute('data-category'));
+    } else {
+        console.warn(`Tab not found for category: ${category}`);
+    }
+
+    if (categoryDiv) {
+        categoryDiv.classList.add("active");
+        console.log('Activated category div:', categoryDiv.id);
+        
+        // עדכון צבע הגבול של מכל הבלוקים
+        const blockPalette = document.getElementById("block-palette");
+        if (blockPalette) {
+            // שימוש בצבע המתאים לקטגוריה
+            const categoryColor = getCategoryColor(category);
+            blockPalette.style.borderColor = categoryColor;
+        }
+        
+        // מילוי הקטגוריה בבלוקים
+        populateBlockPalette(category);
+    } else {
+        console.warn(`Block category container not found for: ${category}`);
+    }
 }
 
 // ========================================================================
-//  לוגיקת גרירה ושחרור (Drag and Drop)
+// פונקציית עזר לקבלת הצבע המתאים לקטגוריה
 // ========================================================================
+function getCategoryColor(category) {
+    switch(category) {
+        case 'triggering': return getComputedStyle(document.documentElement).getPropertyValue('--triggering-color');
+        case 'motion': return getComputedStyle(document.documentElement).getPropertyValue('--motion-color');
+        case 'looks': return getComputedStyle(document.documentElement).getPropertyValue('--looks-color');
+        case 'sound': return getComputedStyle(document.documentElement).getPropertyValue('--sound-color');
+        case 'control': return getComputedStyle(document.documentElement).getPropertyValue('--control-color');
+        case 'end': return getComputedStyle(document.documentElement).getPropertyValue('--end-color');
+        default: return '#f0f0f0'; // צבע ברירת מחדל
+    }
+}
 
-const programmingArea = document.getElementById("program-blocks");
-
-// טיפול באירוע גרירה מעל אזור התכנות (dragover)
-programmingArea.addEventListener("dragover", (event) => {
+// ========================================================================
+// פונקציה לטיפול בהשמטת בלוק באזור התכנות
+// ========================================================================
+function handleDrop(event) {
     event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-});
-
-// טיפול באירוע שחרור באזור התכנות (drop)
-programmingArea.addEventListener("drop", handleDrop);
-
-const categoryTabs = document.querySelectorAll(".category-tab");
-const blockCategories = document.querySelectorAll(".block-category");
-
-categoryTabs.forEach(tab => {
-    tab.addEventListener("click", () => {
-        const category = tab.dataset.category;
-        handleCategoryChange(category);
-    });
-});
-
-// הוספת כפתור קווי GRID
-const gridToggle = document.getElementById("grid-toggle");
-const stage = document.getElementById("stage");
-
-gridToggle.addEventListener("click", () => {
-    stage.classList.toggle("show-grid");
-});
-
-// אתחול הלוח עם הקטגוריה הפעילה הראשונה
-populateBlockPalette("triggering");
+    
+    // בדיקה אם מדובר בהזזת בלוק קיים
+    const blockIndex = event.dataTransfer.getData('block-index');
+    if (blockIndex !== undefined && blockIndex !== '') {
+        // הזזת בלוק קיים
+        const programmingArea = document.getElementById("program-blocks");
+        const draggedBlockIndex = parseInt(blockIndex);
+        
+        if (draggedBlockIndex >= 0 && draggedBlockIndex < programmingArea.children.length) {
+            const draggedBlock = programmingArea.children[draggedBlockIndex];
+            if (draggedBlock) {
+                const rect = programmingArea.getBoundingClientRect();
+                draggedBlock.style.position = "absolute";
+                draggedBlock.style.left = `${event.clientX - rect.left - (draggedBlock.offsetWidth / 2)}px`;
+                draggedBlock.style.top = `${event.clientY - rect.top - (draggedBlock.offsetHeight / 2)}px`;
+            }
+        }
+    } else {
+        // יצירת בלוק חדש
+        const programmingArea = document.getElementById("program-blocks");
+        const dataString = event.dataTransfer.getData("text/plain");
+        
+        if (!dataString) {
+            console.error("No data transferred on drop.");
+            return;
+        }
+        
+        try {
+            const data = JSON.parse(dataString);
+            const blockCategory = data.category;
+            const blockDefinition = blocks[blockCategory]?.find(b => b.type === data.type);
+            
+            if (!blockDefinition) {
+                console.error("Could not find block definition:", data);
+                return;
+            }
+            
+            // יצירת בלוק חדש והוספתו לאזור התכנות
+            const newBlock = createBlockElement(blockDefinition, blockCategory);
+            programmingArea.appendChild(newBlock);
+            
+            // הוספת מאזין גרירה לבלוק החדש
+            newBlock.addEventListener("dragstart", (e) => {
+                const index = Array.from(programmingArea.children).indexOf(newBlock);
+                e.dataTransfer.setData('block-index', index.toString());
+                e.dataTransfer.effectAllowed = "move";
+            });
+            
+            // מיקום הבלוק החדש
+            const rect = programmingArea.getBoundingClientRect();
+            newBlock.style.position = "absolute";
+            const blockWidth = newBlock.offsetWidth || 100;
+            const blockHeight = newBlock.offsetHeight || 80;
+            newBlock.style.left = `${event.clientX - rect.left - (blockWidth / 2)}px`;
+            newBlock.style.top = `${event.clientY - rect.top - (blockHeight / 2)}px`;
+            
+        } catch (e) {
+            console.error("Error parsing dropped data:", e);
+        }
+    }
+}
 
 // ========================================================================
-// גרירה של הדמות
+// אתחול כללי - מופעל כשה-DOM נטען
 // ========================================================================
-
-const character = document.getElementById('character');
-
-character.addEventListener('dragstart', (event) => {
-    event.dataTransfer.setData('text/plain', ''); // Required for drag to work in Firefox
-});
-
-stage.addEventListener('dragover', (event) => {
-    event.preventDefault(); // Allow drop
-});
-
-stage.addEventListener('drop', (event) => {
-    event.preventDefault();
-
-    const stageRect = stage.getBoundingClientRect();
-    const characterWidth = character.offsetWidth;
-    const characterHeight = character.offsetHeight;
-
-    let x = event.clientX - stageRect.left - characterWidth / 2;
-    let y = event.clientY - stageRect.top - characterHeight / 2;
-
-    // Stay within stage bounds
-    x = Math.max(0, Math.min(x, stageRect.width - characterWidth));
-    y = Math.max(0, Math.min(y, stageRect.height - characterHeight));
-
-    character.style.left = x + 'px';
-    character.style.top = y + 'px';
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM fully loaded");
+    
+    // אתחול אזור התכנות
+    const programmingArea = document.getElementById("program-blocks");
+    if (programmingArea) {
+        programmingArea.addEventListener("dragover", (event) => {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
+        });
+        
+        programmingArea.addEventListener("drop", handleDrop);
+        console.log("Programming area initialized");
+    } else {
+        console.error("Programming area element not found!");
+    }
+    
+    // אתחול כרטיסיות הקטגוריות
+    const categoryTabs = document.querySelectorAll(".category-tab");
+    if (categoryTabs.length > 0) {
+        categoryTabs.forEach(tab => {
+            tab.addEventListener("click", () => {
+                const category = tab.getAttribute('data-category');
+                console.log(`Tab clicked: ${category}`);
+                handleCategoryChange(category);
+            });
+        });
+        console.log(`${categoryTabs.length} category tabs initialized`);
+    } else {
+        console.error("No category tabs found!");
+    }
+    
+    // אתחול כפתור הרשת
+    const gridToggle = document.getElementById("grid-toggle");
+    const stage = document.getElementById("stage");
+    if (gridToggle && stage) {
+        gridToggle.addEventListener("click", () => {
+            stage.classList.toggle("show-grid");
+            console.log("Grid toggled");
+        });
+    }
+    
+    // אתחול כפתור ניקוי
+    const clearAllButton = document.getElementById("clear-all");
+    if (clearAllButton && programmingArea) {
+        clearAllButton.addEventListener("click", () => {
+            programmingArea.innerHTML = "";
+            console.log("Programming area cleared");
+        });
+    }
+    
+    // אתחול גרירת דמות
+    const character = document.getElementById('character');
+    const stageElement = document.getElementById('stage');
+    
+    if (character && stageElement) {
+        // מרכוז הדמות
+        function centerCharacter() {
+            character.style.transform = 'none';
+            character.style.transition = 'none';
+            
+            const stageRect = stageElement.getBoundingClientRect();
+            const charRect = character.getBoundingClientRect();
+            
+            const centerX = (stageRect.width - charRect.width) / 2;
+            const centerY = (stageRect.height - charRect.height) / 2;
+            
+            character.style.position = 'absolute';
+            character.style.left = centerX + 'px';
+            character.style.top = centerY + 'px';
+        }
+        
+        setTimeout(centerCharacter, 500);
+        
+        // טיפול בגרירת דמות
+        let isDragging = false;
+        let offsetX, offsetY;
+        
+        character.addEventListener('dragstart', function(e) {
+            e.preventDefault();
+            return false;
+        });
+        
+        character.addEventListener('mousedown', function(e) {
+            if (e.target !== character) return;
+            e.preventDefault();
+            
+            const charRect = character.getBoundingClientRect();
+            offsetX = e.clientX - charRect.left;
+            offsetY = e.clientY - charRect.top;
+            
+            isDragging = true;
+            character.style.cursor = 'grabbing';
+        });
+        
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            
+            character.style.transform = 'none';
+            character.style.transition = 'none';
+            
+            const stageRect = stageElement.getBoundingClientRect();
+            let newLeft = e.clientX - stageRect.left - offsetX;
+            let newTop = e.clientY - stageRect.top - offsetY;
+            
+            const charRect = character.getBoundingClientRect();
+            const maxLeft = stageRect.width - charRect.width;
+            const maxTop = stageRect.height - charRect.height;
+            
+            newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+            newTop = Math.max(0, Math.min(newTop, maxTop));
+            
+            character.style.left = newLeft + 'px';
+            character.style.top = newTop + 'px';
+        });
+        
+        document.addEventListener('mouseup', function() {
+            if (isDragging) {
+                isDragging = false;
+                character.style.cursor = 'grab';
+            }
+        });
+    }
+    
+    // אתחול הקטגוריה הראשונית
+    let initialCategory = 'triggering';
+    const activeTab = document.querySelector(".category-tab.active");
+    
+    if (activeTab && activeTab.getAttribute('data-category')) {
+        initialCategory = activeTab.getAttribute('data-category');
+    } else {
+        const triggeringTab = document.querySelector('.category-tab[data-category="triggering"]');
+        if (triggeringTab) {
+            triggeringTab.classList.add('active');
+        }
+    }
+    
+    // הפעלת הקטגוריה הראשונית
+    handleCategoryChange(initialCategory);
 });
