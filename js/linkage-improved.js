@@ -22,7 +22,7 @@
   // Configuration - parameters that can be adjusted
   const CONFIG = {
     PIN_WIDTH: 5,
-    CONNECT_THRESHOLD: 15,        // Increased threshold for easier connections
+    CONNECT_THRESHOLD: 25,        // Increased threshold for easier connections
     VERTICAL_ALIGN_THRESHOLD: 20,
     VERTICAL_OVERLAP_REQ: 0.4,    // Require 40% vertical overlap
     BLOCK_GAP: 0,                 // No gap - socket-pin connection
