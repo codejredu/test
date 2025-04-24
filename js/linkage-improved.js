@@ -1,6 +1,6 @@
-// --- START OF FILE svg-blocks-linkage.js ---
-// --- Version 1.0: SVG Block Linkage System ---
-// Specialized for SVG blocks with improved connection detection
+// --- START OF FILE puzzle-blocks-linkage.js ---
+// --- Version 1.0: Puzzle Block Connection System ---
+// Specialized for blocks with puzzle-like connectors (pins and sockets)
 
 (function() {
   // Global module variables
@@ -13,37 +13,42 @@
   let snapSound = null;
   let audioContextAllowed = false;
   let soundInitialized = false;
-  let svgNamespace = "http://www.w3.org/2000/svg";
+  let lastHighlightTime = 0;
 
   // Configuration - parameters that can be adjusted
   const CONFIG = {
-    CONNECT_THRESHOLD: 20,        // Increased threshold for SVG elements
-    VERTICAL_OVERLAP_REQ: 0.3,    // Reduced to 30% for SVG blocks
-    BLOCK_GAP: 0,                 // No gap
+    CONNECT_THRESHOLD: 25,        // Increased threshold for easier connections
+    VERTICAL_ALIGN_THRESHOLD: 15, // How close vertically blocks should be
+    BLOCK_GAP: 0,                 // No gap between connected blocks
     PLAY_SOUND: true,
     SOUND_VOLUME: 0.8,
     SOUND_PATH: 'assets/sound/link.mp3',
-    DEBUG: true                   // Enable for debugging
+    DEBUG: true,                  // Enable for debugging
+    PIN_DETECTION_WIDTH: 20,      // Width to check for pin/socket detection
+    ANIMATE_CONNECTIONS: true,    // Enable smooth animation when connecting
+    CONNECTION_ANIMATION_SPEED: 200 // ms for connection animation
   };
 
   // ========================================================================
-  // Add CSS styles for indicators and highlights
+  // Add CSS styles - focus on puzzle connection visuals
   // ========================================================================
-  function addStyles() {
-    if (document.getElementById('svg-block-connection-styles')) return;
+  function addHighlightStyles() {
+    if (document.getElementById('puzzle-connection-styles')) return;
     
     const style = document.createElement('style');
-    style.id = 'svg-block-connection-styles';
+    style.id = 'puzzle-connection-styles';
     style.textContent = `
-      .svg-snap-source { 
-        filter: drop-shadow(0 5px 10px rgba(0,0,0,0.4));
+      .snap-source { 
+        filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5));
+        transition: filter 0.15s ease-out; 
         cursor: grabbing !important; 
         z-index: 1001 !important; 
       }
-      .svg-snap-target { 
+      .snap-target { 
         outline: 6px solid #FFC107 !important; 
-        outline-offset: 4px; 
+        outline-offset: 2px; 
         filter: drop-shadow(0 0 10px rgba(255,193,7,0.8));
+        transition: outline 0.1s ease-out, filter 0.1s ease-out; 
         z-index: 999 !important; 
       }
       .future-position-indicator { 
@@ -61,25 +66,51 @@
         display: block; 
         opacity: 0.9; 
       }
-      @keyframes svgSnapEffect { 
-        0% {transform:scale(1)} 
-        35% {transform:scale(1.05)} 
-        70% {transform:scale(0.98)} 
-        100% {transform:scale(1)} 
-      } 
-      .svg-snap-animation { 
-        animation: svgSnapEffect 0.3s ease-out; 
+      .snap-target.snap-left::before, .snap-target.snap-socket::before { 
+        content: ''; 
+        position: absolute; 
+        left: -3px; 
+        top: 30%; 
+        bottom: 30%; 
+        width: 8px; 
+        background-color: #FFC107; 
+        border-radius: 2px; 
+        z-index: 1000; 
+        filter: drop-shadow(0 0 5px rgba(255,193,7,0.8));
+        transition: all 0.1s ease-out; 
       }
-      @keyframes svgDetachEffect { 
-        0% {transform:translate(0,0) rotate(0)} 
-        30% {transform:translate(3px,1px) rotate(0.8deg)} 
-        60% {transform:translate(-2px,2px) rotate(-0.5deg)} 
-        100% {transform:translate(0,0) rotate(0)} 
-      } 
-      .svg-detach-animation { 
-        animation: svgDetachEffect 0.3s ease-in-out; 
+      .snap-target.snap-right::after, .snap-target.snap-pin::after { 
+        content: ''; 
+        position: absolute; 
+        right: -3px; 
+        top: 30%; 
+        bottom: 30%; 
+        width: 8px; 
+        background-color: #FFC107; 
+        border-radius: 2px; 
+        z-index: 1000; 
+        filter: drop-shadow(0 0 5px rgba(255,193,7,0.8));
+        transition: all 0.1s ease-out; 
       }
-      #svg-detach-menu { 
+      @keyframes snapEffect { 
+        0% {transform: scale(1)} 
+        35% {transform: scale(1.05)} 
+        70% {transform: scale(0.98)} 
+        100% {transform: scale(1)} 
+      } 
+      .snap-animation { 
+        animation: snapEffect 0.3s ease-out; 
+      }
+      @keyframes detachEffect { 
+        0% {transform: translate(0,0) rotate(0)} 
+        30% {transform: translate(3px,1px) rotate(0.8deg)} 
+        60% {transform: translate(-2px,2px) rotate(-0.5deg)} 
+        100% {transform: translate(0,0) rotate(0)} 
+      } 
+      .detach-animation { 
+        animation: detachEffect 0.3s ease-in-out; 
+      }
+      #detach-menu { 
         position: absolute; 
         background-color: white; 
         border: 1px solid #ccc; 
@@ -90,30 +121,54 @@
         font-size: 14px; 
         min-width: 100px; 
       } 
-      #svg-detach-menu div { 
+      #detach-menu div { 
         padding: 6px 12px; 
         cursor: pointer; 
         border-radius: 3px; 
       } 
-      #svg-detach-menu div:hover { 
+      #detach-menu div:hover { 
         background-color: #eee; 
       }
-      body.svg-user-select-none { 
+      body.user-select-none { 
         user-select: none; 
         -webkit-user-select: none; 
         -moz-user-select: none; 
         -ms-user-select: none; 
       }
-      .svg-connection-indicator {
-        stroke: #FFC107;
-        stroke-width: 4;
-        stroke-dasharray: 5,5;
-        opacity: 0.8;
+      .pin-indicator, .socket-indicator {
+        position: absolute;
+        top: 40%;
+        height: 20%;
+        width: 10px;
+        background-color: rgba(255,193,7,0.5);
+        filter: drop-shadow(0 0 3px rgba(255,193,7,0.5));
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.2s ease-in-out;
+      }
+      .pin-indicator {
+        right: -5px;
+        border-radius: 0 3px 3px 0;
+      }
+      .socket-indicator {
+        left: -5px;
+        border-radius: 3px 0 0 3px;
+      }
+      .snap-highlight .pin-indicator,
+      .snap-highlight .socket-indicator {
+        opacity: 1;
+      }
+      /* Additional styles for puzzle pieces - adapt to your specific blocks */
+      .puzzle-block.connected-pin {
+        margin-right: -5px !important; /* Adjust based on your pin width */
+      }
+      .puzzle-block.connected-socket {
+        margin-left: -5px !important; /* Adjust based on your socket width */
       }
     `;
     
     document.head.appendChild(style);
-    if (CONFIG.DEBUG) console.log('SVG block styles added');
+    if (CONFIG.DEBUG) console.log('Puzzle block styles added');
   }
 
   // ========================================================================
@@ -209,44 +264,51 @@
   }
 
   // ========================================================================
-  // SVG Block Identification and Event Listeners
+  // Block Identification and Event Listeners
   // ========================================================================
   
-  // Find all SVG blocks in the programming area
-  function findSvgBlocks() {
-    // Look for SVG elements or SVG containers that represent blocks
-    // Adjust these selectors to match your specific SVG block structure
-    const svgBlocks = document.querySelectorAll('#program-blocks .block-container svg, #program-blocks svg.block-svg, #program-blocks .block-svg');
+  // Find all blocks in the programming area
+  function findPuzzleBlocks() {
+    const blocks = document.querySelectorAll('#program-blocks .block-container');
     
-    if (CONFIG.DEBUG) console.log(`Found ${svgBlocks.length} SVG blocks`);
+    if (CONFIG.DEBUG) console.log(`Found ${blocks.length} puzzle blocks`);
     
-    return svgBlocks;
+    return blocks;
   }
   
-  // Initialize existing SVG blocks
-  function initExistingSvgBlocks() {
-    const blocks = findSvgBlocks();
+  // Initialize existing blocks
+  function initExistingBlocks() {
+    const blocks = findPuzzleBlocks();
     
     blocks.forEach(block => {
-      const container = getBlockContainer(block);
-      
-      if (!container.id) {
-        generateUniqueId(container);
+      if (!block.id) {
+        generateUniqueId(block);
       }
       
-      addBlockDragListeners(container);
+      // Look for pin/socket indicators or add them
+      addPinSocketIndicators(block);
+      
+      // Add event listeners
+      addBlockDragListeners(block);
     });
     
-    if (CONFIG.DEBUG) console.log(`Initialized ${blocks.length} existing SVG blocks`);
+    if (CONFIG.DEBUG) console.log(`Initialized ${blocks.length} existing puzzle blocks`);
   }
   
-  // Get the container of an SVG block (may be the SVG itself or a parent div)
-  function getBlockContainer(svgElement) {
-    // If the SVG is inside a container, return that
-    const container = svgElement.closest('.block-container, .block-svg');
+  // Add visual indicators for pins and sockets if they don't exist
+  function addPinSocketIndicators(block) {
+    // Only add if they don't exist
+    if (!block.querySelector('.pin-indicator')) {
+      const pin = document.createElement('div');
+      pin.className = 'pin-indicator';
+      block.appendChild(pin);
+    }
     
-    // If no container, use the SVG itself
-    return container || svgElement;
+    if (!block.querySelector('.socket-indicator')) {
+      const socket = document.createElement('div');
+      socket.className = 'socket-indicator';
+      block.appendChild(socket);
+    }
   }
   
   // Add event listeners to block
@@ -270,21 +332,20 @@
         if (mutation.type === 'childList') {
           mutation.addedNodes.forEach((node) => {
             if (node.nodeType === 1) { // Element node
-              // Check if it's an SVG or contains an SVG
-              const svgElement = node.nodeName === 'svg' ? 
-                                node : 
-                                node.querySelector('svg');
+              // Check if it's a block container or contains one
+              const block = node.classList?.contains('block-container') ? 
+                          node : 
+                          node.querySelector?.('.block-container');
                                 
-              if (svgElement && svgElement.closest('#program-blocks')) {
-                const container = getBlockContainer(svgElement);
-                
-                if (!container.id) {
-                  generateUniqueId(container);
+              if (block && block.closest('#program-blocks')) {
+                if (!block.id) {
+                  generateUniqueId(block);
                 }
                 
-                addBlockDragListeners(container);
+                addPinSocketIndicators(block);
+                addBlockDragListeners(block);
                 
-                if (CONFIG.DEBUG) console.log(`Added new SVG block: ${container.id}`);
+                if (CONFIG.DEBUG) console.log(`Added new puzzle block: ${block.id}`);
               }
             }
           });
@@ -294,7 +355,19 @@
     
     observer.observe(programArea, {childList: true, subtree: true});
     
-    if (CONFIG.DEBUG) console.log("MutationObserver watching for new SVG blocks");
+    if (CONFIG.DEBUG) console.log("MutationObserver watching for new puzzle blocks");
+  }
+  
+  // Initialize programming area
+  function initProgrammingAreaListeners() {
+    const area = document.getElementById('program-blocks');
+    if (!area) return;
+    
+    // Prevent default drag behavior
+    area.addEventListener('dragover', (e) => e.preventDefault());
+    area.addEventListener('dragstart', (e) => {
+      if (e.target?.closest?.('#program-blocks .block-container')) e.preventDefault();
+    });
   }
 
   // ========================================================================
@@ -304,7 +377,7 @@
   function handleContextMenu(e) {
     e.preventDefault();
     
-    const block = getBlockContainer(e.target.closest('svg') || e.target);
+    const block = e.target.closest('.block-container');
     
     if (block?.hasAttribute('data-connected-to')) {
       showDetachMenu(e.clientX, e.clientY, block);
@@ -313,16 +386,12 @@
   
   function handleMouseDown(e) {
     // Skip if not left click or clicked on interactive element
-    if (e.button !== 0 || !e.target || e.target.matches('input,button,select,textarea,a[href]')) return;
+    if (e.button !== 0 || !e.target.closest || e.target.matches('input,button,select,textarea,a[href]')) return;
     
-    // Get the SVG block container
-    const svgElement = e.target.closest('svg');
-    if (!svgElement) return;
-    
-    const block = getBlockContainer(svgElement);
+    const block = e.target.closest('.block-container');
     
     // Skip if not a valid block
-    if (!block || !block.closest('#program-blocks')) return;
+    if (!block || !block.parentElement || block.parentElement.id !== 'program-blocks') return;
     
     // Ensure ID exists
     if (!block.id) generateUniqueId(block);
@@ -330,7 +399,7 @@
     e.preventDefault();
     block.draggable = false;
     
-    if (CONFIG.DEBUG) console.log(`[MouseDown] Start drag SVG block: ${block.id}`);
+    if (CONFIG.DEBUG) console.log(`[MouseDown] Start drag puzzle block: ${block.id}`);
     
     // Detach this block if it's connected to another
     if (block.hasAttribute('data-connected-to')) detachBlock(block, false);
@@ -363,10 +432,10 @@
     
     block.style.margin = '0';
     block.style.zIndex = '1001';
-    block.classList.add('svg-snap-source');
-    document.body.classList.add('svg-user-select-none');
+    block.classList.add('snap-source');
+    document.body.classList.add('user-select-none');
     
-    // Start global listeners
+    // Add global listeners
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp, { once: true });
     document.addEventListener('mouseleave', handleMouseLeave);
@@ -390,8 +459,8 @@
     let newTop = e.clientY - programRect.top - dragOffset.y + programElement.scrollTop;
     
     // Keep within bounds
-    const blockWidth = currentDraggedBlock.offsetWidth || 100;
-    const blockHeight = currentDraggedBlock.offsetHeight || 50;
+    const blockWidth = currentDraggedBlock.offsetWidth;
+    const blockHeight = currentDraggedBlock.offsetHeight;
     const scrollWidth = programElement.scrollWidth;
     const scrollHeight = programElement.scrollHeight;
     
@@ -402,8 +471,12 @@
     currentDraggedBlock.style.left = Math.round(newLeft) + 'px';
     currentDraggedBlock.style.top = Math.round(newTop) + 'px';
     
-    // Check for snap opportunities
-    checkAndHighlightSnapPossibility();
+    // Throttle highlight checking to improve performance
+    const now = Date.now();
+    if (now - lastHighlightTime > 30) { // Check every 30ms (about 33fps)
+      checkAndHighlightSnapPossibility();
+      lastHighlightTime = now;
+    }
   }
   
   function handleMouseUp(e) {
@@ -414,7 +487,7 @@
     const candidateDirection = snapDirection;
     
     if (CONFIG.DEBUG) {
-      console.log(`[MouseUp] Releasing SVG block ${blockReleased.id}. ` +
+      console.log(`[MouseUp] Releasing puzzle block ${blockReleased.id}. ` +
                   `Candidate target: ${candidateTarget?.id || 'none'}, ` +
                   `direction: ${candidateDirection || 'none'}`);
     }
@@ -428,13 +501,14 @@
     currentDraggedBlock = null;
     potentialSnapTarget = null;
     snapDirection = null;
-    document.body.classList.remove('svg-user-select-none');
-    blockReleased.classList.remove('svg-snap-source');
+    document.body.classList.remove('user-select-none');
+    blockReleased.classList.remove('snap-source');
     blockReleased.style.zIndex = '';
     
     // Remove all highlights
-    document.querySelectorAll('.svg-snap-target').forEach(element => {
-      element.classList.remove('svg-snap-target');
+    document.querySelectorAll('.snap-target').forEach(element => {
+      element.classList.remove('snap-target', 'snap-left', 'snap-right',
+                             'snap-pin', 'snap-socket', 'snap-highlight');
     });
     
     removeFuturePositionIndicator();
@@ -509,9 +583,8 @@
     
     const sourceRect = currentDraggedBlock.getBoundingClientRect();
     
-    // Get all SVG blocks that aren't the source
-    const allPotentialTargets = Array.from(findSvgBlocks())
-                               .map(svg => getBlockContainer(svg))
+    // Get all potential targets that aren't the source
+    const allPotentialTargets = Array.from(findPuzzleBlocks())
                                .filter(block => block !== currentDraggedBlock && block.offsetParent !== null);
     
     let bestTarget = null;
@@ -519,8 +592,9 @@
     let minDistance = CONFIG.CONNECT_THRESHOLD + 1;
     
     // Reset highlights and global state before checking
-    document.querySelectorAll('.svg-snap-target').forEach(element => {
-      element.classList.remove('svg-snap-target');
+    document.querySelectorAll('.snap-target').forEach(element => {
+      element.classList.remove('snap-target', 'snap-left', 'snap-right', 
+                             'snap-pin', 'snap-socket', 'snap-highlight');
     });
     
     potentialSnapTarget = null;
@@ -535,8 +609,8 @@
       const targetConnectedLeft = targetBlock.hasAttribute('data-connected-from-left');
       const targetConnectedRight = targetBlock.hasAttribute('data-connected-from-right');
       
-      // Special SVG optimized snap calculation
-      const snapInfo = calculateSvgSnapInfo(sourceRect, targetRect);
+      // Special puzzle piece snap calculation
+      const snapInfo = calculatePuzzleSnapInfo(sourceRect, targetRect);
       
       if (snapInfo) {
         let connectionAllowed = true;
@@ -563,45 +637,51 @@
       potentialSnapTarget = bestTarget;
       snapDirection = bestDirection;
       
-      // Activate highlights
-      bestTarget.classList.add('svg-snap-target');
+      // Activate highlights - use pin/socket specific classes
+      const directionClass = bestDirection === 'left' ? 'snap-socket' : 'snap-pin';
+      bestTarget.classList.add('snap-target', directionClass, 'snap-highlight');
+      
+      // Show indicator of future position
       updateFuturePositionIndicator(currentDraggedBlock, bestTarget, bestDirection);
     }
   }
   
-  function calculateSvgSnapInfo(sourceRect, targetRect) {
-    // Calculate vertical overlap (optimized for SVG)
-    const topOverlap = Math.max(sourceRect.top, targetRect.top);
-    const bottomOverlap = Math.min(sourceRect.bottom, targetRect.bottom);
-    const verticalOverlap = Math.max(0, bottomOverlap - topOverlap);
+  function calculatePuzzleSnapInfo(sourceRect, targetRect) {
+    // First check vertical alignment - puzzle pieces must be well-aligned
+    const sourceMiddleY = sourceRect.top + sourceRect.height / 2;
+    const targetMiddleY = targetRect.top + targetRect.height / 2;
+    const verticalDistance = Math.abs(sourceMiddleY - targetMiddleY);
     
-    // Minimum height requirement (30% of smaller block for SVGs)
-    const minHeightReq = Math.min(sourceRect.height, targetRect.height) * CONFIG.VERTICAL_OVERLAP_REQ;
+    // If vertical alignment is poor, no snap possible
+    if (verticalDistance > CONFIG.VERTICAL_ALIGN_THRESHOLD) {
+      return null;
+    }
     
-    // If not enough vertical overlap, no snap possible
-    if (verticalOverlap < minHeightReq || verticalOverlap <= 0) return null;
-    
-    // Calculate horizontal distances for potential connections
+    // Calculate horizontal distances for pin/socket connections
     let distance, direction;
     
-    const distRightToLeft = Math.abs(sourceRect.right - targetRect.left);
-    const distLeftToRight = Math.abs(sourceRect.left - targetRect.right);
+    // Source RIGHT pin to target LEFT socket
+    const pinToSocketDist = Math.abs(sourceRect.right - targetRect.left);
     
-    if (distRightToLeft < distLeftToRight) {
-      distance = distRightToLeft;
-      direction = 'left'; // Source's RIGHT connects to target's LEFT
+    // Source LEFT socket to target RIGHT pin
+    const socketToPinDist = Math.abs(sourceRect.left - targetRect.right);
+    
+    // Determine best connection direction
+    if (pinToSocketDist < socketToPinDist) {
+      distance = pinToSocketDist;
+      direction = 'left'; // Source RIGHT (pin) connects to target LEFT (socket)
     } else {
-      distance = distLeftToRight;
-      direction = 'right'; // Source's LEFT connects to target's RIGHT
+      distance = socketToPinDist;
+      direction = 'right'; // Source LEFT (socket) connects to target RIGHT (pin)
     }
     
     // Return snap info only if within threshold
     if (distance <= CONFIG.CONNECT_THRESHOLD) {
       if (CONFIG.DEBUG > 1) {
-        console.log(`[calculateSvgSnapInfo] Within threshold (${CONFIG.CONNECT_THRESHOLD}px): ` +
-                   `dir=${direction}, dist=${distance.toFixed(1)}`);
+        console.log(`[calculatePuzzleSnapInfo] Within threshold (${CONFIG.CONNECT_THRESHOLD}px): ` +
+                   `dir=${direction}, dist=${distance.toFixed(1)}, vdist=${verticalDistance.toFixed(1)}`);
       }
-      return { direction, distance };
+      return { direction, distance, verticalDistance };
     }
     
     return null;
@@ -628,11 +708,18 @@
       const targetRect = targetBlock.getBoundingClientRect();
       const programRect = programArea.getBoundingClientRect();
       
-      // Calculate position
-      let destVisualLeft = (direction === 'left') ? 
-                          (targetRect.left - sourceRect.width - CONFIG.BLOCK_GAP) : 
-                          (targetRect.right + CONFIG.BLOCK_GAP);
+      // Calculate position based on pin/socket connection
+      let destVisualLeft;
       
+      if (direction === 'left') {
+        // Source RIGHT (pin) connects to target LEFT (socket)
+        destVisualLeft = targetRect.left - sourceRect.width + CONFIG.PIN_DETECTION_WIDTH;
+      } else {
+        // Source LEFT (socket) connects to target RIGHT (pin)
+        destVisualLeft = targetRect.right - CONFIG.PIN_DETECTION_WIDTH;
+      }
+      
+      // Align vertically
       let destVisualTop = targetRect.top;
       
       // Convert to position relative to programming area
@@ -666,7 +753,7 @@
   
   function performBlockSnap(sourceBlock, targetBlock, direction) {
     if (!sourceBlock || !targetBlock || !document.body.contains(targetBlock) || targetBlock.offsetParent === null) {
-      console.error("[PerformSnap] Invalid SVG block(s). Snap cancelled.");
+      console.error("[PerformSnap] Invalid block(s). Snap cancelled.");
       return false;
     }
     
@@ -687,19 +774,29 @@
       const programElement = document.getElementById('program-blocks');
       const programRect = programElement.getBoundingClientRect();
       
-      // Calculate exact position for snap
-      let finalLeft = (direction === 'left') ? 
-                     (targetRect.left - sourceRect.width - CONFIG.BLOCK_GAP) : 
-                     (targetRect.right + CONFIG.BLOCK_GAP);
+      // Calculate exact position for puzzle piece connection
+      let finalLeft;
       
-      const finalTop = targetRect.top; // Align tops
+      if (direction === 'left') {
+        // Source RIGHT pin to target LEFT socket
+        // Adjust position to account for pin/socket overlap
+        finalLeft = targetRect.left - sourceRect.width + CONFIG.PIN_DETECTION_WIDTH;
+      } else {
+        // Source LEFT socket to target RIGHT pin
+        finalLeft = targetRect.right - CONFIG.PIN_DETECTION_WIDTH;
+      }
+      
+      // Align tops precisely
+      const finalTop = targetRect.top;
       
       // Convert to local coordinates
       let styleLeft = finalLeft - programRect.left + programElement.scrollLeft;
       let styleTop = finalTop - programRect.top + programElement.scrollTop;
       
-      // Animate the movement to the final position
-      sourceBlock.style.transition = 'left 0.2s ease-out, top 0.2s ease-out';
+      // Animate the movement to the final position if configured
+      if (CONFIG.ANIMATE_CONNECTIONS) {
+        sourceBlock.style.transition = `left ${CONFIG.CONNECTION_ANIMATION_SPEED}ms ease-out, top ${CONFIG.CONNECTION_ANIMATION_SPEED}ms ease-out`;
+      }
       
       // Set the final position
       sourceBlock.style.position = 'absolute';
@@ -716,9 +813,14 @@
         sourceBlock.id
       );
       
-      // Add classes for styling
-      sourceBlock.classList.add('svg-connected-block');
-      targetBlock.classList.add('svg-has-connected-block');
+      // Add classes for styling - use pin/socket specific classes
+      if (direction === 'left') {
+        sourceBlock.classList.add('connected-block', 'connected-pin');
+        targetBlock.classList.add('has-connected-block', 'connected-socket');
+      } else {
+        sourceBlock.classList.add('connected-block', 'connected-socket');
+        targetBlock.classList.add('has-connected-block', 'connected-pin');
+      }
       
       // Play sound effect
       playSnapSound();
@@ -730,9 +832,11 @@
       sourceBlock.draggable = false;
       
       // Clear transition after animation completes
-      setTimeout(() => {
-        sourceBlock.style.transition = '';
-      }, 250);
+      if (CONFIG.ANIMATE_CONNECTIONS) {
+        setTimeout(() => {
+          sourceBlock.style.transition = '';
+        }, CONFIG.CONNECTION_ANIMATION_SPEED + 50);
+      }
       
       if (CONFIG.DEBUG) {
         console.log(`[PerformSnap] Success. ${sourceBlock.id} pos: L=${styleLeft.toFixed(0)}, T=${styleTop.toFixed(0)}. Draggable: ${sourceBlock.draggable}`);
@@ -765,19 +869,19 @@
       console.warn(`[Detach] Missing data on ${blockToDetach.id}. Cleaning.`);
       blockToDetach.removeAttribute('data-connected-to');
       blockToDetach.removeAttribute('data-connection-direction');
-      blockToDetach.classList.remove('svg-connected-block');
+      blockToDetach.classList.remove('connected-block', 'connected-pin', 'connected-socket');
       blockToDetach.draggable = true;
       return;
     }
     
     if (CONFIG.DEBUG) {
-      console.log(`[Detach] Detaching SVG block ${blockToDetach.id} from ${targetId}`);
+      console.log(`[Detach] Detaching block ${blockToDetach.id} from ${targetId}`);
     }
     
     // Remove connection attributes from source
     blockToDetach.removeAttribute('data-connected-to');
     blockToDetach.removeAttribute('data-connection-direction');
-    blockToDetach.classList.remove('svg-connected-block');
+    blockToDetach.classList.remove('connected-block', 'connected-pin', 'connected-socket');
     blockToDetach.draggable = true;
     
     // Update target block
@@ -795,7 +899,7 @@
       
       // Remove has-connected-block class if no remaining connections
       if (!hasOtherConnections) {
-        targetBlock.classList.remove('svg-has-connected-block');
+        targetBlock.classList.remove('has-connected-block', 'connected-pin', 'connected-socket');
       }
     } else {
       console.warn(`[Detach] Target ${targetId} not found.`);
@@ -813,12 +917,12 @@
   
   function showDetachMenu(x, y, block) {
     // Remove any existing menu
-    const existingMenu = document.getElementById('svg-detach-menu');
+    const existingMenu = document.getElementById('detach-menu');
     if (existingMenu) existingMenu.remove();
     
     // Create new menu
     const menu = document.createElement('div');
-    menu.id = 'svg-detach-menu';
+    menu.id = 'detach-menu';
     menu.style.left = `${x}px`;
     menu.style.top = `${y}px`;
     
@@ -856,40 +960,40 @@
   
   function addSnapEffectAnimation(block) {
     // Remove existing animation if any
-    block.classList.remove('svg-snap-animation');
+    block.classList.remove('snap-animation');
     
     // Force reflow to restart animation
     void block.offsetWidth;
     
     // Apply animation
-    block.classList.add('svg-snap-animation');
+    block.classList.add('snap-animation');
     
     // Clean up after animation ends
     block.addEventListener('animationend', () => {
-      block.classList.remove('svg-snap-animation');
+      block.classList.remove('snap-animation');
     }, {once: true});
   }
   
   function addDetachEffectAnimation(block) {
     // Remove existing animation if any
-    block.classList.remove('svg-detach-animation');
+    block.classList.remove('detach-animation');
     
     // Force reflow to restart animation
     void block.offsetWidth;
     
     // Apply animation
-    block.classList.add('svg-detach-animation');
+    block.classList.add('detach-animation');
     
     // Clean up after animation ends
     block.addEventListener('animationend', () => {
-      block.classList.remove('svg-detach-animation');
+      block.classList.remove('detach-animation');
     }, {once: true});
   }
   
   function generateUniqueId(block) {
     if (block.id) return block.id;
     
-    const prefix = block.dataset.type || 'svg-block';
+    const prefix = block.dataset.type || 'puzzle-block';
     let suffix = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
     let id = `${prefix}-${suffix}`;
     
@@ -906,86 +1010,10 @@
     block.id = id;
     
     if (CONFIG.DEBUG) {
-      console.log(`Generated unique ID for SVG block: ${id}`);
+      console.log(`Generated unique ID for puzzle block: ${id}`);
     }
     
     return id;
-  }
-
-  // ========================================================================
-  // SVG-specific Connection Visualization
-  // ========================================================================
-  
-  // Adds an SVG connection line between blocks
-  function addSvgConnectionLine(sourceBlock, targetBlock, direction) {
-    const svgWrapperID = `connection-${sourceBlock.id}-to-${targetBlock.id}`;
-    
-    // Remove existing connection if any
-    const existingConnection = document.getElementById(svgWrapperID);
-    if (existingConnection) existingConnection.remove();
-    
-    const sourceRect = sourceBlock.getBoundingClientRect();
-    const targetRect = targetBlock.getBoundingClientRect();
-    
-    // Create SVG element for the connection
-    const svgWrapper = document.createElement('div');
-    svgWrapper.id = svgWrapperID;
-    svgWrapper.style.position = 'absolute';
-    svgWrapper.style.top = '0';
-    svgWrapper.style.left = '0';
-    svgWrapper.style.width = '100%';
-    svgWrapper.style.height = '100%';
-    svgWrapper.style.pointerEvents = 'none';
-    svgWrapper.style.zIndex = '500';
-    
-    const svg = document.createElementNS(svgNamespace, 'svg');
-    svg.style.width = '100%';
-    svg.style.height = '100%';
-    svg.style.position = 'absolute';
-    svg.style.top = '0';
-    svg.style.left = '0';
-    
-    // Create connection line
-    const line = document.createElementNS(svgNamespace, 'line');
-    line.classList.add('svg-connection-indicator');
-    
-    // Calculate connection points
-    let x1, y1, x2, y2;
-    
-    if (direction === 'left') {
-      // Source RIGHT to target LEFT
-      x1 = sourceRect.right;
-      y1 = sourceRect.top + sourceRect.height / 2;
-      x2 = targetRect.left;
-      y2 = targetRect.top + targetRect.height / 2;
-    } else {
-      // Source LEFT to target RIGHT
-      x1 = sourceRect.left;
-      y1 = sourceRect.top + sourceRect.height / 2;
-      x2 = targetRect.right;
-      y2 = targetRect.top + targetRect.height / 2;
-    }
-    
-    line.setAttribute('x1', x1);
-    line.setAttribute('y1', y1);
-    line.setAttribute('x2', x2);
-    line.setAttribute('y2', y2);
-    
-    svg.appendChild(line);
-    svgWrapper.appendChild(svg);
-    document.getElementById('program-blocks').appendChild(svgWrapper);
-    
-    return svgWrapper;
-  }
-  
-  // Remove SVG connection line
-  function removeSvgConnectionLine(sourceBlock, targetBlock) {
-    const svgWrapperID = `connection-${sourceBlock.id}-to-${targetBlock.id}`;
-    const existingConnection = document.getElementById(svgWrapperID);
-    
-    if (existingConnection) {
-      existingConnection.remove();
-    }
   }
 
   // ========================================================================
@@ -993,32 +1021,26 @@
   // ========================================================================
   
   function initializeSystem() {
-    const initFlag = 'svgBlockLinkageInitialized';
+    const initFlag = 'puzzleBlockLinkageInitialized';
     
     if (window[initFlag]) {
       if (CONFIG.DEBUG) {
-        console.log("SVG Block linkage system already initialized. Skipping.");
+        console.log("Puzzle Block Linkage System already initialized. Skipping.");
       }
       return;
     }
     
-    // Check if we're in a context with SVG blocks
-    const svgBlocks = findSvgBlocks();
-    if (svgBlocks.length === 0) {
-      console.log("No SVG blocks found. SVG Block Linkage System not initialized.");
-      return;
-    }
-    
     // Initialize components
-    addStyles();
+    addHighlightStyles();
     initAudio();
-    initExistingSvgBlocks();
+    initProgrammingAreaListeners();
+    initExistingBlocks();
     observeNewBlocks();
     
     window[initFlag] = true; // Mark as initialized
     
-    console.log(`SVG Block Linkage System initialized. Found ${svgBlocks.length} SVG blocks.`);
-    console.log(`Configuration: Connect Threshold=${CONFIG.CONNECT_THRESHOLD}px, Overlap Requirement=${CONFIG.VERTICAL_OVERLAP_REQ*100}%, Gap=${CONFIG.BLOCK_GAP}px`);
+    console.log(`Puzzle Block Linkage System initialized. Optimized for pin/socket connections.`);
+    console.log(`Configuration: Connect Threshold=${CONFIG.CONNECT_THRESHOLD}px, Vertical Alignment Threshold=${CONFIG.VERTICAL_ALIGN_THRESHOLD}px, Animate Connections: ${CONFIG.ANIMATE_CONNECTIONS}`);
   }
 
   // Initialize system when DOM is ready
@@ -1030,4 +1052,4 @@
 
 })(); // End IIFE
 
-// --- END OF FILE svg-blocks-linkage.js ---
+// --- END OF FILE puzzle-blocks-linkage.js ---
