@@ -1,4 +1,3 @@
-// linkage-improved.js
 // קוד גרירת בלוקים עם הילה בהתקרבות
 document.addEventListener('DOMContentLoaded', function() {
     console.log('טוען מערכת גרירת בלוקים...');
@@ -51,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.target.dataset.originalTop = e.target.style.top || '';
 
                 // עדכון תצוגת הבלוק בזמן אמת
-                updateDraggedBlockPosition(e);
+                // updateDraggedBlockPosition(e); // הסרנו את השורה הזו
             }
         });
 
@@ -71,6 +70,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     connectBlocks(e.target, nearbyBlock);
                 } else {
                     console.log('אין הילה - לא מבצע חיבור');
+                    // החזרת המיקום המקורי אם לא חובר
+                    e.target.style.left = e.target.dataset.originalLeft || '';
+                    e.target.style.top = e.target.dataset.originalTop || '';
                 }
 
                 // נקה את המצב והילות
@@ -84,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
         programmingArea.addEventListener('dragover', function(e) {
             if (currentDraggedBlock) {
                 e.preventDefault(); // חייב למניעת התנהגות ברירת מחדל
-                updateDraggedBlockPosition(e);
+                // updateDraggedBlockPosition(e); // הסרנו את השורה הזו
 
                 // בדיקת קרבה לבלוקים אחרים
                 checkProximityToOtherBlocks();
@@ -94,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // מאזין לאירוע mousemove - לעדכון רציף של מיקום הבלוק
         programmingArea.addEventListener('mousemove', function(e) {
             if (currentDraggedBlock && currentDraggedBlock.classList.contains('dragging')) {
-                updateDraggedBlockPosition(e);
+                // updateDraggedBlockPosition(e); // הסרנו את השורה הזו
 
                 // בדיקת קרבה לבלוקים אחרים
                 checkProximityToOtherBlocks();
@@ -242,6 +244,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const sourceCenterX = sourceRect.left + sourceRect.width / 2;
                 const targetCenterX = targetRect.left + targetRect.width / 2;
 
+                // קביעת כיוון החיבור
                 if (sourceCenterX < targetCenterX) {
                     // המקור משמאל ליעד - הצד הימני של המקור צמוד לצד השמאלי של היעד
                     direction = 'left-to-right';
@@ -350,10 +353,3 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // פונקציה להסרת מחברים ויזואליים
-        function removeVisualConnectors() {
-            const connectors = document.querySelectorAll('.blocks-connector');
-            connectors.forEach(connector => connector.remove());
-        }
-
-        // פונקציה ליצירת מזהה ייחודי לבלוק
-        function generateUniqueId(block) {
