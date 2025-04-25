@@ -24,7 +24,7 @@
     VERTICAL_ALIGN_THRESHOLD: 20,
     VERTICAL_OVERLAP_REQ: 0.4, // דרישה ל-40% חפיפה אנכית לפחות
     BLOCK_GAP: 0, // אין רווח - חיבור שקע-תקע
-    OVERLAP_AMOUNT: 8, // כמה פיקסלים של חפיפה בין הלבנים המחוברות
+    OVERLAP_AMOUNT: 1, // כמה פיקסלים של חפיפה בין הלבנים המחוברות
     PLAY_SOUND: true,
     SOUND_VOLUME: 0.8,
     SOUND_PATH: 'assets/sound/link.mp3', // ודא שהנתיב נכון
