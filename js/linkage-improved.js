@@ -1,7 +1,7 @@
-// --- START OF FILE linkageimproved-fixed.js ---
-// --- Version 3.6: Visual Offset for Better Connection Appearance ---
+// --- START OF FILE linkageimproved-overlap.js ---
+// --- Version 3.6: Overlap Fix for Better Connection Appearance ---
 // Changes from v3.5:
-// 1. Added 10px visual offset for better connection appearance
+// 1. Added 10px overlap for better connection appearance
 // 2. Added smooth animation for connections
 // 3. Maintained all other functionality from v3.5
 
@@ -23,8 +23,7 @@
     CONNECT_THRESHOLD: 8, // סף להפעלת הדגשה וזיהוי יעד פוטנציאלי
     VERTICAL_ALIGN_THRESHOLD: 20,
     VERTICAL_OVERLAP_REQ: 0.4, // דרישה ל-40% חפיפה אנכית לפחות
-    BLOCK_GAP: 0, // אין רווח - חיבור שקע-תקע
-    VISUAL_OFFSET: 10, // היסט ויזואלי לראות את החיבור טוב יותר
+    OVERLAP_AMOUNT: 10, // כמה פיקסלים של חפיפה בין הלבנים המחוברות
     PLAY_SOUND: true,
     SOUND_VOLUME: 0.8,
     SOUND_PATH: 'assets/sound/link.mp3', // ודא שהנתיב נכון
@@ -112,7 +111,108 @@
     let performSnap = false;
     if (candidateTarget && candidateDirection && document.body.contains(candidateTarget)) {
         // היה מועמד תקין במהלך הגרירה, לכן נקבע שננסה להצמיד
-        if (CONFIG.DEBUG) console.log(`[MouseUp] Candidate target ${candidateTarget.id} identified during drag. Attempting snap.`);
+        if (CONFIG.DEBUG) console.log(`[PerformSnap] Success. ${sourceBlock.id} pos: L=${styleLeft.toFixed(0)}, T=${styleTop.toFixed(0)}. Draggable: ${sourceBlock.draggable}`);
+      return true;
+    } catch (err) { 
+      console.error(`[PerformSnap] Error during snap for ${sourceBlock.id} -> ${targetBlock.id}:`, err); 
+      try { 
+        detachBlock(sourceBlock, false); 
+      } catch (derr) { 
+        console.error(`[PerformSnap] Cleanup detach error:`, derr); 
+      } 
+      sourceBlock.draggable = true; 
+      return false; 
+    }
+  }
+
+  // ========================================================================
+  // עדכון מחוון עתידי - עם תוספת חפיפה של 10 פיקסלים
+  // ========================================================================
+  function updateFuturePositionIndicator(sB, tB, dir, pR) {
+    const pA = document.getElementById('program-blocks');
+    if (!pA) return;
+    
+    if (!futureIndicator) {
+      futureIndicator = document.createElement('div');
+      futureIndicator.id = 'future-position-indicator';
+      futureIndicator.className = 'future-position-indicator';
+      pA.appendChild(futureIndicator);
+    }
+    
+    try {
+      const sRN = sB.getBoundingClientRect();
+      const tR = tB.getBoundingClientRect();
+      const pRct = pA.getBoundingClientRect();
+      
+      // הוספנו חפיפה כדי שהחיווי יראה היכן הבלוק יחובר
+      let dVL;
+      if (dir === 'left') {
+        dVL = tR.left - sRN.width + CONFIG.OVERLAP_AMOUNT; // הזז 10 פיקסלים פנימה (ימינה)
+      } else {
+        dVL = tR.right - CONFIG.OVERLAP_AMOUNT; // הזז 10 פיקסלים פנימה (שמאלה)
+      }
+      
+      let dVT = tR.top;
+      let iL = dVL - pRct.left + pA.scrollLeft;
+      let iT = dVT - pRct.top + pA.scrollTop;
+      
+      futureIndicator.style.left = Math.round(iL) + 'px';
+      futureIndicator.style.top = Math.round(iT) + 'px';
+      futureIndicator.style.width = Math.round(sRN.width) + 'px';
+      futureIndicator.style.height = Math.round(sRN.height) + 'px';
+      futureIndicator.classList.add('visible');
+    } catch (err) {
+      console.error('Err updating future indicator:', err);
+      removeFuturePositionIndicator();
+    }
+  }
+
+  // ========================================================================
+  // פונקציות עזר - ללא שינוי מ-v3.5
+  // ========================================================================
+  function removeFuturePositionIndicator() { if(futureIndicator)futureIndicator.classList.remove('visible'); }
+  function showDetachMenu(x,y,b){removeDetachMenu();const m=document.createElement('div');m.id='detach-menu';m.style.left=`${x}px`;m.style.top=`${y}px`;const o=document.createElement('div');o.textContent='נתק בלוק';o.onclick=(e)=>{e.stopPropagation();detachBlock(b,true);removeDetachMenu();};m.appendChild(o);document.body.appendChild(m);setTimeout(()=>{document.addEventListener('click',closeMenuOutside,{capture:true,once:true});window.addEventListener('scroll',removeDetachMenu,{capture:true,once:true});},0);}
+  function closeMenuOutside(e){const m=document.getElementById('detach-menu');if(m&&!m.contains(e.target))removeDetachMenu();else if(m)setTimeout(()=>document.addEventListener('click',closeMenuOutside,{capture:true,once:true}),0);window.removeEventListener('scroll',removeDetachMenu,{capture:true});}
+  function removeDetachMenu(){const m=document.getElementById('detach-menu');if(m){document.removeEventListener('click',closeMenuOutside,{capture:true});window.removeEventListener('scroll',removeDetachMenu,{capture:true});m.remove();}}
+  function detachBlock(btd,animate=true){if(!btd||!btd.hasAttribute('data-connected-to'))return;const tid=btd.getAttribute('data-connected-to');const dir=btd.getAttribute('data-connection-direction');if(!tid||!dir){console.warn(`[Detach] Missing data on ${btd.id}. Clean.`);btd.removeAttribute('data-connected-to');btd.removeAttribute('data-connection-direction');btd.classList.remove('connected-block');btd.draggable=true;return;}if(CONFIG.DEBUG)console.log(`[Detach] Detaching ${btd.id} from ${tid}`);btd.removeAttribute('data-connected-to');btd.removeAttribute('data-connection-direction');btd.classList.remove('connected-block');btd.draggable=true;const tb=document.getElementById(tid);if(tb){tb.removeAttribute(dir==='left'?'data-connected-from-left':'data-connected-from-right');const hoc=tb.hasAttribute('data-connected-from-left')||tb.hasAttribute('data-connected-from-right')||tb.hasAttribute('data-connected-to');if(!hoc)tb.classList.remove('has-connected-block');}else{console.warn(`[Detach] Target ${tid} not found.`);}if(animate)addDetachEffectAnimation(btd);if(CONFIG.DEBUG)console.log(`[Detach] Finished ${btd.id}. Draggable: ${btd.draggable}`);}
+  function addSnapEffectAnimation(b){b.classList.remove('snap-animation');void b.offsetWidth;b.classList.add('snap-animation');b.addEventListener('animationend',()=>b.classList.remove('snap-animation'),{once:true});}
+  function addDetachEffectAnimation(b){b.classList.remove('detach-animation');void b.offsetWidth;b.classList.add('detach-animation');b.addEventListener('animationend',()=>b.classList.remove('detach-animation'),{once:true});}
+  function generateUniqueId(b){if(b.id)return b.id;const p=b.dataset.type||'block';let s=Math.floor(Math.random()*10000).toString().padStart(4,'0');let id=`${p}-${s}`;let i=0;while(document.getElementById(id)&&i<10){id=`${p}-${s}-${i++}`;}if(i>=10)id=`${p}-${Date.now()}`;b.id=id;if(CONFIG.DEBUG)console.log(`Generated ID: ${id}`);return id;}
+
+  // ========================================================================
+  // אתחול המערכת כולה
+  // ========================================================================
+  function initializeSystem() {
+    const initFlag = 'blockLinkageInitialized_v3_6'; // Version specific flag
+    if (window[initFlag]) {
+        if (CONFIG.DEBUG) console.log("Block linkage system v3.6 already initialized. Skipping.");
+        return;
+    }
+
+    addHighlightStyles();
+    initAudio();
+    initProgrammingAreaListeners();
+    observeNewBlocks();
+    initExistingBlocks();
+    initGlobalMouseListeners();
+
+    if (CONFIG.PLAY_SOUND) { addSoundTestButton(); }
+
+    window[initFlag] = true; // Mark as initialized
+    console.log(`Block linkage system initialized (Version 3.6 - Block Overlap Fix, Threshold=${CONFIG.CONNECT_THRESHOLD}px)`);
+    console.log(`Configuration: Snap Threshold=${CONFIG.CONNECT_THRESHOLD}px, Overlap=${CONFIG.VERTICAL_OVERLAP_REQ*100}%, OverlapAmount=${CONFIG.OVERLAP_AMOUNT}px, Sound=${CONFIG.PLAY_SOUND ? CONFIG.SOUND_PATH : 'Disabled'}`);
+  }
+
+  // הפעל את האתחול
+  if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeSystem);
+  } else {
+      initializeSystem(); // DOM already loaded
+  }
+
+})(); // סוף IIFE
+
+// --- END OF FILE linkageimproved-overlap.js ---CONFIG.DEBUG) console.log(`[MouseUp] Candidate target ${candidateTarget.id} identified during drag. Attempting snap.`);
         performSnap = true;
     } else {
         if (CONFIG.DEBUG) console.log(`[MouseUp] No valid candidate target identified during drag, or target disappeared. No snap attempt.`);
@@ -212,7 +312,7 @@
   }
 
   // ========================================================================
-  // ביצוע ההצמדה הפיזית - עם תוספת היסט ויזואלי של 10 פיקסלים
+  // ביצוע ההצמדה הפיזית - עם תוספת חפיפה של 10 פיקסלים
   // ========================================================================
   function performBlockSnap(sourceBlock, targetBlock, direction) {
     if (!sourceBlock || !targetBlock || !document.body.contains(targetBlock) || targetBlock.offsetParent === null) { 
@@ -235,15 +335,15 @@
       const pE = document.getElementById('program-blocks'); 
       const pR = pE.getBoundingClientRect();
       
-      // המיקום המדויק להצמדה - עם תוספת היסט ויזואלי של 10 פיקסלים
-      // הוספנו סטייה של 10 פיקסלים כדי שהחיבור ייראה טוב יותר
+      // המיקום המדויק להצמדה - עם תוספת חפיפה של 10 פיקסלים
+      // הוספנו חפיפה כדי שהחיבור ייראה טוב יותר
       let finalLeft;
       if (direction === 'left') {
-        // מחבר ימני של המקור לשמאלי של היעד - הזז 10 פיקסלים שמאלה
-        finalLeft = targetRect.left - sourceRect.width - CONFIG.VISUAL_OFFSET;
+        // מחבר ימני של המקור לשמאלי של היעד - הזז 10 פיקסלים פנימה (ימינה) לתוך היעד
+        finalLeft = targetRect.left - sourceRect.width + CONFIG.OVERLAP_AMOUNT;
       } else {
-        // מחבר שמאלי של המקור לימני של היעד - הזז 10 פיקסלים ימינה
-        finalLeft = targetRect.right + CONFIG.VISUAL_OFFSET;
+        // מחבר שמאלי של המקור לימני של היעד - הזז 10 פיקסלים פנימה (שמאלה) לתוך היעד
+        finalLeft = targetRect.right - CONFIG.OVERLAP_AMOUNT;
       }
       
       const finalTop = targetRect.top; // יישור למעלה
@@ -276,105 +376,4 @@
         sourceBlock.style.transition = '';
       }, 250);
       
-      if (CONFIG.DEBUG) console.log(`[PerformSnap] Success. ${sourceBlock.id} pos: L=${styleLeft.toFixed(0)}, T=${styleTop.toFixed(0)}. Draggable: ${sourceBlock.draggable}`);
-      return true;
-    } catch (err) { 
-      console.error(`[PerformSnap] Error during snap for ${sourceBlock.id} -> ${targetBlock.id}:`, err); 
-      try { 
-        detachBlock(sourceBlock, false); 
-      } catch (derr) { 
-        console.error(`[PerformSnap] Cleanup detach error:`, derr); 
-      } 
-      sourceBlock.draggable = true; 
-      return false; 
-    }
-  }
-
-  // ========================================================================
-  // עדכון מחוון עתידי - עם תוספת היסט ויזואלי של 10 פיקסלים
-  // ========================================================================
-  function updateFuturePositionIndicator(sB, tB, dir, pR) {
-    const pA = document.getElementById('program-blocks');
-    if (!pA) return;
-    
-    if (!futureIndicator) {
-      futureIndicator = document.createElement('div');
-      futureIndicator.id = 'future-position-indicator';
-      futureIndicator.className = 'future-position-indicator';
-      pA.appendChild(futureIndicator);
-    }
-    
-    try {
-      const sRN = sB.getBoundingClientRect();
-      const tR = tB.getBoundingClientRect();
-      const pRct = pA.getBoundingClientRect();
-      
-      // הוספנו סטייה של 10 פיקסלים כדי שהחיווי יראה היכן הבלוק יחובר
-      let dVL;
-      if (dir === 'left') {
-        dVL = tR.left - sRN.width - CONFIG.VISUAL_OFFSET; // הזז 10 פיקסלים שמאלה
-      } else {
-        dVL = tR.right + CONFIG.VISUAL_OFFSET; // הזז 10 פיקסלים ימינה
-      }
-      
-      let dVT = tR.top;
-      let iL = dVL - pRct.left + pA.scrollLeft;
-      let iT = dVT - pRct.top + pA.scrollTop;
-      
-      futureIndicator.style.left = Math.round(iL) + 'px';
-      futureIndicator.style.top = Math.round(iT) + 'px';
-      futureIndicator.style.width = Math.round(sRN.width) + 'px';
-      futureIndicator.style.height = Math.round(sRN.height) + 'px';
-      futureIndicator.classList.add('visible');
-    } catch (err) {
-      console.error('Err updating future indicator:', err);
-      removeFuturePositionIndicator();
-    }
-  }
-
-  // ========================================================================
-  // פונקציות עזר - ללא שינוי מ-v3.5
-  // ========================================================================
-  function removeFuturePositionIndicator() { if(futureIndicator)futureIndicator.classList.remove('visible'); }
-  function showDetachMenu(x,y,b){removeDetachMenu();const m=document.createElement('div');m.id='detach-menu';m.style.left=`${x}px`;m.style.top=`${y}px`;const o=document.createElement('div');o.textContent='נתק בלוק';o.onclick=(e)=>{e.stopPropagation();detachBlock(b,true);removeDetachMenu();};m.appendChild(o);document.body.appendChild(m);setTimeout(()=>{document.addEventListener('click',closeMenuOutside,{capture:true,once:true});window.addEventListener('scroll',removeDetachMenu,{capture:true,once:true});},0);}
-  function closeMenuOutside(e){const m=document.getElementById('detach-menu');if(m&&!m.contains(e.target))removeDetachMenu();else if(m)setTimeout(()=>document.addEventListener('click',closeMenuOutside,{capture:true,once:true}),0);window.removeEventListener('scroll',removeDetachMenu,{capture:true});}
-  function removeDetachMenu(){const m=document.getElementById('detach-menu');if(m){document.removeEventListener('click',closeMenuOutside,{capture:true});window.removeEventListener('scroll',removeDetachMenu,{capture:true});m.remove();}}
-  function detachBlock(btd,animate=true){if(!btd||!btd.hasAttribute('data-connected-to'))return;const tid=btd.getAttribute('data-connected-to');const dir=btd.getAttribute('data-connection-direction');if(!tid||!dir){console.warn(`[Detach] Missing data on ${btd.id}. Clean.`);btd.removeAttribute('data-connected-to');btd.removeAttribute('data-connection-direction');btd.classList.remove('connected-block');btd.draggable=true;return;}if(CONFIG.DEBUG)console.log(`[Detach] Detaching ${btd.id} from ${tid}`);btd.removeAttribute('data-connected-to');btd.removeAttribute('data-connection-direction');btd.classList.remove('connected-block');btd.draggable=true;const tb=document.getElementById(tid);if(tb){tb.removeAttribute(dir==='left'?'data-connected-from-left':'data-connected-from-right');const hoc=tb.hasAttribute('data-connected-from-left')||tb.hasAttribute('data-connected-from-right')||tb.hasAttribute('data-connected-to');if(!hoc)tb.classList.remove('has-connected-block');}else{console.warn(`[Detach] Target ${tid} not found.`);}if(animate)addDetachEffectAnimation(btd);if(CONFIG.DEBUG)console.log(`[Detach] Finished ${btd.id}. Draggable: ${btd.draggable}`);}
-  function addSnapEffectAnimation(b){b.classList.remove('snap-animation');void b.offsetWidth;b.classList.add('snap-animation');b.addEventListener('animationend',()=>b.classList.remove('snap-animation'),{once:true});}
-  function addDetachEffectAnimation(b){b.classList.remove('detach-animation');void b.offsetWidth;b.classList.add('detach-animation');b.addEventListener('animationend',()=>b.classList.remove('detach-animation'),{once:true});}
-  function generateUniqueId(b){if(b.id)return b.id;const p=b.dataset.type||'block';let s=Math.floor(Math.random()*10000).toString().padStart(4,'0');let id=`${p}-${s}`;let i=0;while(document.getElementById(id)&&i<10){id=`${p}-${s}-${i++}`;}if(i>=10)id=`${p}-${Date.now()}`;b.id=id;if(CONFIG.DEBUG)console.log(`Generated ID: ${id}`);return id;}
-
-  // ========================================================================
-  // אתחול המערכת כולה
-  // ========================================================================
-  function initializeSystem() {
-    const initFlag = 'blockLinkageInitialized_v3_6'; // Version specific flag
-    if (window[initFlag]) {
-        if (CONFIG.DEBUG) console.log("Block linkage system v3.6 already initialized. Skipping.");
-        return;
-    }
-
-    addHighlightStyles();
-    initAudio();
-    initProgrammingAreaListeners();
-    observeNewBlocks();
-    initExistingBlocks();
-    initGlobalMouseListeners();
-
-    if (CONFIG.PLAY_SOUND) { addSoundTestButton(); }
-
-    window[initFlag] = true; // Mark as initialized
-    console.log(`Block linkage system initialized (Version 3.6 - Visual Offset & Smooth Animation, Threshold=${CONFIG.CONNECT_THRESHOLD}px)`);
-    console.log(`Configuration: Snap Threshold=${CONFIG.CONNECT_THRESHOLD}px, Overlap=${CONFIG.VERTICAL_OVERLAP_REQ*100}%, VisualOffset=${CONFIG.VISUAL_OFFSET}px, Sound=${CONFIG.PLAY_SOUND ? CONFIG.SOUND_PATH : 'Disabled'}`);
-  }
-
-  // הפעל את האתחול
-  if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initializeSystem);
-  } else {
-      initializeSystem(); // DOM already loaded
-  }
-
-})(); // סוף IIFE
-
-// --- END OF FILE linkageimproved-fixed.js ---
+      if (
