@@ -201,10 +201,14 @@ main {
     border: 1px dashed #ccc;
     padding: 10px;
     position: relative;
+    overflow: visible; /* אפשר לבלוקים לחרוג החוצה אם צריך */
+    z-index: 1; /* וודא שיש z-index בסיסי */
 }
 
+/* תיקון: ודא שלבלוקים באזור התכנות יש מיקום אבסולוטי */
 #program-blocks .block-container {
-    position: absolute;
+    position: absolute !important; /* כפה מיקום אבסולוטי */
+    cursor: grab;
 }
 
 .logo {
@@ -289,6 +293,7 @@ main {
     background-color: transparent !important; /* רקע שקוף */
     box-shadow: none !important; /* הסרת הצל */
     border: none !important; /* הסרת מסגרת אם קיימת */
+    transition: all 0.15s ease-out; /* מעבר חלק לאנימציות */
 }
 
 #block-palette .block-container:active,
@@ -348,9 +353,82 @@ main {
 .block-category.active {
     opacity: 1; /* אין צורך בשקיפות נוספת כי הצבעים כבר מוגדרים עם שקיפות */
 }
+
+/* תיקון: וודא שסגנונות ההצמדה לא מוסתרים או נדרסים */
+.snap-source {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4) !important; 
+    transition: box-shadow 0.15s ease-out !important; 
+    cursor: grabbing !important; 
+    z-index: 1001 !important;
+}
+
+.snap-target {
+    outline: 6px solid #FFC107 !important;
+    outline-offset: 4px !important;
+    box-shadow: 0 0 20px 8px rgba(255,193,7,0.8) !important;
+    transition: outline 0.1s ease-out, box-shadow 0.1s ease-out !important;
+    z-index: 999 !important;
+}
+
+/* תיקון: וודא שמחווני הכיוון מוצגים כראוי */
+.snap-target.snap-left::before { 
+    content: '' !important;
+    position: absolute !important;
+    left: -10px !important; 
+    top: 10% !important; 
+    bottom: 10% !important; 
+    width: 8px !important; 
+    background-color: #FFC107 !important; 
+    border-radius: 2px !important; 
+    z-index: 1000 !important; 
+    box-shadow: 0 0 10px 2px rgba(255,193,7,0.8) !important; 
+}
+
+.snap-target.snap-right::after { 
+    content: '' !important;
+    position: absolute !important;
+    right: -10px !important; 
+    top: 10% !important; 
+    bottom: 10% !important; 
+    width: 8px !important; 
+    background-color: #FFC107 !important; 
+    border-radius: 2px !important; 
+    z-index: 1000 !important; 
+    box-shadow: 0 0 10px 2px rgba(255,193,7,0.8) !important; 
+}
+
+/* תיקון: סגנון למחוון המיקום העתידי */
+.future-position-indicator {
+    position: absolute !important;
+    border: 3px dashed rgba(0,120,255,0.95) !important;
+    border-radius: 5px !important;
+    background-color: rgba(0,120,255,0.15) !important;
+    pointer-events: none !important;
+    z-index: 998 !important;
+    opacity: 0 !important;
+    transition: opacity 0.15s ease-out, left 0.05s linear, top 0.05s linear !important;
+    display: none !important;
+}
+
+.future-position-indicator.visible {
+    display: block !important;
+    opacity: 0.9 !important;
+}
+
+/* תיקון: הדגשה ויזואלית לבלוקים מחוברים */
+.connected-block {
+    outline: 2px solid rgba(76, 175, 80, 0.6) !important;
+    outline-offset: 2px !important;
+}
+
+.has-connected-block {
+    outline: 2px solid rgba(33, 150, 243, 0.6) !important;
+    outline-offset: 2px !important;
+}
+
+/* הקלאס הישן שבתמונה - לא בשימוש אבל נשמר למקרה שצריך */
 .snap-highlight {
     outline: 3px dashed dodgerblue !important;
     outline-offset: 2px;
     box-shadow: 0 0 10px rgba(30, 144, 255, 0.7) !important;
-    /* ודא שאין כאן בטעות משהו כמו display: none; או visibility: hidden; */
 }
