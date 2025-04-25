@@ -1,9 +1,10 @@
 // --- START OF FILE linkageimproved.js ---
-// --- Version 3.6: Fixed Block Linkage with 8px Overlap ---
+// --- Version 3.6: Fixed Block Linkage with 8px Overlap and Enhanced Indicator ---
 // Changes from v3.5:
 // 1. Added 8px overlap between connected blocks for visible connection
 // 2. Added smooth animation for connections
-// 3. Maintained all other functionality from v3.5
+// 3. Improved blue indicator visibility
+// 4. Changed connect threshold to 1px for very precise connections
 
 (function() {
   // משתנים גלובליים במודול
@@ -20,11 +21,11 @@
   // קונפיגורציה - פרמטרים שניתן להתאים
   const CONFIG = {
     PIN_WIDTH: 5,
-    CONNECT_THRESHOLD: 8, // סף להפעלת הדגשה וזיהוי יעד פוטנציאלי
+    CONNECT_THRESHOLD: 1, // סף להפעלת הדגשה וזיהוי יעד פוטנציאלי - שונה ל-1 לדיוק מרבי
     VERTICAL_ALIGN_THRESHOLD: 20,
     VERTICAL_OVERLAP_REQ: 0.4, // דרישה ל-40% חפיפה אנכית לפחות
     BLOCK_GAP: 0, // אין רווח - חיבור שקע-תקע
-    OVERLAP_AMOUNT: 1, // כמה פיקסלים של חפיפה בין הלבנים המחוברות
+    OVERLAP_AMOUNT: 8, // כמה פיקסלים של חפיפה בין הלבנים המחוברות
     PLAY_SOUND: true,
     SOUND_VOLUME: 0.8,
     SOUND_PATH: 'assets/sound/link.mp3', // ודא שהנתיב נכון
@@ -32,7 +33,7 @@
   };
 
   // ========================================================================
-  // הוספת סגנונות CSS - הילה צהובה, מחוון כחול (ללא שינוי מ-v3.5)
+  // הוספת סגנונות CSS - הילה צהובה, מחוון כחול (משופר)
   // ========================================================================
   function addHighlightStyles() {
     if (document.getElementById('block-connection-styles')) return;
@@ -41,8 +42,22 @@
     style.textContent = `
       .snap-source { box-shadow: 0 5px 15px rgba(0,0,0,0.4) !important; transition: box-shadow 0.15s ease-out; cursor: grabbing !important; z-index: 1001 !important; }
       .snap-target { outline: 6px solid #FFC107 !important; outline-offset: 4px; box-shadow: 0 0 20px 8px rgba(255,193,7,0.8) !important; transition: outline 0.1s ease-out, box-shadow 0.1s ease-out; z-index: 999 !important; }
-      .future-position-indicator { position: absolute; border: 3px dashed rgba(0,120,255,0.95) !important; border-radius: 5px; background-color: rgba(0,120,255,0.15) !important; pointer-events: none; z-index: 998; opacity: 0; transition: opacity 0.15s ease-out, left 0.05s linear, top 0.05s linear; display: none; }
-      .future-position-indicator.visible { display: block; opacity: 0.9; }
+      .future-position-indicator { 
+        position: absolute; 
+        border: 4px dashed rgba(0,120,255,0.95) !important; 
+        border-radius: 5px; 
+        background-color: rgba(0,120,255,0.2) !important; 
+        pointer-events: none; 
+        z-index: 998; 
+        opacity: 0; 
+        transition: opacity 0.1s ease-out, left 0.05s linear, top 0.05s linear; 
+        display: none; 
+        box-shadow: 0 0 8px 2px rgba(0,120,255,0.5);
+      }
+      .future-position-indicator.visible { 
+        display: block; 
+        opacity: 1; 
+      }
       .snap-target.snap-left::before { content:''; position:absolute; left:-10px; top:10%; bottom:10%; width:8px; background-color:#FFC107; border-radius:2px; z-index:1000; box-shadow:0 0 10px 2px rgba(255,193,7,0.8); transition:all 0.1s ease-out; }
       .snap-target.snap-right::after { content:''; position:absolute; right:-10px; top:10%; bottom:10%; width:8px; background-color:#FFC107; border-radius:2px; z-index:1000; box-shadow:0 0 10px 2px rgba(255,193,7,0.8); transition:all 0.1s ease-out; }
       @keyframes snapEffect { 0%{transform:scale(1)} 35%{transform:scale(1.05)} 70%{transform:scale(0.98)} 100%{transform:scale(1)} } .snap-animation { animation:snapEffect 0.3s ease-out; }
@@ -53,7 +68,7 @@
       #sound-test-button { position:fixed; bottom:15px; right:15px; padding:8px 12px; background-color:#2196F3; color:white; border:none; border-radius:4px; cursor:pointer; z-index:9999; font-family:Arial,sans-serif; font-size:14px; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.2); transition:background-color .2s,opacity .5s ease-out; opacity:1; } #sound-test-button:hover { background-color:#0b7dda; } #sound-test-button.success { background-color:#4CAF50; } #sound-test-button.error { background-color:#f44336; } #sound-test-button.loading { background-color:#ff9800; cursor:wait; } #sound-test-button.hidden { opacity:0; pointer-events:none; }
     `;
     document.head.appendChild(style);
-    if (CONFIG.DEBUG) console.log('Styles added (Yellow Halo, Blue Indicator)');
+    if (CONFIG.DEBUG) console.log('Styles added (Yellow Halo, Enhanced Blue Indicator)');
   }
 
   // ========================================================================
@@ -74,11 +89,39 @@
   function handleMouseDown(e) { if(e.button!==0||!e.target.closest||e.target.matches('input,button,select,textarea,a[href]'))return;const b=e.target.closest('.block-container');if(!b||!b.parentElement||b.parentElement.id!=='program-blocks')return;if(!b.id)generateUniqueId(b);e.preventDefault();b.draggable=false;if(CONFIG.DEBUG)console.log(`[MouseDown] Start drag: ${b.id}`);if(b.hasAttribute('data-connected-to'))detachBlock(b,false);const lId=b.getAttribute('data-connected-from-left');if(lId)detachBlock(document.getElementById(lId),false);const rId=b.getAttribute('data-connected-from-right');if(rId)detachBlock(document.getElementById(rId),false);currentDraggedBlock=b;isDraggingBlock=true;const r=b.getBoundingClientRect();dragOffset.x=e.clientX-r.left;dragOffset.y=e.clientY-r.top;const pE=document.getElementById('program-blocks');const pR=pE.getBoundingClientRect();if(window.getComputedStyle(b).position!=='absolute'){b.style.position='absolute';b.style.left=(r.left-pR.left+pE.scrollLeft)+'px';b.style.top=(r.top-pR.top+pE.scrollTop)+'px';}b.style.margin='0';b.style.zIndex='1001';b.classList.add('snap-source');document.body.classList.add('user-select-none'); }
 
   // ========================================================================
-  // מאזינים גלובליים, MouseLeave, MouseMove - ללא שינוי מ-v3.5
+  // מאזינים גלובליים, MouseLeave, MouseMove - עם בדיקת הצמדה בכל תזוזה
   // ========================================================================
   function initGlobalMouseListeners() { document.removeEventListener('mousemove',handleMouseMove);document.removeEventListener('mouseup',handleMouseUp);document.removeEventListener('mouseleave',handleMouseLeave);document.addEventListener('mousemove',handleMouseMove);document.addEventListener('mouseup',handleMouseUp);document.addEventListener('mouseleave',handleMouseLeave); }
   function handleMouseLeave(e) { if(isDraggingBlock&&e.target===document.documentElement&&!e.relatedTarget){if(CONFIG.DEBUG)console.warn("Mouse left doc during drag, mouseup.");handleMouseUp(e);} }
-  function handleMouseMove(e) { if(!isDraggingBlock||!currentDraggedBlock)return;e.preventDefault();const pE=document.getElementById('program-blocks');if(!pE){handleMouseUp(e);return;}const pR=pE.getBoundingClientRect();let nL=e.clientX-pR.left-dragOffset.x+pE.scrollLeft;let nT=e.clientY-pR.top-dragOffset.y+pE.scrollTop;const bW=currentDraggedBlock.offsetWidth;const bH=currentDraggedBlock.offsetHeight;const sW=pE.scrollWidth;const sH=pE.scrollHeight;nL=Math.max(0,Math.min(nL,sW-bW));nT=Math.max(0,Math.min(nT,sH-bH));currentDraggedBlock.style.left=Math.round(nL)+'px';currentDraggedBlock.style.top=Math.round(nT)+'px';checkAndHighlightSnapPossibility(); }
+  function handleMouseMove(e) { 
+    if(!isDraggingBlock||!currentDraggedBlock) return;
+    
+    e.preventDefault();
+    
+    const pE = document.getElementById('program-blocks');
+    if(!pE) {
+      handleMouseUp(e);
+      return;
+    }
+    
+    const pR = pE.getBoundingClientRect();
+    let nL = e.clientX - pR.left - dragOffset.x + pE.scrollLeft;
+    let nT = e.clientY - pR.top - dragOffset.y + pE.scrollTop;
+    
+    const bW = currentDraggedBlock.offsetWidth;
+    const bH = currentDraggedBlock.offsetHeight;
+    const sW = pE.scrollWidth;
+    const sH = pE.scrollHeight;
+    
+    nL = Math.max(0, Math.min(nL, sW - bW));
+    nT = Math.max(0, Math.min(nT, sH - bH));
+    
+    currentDraggedBlock.style.left = Math.round(nL) + 'px';
+    currentDraggedBlock.style.top = Math.round(nT) + 'px';
+    
+    // בדוק הצמדה בכל תזוזה
+    checkAndHighlightSnapPossibility();
+  }
 
   // ========================================================================
   // טיפול בשחרור העכבר (MouseUp) - קפיצה להצמדה אם היה מודגש
@@ -140,7 +183,7 @@
   }
 
   // ========================================================================
-  // בדיקת הצמדה והדגשה (MouseMove) - ללא שינוי מ-v3.5
+  // בדיקת הצמדה והדגשה - עם הפעלת מחוון מועדף
   // ========================================================================
   function checkAndHighlightSnapPossibility() {
     if (!currentDraggedBlock) return;
@@ -149,7 +192,7 @@
     const allVisibleBlocks = Array.from(programmingArea.querySelectorAll('.block-container:not(.snap-source)'))
                                   .filter(block => block.offsetParent !== null);
     let bestTarget = null; let bestDirection = null;
-    let minDistance = CONFIG.CONNECT_THRESHOLD + 1;
+    let minDistance = 99999; // מרחק גדול מאוד כדי לתפוס כל דבר בתחום
 
     // Reset highlights and global state before checking
     document.querySelectorAll('.snap-target').forEach(el => { el.classList.remove('snap-target', 'snap-left', 'snap-right'); });
@@ -162,7 +205,7 @@
       const targetConnectedLeft = targetBlock.hasAttribute('data-connected-from-left');
       const targetConnectedRight = targetBlock.hasAttribute('data-connected-from-right');
 
-      // Calculate returns info only if distance <= threshold (8px) and overlap is sufficient
+      // Calculate returns info only if distance <= threshold (1px) and overlap is sufficient
       const snapInfo = calculateSnapInfo(sourceRect, targetRect);
 
       if (snapInfo) {
@@ -190,24 +233,37 @@
   }
 
   // ========================================================================
-  // חישוב מידע הצמדה (מרחק וחפיפה) - ללא שינוי מ-v3.5
+  // חישוב מידע הצמדה עבור חיבור מדויק של 1 פיקסל
   // ========================================================================
   function calculateSnapInfo(sourceRect, targetRect) {
+    // בדוק חפיפה אנכית תחילה
     const topOverlap = Math.max(sourceRect.top, targetRect.top);
     const bottomOverlap = Math.min(sourceRect.bottom, targetRect.bottom);
     const verticalOverlap = Math.max(0, bottomOverlap - topOverlap);
     const minHeightReq = Math.min(sourceRect.height, targetRect.height) * CONFIG.VERTICAL_OVERLAP_REQ;
+    
+    // אם אין חפיפה אנכית מספקת, אין חיבור
     if (verticalOverlap < minHeightReq || verticalOverlap <= 0) return null;
+    
+    // חישוב מרחקים אופקיים
     let distance, direction;
     const distRightToLeft = Math.abs(sourceRect.right - targetRect.left);
     const distLeftToRight = Math.abs(sourceRect.left - targetRect.right);
-    if (distRightToLeft < distLeftToRight) { distance = distRightToLeft; direction = 'left'; }
-    else { distance = distLeftToRight; direction = 'right'; }
-    // החזר מידע רק אם המרחק בטווח (עכשיו 8px)
+    
+    if (distRightToLeft < distLeftToRight) { 
+      distance = distRightToLeft; 
+      direction = 'left'; 
+    } else { 
+      distance = distLeftToRight; 
+      direction = 'right'; 
+    }
+    
+    // הסף כאן הוא 1 פיקסל בלבד לדיוק
     if (distance <= CONFIG.CONNECT_THRESHOLD) {
        if (CONFIG.DEBUG > 1) console.log(`[calculateSnapInfo] Within threshold (${CONFIG.CONNECT_THRESHOLD}px): dir=${direction}, dist=${distance.toFixed(1)}`);
        return { direction, distance };
     }
+    
     return null;
   }
 
@@ -291,12 +347,13 @@
   }
 
   // ========================================================================
-  // עדכון מחוון עתידי - עם תוספת חפיפה של 8 פיקסלים 
+  // עדכון מחוון עתידי - משופר לנראות טובה יותר
   // ========================================================================
   function updateFuturePositionIndicator(sB, tB, dir, pR) {
     const pA = document.getElementById('program-blocks');
     if (!pA) return;
     
+    // ודא שהמחוון קיים ומוצג
     if (!futureIndicator) {
       futureIndicator = document.createElement('div');
       futureIndicator.id = 'future-position-indicator';
@@ -309,33 +366,54 @@
       const tR = tB.getBoundingClientRect();
       const pRct = pA.getBoundingClientRect();
       
-      // הוספנו חפיפה כדי שהחיווי יראה היכן הבלוק יחובר
+      // חישוב מיקום עם חפיפה
       let dVL;
       if (dir === 'left') {
-        dVL = tR.left - sRN.width + CONFIG.OVERLAP_AMOUNT; // הזז פנימה (ימינה)
+        dVL = tR.left - sRN.width + CONFIG.OVERLAP_AMOUNT;
       } else {
-        dVL = tR.right - CONFIG.OVERLAP_AMOUNT; // הזז פנימה (שמאלה)
+        dVL = tR.right - CONFIG.OVERLAP_AMOUNT;
       }
       
       let dVT = tR.top;
       let iL = dVL - pRct.left + pA.scrollLeft;
       let iT = dVT - pRct.top + pA.scrollTop;
       
+      // הגדרות עיצוב משופרות למחוון
       futureIndicator.style.left = Math.round(iL) + 'px';
       futureIndicator.style.top = Math.round(iT) + 'px';
       futureIndicator.style.width = Math.round(sRN.width) + 'px';
       futureIndicator.style.height = Math.round(sRN.height) + 'px';
+      futureIndicator.style.borderWidth = '4px';  // הדגשת הגבול
+      futureIndicator.style.boxShadow = '0 0 8px 2px rgba(0,120,255,0.5)';  // הוספת צל
+      
+      // הפוך מיידית למחוון נראה
       futureIndicator.classList.add('visible');
+      
+      if (CONFIG.DEBUG > 1) {
+        console.log(`[Indicator] Showing at L=${iL.toFixed(0)}, T=${iT.toFixed(0)}, W=${sRN.width}, H=${sRN.height}`);
+      }
+      
     } catch (err) {
-      console.error('Err updating future indicator:', err);
+      console.error('Error updating future indicator:', err);
       removeFuturePositionIndicator();
+    }
+  }
+
+  // ========================================================================
+  // הסרת מחוון עתידי - משופר לניקוי טוב יותר
+  // ========================================================================
+  function removeFuturePositionIndicator() { 
+    if (futureIndicator) {
+      futureIndicator.classList.remove('visible');
+      // החזרת ההגדרות למצב ברירת מחדל
+      futureIndicator.style.boxShadow = '';
+      futureIndicator.style.borderWidth = '';
     }
   }
 
   // ========================================================================
   // פונקציות עזר - ללא שינוי מ-v3.5
   // ========================================================================
-  function removeFuturePositionIndicator() { if(futureIndicator)futureIndicator.classList.remove('visible'); }
   function showDetachMenu(x,y,b){removeDetachMenu();const m=document.createElement('div');m.id='detach-menu';m.style.left=`${x}px`;m.style.top=`${y}px`;const o=document.createElement('div');o.textContent='נתק בלוק';o.onclick=(e)=>{e.stopPropagation();detachBlock(b,true);removeDetachMenu();};m.appendChild(o);document.body.appendChild(m);setTimeout(()=>{document.addEventListener('click',closeMenuOutside,{capture:true,once:true});window.addEventListener('scroll',removeDetachMenu,{capture:true,once:true});},0);}
   function closeMenuOutside(e){const m=document.getElementById('detach-menu');if(m&&!m.contains(e.target))removeDetachMenu();else if(m)setTimeout(()=>document.addEventListener('click',closeMenuOutside,{capture:true,once:true}),0);window.removeEventListener('scroll',removeDetachMenu,{capture:true});}
   function removeDetachMenu(){const m=document.getElementById('detach-menu');if(m){document.removeEventListener('click',closeMenuOutside,{capture:true});window.removeEventListener('scroll',removeDetachMenu,{capture:true});m.remove();}}
@@ -364,7 +442,7 @@
     if (CONFIG.PLAY_SOUND) { addSoundTestButton(); }
 
     window[initFlag] = true; // Mark as initialized
-    console.log(`Block linkage system initialized (Version 3.6 - Block Overlap Fix, Threshold=${CONFIG.CONNECT_THRESHOLD}px)`);
+    console.log(`Block linkage system initialized (Version 3.6 - Block Overlap Fix & Enhanced Indicator, Threshold=${CONFIG.CONNECT_THRESHOLD}px)`);
     console.log(`Configuration: Snap Threshold=${CONFIG.CONNECT_THRESHOLD}px, Overlap=${CONFIG.VERTICAL_OVERLAP_REQ*100}%, OverlapAmount=${CONFIG.OVERLAP_AMOUNT}px, Sound=${CONFIG.PLAY_SOUND ? CONFIG.SOUND_PATH : 'Disabled'}`);
   }
 
