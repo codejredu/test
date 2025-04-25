@@ -1,6 +1,6 @@
-// --- START OF FILE svg-puzzle-linkage-fixed.js ---
-// --- Version 2.0: SVG Puzzle Block Connection System ---
-// Specialized for SVG blocks with exact dimensions of 126x93 pixels
+// --- START OF FILE linkage-simple-fix.js ---
+// --- Version 1.0: Simple Visual Fix for Block Linkage ---
+// Simple solution with 10px offset to make connections visible
 
 (function() {
   // Global module variables
@@ -13,47 +13,38 @@
   let snapSound = null;
   let audioContextAllowed = false;
   let soundInitialized = false;
-  let lastHighlightTime = 0;
 
-  // Configuration - optimized for 126x93 SVG blocks
+  // Configuration - parameters that can be adjusted
   const CONFIG = {
-    CONNECT_THRESHOLD: 30,        // Increased threshold for easier connections
-    VERTICAL_ALIGN_THRESHOLD: 20, // Maximum vertical misalignment allowed
-    BLOCK_WIDTH: 126,             // Exact SVG width
-    BLOCK_HEIGHT: 93,             // Exact SVG height
-    PIN_WIDTH: 15,                // Estimated width of puzzle pin
-    SOCKET_DEPTH: 15,             // Estimated depth of puzzle socket
-    BLOCK_GAP: 0,                 // No gap between connected blocks
+    CONNECT_THRESHOLD: 20,      // Distance for connection detection (px)
+    VERTICAL_THRESHOLD: 15,     // Maximum vertical misalignment (px)
+    VISUAL_OFFSET: 10,          // Visual offset for connected blocks (px)
     PLAY_SOUND: true,
     SOUND_VOLUME: 0.8,
     SOUND_PATH: 'assets/sound/link.mp3',
-    DEBUG: true,                  // Enable for debugging
-    ANIMATE_CONNECTIONS: true,    // Enable smooth animation when connecting
-    CONNECTION_ANIMATION_SPEED: 200, // ms for connection animation
-    RIGHT_PIN_OFFSET: 0,          // Fine-tune pin position if needed
-    LEFT_SOCKET_OFFSET: 0         // Fine-tune socket position if needed
+    DEBUG: true                 // Enable for debugging
   };
 
   // ========================================================================
-  // Add CSS styles for connection visuals
+  // Add CSS styles for highlighting
   // ========================================================================
   function addHighlightStyles() {
-    if (document.getElementById('svg-puzzle-connection-styles')) return;
+    if (document.getElementById('simple-connection-styles')) return;
     
     const style = document.createElement('style');
-    style.id = 'svg-puzzle-connection-styles';
+    style.id = 'simple-connection-styles';
     style.textContent = `
       .snap-source { 
-        filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5)) !important;
-        transition: filter 0.15s ease-out; 
+        box-shadow: 0 5px 15px rgba(0,0,0,0.4) !important; 
+        transition: box-shadow 0.15s ease-out; 
         cursor: grabbing !important; 
         z-index: 1001 !important; 
       }
       .snap-target { 
         outline: 6px solid #FFC107 !important; 
-        outline-offset: 2px; 
-        filter: drop-shadow(0 0 10px rgba(255,193,7,0.8)) !important;
-        transition: outline 0.1s ease-out, filter 0.1s ease-out; 
+        outline-offset: 4px; 
+        box-shadow: 0 0 20px 8px rgba(255,193,7,0.8) !important; 
+        transition: outline 0.1s ease-out, box-shadow 0.1s ease-out; 
         z-index: 999 !important; 
       }
       .future-position-indicator { 
@@ -72,89 +63,78 @@
         opacity: 0.9; 
       }
       .snap-target.snap-left::before { 
-        content: ''; 
-        position: absolute; 
-        left: 0; 
-        top: 40%; 
-        height: 20%; 
-        width: 10px; 
-        background-color: #FFC107; 
-        border-radius: 2px 0 0 2px; 
-        z-index: 1000; 
-        filter: drop-shadow(0 0 5px rgba(255,193,7,0.8));
+        content:''; 
+        position:absolute; 
+        left:-10px; 
+        top:10%; 
+        bottom:10%; 
+        width:8px; 
+        background-color:#FFC107; 
+        border-radius:2px; 
+        z-index:1000; 
+        box-shadow:0 0 10px 2px rgba(255,193,7,0.8); 
+        transition:all 0.1s ease-out; 
       }
       .snap-target.snap-right::after { 
-        content: ''; 
-        position: absolute; 
-        right: 0; 
-        top: 40%; 
-        height: 20%; 
-        width: 10px; 
-        background-color: #FFC107; 
-        border-radius: 0 2px 2px 0; 
-        z-index: 1000; 
-        filter: drop-shadow(0 0 5px rgba(255,193,7,0.8));
+        content:''; 
+        position:absolute; 
+        right:-10px; 
+        top:10%; 
+        bottom:10%; 
+        width:8px; 
+        background-color:#FFC107; 
+        border-radius:2px; 
+        z-index:1000; 
+        box-shadow:0 0 10px 2px rgba(255,193,7,0.8); 
+        transition:all 0.1s ease-out; 
       }
       @keyframes snapEffect { 
-        0% {transform: scale(1)} 
-        35% {transform: scale(1.05)} 
-        70% {transform: scale(0.98)} 
-        100% {transform: scale(1)} 
+        0% {transform:scale(1)} 
+        35% {transform:scale(1.05)} 
+        70% {transform:scale(0.98)} 
+        100% {transform:scale(1)} 
       } 
       .snap-animation { 
-        animation: snapEffect 0.3s ease-out; 
+        animation:snapEffect 0.3s ease-out; 
       }
       @keyframes detachEffect { 
-        0% {transform: translate(0,0) rotate(0)} 
-        30% {transform: translate(3px,1px) rotate(0.8deg)} 
-        60% {transform: translate(-2px,2px) rotate(-0.5deg)} 
-        100% {transform: translate(0,0) rotate(0)} 
+        0% {transform:translate(0,0) rotate(0)} 
+        30% {transform:translate(3px,1px) rotate(0.8deg)} 
+        60% {transform:translate(-2px,2px) rotate(-0.5deg)} 
+        100% {transform:translate(0,0) rotate(0)} 
       } 
       .detach-animation { 
-        animation: detachEffect 0.3s ease-in-out; 
+        animation:detachEffect 0.3s ease-in-out; 
       }
       #detach-menu { 
-        position: absolute; 
-        background-color: white; 
-        border: 1px solid #ccc; 
-        border-radius: 4px; 
-        box-shadow: 0 3px 8px rgba(0,0,0,0.2); 
-        z-index: 1100; 
-        padding: 5px; 
-        font-size: 14px; 
-        min-width: 100px; 
+        position:absolute; 
+        background-color:white; 
+        border:1px solid #ccc; 
+        border-radius:4px; 
+        box-shadow:0 3px 8px rgba(0,0,0,0.2); 
+        z-index:1100; 
+        padding:5px; 
+        font-size:14px; 
+        min-width:100px; 
       } 
       #detach-menu div { 
-        padding: 6px 12px; 
-        cursor: pointer; 
-        border-radius: 3px; 
+        padding:6px 12px; 
+        cursor:pointer; 
+        border-radius:3px; 
       } 
       #detach-menu div:hover { 
-        background-color: #eee; 
+        background-color:#eee; 
       }
       body.user-select-none { 
-        user-select: none; 
-        -webkit-user-select: none; 
-        -moz-user-select: none; 
-        -ms-user-select: none; 
-      }
-      /* Show original element boundaries for debugging */
-      .show-debug-bounds .block-container,
-      .show-debug-bounds .block-svg,
-      .show-debug-bounds svg {
-        outline: 1px dotted red;
-      }
-      /* Special fixes for SVG in Firefox and Safari */
-      svg {
-        pointer-events: auto !important;
-      }
-      svg * {
-        pointer-events: inherit !important;
+        user-select:none; 
+        -webkit-user-select:none; 
+        -moz-user-select:none; 
+        -ms-user-select:none; 
       }
     `;
     
     document.head.appendChild(style);
-    if (CONFIG.DEBUG) console.log('SVG puzzle block styles added');
+    if (CONFIG.DEBUG) console.log('Styles added');
   }
 
   // ========================================================================
@@ -238,7 +218,6 @@
         }).catch(err => {
           if (err.name === 'NotAllowedError') {
             console.warn('Snap sound blocked by browser.');
-            audioContextAllowed = false;
           } else if (err.name !== 'AbortError') {
             console.error('Error playing snap sound:', err);
           }
@@ -250,99 +229,37 @@
   }
 
   // ========================================================================
-  // SVG Block Identification and Event Listeners
+  // Block Identification and Event Listeners
   // ========================================================================
   
   // Find all blocks in the programming area
-  function findSvgBlocks() {
-    // Try multiple selectors to catch different structures
-    const blocks = Array.from(document.querySelectorAll(
-      '#program-blocks > .block-container, ' + 
-      '#program-blocks > div > .block-container, ' +
-      '#program-blocks svg, ' +
-      '#program-blocks .block-svg, ' +
-      '#program-blocks > [id*="block"], ' +
-      '#program-blocks > div > [id*="block"]'
-    ));
+  function findBlocks() {
+    const blocks = document.querySelectorAll('#program-blocks .block-container');
     
-    if (CONFIG.DEBUG) console.log(`Found ${blocks.length} potential SVG blocks`);
+    if (CONFIG.DEBUG) console.log(`Found ${blocks.length} blocks`);
     
     return blocks;
   }
   
-  // Find the actual SVG element inside a container
-  function findSvgElement(container) {
-    // If the container is an SVG, return it directly
-    if (container.nodeName.toLowerCase() === 'svg') {
-      return container;
-    }
-    
-    // Otherwise look for an SVG inside
-    return container.querySelector('svg');
-  }
-  
-  // Get the container element that should be moved
-  function getBlockContainer(element) {
-    // If it's an SVG, find its proper container
-    if (element.nodeName.toLowerCase() === 'svg') {
-      const parent = element.parentElement;
-      // If parent seems like a proper container, use it
-      if (parent && parent.id !== 'program-blocks') {
-        return parent;
-      }
-      // Otherwise use the SVG itself
-      return element;
-    }
-    
-    // Find the closest container
-    const container = element.closest('.block-container, .block-svg, [id*="block"]');
-    
-    // If no container, use the element itself
-    return container || element;
-  }
-  
   // Initialize existing blocks
   function initExistingBlocks() {
-    const blocks = findSvgBlocks();
+    const blocks = findBlocks();
     
     blocks.forEach(block => {
-      const container = getBlockContainer(block);
-      
-      if (!container.id) {
-        generateUniqueId(container);
+      if (!block.id) {
+        generateUniqueId(block);
       }
       
-      // Ensure that each block has an SVG element reference
-      container.svgElement = findSvgElement(container);
-      
-      // Add event listeners
-      addBlockDragListeners(container);
-      
-      // Log original dimensions for reference
-      if (CONFIG.DEBUG && container.svgElement) {
-        const rect = container.svgElement.getBoundingClientRect();
-        console.log(`SVG ${container.id} dimensions: ${rect.width}x${rect.height}`);
-      }
+      addBlockDragListeners(block);
     });
     
-    if (CONFIG.DEBUG) console.log(`Initialized ${blocks.length} existing SVG blocks`);
+    if (CONFIG.DEBUG) console.log(`Initialized ${blocks.length} existing blocks`);
   }
   
   // Add event listeners to block
   function addBlockDragListeners(block) {
-    // Make sure we have the SVG element reference
-    if (!block.svgElement) {
-      block.svgElement = findSvgElement(block);
-    }
-    
-    // Add listeners to both the container and the SVG
     block.removeEventListener('mousedown', handleMouseDown);
     block.addEventListener('mousedown', handleMouseDown);
-    
-    if (block.svgElement && block.svgElement !== block) {
-      block.svgElement.removeEventListener('mousedown', handleSvgMouseDown);
-      block.svgElement.addEventListener('mousedown', handleSvgMouseDown);
-    }
     
     block.removeEventListener('contextmenu', handleContextMenu);
     block.addEventListener('contextmenu', handleContextMenu);
@@ -360,22 +277,18 @@
         if (mutation.type === 'childList') {
           mutation.addedNodes.forEach((node) => {
             if (node.nodeType === 1) { // Element node
-              // Check for SVG or container
-              const svgElement = node.nodeName.toLowerCase() === 'svg' ? 
-                              node : 
-                              node.querySelector('svg');
+              let block = node.classList?.contains('block-container') ? 
+                        node : 
+                        node.querySelector?.('.block-container');
                               
-              if (svgElement && node.closest('#program-blocks')) {
-                const container = getBlockContainer(svgElement);
-                
-                if (!container.id) {
-                  generateUniqueId(container);
+              if (block && block.closest('#program-blocks')) {
+                if (!block.id) {
+                  generateUniqueId(block);
                 }
                 
-                container.svgElement = svgElement;
-                addBlockDragListeners(container);
+                addBlockDragListeners(block);
                 
-                if (CONFIG.DEBUG) console.log(`Added new SVG block: ${container.id}`);
+                if (CONFIG.DEBUG) console.log(`Added new block: ${block.id}`);
               }
             }
           });
@@ -385,7 +298,7 @@
     
     observer.observe(programArea, {childList: true, subtree: true});
     
-    if (CONFIG.DEBUG) console.log("MutationObserver watching for new SVG blocks");
+    if (CONFIG.DEBUG) console.log("MutationObserver watching for new blocks");
   }
   
   // Initialize programming area
@@ -396,7 +309,7 @@
     // Prevent default drag behavior
     area.addEventListener('dragover', (e) => e.preventDefault());
     area.addEventListener('dragstart', (e) => {
-      if (e.target?.closest?.('#program-blocks')) e.preventDefault();
+      if (e.target?.closest?.('#program-blocks .block-container')) e.preventDefault();
     });
   }
 
@@ -407,83 +320,52 @@
   function handleContextMenu(e) {
     e.preventDefault();
     
-    const container = getBlockContainer(e.target);
+    const block = e.target.closest('.block-container');
     
-    if (container?.hasAttribute('data-connected-to')) {
-      showDetachMenu(e.clientX, e.clientY, container);
-    }
-  }
-  
-  // Handle mousedown directly on SVG element
-  function handleSvgMouseDown(e) {
-    // Redirect to the container's event handler
-    const container = getBlockContainer(e.currentTarget);
-    if (container) {
-      // Create a new event to pass to the container
-      const newEvent = new MouseEvent('mousedown', {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-        button: e.button,
-        buttons: e.buttons,
-        clientX: e.clientX,
-        clientY: e.clientY
-      });
-      
-      // Stop the current event to prevent double handling
-      e.stopPropagation();
-      
-      // Dispatch to container
-      container.dispatchEvent(newEvent);
+    if (block?.hasAttribute('data-connected-to')) {
+      showDetachMenu(e.clientX, e.clientY, block);
     }
   }
   
   function handleMouseDown(e) {
     // Skip if not left click or clicked on interactive element
-    if (e.button !== 0 || !e.target || e.target.matches('input,button,select,textarea,a[href]')) return;
+    if (e.button !== 0 || !e.target.closest || e.target.matches('input,button,select,textarea,a[href]')) return;
     
-    // Get the block container
-    const container = getBlockContainer(e.target);
+    const block = e.target.closest('.block-container');
     
     // Skip if not a valid block
-    if (!container || !container.closest('#program-blocks')) return;
+    if (!block || !block.parentElement || block.parentElement.id !== 'program-blocks') return;
     
     // Ensure ID exists
-    if (!container.id) generateUniqueId(container);
-    
-    // Make sure we have the SVG element reference
-    if (!container.svgElement) {
-      container.svgElement = findSvgElement(container);
-    }
+    if (!block.id) generateUniqueId(block);
     
     e.preventDefault();
-    e.stopPropagation();
-    container.draggable = false;
+    block.draggable = false;
     
-    if (CONFIG.DEBUG) console.log(`[MouseDown] Start drag SVG block: ${container.id}`);
+    if (CONFIG.DEBUG) console.log(`[MouseDown] Start drag block: ${block.id}`);
     
     // Detach this block if it's connected to another
-    if (container.hasAttribute('data-connected-to')) detachBlock(container, false);
+    if (block.hasAttribute('data-connected-to')) detachBlock(block, false);
     
     // Detach any blocks connected to this one
-    const leftId = container.getAttribute('data-connected-from-left');
+    const leftId = block.getAttribute('data-connected-from-left');
     if (leftId) {
       const leftBlock = document.getElementById(leftId);
       if (leftBlock) detachBlock(leftBlock, false);
     }
     
-    const rightId = container.getAttribute('data-connected-from-right');
+    const rightId = block.getAttribute('data-connected-from-right');
     if (rightId) {
       const rightBlock = document.getElementById(rightId);
       if (rightBlock) detachBlock(rightBlock, false);
     }
     
     // Set drag state
-    currentDraggedBlock = container;
+    currentDraggedBlock = block;
     isDraggingBlock = true;
     
     // Calculate drag offset (where within the block was clicked)
-    const rect = container.getBoundingClientRect();
+    const rect = block.getBoundingClientRect();
     dragOffset.x = e.clientX - rect.left;
     dragOffset.y = e.clientY - rect.top;
     
@@ -491,21 +373,16 @@
     const programElement = document.getElementById('program-blocks');
     const programRect = programElement.getBoundingClientRect();
     
-    if (window.getComputedStyle(container).position !== 'absolute') {
-      container.style.position = 'absolute';
-      container.style.left = (rect.left - programRect.left + programElement.scrollLeft) + 'px';
-      container.style.top = (rect.top - programRect.top + programElement.scrollTop) + 'px';
+    if (window.getComputedStyle(block).position !== 'absolute') {
+      block.style.position = 'absolute';
+      block.style.left = (rect.left - programRect.left + programElement.scrollLeft) + 'px';
+      block.style.top = (rect.top - programRect.top + programElement.scrollTop) + 'px';
     }
     
-    container.style.margin = '0';
-    container.style.zIndex = '1001';
-    container.classList.add('snap-source');
+    block.style.margin = '0';
+    block.style.zIndex = '1001';
+    block.classList.add('snap-source');
     document.body.classList.add('user-select-none');
-    
-    // If debugging, show boundaries
-    if (CONFIG.DEBUG) {
-      document.documentElement.classList.add('show-debug-bounds');
-    }
     
     // Add global listeners
     document.addEventListener('mousemove', handleMouseMove);
@@ -531,8 +408,8 @@
     let newTop = e.clientY - programRect.top - dragOffset.y + programElement.scrollTop;
     
     // Keep within bounds
-    const blockWidth = currentDraggedBlock.offsetWidth || CONFIG.BLOCK_WIDTH;
-    const blockHeight = currentDraggedBlock.offsetHeight || CONFIG.BLOCK_HEIGHT;
+    const blockWidth = currentDraggedBlock.offsetWidth;
+    const blockHeight = currentDraggedBlock.offsetHeight;
     const scrollWidth = programElement.scrollWidth;
     const scrollHeight = programElement.scrollHeight;
     
@@ -543,12 +420,8 @@
     currentDraggedBlock.style.left = Math.round(newLeft) + 'px';
     currentDraggedBlock.style.top = Math.round(newTop) + 'px';
     
-    // Throttle highlight checking to improve performance
-    const now = Date.now();
-    if (now - lastHighlightTime > 30) { // Check every 30ms (about 33fps)
-      checkAndHighlightSnapPossibility();
-      lastHighlightTime = now;
-    }
+    // Check for snap opportunities
+    checkAndHighlightSnapPossibility();
   }
   
   function handleMouseUp(e) {
@@ -559,7 +432,7 @@
     const candidateDirection = snapDirection;
     
     if (CONFIG.DEBUG) {
-      console.log(`[MouseUp] Releasing SVG block ${blockReleased.id}. ` +
+      console.log(`[MouseUp] Releasing block ${blockReleased.id}. ` +
                   `Candidate target: ${candidateTarget?.id || 'none'}, ` +
                   `direction: ${candidateDirection || 'none'}`);
     }
@@ -567,9 +440,6 @@
     // Clean up
     document.removeEventListener('mousemove', handleMouseMove);
     document.removeEventListener('mouseleave', handleMouseLeave);
-    
-    // Remove debug boundaries
-    document.documentElement.classList.remove('show-debug-bounds');
     
     // Immediately clean up drag state and highlights
     isDraggingBlock = false;
@@ -658,8 +528,7 @@
     const sourceRect = currentDraggedBlock.getBoundingClientRect();
     
     // Get all potential targets that aren't the source
-    const allPotentialTargets = Array.from(findSvgBlocks())
-                               .map(block => getBlockContainer(block))
+    const allPotentialTargets = Array.from(findBlocks())
                                .filter(block => block !== currentDraggedBlock && block.offsetParent !== null);
     
     let bestTarget = null;
@@ -683,11 +552,8 @@
       const targetConnectedLeft = targetBlock.hasAttribute('data-connected-from-left');
       const targetConnectedRight = targetBlock.hasAttribute('data-connected-from-right');
       
-      // Skip if no valid snap possibility due to existing connections
-      if (targetConnectedLeft && targetConnectedRight) continue;
-      
-      // Special SVG puzzle snap calculation
-      const snapInfo = calculateSvgPuzzleSnapInfo(sourceRect, targetRect);
+      // Simple connection calculation
+      const snapInfo = calculateSimpleSnapInfo(sourceRect, targetRect);
       
       if (snapInfo) {
         let connectionAllowed = true;
@@ -722,41 +588,39 @@
     }
   }
   
-  function calculateSvgPuzzleSnapInfo(sourceRect, targetRect) {
-    // First check vertical alignment - SVG blocks must be fairly aligned
+  function calculateSimpleSnapInfo(sourceRect, targetRect) {
+    // First check vertical alignment
     const sourceMiddleY = sourceRect.top + sourceRect.height / 2;
     const targetMiddleY = targetRect.top + targetRect.height / 2;
     const verticalDistance = Math.abs(sourceMiddleY - targetMiddleY);
     
-    // If vertical alignment is poor, no snap possible
-    if (verticalDistance > CONFIG.VERTICAL_ALIGN_THRESHOLD) {
+    // If vertical misalignment is too large, no snap possible
+    if (verticalDistance > CONFIG.VERTICAL_THRESHOLD) {
       return null;
     }
     
     // Calculate horizontal distances for potential connections
     let distance, direction;
     
-    // Source RIGHT (pin) to target LEFT (socket)
-    // Pin is on right side of source, Socket is on left side of target
-    const pinToSocketDist = Math.abs(sourceRect.right - targetRect.left);
+    // Source RIGHT to target LEFT
+    const rightToLeftDist = Math.abs(sourceRect.right - targetRect.left);
     
-    // Source LEFT (socket) to target RIGHT (pin)
-    // Socket is on left side of source, Pin is on right side of target
-    const socketToPinDist = Math.abs(sourceRect.left - targetRect.right);
+    // Source LEFT to target RIGHT
+    const leftToRightDist = Math.abs(sourceRect.left - targetRect.right);
     
     // Determine best connection direction
-    if (pinToSocketDist < socketToPinDist) {
-      distance = pinToSocketDist;
-      direction = 'left'; // Source's RIGHT (pin) connects to target's LEFT (socket)
+    if (rightToLeftDist < leftToRightDist) {
+      distance = rightToLeftDist;
+      direction = 'left'; // Source's RIGHT connects to target's LEFT
     } else {
-      distance = socketToPinDist;
-      direction = 'right'; // Source's LEFT (socket) connects to target's RIGHT (pin)
+      distance = leftToRightDist;
+      direction = 'right'; // Source's LEFT connects to target's RIGHT
     }
     
     // Return snap info only if within threshold
     if (distance <= CONFIG.CONNECT_THRESHOLD) {
       if (CONFIG.DEBUG > 1) {
-        console.log(`[calculateSvgSnapInfo] Within threshold (${CONFIG.CONNECT_THRESHOLD}px): ` +
+        console.log(`[calculateSimpleSnapInfo] Within threshold (${CONFIG.CONNECT_THRESHOLD}px): ` +
                    `dir=${direction}, dist=${distance.toFixed(1)}, vdist=${verticalDistance.toFixed(1)}`);
       }
       return { direction, distance, verticalDistance };
@@ -785,3 +649,129 @@
       const sourceRect = sourceBlock.getBoundingClientRect();
       const targetRect = targetBlock.getBoundingClientRect();
       const programRect = programArea.getBoundingClientRect();
+      
+      // Calculate position with visual offset for better appearance
+      let destVisualLeft;
+      
+      if (direction === 'left') {
+        // Source RIGHT connects to target LEFT
+        // Add 10px offset to the left for better visual connection
+        destVisualLeft = targetRect.left - sourceRect.width - CONFIG.VISUAL_OFFSET;
+      } else {
+        // Source LEFT connects to target RIGHT
+        // Add 10px offset to the right for better visual connection
+        destVisualLeft = targetRect.right + CONFIG.VISUAL_OFFSET;
+      }
+      
+      // Align tops
+      let destVisualTop = targetRect.top;
+      
+      // Convert to position relative to programming area
+      let indicatorLeft = destVisualLeft - programRect.left + programArea.scrollLeft;
+      let indicatorTop = destVisualTop - programRect.top + programArea.scrollTop;
+      
+      // Update indicator style
+      futureIndicator.style.left = Math.round(indicatorLeft) + 'px';
+      futureIndicator.style.top = Math.round(indicatorTop) + 'px';
+      futureIndicator.style.width = Math.round(sourceRect.width) + 'px';
+      futureIndicator.style.height = Math.round(sourceRect.height) + 'px';
+      
+      // Show the indicator
+      futureIndicator.classList.add('visible');
+      
+    } catch (err) {
+      console.error('Error updating future position indicator:', err);
+      removeFuturePositionIndicator();
+    }
+  }
+  
+  function removeFuturePositionIndicator() {
+    if (futureIndicator) {
+      futureIndicator.classList.remove('visible');
+    }
+  }
+
+  // ========================================================================
+  // Connection and Detachment Functions - WITH VISUAL OFFSET
+  // ========================================================================
+  
+  function performBlockSnap(sourceBlock, targetBlock, direction) {
+    if (!sourceBlock || !targetBlock || !document.body.contains(targetBlock) || targetBlock.offsetParent === null) {
+      console.error("[PerformSnap] Invalid block(s). Snap cancelled.");
+      return false;
+    }
+    
+    // Final check before changing anything
+    if ((direction === 'left' && targetBlock.hasAttribute('data-connected-from-left')) || 
+        (direction === 'right' && targetBlock.hasAttribute('data-connected-from-right'))) {
+      console.warn(`[PerformSnap] Snap cancelled: Target ${targetBlock.id} conflict on side '${direction}' just before snap.`);
+      return false;
+    }
+    
+    if (CONFIG.DEBUG) {
+      console.log(`[PerformSnap] Snapping ${sourceBlock.id} to ${targetBlock.id} (${direction})`);
+    }
+    
+    try {
+      const sourceRect = sourceBlock.getBoundingClientRect();
+      const targetRect = targetBlock.getBoundingClientRect();
+      const programElement = document.getElementById('program-blocks');
+      const programRect = programElement.getBoundingClientRect();
+      
+      // *** THE KEY CHANGE: Add visual offset for better appearance ***
+      let finalLeft;
+      
+      if (direction === 'left') {
+        // Source RIGHT connects to target LEFT with left offset
+        finalLeft = targetRect.left - sourceRect.width - CONFIG.VISUAL_OFFSET;
+      } else {
+        // Source LEFT connects to target RIGHT with right offset
+        finalLeft = targetRect.right + CONFIG.VISUAL_OFFSET;
+      }
+      
+      // Align tops
+      const finalTop = targetRect.top;
+      
+      // Convert to local coordinates
+      let styleLeft = finalLeft - programRect.left + programElement.scrollLeft;
+      let styleTop = finalTop - programRect.top + programElement.scrollTop;
+      
+      // Add smooth transition
+      sourceBlock.style.transition = 'left 0.2s ease-out, top 0.2s ease-out';
+      
+      // Set the final position
+      sourceBlock.style.position = 'absolute';
+      sourceBlock.style.left = `${Math.round(styleLeft)}px`;
+      sourceBlock.style.top = `${Math.round(styleTop)}px`;
+      sourceBlock.style.margin = '0';
+      
+      // Update connection attributes
+      sourceBlock.setAttribute('data-connected-to', targetBlock.id);
+      sourceBlock.setAttribute('data-connection-direction', direction);
+      
+      targetBlock.setAttribute(
+        direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right', 
+        sourceBlock.id
+      );
+      
+      // Add classes for styling
+      sourceBlock.classList.add('connected-block');
+      targetBlock.classList.add('has-connected-block');
+      
+      // Play sound effect
+      playSnapSound();
+      
+      // Add animation effect
+      addSnapEffectAnimation(sourceBlock);
+      
+      // Prevent dragging when connected
+      sourceBlock.draggable = false;
+      
+      // Clear transition after animation completes
+      setTimeout(() => {
+        sourceBlock.style.transition = '';
+      }, 250);
+      
+      if (CONFIG.DEBUG) {
+        console.log(`[PerformSnap] Success. ${sourceBlock.id} pos: L=${styleLeft.toFixed(0)}, T=${styleTop.toFixed(0)}. Draggable: ${sourceBlock.draggable}`);
+      }
