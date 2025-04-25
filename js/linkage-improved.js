@@ -1,9 +1,9 @@
-// --- START OF FILE linkageimproved-visual.js ---
-// --- Version 3.6: Visual Connection Indicators ---
+// --- START OF FILE linkageimproved.js ---
+// --- Version 3.6: Fixed Block Linkage with 8px Overlap ---
 // Changes from v3.5:
-// 1. Added visual connection lines between connected blocks
-// 2. Added connection highlight styles
-// 3. Maintains Z-index of connected blocks to keep them above others
+// 1. Added 8px overlap between connected blocks for visible connection
+// 2. Added smooth animation for connections
+// 3. Maintained all other functionality from v3.5
 
 (function() {
   // משתנים גלובליים במודול
@@ -16,7 +16,6 @@
   let snapSound = null;
   let audioContextAllowed = false;
   let soundInitialized = false;
-  let connectionLines = {}; // מאחסן את קווי החיבור בין הבלוקים
 
   // קונפיגורציה - פרמטרים שניתן להתאים
   const CONFIG = {
@@ -25,6 +24,7 @@
     VERTICAL_ALIGN_THRESHOLD: 20,
     VERTICAL_OVERLAP_REQ: 0.4, // דרישה ל-40% חפיפה אנכית לפחות
     BLOCK_GAP: 0, // אין רווח - חיבור שקע-תקע
+    OVERLAP_AMOUNT: 8, // כמה פיקסלים של חפיפה בין הלבנים המחוברות
     PLAY_SOUND: true,
     SOUND_VOLUME: 0.8,
     SOUND_PATH: 'assets/sound/link.mp3', // ודא שהנתיב נכון
@@ -32,7 +32,7 @@
   };
 
   // ========================================================================
-  // הוספת סגנונות CSS - כולל סגנונות חיבור ויזואלי חדשים
+  // הוספת סגנונות CSS - הילה צהובה, מחוון כחול (ללא שינוי מ-v3.5)
   // ========================================================================
   function addHighlightStyles() {
     if (document.getElementById('block-connection-styles')) return;
@@ -49,42 +49,11 @@
       @keyframes detachEffect { 0%{transform:translate(0,0) rotate(0)} 30%{transform:translate(3px,1px) rotate(0.8deg)} 60%{transform:translate(-2px,2px) rotate(-0.5deg)} 100%{transform:translate(0,0) rotate(0)} } .detach-animation { animation:detachEffect 0.3s ease-in-out; }
       #detach-menu { position:absolute; background-color:white; border:1px solid #ccc; border-radius:4px; box-shadow:0 3px 8px rgba(0,0,0,0.2); z-index:1100; padding:5px; font-size:14px; min-width:100px; } #detach-menu div { padding:6px 12px; cursor:pointer; border-radius:3px; } #detach-menu div:hover { background-color:#eee; }
       body.user-select-none { user-select:none; -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; }
-      
-      /* סגנונות חדשים לחיבור ויזואלי */
-      .connected-block { 
-        outline: 2px solid #4CAF50 !important; 
-        box-shadow: 0 0 6px 2px rgba(76,175,80,0.5) !important;
-        z-index: 950 !important;
-      }
-      .has-connected-block { 
-        outline: 2px solid #4CAF50 !important;
-        box-shadow: 0 0 6px 2px rgba(76,175,80,0.5) !important; 
-        z-index: 950 !important;
-      }
-      .connection-line {
-        position: absolute;
-        height: 4px;
-        background-color: #4CAF50;
-        z-index: 949;
-        box-shadow: 0 0 4px rgba(76,175,80,0.7);
-        pointer-events: none;
-        transition: all 0.15s ease-out;
-      }
-      .connection-indicator {
-        position: absolute;
-        width: 10px;
-        height: 10px;
-        background-color: #4CAF50;
-        border-radius: 50%;
-        z-index: 950;
-        box-shadow: 0 0 4px rgba(76,175,80,0.7);
-        pointer-events: none;
-      }
-      
+      .connected-block, .has-connected-block { /* Optional */ }
       #sound-test-button { position:fixed; bottom:15px; right:15px; padding:8px 12px; background-color:#2196F3; color:white; border:none; border-radius:4px; cursor:pointer; z-index:9999; font-family:Arial,sans-serif; font-size:14px; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.2); transition:background-color .2s,opacity .5s ease-out; opacity:1; } #sound-test-button:hover { background-color:#0b7dda; } #sound-test-button.success { background-color:#4CAF50; } #sound-test-button.error { background-color:#f44336; } #sound-test-button.loading { background-color:#ff9800; cursor:wait; } #sound-test-button.hidden { opacity:0; pointer-events:none; }
     `;
     document.head.appendChild(style);
-    if (CONFIG.DEBUG) console.log('Styles added (Including Visual Connection Indicators)');
+    if (CONFIG.DEBUG) console.log('Styles added (Yellow Halo, Blue Indicator)');
   }
 
   // ========================================================================
@@ -113,7 +82,6 @@
 
   // ========================================================================
   // טיפול בשחרור העכבר (MouseUp) - קפיצה להצמדה אם היה מודגש
-  // ללא שינוי מ-v3.5 מלבד ניתוק של קו החיבור
   // ========================================================================
   function handleMouseUp(e) {
     if (!isDraggingBlock || !currentDraggedBlock) return;
@@ -244,7 +212,7 @@
   }
 
   // ========================================================================
-  // ביצוע ההצמדה הפיזית - כולל הוספת קו חיבור ויזואלי
+  // ביצוע ההצמדה הפיזית - עם תוספת חפיפה של 8 פיקסלים
   // ========================================================================
   function performBlockSnap(sourceBlock, targetBlock, direction) {
     if (!sourceBlock || !targetBlock || !document.body.contains(targetBlock) || targetBlock.offsetParent === null) { 
@@ -267,10 +235,16 @@
       const pE = document.getElementById('program-blocks'); 
       const pR = pE.getBoundingClientRect();
       
-      // המיקום המדויק להצמדה
-      let finalLeft = (direction === 'left') ? 
-                     (targetRect.left - sourceRect.width - CONFIG.BLOCK_GAP) : 
-                     (targetRect.right + CONFIG.BLOCK_GAP);
+      // המיקום המדויק להצמדה - עם תוספת חפיפה של 8 פיקסלים
+      // הוספנו חפיפה כדי שהחיבור ייראה טוב יותר
+      let finalLeft;
+      if (direction === 'left') {
+        // מחבר ימני של המקור לשמאלי של היעד - הזז 8 פיקסלים פנימה (ימינה) לתוך היעד
+        finalLeft = targetRect.left - sourceRect.width + CONFIG.OVERLAP_AMOUNT;
+      } else {
+        // מחבר שמאלי של המקור לימני של היעד - הזז 8 פיקסלים פנימה (שמאלה) לתוך היעד
+        finalLeft = targetRect.right - CONFIG.OVERLAP_AMOUNT;
+      }
       
       const finalTop = targetRect.top; // יישור למעלה
       
@@ -290,17 +264,8 @@
       sourceBlock.setAttribute('data-connected-to', targetBlock.id); 
       sourceBlock.setAttribute('data-connection-direction', direction);
       targetBlock.setAttribute(direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right', sourceBlock.id);
-      
-      // הוספת מחלקות לסגנון החיבור הוויזואלי
       sourceBlock.classList.add('connected-block'); 
       targetBlock.classList.add('has-connected-block');
-      
-      // *** הוסף קו חיבור ויזואלי בין הבלוקים ***
-      createConnectionLine(sourceBlock, targetBlock, direction);
-      
-      // השאר את z-index גבוה כדי שהבלוקים המחוברים יהיו מעל אחרים
-      sourceBlock.style.zIndex = '950';
-      targetBlock.style.zIndex = '950';
       
       playSnapSound(); // נגן צליל
       addSnapEffectAnimation(sourceBlock);
@@ -326,134 +291,7 @@
   }
 
   // ========================================================================
-  // פונקציות חדשות לטיפול בקווי חיבור ויזואליים
-  // ========================================================================
-  
-  // יצירת קו חיבור ויזואלי בין שני בלוקים
-  function createConnectionLine(sourceBlock, targetBlock, direction) {
-    const sourceId = sourceBlock.id;
-    const targetId = targetBlock.id;
-    const connectionId = `connection-${sourceId}-${targetId}`;
-    
-    // הסר קו קודם אם קיים
-    removeConnectionLine(sourceBlock);
-    
-    const pE = document.getElementById('program-blocks');
-    if (!pE) return;
-    
-    // יצירת קו החיבור
-    const line = document.createElement('div');
-    line.id = connectionId;
-    line.className = 'connection-line';
-    
-    // יצירת נקודות חיבור (ימין ושמאל)
-    const dot1 = document.createElement('div');
-    dot1.className = 'connection-indicator';
-    const dot2 = document.createElement('div');
-    dot2.className = 'connection-indicator';
-    
-    pE.appendChild(line);
-    pE.appendChild(dot1);
-    pE.appendChild(dot2);
-    
-    // שמור מידע על כל אלמנטי החיבור
-    connectionLines[sourceId] = { 
-      line, 
-      dot1, 
-      dot2, 
-      sourceId, 
-      targetId, 
-      direction 
-    };
-    
-    // עדכן את מיקום האלמנטים
-    updateConnectionLine(sourceBlock);
-    
-    if (CONFIG.DEBUG) console.log(`[Connection] Created visual connection ${connectionId}`);
-  }
-  
-  // עדכון מיקום קו החיבור בין שני בלוקים
-  function updateConnectionLine(sourceBlock) {
-    const sourceId = sourceBlock.id;
-    const connection = connectionLines[sourceId];
-    if (!connection) return;
-    
-    const targetBlock = document.getElementById(connection.targetId);
-    if (!sourceBlock || !targetBlock) {
-      removeConnectionLine(sourceBlock);
-      return;
-    }
-    
-    const sourceRect = sourceBlock.getBoundingClientRect();
-    const targetRect = targetBlock.getBoundingClientRect();
-    const pE = document.getElementById('program-blocks');
-    if (!pE) return;
-    const pR = pE.getBoundingClientRect();
-    
-    let startX, endX, top, dotLeft1, dotLeft2;
-    
-    const middleY = (sourceRect.top + sourceRect.height/2 + targetRect.top + targetRect.height/2) / 2;
-    const offsetY = (pR.top + pE.scrollTop);
-    
-    if (connection.direction === 'left') {
-      // מקור מחובר מימין למטרה משמאל
-      startX = sourceRect.right - pR.left + pE.scrollLeft;
-      endX = targetRect.left - pR.left + pE.scrollLeft;
-      top = middleY - offsetY - 2; // חצי מגובה הקו
-      dotLeft1 = startX - 5; // 5 = חצי מרוחב הנקודה
-      dotLeft2 = endX - 5;
-    } else {
-      // מקור מחובר משמאל למטרה מימין
-      startX = sourceRect.left - pR.left + pE.scrollLeft;
-      endX = targetRect.right - pR.left + pE.scrollLeft;
-      top = middleY - offsetY - 2;
-      dotLeft1 = startX - 5;
-      dotLeft2 = endX - 5;
-    }
-    
-    // הגדר את מיקום וגודל הקו
-    connection.line.style.left = Math.min(startX, endX) + 'px';
-    connection.line.style.top = top + 'px'; 
-    connection.line.style.width = Math.abs(endX - startX) + 'px';
-    
-    // הגדר את מיקום נקודות החיבור
-    connection.dot1.style.left = Math.round(dotLeft1) + 'px';
-    connection.dot1.style.top = Math.round(top - 3) + 'px'; // -3 לשים באמצע הקו
-    
-    connection.dot2.style.left = Math.round(dotLeft2) + 'px';
-    connection.dot2.style.top = Math.round(top - 3) + 'px';
-  }
-  
-  // הסרת קו חיבור ויזואלי
-  function removeConnectionLine(sourceBlock) {
-    if (!sourceBlock) return;
-    
-    const sourceId = sourceBlock.id;
-    const connection = connectionLines[sourceId];
-    
-    if (!connection) return;
-    
-    // הסר את האלמנטים
-    if (connection.line && connection.line.parentNode) {
-      connection.line.parentNode.removeChild(connection.line);
-    }
-    
-    if (connection.dot1 && connection.dot1.parentNode) {
-      connection.dot1.parentNode.removeChild(connection.dot1);
-    }
-    
-    if (connection.dot2 && connection.dot2.parentNode) {
-      connection.dot2.parentNode.removeChild(connection.dot2);
-    }
-    
-    // נקה מהמאגר
-    delete connectionLines[sourceId];
-    
-    if (CONFIG.DEBUG) console.log(`[Connection] Removed visual connection for ${sourceId}`);
-  }
-
-  // ========================================================================
-  // עדכון מחוון עתידי - ללא שינוי מ-v3.5
+  // עדכון מחוון עתידי - עם תוספת חפיפה של 8 פיקסלים 
   // ========================================================================
   function updateFuturePositionIndicator(sB, tB, dir, pR) {
     const pA = document.getElementById('program-blocks');
@@ -471,9 +309,13 @@
       const tR = tB.getBoundingClientRect();
       const pRct = pA.getBoundingClientRect();
       
-      let dVL = (dir === 'left') ? 
-               (tR.left - sRN.width - CONFIG.BLOCK_GAP) : 
-               (tR.right + CONFIG.BLOCK_GAP);
+      // הוספנו חפיפה כדי שהחיווי יראה היכן הבלוק יחובר
+      let dVL;
+      if (dir === 'left') {
+        dVL = tR.left - sRN.width + CONFIG.OVERLAP_AMOUNT; // הזז פנימה (ימינה)
+      } else {
+        dVL = tR.right - CONFIG.OVERLAP_AMOUNT; // הזז פנימה (שמאלה)
+      }
       
       let dVT = tR.top;
       let iL = dVL - pRct.left + pA.scrollLeft;
@@ -491,68 +333,13 @@
   }
 
   // ========================================================================
-  // פונקציות עזר - עם תוספת הסרת קווי חיבור בעת ניתוק
+  // פונקציות עזר - ללא שינוי מ-v3.5
   // ========================================================================
   function removeFuturePositionIndicator() { if(futureIndicator)futureIndicator.classList.remove('visible'); }
   function showDetachMenu(x,y,b){removeDetachMenu();const m=document.createElement('div');m.id='detach-menu';m.style.left=`${x}px`;m.style.top=`${y}px`;const o=document.createElement('div');o.textContent='נתק בלוק';o.onclick=(e)=>{e.stopPropagation();detachBlock(b,true);removeDetachMenu();};m.appendChild(o);document.body.appendChild(m);setTimeout(()=>{document.addEventListener('click',closeMenuOutside,{capture:true,once:true});window.addEventListener('scroll',removeDetachMenu,{capture:true,once:true});},0);}
   function closeMenuOutside(e){const m=document.getElementById('detach-menu');if(m&&!m.contains(e.target))removeDetachMenu();else if(m)setTimeout(()=>document.addEventListener('click',closeMenuOutside,{capture:true,once:true}),0);window.removeEventListener('scroll',removeDetachMenu,{capture:true});}
   function removeDetachMenu(){const m=document.getElementById('detach-menu');if(m){document.removeEventListener('click',closeMenuOutside,{capture:true});window.removeEventListener('scroll',removeDetachMenu,{capture:true});m.remove();}}
-  
-  // פונקציית ניתוק מעודכנת כולל הסרת קווי חיבור
-  function detachBlock(btd, animate=true) {
-    if (!btd || !btd.hasAttribute('data-connected-to')) return;
-    
-    const tid = btd.getAttribute('data-connected-to');
-    const dir = btd.getAttribute('data-connection-direction');
-    
-    if (!tid || !dir) {
-      console.warn(`[Detach] Missing data on ${btd.id}. Clean.`);
-      btd.removeAttribute('data-connected-to');
-      btd.removeAttribute('data-connection-direction');
-      btd.classList.remove('connected-block');
-      btd.style.zIndex = '';
-      btd.draggable = true;
-      
-      // הסר קו חיבור אם קיים
-      removeConnectionLine(btd);
-      return;
-    }
-    
-    if (CONFIG.DEBUG) console.log(`[Detach] Detaching ${btd.id} from ${tid}`);
-    
-    // הסר מאפיינים וסגנונות
-    btd.removeAttribute('data-connected-to');
-    btd.removeAttribute('data-connection-direction');
-    btd.classList.remove('connected-block');
-    btd.style.zIndex = '';
-    btd.draggable = true;
-    
-    // מצא את הבלוק המחובר ועדכן גם אותו
-    const tb = document.getElementById(tid);
-    if (tb) {
-      tb.removeAttribute(dir === 'left' ? 'data-connected-from-left' : 'data-connected-from-right');
-      
-      const hasOtherConnection = tb.hasAttribute('data-connected-from-left') || 
-                              tb.hasAttribute('data-connected-from-right') || 
-                              tb.hasAttribute('data-connected-to');
-      
-      if (!hasOtherConnection) {
-        tb.classList.remove('has-connected-block');
-        tb.style.zIndex = '';
-      }
-    } else {
-      console.warn(`[Detach] Target ${tid} not found.`);
-    }
-    
-    // הסר את קו החיבור הויזואלי
-    removeConnectionLine(btd);
-    
-    // הוסף אנימציית ניתוק
-    if (animate) addDetachEffectAnimation(btd);
-    
-    if (CONFIG.DEBUG) console.log(`[Detach] Finished ${btd.id}. Draggable: ${btd.draggable}`);
-  }
-  
+  function detachBlock(btd,animate=true){if(!btd||!btd.hasAttribute('data-connected-to'))return;const tid=btd.getAttribute('data-connected-to');const dir=btd.getAttribute('data-connection-direction');if(!tid||!dir){console.warn(`[Detach] Missing data on ${btd.id}. Clean.`);btd.removeAttribute('data-connected-to');btd.removeAttribute('data-connection-direction');btd.classList.remove('connected-block');btd.draggable=true;return;}if(CONFIG.DEBUG)console.log(`[Detach] Detaching ${btd.id} from ${tid}`);btd.removeAttribute('data-connected-to');btd.removeAttribute('data-connection-direction');btd.classList.remove('connected-block');btd.draggable=true;const tb=document.getElementById(tid);if(tb){tb.removeAttribute(dir==='left'?'data-connected-from-left':'data-connected-from-right');const hoc=tb.hasAttribute('data-connected-from-left')||tb.hasAttribute('data-connected-from-right')||tb.hasAttribute('data-connected-to');if(!hoc)tb.classList.remove('has-connected-block');}else{console.warn(`[Detach] Target ${tid} not found.`);}if(animate)addDetachEffectAnimation(btd);if(CONFIG.DEBUG)console.log(`[Detach] Finished ${btd.id}. Draggable: ${btd.draggable}`);}
   function addSnapEffectAnimation(b){b.classList.remove('snap-animation');void b.offsetWidth;b.classList.add('snap-animation');b.addEventListener('animationend',()=>b.classList.remove('snap-animation'),{once:true});}
   function addDetachEffectAnimation(b){b.classList.remove('detach-animation');void b.offsetWidth;b.classList.add('detach-animation');b.addEventListener('animationend',()=>b.classList.remove('detach-animation'),{once:true});}
   function generateUniqueId(b){if(b.id)return b.id;const p=b.dataset.type||'block';let s=Math.floor(Math.random()*10000).toString().padStart(4,'0');let id=`${p}-${s}`;let i=0;while(document.getElementById(id)&&i<10){id=`${p}-${s}-${i++}`;}if(i>=10)id=`${p}-${Date.now()}`;b.id=id;if(CONFIG.DEBUG)console.log(`Generated ID: ${id}`);return id;}
@@ -577,8 +364,8 @@
     if (CONFIG.PLAY_SOUND) { addSoundTestButton(); }
 
     window[initFlag] = true; // Mark as initialized
-    console.log(`Block linkage system initialized (Version 3.6 - Visual Connection Lines, Threshold=${CONFIG.CONNECT_THRESHOLD}px)`);
-    console.log(`Configuration: Snap Threshold=${CONFIG.CONNECT_THRESHOLD}px, Overlap=${CONFIG.VERTICAL_OVERLAP_REQ*100}%, Sound=${CONFIG.PLAY_SOUND ? CONFIG.SOUND_PATH : 'Disabled'}`);
+    console.log(`Block linkage system initialized (Version 3.6 - Block Overlap Fix, Threshold=${CONFIG.CONNECT_THRESHOLD}px)`);
+    console.log(`Configuration: Snap Threshold=${CONFIG.CONNECT_THRESHOLD}px, Overlap=${CONFIG.VERTICAL_OVERLAP_REQ*100}%, OverlapAmount=${CONFIG.OVERLAP_AMOUNT}px, Sound=${CONFIG.PLAY_SOUND ? CONFIG.SOUND_PATH : 'Disabled'}`);
   }
 
   // הפעל את האתחול
@@ -590,4 +377,4 @@
 
 })(); // סוף IIFE
 
-// --- END OF FILE linkageimproved-visual.js ---
+// --- END OF FILE linkageimproved.js ---
