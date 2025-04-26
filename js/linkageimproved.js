@@ -1,4 +1,113 @@
-// --- START OF FILE linkageimproved.js ---
+function resetActiveAnchors() {
+    // Remove highlight from all anchor points
+    document.querySelectorAll('.anchor-point.highlight-active').forEach(anchor => {
+      anchor.classList.remove('highlight-active');
+    });
+    
+    // Reset active anchors
+    activeAnchors.source = null;
+    activeAnchors.target = null;
+    
+    // Hide potential connection line
+    hidePotentialConnection();
+  }
+  
+  function showPotentialConnection(sourceAnchor, targetAnchor) {
+    if (!svgContainer || !sourceAnchor || !targetAnchor) return;
+    
+    // Remove existing line if any
+    hidePotentialConnection();
+    
+    // Create new connection line
+    potentialConnectionLine = document.createElementNS(CONFIG.SVG_NAMESPACE, 'path');
+    potentialConnectionLine.setAttribute('class', 'potential-connection');
+    
+    // Calculate control points for a smooth curve
+    const dx = targetAnchor.x - sourceAnchor.x;
+    const dy = targetAnchor.y - sourceAnchor.y;
+    const controlPointOffset = Math.min(Math.abs(dx) * 0.5, 50); // Limit curve
+    
+    // Create a bezier curve path
+    const pathData = `
+      M ${sourceAnchor.x},${sourceAnchor.y} 
+      C ${sourceAnchor.x + controlPointOffset},${sourceAnchor.y} 
+        ${targetAnchor.x - controlPointOffset},${targetAnchor.y} 
+        ${targetAnchor.x},${targetAnchor.y}
+    `;
+    
+    potentialConnectionLine.setAttribute('d', pathData);
+    
+    // Add to SVG container
+    svgContainer.appendChild(potentialConnectionLine);
+  }
+  
+  function hidePotentialConnection() {
+    if (potentialConnectionLine) {
+      potentialConnectionLine.remove();
+      potentialConnectionLine = null;
+    }
+  }
+  
+  function updateFuturePositionIndicator() {
+    if (!futureIndicator || !currentDraggedBlock || !potentialSnapTarget) {
+      if (futureIndicator) futureIndicator.classList.remove('visible');
+      return;
+    }
+    
+    // Get coordinates and anchor points
+    const currentCoords = getElementCoordinates(currentDraggedBlock);
+    
+    if (!currentCoords || !blockAnchors[currentDraggedBlock.id] || !blockAnchors[potentialSnapTarget.id]) {
+      futureIndicator.classList.remove('visible');
+      return;
+    }
+    
+    // Get the relevant anchor points based on snap direction
+    let sourceAnchor, targetAnchor;
+    
+    if (snapDirection === 'right') {
+      // Current block's output connects to target's input
+      sourceAnchor = blockAnchors[currentDraggedBlock.id].outputs[0];
+      targetAnchor = blockAnchors[potentialSnapTarget.id].inputs[0];
+    } else if (snapDirection === 'left') {
+      // Target block's output connects to current's input
+      sourceAnchor = blockAnchors[currentDraggedBlock.id].inputs[0];
+      targetAnchor = blockAnchors[potentialSnapTarget.id].outputs[0];
+    }
+    
+    if (!sourceAnchor || !targetAnchor) {
+      futureIndicator.classList.remove('visible');
+      return;
+    }
+    
+    // Calculate future position based on anchor points alignment
+    let newLeft, newTop;
+    
+    if (snapDirection === 'right') {
+      // Position current block so its output aligns with target's input
+      // Calculate offset from right edge of block to output anchor
+      const outputOffsetFromRight = currentCoords.right - sourceAnchor.x;
+      // Position left edge so output anchor aligns with input anchor
+      newLeft = targetAnchor.x - (currentCoords.width - outputOffsetFromRight);
+      // Vertically align based on anchor point y position
+      newTop = targetAnchor.y - (sourceAnchor.y - currentCoords.top);
+    } else if (snapDirection === 'left') {
+      // Position current block so its input aligns with target's output
+      // Calculate offset from left edge of block to input anchor
+      const inputOffsetFromLeft = sourceAnchor.x - currentCoords.left;
+      // Position left edge so input anchor aligns with output anchor
+      newLeft = targetAnchor.x - inputOffsetFromLeft;
+      // Vertically align based on anchor point y position
+      newTop = targetAnchor.y - (sourceAnchor.y - currentCoords.top);
+    }
+    
+    // Update indicator style
+    futureIndicator.style.left = `${newLeft}px`;
+    futureIndicator.style.top = `${newTop}px`;
+    futureIndicator.style.width = `${currentCoords.width}px`;
+    futureIndicator.style.height = `${currentCoords.height}px`;
+    futureIndicator.classList.add('visible');
+  }// --- START OF FILE linkageimproved.js ---
 // --- Version 4.0.0: SVG Anchor Points Connection System ---
 // Changes from v3.5.1:
 // 1. Implemented SVG anchor point system for precise connections
@@ -29,7 +138,7 @@
   // קונפיגורציה - פרמטרים שניתן להתאים
   const CONFIG = {
     PIN_WIDTH: 5,
-    CONNECT_THRESHOLD: 30, // הגדלנו את הסף לזיהוי חיבורים פוטנציאליים (30px)
+    CONNECT_THRESHOLD: 50, // הגדלנו את הסף לזיהוי חיבורים פוטנציאליים (50px)
     VERTICAL_ALIGN_THRESHOLD: 20,
     VERTICAL_OVERLAP_REQ: 0.4, // דרישה ל-40% חפיפה אנכית לפחות
     BLOCK_GAP: 0, // אין רווח - חיבור שקע-תקע
@@ -40,7 +149,7 @@
     
     // SVG Anchor point configuration - New in v4.0
     SVG_NAMESPACE: "http://www.w3.org/2000/svg",
-    ANCHOR_RADIUS: 5, // Size of anchor point visualization (if shown)
+    ANCHOR_RADIUS: 8, // הגדלנו את גודל נקודות העיגון
     SHOW_ANCHORS: true, // תמיד מציג את נקודות העיגון לנוחות המשתמש
     CONNECTION_PATH_WIDTH: 2,
     CONNECTION_PATH_COLOR: "rgba(76, 175, 80, 0.7)",
@@ -238,7 +347,7 @@
     point.setAttribute('r', CONFIG.ANCHOR_RADIUS);
     point.setAttribute('fill', anchor.type === 'output' ? '#4CAF50' : '#2196F3');
     point.setAttribute('stroke', '#fff');
-    point.setAttribute('stroke-width', '1');
+    point.setAttribute('stroke-width', '2');
     point.setAttribute('class', `anchor-point anchor-${anchor.type}`);
     point.setAttribute('data-block-id', anchor.blockId);
     point.setAttribute('data-anchor-type', anchor.type);
@@ -505,18 +614,19 @@
       
       /* Anchor point styles */
       .anchor-point { 
-        opacity: 0.7; 
+        opacity: 0.9; 
         transition: opacity 0.2s, r 0.2s, fill 0.3s; 
-        pointer-events: none; 
+        pointer-events: none;
+        filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.3));
       }
-      .anchor-point:hover { opacity: 1; r: 5; }
+      .anchor-point:hover { opacity: 1; r: 8; }
       .anchor-input { cursor: pointer; fill: #2196F3; }
       .anchor-output { cursor: pointer; fill: #4CAF50; }
       
       /* Highlighted anchor points when close to connection */
       .anchor-point.highlight-active {
         opacity: 1 !important;
-        r: 6 !important;
+        r: 10 !important;
         fill: #FFC107 !important;
         stroke: #FFF !important;
         stroke-width: 2 !important;
@@ -526,9 +636,9 @@
       
       /* Pulse animation for active anchor points */
       @keyframes pulse {
-        0% { r: 6; stroke-width: 2; }
-        50% { r: 8; stroke-width: 3; }
-        100% { r: 6; stroke-width: 2; }
+        0% { r: 8; stroke-width: 2; }
+        50% { r: 12; stroke-width: 3; }
+        100% { r: 8; stroke-width: 2; }
       }
       
       .connection-path { transition: stroke 0.3s; }
@@ -555,6 +665,11 @@
         display: block !important;
         z-index: 1000 !important;
       }
+
+      /* מניעת אפקט של צל/רפאים בגרירה */
+      .block-container.snap-source * {
+        pointer-events: none !important;
+      }
       
       #sound-test-button { position:fixed; bottom:15px; right:15px; padding:8px 12px; background-color:#2196F3; color:white; border:none; border-radius:4px; cursor:pointer; z-index:9999; font-family:Arial,sans-serif; font-size:14px; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.2); transition:background-color .2s,opacity .5s ease-out; opacity:1; } #sound-test-button:hover { background-color:#0b7dda; } #sound-test-button.success { background-color:#4CAF50; } #sound-test-button.error { background-color:#f44336; } #sound-test-button.loading { background-color:#ff9800; cursor:wait; } #sound-test-button.hidden { opacity:0; pointer-events:none; }
     `;
@@ -579,4 +694,3 @@
   // ========================================================================
   function initAudio() { if (!CONFIG.PLAY_SOUND || soundInitialized) return; try { const el=document.getElementById('snap-sound-element'); if(el){snapSound=el;soundInitialized=true;if(CONFIG.DEBUG)console.log('Audio reused.');if(!el.querySelector(`source[src="${CONFIG.SOUND_PATH}"]`)){el.innerHTML='';const s=document.createElement('source');s.src=CONFIG.SOUND_PATH;s.type='audio/mpeg';el.appendChild(s);el.load();}return;} snapSound=document.createElement('audio');snapSound.id='snap-sound-element';snapSound.preload='auto';snapSound.volume=CONFIG.SOUND_VOLUME;const s=document.createElement('source');s.src=CONFIG.SOUND_PATH;s.type='audio/mpeg';snapSound.appendChild(s);snapSound.addEventListener('error',(e)=>{console.error(`Audio Error: ${CONFIG.SOUND_PATH}`,e);const b=document.getElementById('sound-test-button');if(b){b.textContent='שגיאה';b.classList.add('error');b.disabled=true;}CONFIG.PLAY_SOUND=false;snapSound=null;soundInitialized=false;});snapSound.addEventListener('canplaythrough',()=>{soundInitialized=true;if(CONFIG.DEBUG)console.log('Audio ready.');const b=document.getElementById('sound-test-button');if(b?.classList.contains('loading')){b.textContent='בדוק';b.classList.remove('loading');b.disabled=false;}});snapSound.style.display='none';document.body.appendChild(snapSound);if(CONFIG.DEBUG)console.log(`Audio created: ${CONFIG.SOUND_PATH}`);}catch(err){console.error('Audio init error:',err);CONFIG.PLAY_SOUND=false;snapSound=null;soundInitialized=false;}}
   function addSoundTestButton() { if(!CONFIG.PLAY_SOUND)return;try{const eb=document.getElementById('sound-test-button');if(eb)eb.remove();const b=document.createElement('button');b.id='sound-test-button';b.title='בדוק צליל';b.className='';if(!snapSound){b.textContent='שמע נכשל';b.classList.add('error');b.disabled=true;}else if(!soundInitialized){b.textContent='טוען...';b.classList.add('loading');b.disabled=true;}else{b.textContent='בדוק';b.disabled=false;}Object.assign(b.style,{position:'fixed',bottom:'15px',right:'15px',zIndex:'9999',padding:'8px 12px',color:'white',border:'none',borderRadius:'4px',cursor:'pointer',boxShadow:'0 2px 5px rgba(0,0,0,0.2)',fontFamily:'Arial,sans-serif',fontSize:'14px',fontWeight:'bold',transition:'background-color .2s,opacity .5s ease-out',opacity:'1'});b.onmouseover=function(){if(!this.disabled&&!this.classList.contains('success')&&!this.classList.contains('error'))this.style.backgroundColor='#0b7dda'};b.onmouseout=function(){if(!this.disabled&&!this.classList.contains('success')&&!this.classList.contains('error'))this.style.backgroundColor='#2196F3'};b.addEventListener('click',function(){if(this.disabled||!snapSound||!soundInitialized)return;snapSound.play().then(()=>{b.textContent='פועל ✓';b.classList.add('success');audioContextAllowed=true;setTimeout(()=>{b.classList.add('hidden');setTimeout(()=>b.remove(),500)},3000);if(snapSound){snapSound.pause();snapSound.currentTime=0;}}).catch(err=>{console.warn('Sound test fail:',err.name);if(err.name==='NotAllowedError'){b.textContent='חסום-לחץ';b.classList.add('error');audioContextAllowed=false;}else{b.textContent='שגיאה';b.classList.add('error');b.disabled=true;}});});document.body.appendChild(b);if(CONFIG.DEBUG)console.log('Sound test button added.');}catch(err){console.error('Err adding sound btn:',err);}}
-  })();
