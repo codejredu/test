@@ -331,15 +331,31 @@
       const finalTop = targetRect.top; // יישור למעלה
       let styleLeft = finalLeft - pR.left + pE.scrollLeft; let styleTop = finalTop - pR.top + pE.scrollTop;
       // *** הזזת הבלוק הנגרר למיקום הסופי - זו ה"קפיצה" ***
-      sourceBlock.style.position = 'absolute'; sourceBlock.style.left = `${Math.round(styleLeft)}px`; sourceBlock.style.top = `${Math.round(styleTop)}px`; sourceBlock.style.margin = '0';
+      sourceBlock.style.position = 'absolute'; 
+      sourceBlock.style.left = `${Math.round(styleLeft)}px`; 
+      sourceBlock.style.top = `${Math.round(styleTop)}px`; 
+      sourceBlock.style.margin = '0';
+      
       // עדכון מאפיינים
-      sourceBlock.setAttribute('data-connected-to', targetBlock.id); sourceBlock.setAttribute('data-connection-direction', direction);
+      sourceBlock.setAttribute('data-connected-to', targetBlock.id); 
+      sourceBlock.setAttribute('data-connection-direction', direction);
       targetBlock.setAttribute(direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right', sourceBlock.id);
-      sourceBlock.classList.add('connected-block'); targetBlock.classList.add('has-connected-block');
+      sourceBlock.classList.add('connected-block'); 
+      targetBlock.classList.add('has-connected-block');
+      
       playSnapSound(); // נגן צליל
       addSnapEffectAnimation(sourceBlock);
       sourceBlock.draggable = false; // מנע גרירה כשהוא מחובר
+      
       if (CONFIG.DEBUG) console.log(`[PerformSnap] Success. ${sourceBlock.id} pos: L=${styleLeft.toFixed(0)}, T=${styleTop.toFixed(0)}. Draggable: ${sourceBlock.draggable}`);
       return true;
-    } catch (err) { console.error(`[PerformSnap] Error during snap for ${sourceBlock.id} -> ${targetBlock.id}:`, err); try { detachBlock(sourceBlock, false); } catch (derr) { console.error(`[PerformSnap] Cleanup detach error:`, derr); } sourceBlock.draggable = true; return false; }
-  }
+    } catch (err) { 
+      console.error(`[PerformSnap] Error during snap for ${sourceBlock.id} -> ${targetBlock.id}:`, err); 
+      try { 
+        detachBlock(sourceBlock, false); 
+      } catch (derr) { 
+        console.error(`[PerformSnap] Cleanup detach error:`, derr); 
+      } 
+      sourceBlock.draggable = true; 
+      return false; 
+    }
