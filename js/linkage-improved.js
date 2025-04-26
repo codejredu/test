@@ -124,30 +124,94 @@
       };
     }
     
-    // Create output anchor point (right side)
-    const outputAnchor = {
-      type: 'output',
-      x: coords.right,
-      y: coords.top + (coords.height * CONFIG.ANCHOR_POINTS.OUTPUT.right),
-      blockId: block.id
-    };
+    // Find SVG elements inside the block if any
+    const svgElement = block.querySelector('svg');
     
-    // Create input anchor point (left side)
-    const inputAnchor = {
-      type: 'input',
-      x: coords.left,
-      y: coords.top + (coords.height * CONFIG.ANCHOR_POINTS.INPUT.left),
-      blockId: block.id
-    };
-    
-    // Store anchor points
-    blockAnchors[block.id].outputs = [outputAnchor];
-    blockAnchors[block.id].inputs = [inputAnchor];
+    if (svgElement) {
+      // Option 1: SVG block with predefined connection points
+      const outputPoint = svgElement.querySelector('.output-point, .output, .output-anchor');
+      const inputPoint = svgElement.querySelector('.input-point, .input, .input-anchor');
+      
+      // Get SVG's position relative to block
+      const svgRect = svgElement.getBoundingClientRect();
+      const svgOffsetX = svgRect.left - coords.left;
+      const svgOffsetY = svgRect.top - coords.top;
+      
+      if (outputPoint) {
+        // Get point position within SVG
+        const pointX = parseFloat(outputPoint.getAttribute('cx') || 0);
+        const pointY = parseFloat(outputPoint.getAttribute('cy') || 0);
+        
+        // Create output anchor at exact point position
+        const outputAnchor = {
+          type: 'output',
+          x: coords.left + svgOffsetX + pointX,
+          y: coords.top + svgOffsetY + pointY,
+          blockId: block.id
+        };
+        
+        blockAnchors[block.id].outputs = [outputAnchor];
+      } else {
+        // Default output anchor if no specific point found
+        const outputAnchor = {
+          type: 'output',
+          x: coords.right,
+          y: coords.top + (coords.height * CONFIG.ANCHOR_POINTS.OUTPUT.right),
+          blockId: block.id
+        };
+        
+        blockAnchors[block.id].outputs = [outputAnchor];
+      }
+      
+      if (inputPoint) {
+        // Get point position within SVG
+        const pointX = parseFloat(inputPoint.getAttribute('cx') || 0);
+        const pointY = parseFloat(inputPoint.getAttribute('cy') || 0);
+        
+        // Create input anchor at exact point position
+        const inputAnchor = {
+          type: 'input',
+          x: coords.left + svgOffsetX + pointX,
+          y: coords.top + svgOffsetY + pointY,
+          blockId: block.id
+        };
+        
+        blockAnchors[block.id].inputs = [inputAnchor];
+      } else {
+        // Default input anchor if no specific point found
+        const inputAnchor = {
+          type: 'input',
+          x: coords.left,
+          y: coords.top + (coords.height * CONFIG.ANCHOR_POINTS.INPUT.left),
+          blockId: block.id
+        };
+        
+        blockAnchors[block.id].inputs = [inputAnchor];
+      }
+    } else {
+      // Option 2: Standard block without SVG - use default positions
+      const outputAnchor = {
+        type: 'output',
+        x: coords.right,
+        y: coords.top + (coords.height * CONFIG.ANCHOR_POINTS.OUTPUT.right),
+        blockId: block.id
+      };
+      
+      const inputAnchor = {
+        type: 'input',
+        x: coords.left,
+        y: coords.top + (coords.height * CONFIG.ANCHOR_POINTS.INPUT.left),
+        blockId: block.id
+      };
+      
+      blockAnchors[block.id].outputs = [outputAnchor];
+      blockAnchors[block.id].inputs = [inputAnchor];
+    }
     
     // Visualize anchor points if debug mode is enabled
     if (CONFIG.SHOW_ANCHORS) {
-      visualizeAnchorPoint(outputAnchor);
-      visualizeAnchorPoint(inputAnchor);
+      blockAnchors[block.id].outputs.forEach(visualizeAnchorPoint);
+      blockAnchors[block.id].inputs.forEach(visualizeAnchorPoint);
     }
     
     if (CONFIG.DEBUG > 1) console.log(`Created anchor points for block ${block.id}`);
@@ -694,26 +758,51 @@
       return;
     }
     
-    // Get coordinates
+    // Get coordinates and anchor points
     const currentCoords = getElementCoordinates(currentDraggedBlock);
-    const targetCoords = getElementCoordinates(potentialSnapTarget);
     
-    if (!currentCoords || !targetCoords) {
+    if (!currentCoords || !blockAnchors[currentDraggedBlock.id] || !blockAnchors[potentialSnapTarget.id]) {
       futureIndicator.classList.remove('visible');
       return;
     }
     
-    // Calculate future position based on snap direction
+    // Get the relevant anchor points based on snap direction
+    let sourceAnchor, targetAnchor;
+    
+    if (snapDirection === 'right') {
+      // Current block's output connects to target's input
+      sourceAnchor = blockAnchors[currentDraggedBlock.id].outputs[0];
+      targetAnchor = blockAnchors[potentialSnapTarget.id].inputs[0];
+    } else if (snapDirection === 'left') {
+      // Target block's output connects to current's input
+      sourceAnchor = blockAnchors[currentDraggedBlock.id].inputs[0];
+      targetAnchor = blockAnchors[potentialSnapTarget.id].outputs[0];
+    }
+    
+    if (!sourceAnchor || !targetAnchor) {
+      futureIndicator.classList.remove('visible');
+      return;
+    }
+    
+    // Calculate future position based on anchor points alignment
     let newLeft, newTop;
     
     if (snapDirection === 'right') {
-      // Current block connects its right side to target's left
-      newLeft = targetCoords.left - currentCoords.width - CONFIG.BLOCK_GAP;
-      newTop = targetCoords.top;
+      // Position current block so its output aligns with target's input
+      // Calculate offset from right edge of block to output anchor
+      const outputOffsetFromRight = currentCoords.right - sourceAnchor.x;
+      // Position left edge so output anchor aligns with input anchor
+      newLeft = targetAnchor.x - (currentCoords.width - outputOffsetFromRight);
+      // Vertically align based on anchor point y position
+      newTop = targetAnchor.y - (sourceAnchor.y - currentCoords.top);
     } else if (snapDirection === 'left') {
-      // Current block connects its left side to target's right
-      newLeft = targetCoords.right + CONFIG.BLOCK_GAP;
-      newTop = targetCoords.top;
+      // Position current block so its input aligns with target's output
+      // Calculate offset from left edge of block to input anchor
+      const inputOffsetFromLeft = sourceAnchor.x - currentCoords.left;
+      // Position left edge so input anchor aligns with output anchor
+      newLeft = targetAnchor.x - inputOffsetFromLeft;
+      // Vertically align based on anchor point y position
+      newTop = targetAnchor.y - (sourceAnchor.y - currentCoords.top);
     }
     
     // Update indicator style
@@ -737,23 +826,47 @@
       }
     }, 300);
     
-    // Get coordinates
+    // Get coordinates and anchor points
     const currentCoords = getElementCoordinates(currentDraggedBlock);
-    const targetCoords = getElementCoordinates(potentialSnapTarget);
     
-    if (!currentCoords || !targetCoords) return;
+    if (!currentCoords || !blockAnchors[currentDraggedBlock.id] || !blockAnchors[potentialSnapTarget.id]) {
+      return;
+    }
     
-    // Calculate final position based on snap direction
+    // Get the relevant anchor points based on snap direction
+    let sourceAnchor, targetAnchor;
+    
+    if (snapDirection === 'right') {
+      // Current block's output connects to target's input
+      sourceAnchor = blockAnchors[currentDraggedBlock.id].outputs[0];
+      targetAnchor = blockAnchors[potentialSnapTarget.id].inputs[0];
+    } else if (snapDirection === 'left') {
+      // Target block's output connects to current's input
+      sourceAnchor = blockAnchors[currentDraggedBlock.id].inputs[0];
+      targetAnchor = blockAnchors[potentialSnapTarget.id].outputs[0];
+    }
+    
+    if (!sourceAnchor || !targetAnchor) return;
+    
+    // Calculate final position based on anchor points alignment
     let newLeft, newTop;
     
     if (snapDirection === 'right') {
-      // Current block connects its right side to target's left
-      newLeft = targetCoords.left - currentCoords.width - CONFIG.BLOCK_GAP;
-      newTop = targetCoords.top;
+      // Position current block so its output aligns with target's input
+      // Calculate offset from right edge of block to output anchor
+      const outputOffsetFromRight = currentCoords.right - sourceAnchor.x;
+      // Position left edge so output anchor aligns with input anchor
+      newLeft = targetAnchor.x - (currentCoords.width - outputOffsetFromRight);
+      // Vertically align based on anchor point y position
+      newTop = targetAnchor.y - (sourceAnchor.y - currentCoords.top);
     } else if (snapDirection === 'left') {
-      // Current block connects its left side to target's right
-      newLeft = targetCoords.right + CONFIG.BLOCK_GAP;
-      newTop = targetCoords.top;
+      // Position current block so its input aligns with target's output
+      // Calculate offset from left edge of block to input anchor
+      const inputOffsetFromLeft = sourceAnchor.x - currentCoords.left;
+      // Position left edge so input anchor aligns with output anchor
+      newLeft = targetAnchor.x - inputOffsetFromLeft;
+      // Vertically align based on anchor point y position
+      newTop = targetAnchor.y - (sourceAnchor.y - currentCoords.top);
     }
     
     // Move to final position
