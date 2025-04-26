@@ -1,11 +1,9 @@
 // --- START OF FILE linkageimproved.js ---
-// --- Version 3.6: Anchor Point Highlighting ---
+// --- Version 3.6: With Anchor Points Highlights ---
 // Changes from v3.5:
-// 1. Replaced yellow halo and dashed outline with highlighted anchor points
-// 2. Added visual connection points on blocks that light up in yellow when close enough
-// 3. Maintained all existing drag functionality and connection logic
-// 4. Preserved the 8px CONNECT_THRESHOLD as in v3.5
-// 5. Preserved the "jumping" behavior when a block is released near a valid target
+// 1. Replaced yellow halo and dashed outline with anchor point highlights
+// 2. Maintained the same 8px CONNECT_THRESHOLD as in v3.5
+// 3. Preserved the "jumping" behavior on release
 
 (function() {
   // משתנים גלובליים במודול
@@ -22,8 +20,7 @@
   // קונפיגורציה - פרמטרים שניתן להתאים
   const CONFIG = {
     PIN_WIDTH: 5,
-    // סף קרבה נשאר 8px
-    CONNECT_THRESHOLD: 8, // סף להפעלת הדגשה וזיהוי יעד פוטנציאלי
+    CONNECT_THRESHOLD: 8, // סף להפעלת הדגשה וזיהוי יעד פוטנציאלי - נשאר 8px
     VERTICAL_ALIGN_THRESHOLD: 20,
     VERTICAL_OVERLAP_REQ: 0.4, // דרישה ל-40% חפיפה אנכית לפחות
     BLOCK_GAP: 0, // אין רווח - חיבור שקע-תקע
@@ -34,7 +31,7 @@
   };
 
   // ========================================================================
-  // הוספת סגנונות CSS חדשים - עם נקודות עיגון במקום הילה והמחוון הכחול
+  // הוספת סגנונות CSS - נקודות עיגון במקום הילה והמחוון הכחול
   // ========================================================================
   function addHighlightStyles() {
     if (document.getElementById('block-connection-styles')) return;
@@ -48,50 +45,49 @@
         z-index: 1001 !important; 
       }
       
-      /* הגדרת נקודות העיגון הבסיסיות */
-      .anchor-point-left,
-      .anchor-point-right {
+      /* נקודות עיגון */
+      .anchor-point {
         position: absolute;
-        width: 10px;
-        height: 10px;
+        width: 12px;
+        height: 12px;
         border-radius: 50%;
-        background-color: transparent;
-        border: 2px solid transparent;
-        opacity: 0;
-        transition: all 0.2s ease-out;
-        z-index: 1002;
-        pointer-events: none;
+        background-color: #f0f0f0;
+        border: 2px solid #666;
         top: 50%;
         transform: translateY(-50%);
+        z-index: 1002;
+        pointer-events: none;
+        opacity: 0.7;
+        transition: opacity 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
       }
       
       /* נקודת עיגון שמאלית */
       .anchor-point-left {
-        left: -6px;
+        left: -7px;
       }
       
       /* נקודת עיגון ימנית */
       .anchor-point-right {
-        right: -6px;
+        right: -7px;
       }
       
-      /* הדגשת נקודת העיגון כשהיא פעילה */
-      .anchor-point-active {
-        opacity: 1;
-        border-color: #FFC107;
+      /* נקודת עיגון מודגשת */
+      .anchor-point-highlight {
         background-color: #FFEB3B;
+        border-color: #FFC107;
         box-shadow: 0 0 8px 2px rgba(255,193,7,0.6);
-        animation: pulseAnchorPoint 1s infinite;
+        opacity: 1;
+        animation: pulseAnchor 1s infinite;
       }
       
-      /* אנימציה לנקודות העיגון */
-      @keyframes pulseAnchorPoint {
+      /* אנימציית פעימה לנקודות עיגון */
+      @keyframes pulseAnchor {
         0% { transform: translateY(-50%) scale(1); }
         50% { transform: translateY(-50%) scale(1.2); }
         100% { transform: translateY(-50%) scale(1); }
       }
       
-      /* שאר הסגנונות כמו קודם */
+      /* אנימציות וסגנונות נוספים */
       @keyframes snapEffect { 0%{transform:scale(1)} 35%{transform:scale(1.05)} 70%{transform:scale(0.98)} 100%{transform:scale(1)} } 
       .snap-animation { animation:snapEffect 0.3s ease-out; }
       
@@ -113,7 +109,7 @@
       #sound-test-button.hidden { opacity:0; pointer-events:none; }
     `;
     document.head.appendChild(style);
-    if (CONFIG.DEBUG) console.log('Styles added (Anchor Points Highlight System)');
+    if (CONFIG.DEBUG) console.log('Styles added (Anchor Points System)');
   }
 
   // ========================================================================
@@ -127,23 +123,24 @@
   // יצירה והוספת נקודות עיגון לבלוקים
   // ========================================================================
   function addAnchorPointsToBlock(block) {
-    if (!block || block.querySelector('.anchor-point-left')) return; // כבר יש נקודות עיגון
+    if (!block || block.querySelector('.anchor-point')) return; // כבר יש נקודות עיגון
     
     // יצירת נקודת עיגון שמאלית
     const leftAnchor = document.createElement('div');
-    leftAnchor.className = 'anchor-point-left';
+    leftAnchor.className = 'anchor-point anchor-point-left';
     block.appendChild(leftAnchor);
     
     // יצירת נקודת עיגון ימנית
     const rightAnchor = document.createElement('div');
-    rightAnchor.className = 'anchor-point-right';
+    rightAnchor.className = 'anchor-point anchor-point-right';
     block.appendChild(rightAnchor);
     
     if (CONFIG.DEBUG > 1) console.log(`Added anchor points to block ${block.id}`);
   }
 
   // ========================================================================
-  // מאזינים, זיהוי בלוקים, קליק ימני, MouseDown - עדכונים לעיגון
+  // מאזינים, זיהוי בלוקים, קליק ימני, MouseDown 
+  // ללא שינוי בגרירה באזור התכנות
   // ========================================================================
   function initProgrammingAreaListeners() { const a=document.getElementById('program-blocks');if(!a)return;a.addEventListener('dragover',(e)=>e.preventDefault());a.addEventListener('dragstart',(e)=>{if(e.target?.closest?.('#program-blocks .block-container'))e.preventDefault();}); }
   function observeNewBlocks() { const a=document.getElementById('program-blocks');if(!a)return;const o=new MutationObserver((m)=>{m.forEach((mu)=>{if(mu.type==='childList'){mu.addedNodes.forEach((n)=>{if(n.nodeType===1){let b=n.classList?.contains('block-container')?n:n.querySelector?.('.block-container');if(b?.closest('#program-blocks')){if(!b.id)generateUniqueId(b);addBlockDragListeners(b);addAnchorPointsToBlock(b);}}});}});});o.observe(a,{childList:true,subtree:true});if(CONFIG.DEBUG)console.log("MutationObserver watching."); }
@@ -153,7 +150,8 @@
   function handleMouseDown(e) { if(e.button!==0||!e.target.closest||e.target.matches('input,button,select,textarea,a[href]'))return;const b=e.target.closest('.block-container');if(!b||!b.parentElement||b.parentElement.id!=='program-blocks')return;if(!b.id)generateUniqueId(b);e.preventDefault();b.draggable=false;if(CONFIG.DEBUG)console.log(`[MouseDown] Start drag: ${b.id}`);if(b.hasAttribute('data-connected-to'))detachBlock(b,false);const lId=b.getAttribute('data-connected-from-left');if(lId)detachBlock(document.getElementById(lId),false);const rId=b.getAttribute('data-connected-from-right');if(rId)detachBlock(document.getElementById(rId),false);currentDraggedBlock=b;isDraggingBlock=true;const r=b.getBoundingClientRect();dragOffset.x=e.clientX-r.left;dragOffset.y=e.clientY-r.top;const pE=document.getElementById('program-blocks');const pR=pE.getBoundingClientRect();if(window.getComputedStyle(b).position!=='absolute'){b.style.position='absolute';b.style.left=(r.left-pR.left+pE.scrollLeft)+'px';b.style.top=(r.top-pR.top+pE.scrollTop)+'px';}b.style.margin='0';b.style.zIndex='1001';b.classList.add('snap-source');document.body.classList.add('user-select-none'); }
 
   // ========================================================================
-  // מאזינים גלובליים, MouseLeave, MouseMove - ללא שינוי מ-v3.5
+  // מאזינים גלובליים, MouseLeave, MouseMove
+  // ללא שינוי בגרירה באזור התכנות
   // ========================================================================
   function initGlobalMouseListeners() { document.removeEventListener('mousemove',handleMouseMove);document.removeEventListener('mouseup',handleMouseUp);document.removeEventListener('mouseleave',handleMouseLeave);document.addEventListener('mousemove',handleMouseMove);document.addEventListener('mouseup',handleMouseUp);document.addEventListener('mouseleave',handleMouseLeave); }
   function handleMouseLeave(e) { if(isDraggingBlock&&e.target===document.documentElement&&!e.relatedTarget){if(CONFIG.DEBUG)console.warn("Mouse left doc during drag, mouseup.");handleMouseUp(e);} }
@@ -161,7 +159,7 @@
 
   // ========================================================================
   // טיפול בשחרור העכבר (MouseUp) - קפיצה להצמדה אם היה מודגש
-  // ללא שינוי בהתנהגות הלוגית מ-v3.5, רק עדכון בניקוי ה-CSS
+  // ללא שינוי בלוגיקה - רק בניקוי CSS
   // ========================================================================
   function handleMouseUp(e) {
     if (!isDraggingBlock || !currentDraggedBlock) return;
@@ -183,7 +181,7 @@
     blockReleased.style.zIndex = '';
     
     // ניקוי נקודות העיגון
-    clearAnchorPointHighlights();
+    clearAllAnchorPointHighlights();
     
     // --- סוף ניקוי ---
 
@@ -222,9 +220,9 @@
   // ========================================================================
   // ניקוי הדגשות נקודות עיגון
   // ========================================================================
-  function clearAnchorPointHighlights() {
-    document.querySelectorAll('.anchor-point-left.anchor-point-active, .anchor-point-right.anchor-point-active').forEach(anchor => {
-      anchor.classList.remove('anchor-point-active');
+  function clearAllAnchorPointHighlights() {
+    document.querySelectorAll('.anchor-point-highlight').forEach(anchor => {
+      anchor.classList.remove('anchor-point-highlight');
     });
   }
 
@@ -242,7 +240,7 @@
     let minDistance = CONFIG.CONNECT_THRESHOLD + 1;
 
     // Reset highlights and global state before checking
-    clearAnchorPointHighlights();
+    clearAllAnchorPointHighlights();
     potentialSnapTarget = null; snapDirection = null; // איפוס המועמד הגלובלי
 
     for (const targetBlock of allVisibleBlocks) {
@@ -281,22 +279,22 @@
         const targetLeftAnchor = bestTarget.querySelector('.anchor-point-left');
         const sourceRightAnchor = currentDraggedBlock.querySelector('.anchor-point-right');
         
-        if (targetLeftAnchor) targetLeftAnchor.classList.add('anchor-point-active');
-        if (sourceRightAnchor) sourceRightAnchor.classList.add('anchor-point-active');
+        if (targetLeftAnchor) targetLeftAnchor.classList.add('anchor-point-highlight');
+        if (sourceRightAnchor) sourceRightAnchor.classList.add('anchor-point-highlight');
       } else if (bestDirection === 'right') {
         // הצד הימני של היעד מתחבר לצד השמאלי של המקור
         const targetRightAnchor = bestTarget.querySelector('.anchor-point-right');
         const sourceLeftAnchor = currentDraggedBlock.querySelector('.anchor-point-left');
         
-        if (targetRightAnchor) targetRightAnchor.classList.add('anchor-point-active');
-        if (sourceLeftAnchor) sourceLeftAnchor.classList.add('anchor-point-active');
+        if (targetRightAnchor) targetRightAnchor.classList.add('anchor-point-highlight');
+        if (sourceLeftAnchor) sourceLeftAnchor.classList.add('anchor-point-highlight');
       }
     }
     // אם לא נמצא יעד, ההדגשות כבויות בגלל האיפוס בתחילת הפונקציה
   }
 
   // ========================================================================
-  // חישוב מידע הצמדה (מרחק וחפיפה) - ללא שינוי מ-v3.5
+  // חישוב מידע הצמדה (מרחק וחפיפה) - ללא שינוי 
   // ========================================================================
   function calculateSnapInfo(sourceRect, targetRect) {
     const topOverlap = Math.max(sourceRect.top, targetRect.top);
@@ -309,7 +307,7 @@
     const distLeftToRight = Math.abs(sourceRect.left - targetRect.right);
     if (distRightToLeft < distLeftToRight) { distance = distRightToLeft; direction = 'left'; }
     else { distance = distLeftToRight; direction = 'right'; }
-    // החזר מידע רק אם המרחק בטווח (עכשיו 8px)
+    // החזר מידע רק אם המרחק בטווח (8px)
     if (distance <= CONFIG.CONNECT_THRESHOLD) {
        if (CONFIG.DEBUG > 1) console.log(`[calculateSnapInfo] Within threshold (${CONFIG.CONNECT_THRESHOLD}px): dir=${direction}, dist=${distance.toFixed(1)}`);
        return { direction, distance };
@@ -318,7 +316,7 @@
   }
 
   // ========================================================================
-  // ביצוע ההצמדה הפיזית (כולל הקפיצה) - ללא שינוי מ-v3.5
+  // ביצוע ההצמדה הפיזית (כולל הקפיצה) - ללא שינוי
   // ========================================================================
   function performBlockSnap(sourceBlock, targetBlock, direction) {
     if (!sourceBlock || !targetBlock || !document.body.contains(targetBlock) || targetBlock.offsetParent === null) { console.error("[PerformSnap] Invalid block(s). Snap cancelled."); return false; }
