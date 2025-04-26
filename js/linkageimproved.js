@@ -4,6 +4,7 @@ function finishDragging() {
     // Clean up visual effects
     document.body.classList.remove('user-select-none');
     currentDraggedBlock.classList.remove('snap-source');
+    currentDraggedBlock.classList.remove('dragging');
     
     // Handle connection if there's a snap target
     if (potentialSnapTarget) {
@@ -24,6 +25,39 @@ function finishDragging() {
       
       // Play sound effect
       playSnapSound();
+    }
+    
+    // Hide future position indicator
+    if (futureIndicator) {
+      futureIndicator.classList.remove('visible');
+    }
+    
+    // Reset anchor highlighting
+    resetActiveAnchors();
+    
+    // Reset state
+    isDraggingBlock = false;
+    currentDraggedBlock = null;
+    potentialSnapTarget = null;
+    snapDirection = null;
+  }
+      playSnapSound();
+    }
+    
+    // Hide future position indicator
+    if (futureIndicator) {
+      futureIndicator.classList.remove('visible');
+    }
+    
+    // Reset anchor highlighting
+    resetActiveAnchors();
+    
+    // Reset state
+    isDraggingBlock = false;
+    currentDraggedBlock = null;
+    potentialSnapTarget = null;
+    snapDirection = null;
+  }playSnapSound();
     }
     
     // Hide future position indicator
@@ -523,7 +557,15 @@ function finishDragging() {
     const style = document.createElement('style');
     style.id = 'block-connection-styles';
     style.textContent = `
-      .snap-source { box-shadow: 0 5px 15px rgba(0,0,0,0.4) !important; transition: box-shadow 0.15s ease-out; cursor: grabbing !important; z-index: 1001 !important; }
+      .snap-source { 
+        box-shadow: 0 5px 15px rgba(0,0,0,0.4) !important; 
+        transition: box-shadow 0.15s ease-out; 
+        cursor: grabbing !important; 
+        z-index: 1001 !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        display: block !important;
+      }
       .snap-target { outline: 6px solid #FFC107 !important; outline-offset: 4px; box-shadow: 0 0 20px 8px rgba(255,193,7,0.8) !important; transition: outline 0.1s ease-out, box-shadow 0.1s ease-out; z-index: 999 !important; }
       .future-position-indicator { position: absolute; border: 3px dashed rgba(0,120,255,0.95) !important; border-radius: 5px; background-color: rgba(0,120,255,0.15) !important; pointer-events: none; z-index: 998; opacity: 0; transition: opacity 0.15s ease-out, left 0.05s linear, top 0.05s linear; display: none; }
       .future-position-indicator.visible { display: block; opacity: 0.9; }
@@ -576,6 +618,19 @@ function finishDragging() {
         pointer-events: none;
       }
       
+      /* Fix for disappearing blocks */
+      .block-container {
+        transition: none !important; /* Prevent transitions from causing disappearing */
+      }
+      
+      /* Make sure dragged blocks stay visible */
+      .block-container.dragging {
+        opacity: 1 !important;
+        visibility: visible !important;
+        display: block !important;
+        z-index: 1000 !important;
+      }
+      
       #sound-test-button { position:fixed; bottom:15px; right:15px; padding:8px 12px; background-color:#2196F3; color:white; border:none; border-radius:4px; cursor:pointer; z-index:9999; font-family:Arial,sans-serif; font-size:14px; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.2); transition:background-color .2s,opacity .5s ease-out; opacity:1; } #sound-test-button:hover { background-color:#0b7dda; } #sound-test-button.success { background-color:#4CAF50; } #sound-test-button.error { background-color:#f44336; } #sound-test-button.loading { background-color:#ff9800; cursor:wait; } #sound-test-button.hidden { opacity:0; pointer-events:none; }
     `;
     
@@ -620,6 +675,9 @@ function finishDragging() {
     if (CONFIG.DEBUG > 1) console.log(`Drag listeners added to block ${block.id}`);
   }
   
+  // ========================================================================
+  // Event handlers for block dragging - Updated to fix disappearing blocks
+  // ========================================================================
   function handleBlockMouseDown(e) {
     // Only handle left mouse button
     if (e.button !== 0) return;
@@ -628,7 +686,16 @@ function finishDragging() {
     e.stopPropagation();
     
     const block = e.currentTarget;
+    
+    // Ensure we can find the block later
+    if (!block.id) generateUniqueId(block);
+    
+    // Start the drag immediately
     startDragging(block, e.clientX, e.clientY);
+    
+    // Apply an initial handleMove to position the block right away
+    // This prevents the block from disappearing until the next mouse move
+    handleMove(e.clientX, e.clientY);
     
     // Global mouse move and up handlers
     document.addEventListener('mousemove', handleMouseMove);
@@ -641,7 +708,14 @@ function finishDragging() {
     const block = e.currentTarget;
     const touch = e.touches[0];
     
+    // Ensure we can find the block later
+    if (!block.id) generateUniqueId(block);
+    
+    // Start the drag immediately
     startDragging(block, touch.clientX, touch.clientY);
+    
+    // Apply an initial handleMove to position the block right away
+    handleMove(touch.clientX, touch.clientY);
     
     // Global touch move and end handlers
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
@@ -681,6 +755,30 @@ function finishDragging() {
       y: clientY - rect.top
     };
     
+    // Ensure the block is properly positioned before dragging
+    // Get computed position to maintain current layout position
+    const computedStyle = window.getComputedStyle(block);
+    const currentLeft = computedStyle.left !== 'auto' ? parseInt(computedStyle.left) : rect.left;
+    const currentTop = computedStyle.top !== 'auto' ? parseInt(computedStyle.top) : rect.top;
+    
+    // Set position before applying 'absolute' to avoid jumps
+    block.style.left = `${currentLeft}px`;
+    block.style.top = `${currentTop}px`;
+    
+    // Make the block absolutely positioned for dragging
+    block.style.position = 'absolute';
+    
+    // Ensure block stays visible by setting a high z-index
+    block.style.zIndex = '1000';
+    
+    // Make sure block is visible
+    block.style.opacity = '1';
+    block.style.visibility = 'visible';
+    block.style.display = 'block';
+    
+    // Mark as being dragged for CSS targeting
+    block.classList.add('dragging');
+    
     // Add visual feedback
     document.body.classList.add('user-select-none');
     block.classList.add('snap-source');
@@ -703,9 +801,14 @@ function finishDragging() {
     const newTop = clientY - dragOffset.y;
     
     // Move the dragged block
-    currentDraggedBlock.style.position = 'absolute';
+    currentDraggedBlock.style.position = 'absolute'; // Ensure position is absolute
     currentDraggedBlock.style.left = `${newLeft}px`;
     currentDraggedBlock.style.top = `${newTop}px`;
+    
+    // Ensure visibility
+    currentDraggedBlock.style.opacity = '1';
+    currentDraggedBlock.style.visibility = 'visible';
+    currentDraggedBlock.style.display = 'block';
     
     // Update anchor positions for this block
     updateAnchorPositions(currentDraggedBlock);
