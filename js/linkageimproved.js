@@ -1,12 +1,52 @@
-// --- START OF FILE linkageimproved.js ---
-// --- Version 3.5: Reverted to Snap-on-Release if Highlighted (Jumping Behavior) ---
-// Changes from v3.4:
-// 1. Increased CONNECT_THRESHOLD back to 8px as requested.
-// 2. Reverted handleMouseUp logic: Removed the final proximity check.
-//    If a potential target was highlighted *during* the drag (within 8px),
-//    the dragged block will now "jump" and snap to that target upon release,
-//    even if slightly outside the 8px threshold at the exact moment of release.
-//    This restores the "jumping" behavior.
+function finishDragging() {
+    if (!isDraggingBlock || !currentDraggedBlock) return;
+    
+    // Clean up visual effects
+    document.body.classList.remove('user-select-none');
+    currentDraggedBlock.classList.remove('snap-source');
+    
+    // Handle connection if there's a snap target
+    if (potentialSnapTarget) {
+      potentialSnapTarget.classList.remove('snap-target');
+      potentialSnapTarget.classList.remove('snap-left', 'snap-right');
+      
+      // Create visual snap effect
+      applySnapAnimation();
+      
+      // Create connection between blocks
+      if (snapDirection === 'right') {
+        // Current block's output connects to target block's input
+        createConnection(currentDraggedBlock.id, potentialSnapTarget.id);
+      } else if (snapDirection === 'left') {
+        // Target block's output connects to current block's input
+        createConnection(potentialSnapTarget.id, currentDraggedBlock.id);
+      }
+      
+      // Play sound effect
+      playSnapSound();
+    }
+    
+    // Hide future position indicator
+    if (futureIndicator) {
+      futureIndicator.classList.remove('visible');
+    }
+    
+    // Reset anchor highlighting
+    resetActiveAnchors();
+    
+    // Reset state
+    isDraggingBlock = false;
+    currentDraggedBlock = null;
+    potentialSnapTarget = null;
+    snapDirection = null;
+  }// --- START OF FILE linkageimproved.js ---
+// --- Version 4.0.0: SVG Anchor Points Connection System ---
+// Changes from v3.5.1:
+// 1. Implemented SVG anchor point system for precise connections
+// 2. Added support for detecting and utilizing SVG connection points
+// 3. Improved connection visualization with SVG path elements
+// 4. Added dynamic anchor point assignment to blocks
+// 5. Fixed position calculation to work with SVG coordinate system
 
 (function() {
   // משתנים גלובליים במודול
@@ -19,26 +59,467 @@
   let snapSound = null;
   let audioContextAllowed = false;
   let soundInitialized = false;
+  let svgContainer = null; // Will hold reference to the SVG container
+  let connectionPaths = {}; // Stores SVG path elements for visualizing connections
+  let blockAnchors = {}; // Stores anchor points for each block
 
+  // משתנים גלובליים נוספים עבור הדגשת נקודות עיגון
+  let potentialConnectionLine = null; // קו להצגת חיבור פוטנציאלי
+  let activeAnchors = { source: null, target: null }; // נקודות עיגון פעילות
+  
   // קונפיגורציה - פרמטרים שניתן להתאים
   const CONFIG = {
     PIN_WIDTH: 5,
-    // *** שונה בחזרה ל-8 ***
-    CONNECT_THRESHOLD: 8, // סף להפעלת הדגשה וזיהוי יעד פוטנציאלי
+    CONNECT_THRESHOLD: 30, // הגדלנו את הסף לזיהוי חיבורים פוטנציאליים (30px)
     VERTICAL_ALIGN_THRESHOLD: 20,
     VERTICAL_OVERLAP_REQ: 0.4, // דרישה ל-40% חפיפה אנכית לפחות
     BLOCK_GAP: 0, // אין רווח - חיבור שקע-תקע
     PLAY_SOUND: true,
     SOUND_VOLUME: 0.8,
     SOUND_PATH: 'assets/sound/link.mp3', // ודא שהנתיב נכון
-    DEBUG: true // Set to false for production
+    DEBUG: true, // Set to false for production
+    
+    // SVG Anchor point configuration - New in v4.0
+    SVG_NAMESPACE: "http://www.w3.org/2000/svg",
+    ANCHOR_RADIUS: 5, // Size of anchor point visualization (if shown)
+    SHOW_ANCHORS: true, // תמיד מציג את נקודות העיגון לנוחות המשתמש
+    CONNECTION_PATH_WIDTH: 2,
+    CONNECTION_PATH_COLOR: "rgba(76, 175, 80, 0.7)",
+    CONNECTION_PATH_DASH: "5,3",
+    
+    // Definition of anchor points (relative positions)
+    ANCHOR_POINTS: {
+      OUTPUT: { right: 0.5 }, // Output on right center
+      INPUT: { left: 0.5 }    // Input on left center
+    }
   };
 
   // ========================================================================
-  // הוספת סגנונות CSS - הילה צהובה, מחוון כחול (ללא שינוי מ-v3.3/3.4)
+  // Utility Functions
+  // ========================================================================
+  function generateUniqueId(element) {
+    if (!element.id) {
+      const timestamp = new Date().getTime();
+      const random = Math.floor(Math.random() * 10000);
+      element.id = `block-${timestamp}-${random}`;
+    }
+    return element.id;
+  }
+
+  function getElementCoordinates(element) {
+    if (!element) return null;
+    
+    const rect = element.getBoundingClientRect();
+    return {
+      left: rect.left,
+      right: rect.right,
+      top: rect.top,
+      bottom: rect.bottom,
+      width: rect.width,
+      height: rect.height,
+      center: {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2
+      }
+    };
+  }
+
+  // ========================================================================
+  // SVG Anchor Point System - New in v4.0
+  // ========================================================================
+  function initSVGContainer() {
+    // Check if SVG container already exists
+    svgContainer = document.getElementById('connection-svg-container');
+    if (svgContainer) return;
+    
+    // Create SVG container for connection visualization
+    svgContainer = document.createElementNS(CONFIG.SVG_NAMESPACE, 'svg');
+    svgContainer.id = 'connection-svg-container';
+    svgContainer.style.position = 'absolute';
+    svgContainer.style.top = '0';
+    svgContainer.style.left = '0';
+    svgContainer.style.width = '100%';
+    svgContainer.style.height = '100%';
+    svgContainer.style.pointerEvents = 'none';
+    svgContainer.style.zIndex = '998';
+    
+    // Add to programming area
+    const programmingArea = document.getElementById('program-blocks');
+    if (programmingArea) {
+      programmingArea.style.position = 'relative'; // Ensure positioning context
+      programmingArea.appendChild(svgContainer);
+      if (CONFIG.DEBUG) console.log('SVG container created for connections');
+    } else {
+      console.error('Programming area not found for SVG container');
+    }
+  }
+
+  function createAnchorPoints(block) {
+    if (!block || !block.id) return;
+    
+    // Get block dimensions
+    const coords = getElementCoordinates(block);
+    if (!coords) return;
+    
+    // Create anchor points object for this block if it doesn't exist
+    if (!blockAnchors[block.id]) {
+      blockAnchors[block.id] = {
+        inputs: [],
+        outputs: []
+      };
+    }
+    
+    // Find SVG elements inside the block if any
+    const svgElement = block.querySelector('svg');
+    
+    if (svgElement) {
+      // Option 1: SVG block with predefined connection points
+      const outputPoint = svgElement.querySelector('.output-point, .output, .output-anchor');
+      const inputPoint = svgElement.querySelector('.input-point, .input, .input-anchor');
+      
+      // Get SVG's position relative to block
+      const svgRect = svgElement.getBoundingClientRect();
+      const svgOffsetX = svgRect.left - coords.left;
+      const svgOffsetY = svgRect.top - coords.top;
+      
+      if (outputPoint) {
+        // Get point position within SVG
+        const pointX = parseFloat(outputPoint.getAttribute('cx') || 0);
+        const pointY = parseFloat(outputPoint.getAttribute('cy') || 0);
+        
+        // Create output anchor at exact point position
+        const outputAnchor = {
+          type: 'output',
+          x: coords.left + svgOffsetX + pointX,
+          y: coords.top + svgOffsetY + pointY,
+          blockId: block.id
+        };
+        
+        blockAnchors[block.id].outputs = [outputAnchor];
+      } else {
+        // Default output anchor if no specific point found
+        const outputAnchor = {
+          type: 'output',
+          x: coords.right,
+          y: coords.top + (coords.height * CONFIG.ANCHOR_POINTS.OUTPUT.right),
+          blockId: block.id
+        };
+        
+        blockAnchors[block.id].outputs = [outputAnchor];
+      }
+      
+      if (inputPoint) {
+        // Get point position within SVG
+        const pointX = parseFloat(inputPoint.getAttribute('cx') || 0);
+        const pointY = parseFloat(inputPoint.getAttribute('cy') || 0);
+        
+        // Create input anchor at exact point position
+        const inputAnchor = {
+          type: 'input',
+          x: coords.left + svgOffsetX + pointX,
+          y: coords.top + svgOffsetY + pointY,
+          blockId: block.id
+        };
+        
+        blockAnchors[block.id].inputs = [inputAnchor];
+      } else {
+        // Default input anchor if no specific point found
+        const inputAnchor = {
+          type: 'input',
+          x: coords.left,
+          y: coords.top + (coords.height * CONFIG.ANCHOR_POINTS.INPUT.left),
+          blockId: block.id
+        };
+        
+        blockAnchors[block.id].inputs = [inputAnchor];
+      }
+    } else {
+      // Option 2: Standard block without SVG - use default positions
+      const outputAnchor = {
+        type: 'output',
+        x: coords.right,
+        y: coords.top + (coords.height * CONFIG.ANCHOR_POINTS.OUTPUT.right),
+        blockId: block.id
+      };
+      
+      const inputAnchor = {
+        type: 'input',
+        x: coords.left,
+        y: coords.top + (coords.height * CONFIG.ANCHOR_POINTS.INPUT.left),
+        blockId: block.id
+      };
+      
+      blockAnchors[block.id].outputs = [outputAnchor];
+      blockAnchors[block.id].inputs = [inputAnchor];
+    }
+    
+    // Visualize anchor points if debug mode is enabled
+    if (CONFIG.SHOW_ANCHORS) {
+      blockAnchors[block.id].outputs.forEach(visualizeAnchorPoint);
+      blockAnchors[block.id].inputs.forEach(visualizeAnchorPoint);
+    }
+    
+    if (CONFIG.DEBUG > 1) console.log(`Created anchor points for block ${block.id}`);
+    return blockAnchors[block.id];
+  }
+
+  function visualizeAnchorPoint(anchor) {
+    if (!svgContainer || !anchor) return;
+    
+    // Remove existing anchor visualization with same id if exists
+    const existingAnchor = document.querySelector(`.anchor-point[data-block-id="${anchor.blockId}"][data-anchor-type="${anchor.type}"]`);
+    if (existingAnchor) {
+      existingAnchor.remove();
+    }
+    
+    // Create anchor point visualization
+    const point = document.createElementNS(CONFIG.SVG_NAMESPACE, 'circle');
+    point.setAttribute('cx', anchor.x);
+    point.setAttribute('cy', anchor.y);
+    point.setAttribute('r', CONFIG.ANCHOR_RADIUS);
+    point.setAttribute('fill', anchor.type === 'output' ? '#4CAF50' : '#2196F3');
+    point.setAttribute('stroke', '#fff');
+    point.setAttribute('stroke-width', '1');
+    point.setAttribute('class', `anchor-point anchor-${anchor.type}`);
+    point.setAttribute('data-block-id', anchor.blockId);
+    point.setAttribute('data-anchor-type', anchor.type);
+    point.setAttribute('data-anchor-id', `${anchor.blockId}-${anchor.type}`);
+    
+    svgContainer.appendChild(point);
+    
+    return point;
+  }
+
+  function updateAnchorPositions(block) {
+    if (!block || !block.id || !blockAnchors[block.id]) return;
+    
+    // Get updated block coordinates
+    const coords = getElementCoordinates(block);
+    if (!coords) return;
+    
+    // Update output anchor positions
+    blockAnchors[block.id].outputs.forEach(anchor => {
+      anchor.x = coords.right;
+      anchor.y = coords.top + (coords.height * CONFIG.ANCHOR_POINTS.OUTPUT.right);
+    });
+    
+    // Update input anchor positions
+    blockAnchors[block.id].inputs.forEach(anchor => {
+      anchor.x = coords.left;
+      anchor.y = coords.top + (coords.height * CONFIG.ANCHOR_POINTS.INPUT.left);
+    });
+    
+    // Update visualizations if in debug mode
+    if (CONFIG.SHOW_ANCHORS) {
+      // Remove old visualization
+      const existingPoints = svgContainer.querySelectorAll(`.anchor-point[data-block-id="${block.id}"]`);
+      existingPoints.forEach(point => point.remove());
+      
+      // Create new visualizations
+      blockAnchors[block.id].outputs.forEach(visualizeAnchorPoint);
+      blockAnchors[block.id].inputs.forEach(visualizeAnchorPoint);
+    }
+    
+    // Update any connections involving this block
+    updateConnections(block.id);
+  }
+
+  function findClosestAnchors(sourceBlock, targetBlock) {
+    if (!sourceBlock || !targetBlock || 
+        !blockAnchors[sourceBlock.id] || 
+        !blockAnchors[targetBlock.id]) {
+      return null;
+    }
+    
+    let minDistance = Infinity;
+    let bestMatch = null;
+    
+    // For each output anchor of source block
+    blockAnchors[sourceBlock.id].outputs.forEach(output => {
+      // For each input anchor of target block
+      blockAnchors[targetBlock.id].inputs.forEach(input => {
+        // Calculate distance between points
+        const distance = Math.sqrt(
+          Math.pow(output.x - input.x, 2) + 
+          Math.pow(output.y - input.y, 2)
+        );
+        
+        // Update best match if this is closer
+        if (distance < minDistance) {
+          minDistance = distance;
+          bestMatch = { output, input, distance };
+        }
+      });
+    });
+    
+    return bestMatch;
+  }
+
+  function createConnection(sourceBlockId, targetBlockId) {
+    if (!sourceBlockId || !targetBlockId || 
+        !blockAnchors[sourceBlockId] || 
+        !blockAnchors[targetBlockId]) {
+      return false;
+    }
+    
+    const connectionId = `${sourceBlockId}-to-${targetBlockId}`;
+    
+    // Get the output anchor from source block and input anchor from target block
+    const outputAnchor = blockAnchors[sourceBlockId].outputs[0];
+    const inputAnchor = blockAnchors[targetBlockId].inputs[0];
+    
+    if (!outputAnchor || !inputAnchor) return false;
+    
+    // Create SVG path for connection visualization
+    const path = document.createElementNS(CONFIG.SVG_NAMESPACE, 'path');
+    path.setAttribute('id', connectionId);
+    path.setAttribute('stroke', CONFIG.CONNECTION_PATH_COLOR);
+    path.setAttribute('stroke-width', CONFIG.CONNECTION_PATH_WIDTH);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke-dasharray', CONFIG.CONNECTION_PATH_DASH);
+    path.setAttribute('marker-end', 'url(#arrowhead)');
+    path.setAttribute('data-source', sourceBlockId);
+    path.setAttribute('data-target', targetBlockId);
+    path.classList.add('connection-path');
+    
+    // Draw the path
+    updatePathBetweenAnchors(path, outputAnchor, inputAnchor);
+    
+    // Add to SVG container
+    svgContainer.appendChild(path);
+    
+    // Store reference
+    connectionPaths[connectionId] = path;
+    
+    // Add classes to indicate connected blocks
+    const sourceBlock = document.getElementById(sourceBlockId);
+    const targetBlock = document.getElementById(targetBlockId);
+    
+    if (sourceBlock) sourceBlock.classList.add('has-connected-block');
+    if (targetBlock) targetBlock.classList.add('connected-block');
+    
+    if (CONFIG.DEBUG) console.log(`Created connection: ${connectionId}`);
+    return true;
+  }
+
+  function updatePathBetweenAnchors(path, fromAnchor, toAnchor) {
+    if (!path || !fromAnchor || !toAnchor) return;
+    
+    // Calculate control points for a smooth curve
+    const dx = toAnchor.x - fromAnchor.x;
+    const dy = toAnchor.y - fromAnchor.y;
+    const controlPointOffset = Math.min(Math.abs(dx) * 0.5, 50); // Limit curve
+    
+    // Create a bezier curve path
+    const pathData = `
+      M ${fromAnchor.x},${fromAnchor.y} 
+      C ${fromAnchor.x + controlPointOffset},${fromAnchor.y} 
+        ${toAnchor.x - controlPointOffset},${toAnchor.y} 
+        ${toAnchor.x},${toAnchor.y}
+    `;
+    
+    path.setAttribute('d', pathData);
+  }
+
+  function updateConnections(blockId) {
+    if (!blockId) return;
+    
+    // Find all connections involving this block
+    Object.keys(connectionPaths).forEach(connectionId => {
+      const path = connectionPaths[connectionId];
+      const sourceId = path.getAttribute('data-source');
+      const targetId = path.getAttribute('data-target');
+      
+      // If this block is involved in the connection
+      if (sourceId === blockId || targetId === blockId) {
+        // Get the anchors
+        const sourceAnchor = blockAnchors[sourceId]?.outputs[0];
+        const targetAnchor = blockAnchors[targetId]?.inputs[0];
+        
+        if (sourceAnchor && targetAnchor) {
+          // Update the path
+          updatePathBetweenAnchors(path, sourceAnchor, targetAnchor);
+        }
+      }
+    });
+  }
+
+  function removeConnection(sourceBlockId, targetBlockId) {
+    const connectionId = `${sourceBlockId}-to-${targetBlockId}`;
+    const path = connectionPaths[connectionId];
+    
+    if (path) {
+      // Remove the path element
+      path.remove();
+      
+      // Remove from our tracking
+      delete connectionPaths[connectionId];
+      
+      // Update classes for blocks
+      const sourceBlock = document.getElementById(sourceBlockId);
+      const targetBlock = document.getElementById(targetBlockId);
+      
+      // Check if source block has other connections
+      const sourceHasOtherConnections = Object.keys(connectionPaths).some(id => 
+        id.startsWith(`${sourceBlockId}-to-`)
+      );
+      
+      // Check if target block has other connections
+      const targetHasOtherConnections = Object.keys(connectionPaths).some(id => 
+        id.endsWith(`-to-${targetBlockId}`)
+      );
+      
+      // Update classes based on connection status
+      if (sourceBlock && !sourceHasOtherConnections) {
+        sourceBlock.classList.remove('has-connected-block');
+      }
+      
+      if (targetBlock && !targetHasOtherConnections) {
+        targetBlock.classList.remove('connected-block');
+      }
+      
+      if (CONFIG.DEBUG) console.log(`Removed connection: ${connectionId}`);
+      return true;
+    }
+    
+    return false;
+  }
+
+  function initArrowheadMarker() {
+    if (!svgContainer) return;
+    
+    // Define marker for arrowhead
+    const defs = document.createElementNS(CONFIG.SVG_NAMESPACE, 'defs');
+    const marker = document.createElementNS(CONFIG.SVG_NAMESPACE, 'marker');
+    
+    marker.setAttribute('id', 'arrowhead');
+    marker.setAttribute('markerWidth', '10');
+    marker.setAttribute('markerHeight', '7');
+    marker.setAttribute('refX', '9');
+    marker.setAttribute('refY', '3.5');
+    marker.setAttribute('orient', 'auto');
+    
+    const polygon = document.createElementNS(CONFIG.SVG_NAMESPACE, 'polygon');
+    polygon.setAttribute('points', '0 0, 10 3.5, 0 7');
+    polygon.setAttribute('fill', CONFIG.CONNECTION_PATH_COLOR);
+    
+    marker.appendChild(polygon);
+    defs.appendChild(marker);
+    svgContainer.appendChild(defs);
+    
+    if (CONFIG.DEBUG) console.log('Added arrowhead marker to SVG');
+  }
+
+  // ========================================================================
+  // הוספת סגנונות CSS - עדכון לעבודה עם מערכת עוגנים
   // ========================================================================
   function addHighlightStyles() {
-    if (document.getElementById('block-connection-styles')) return;
+    // בדוק אם הסגנונות כבר קיימים
+    if (document.getElementById('block-connection-styles')) {
+      if (CONFIG.DEBUG) console.log('Styles already exist - ensuring they are properly applied');
+      return;
+    }
+    
     const style = document.createElement('style');
     style.id = 'block-connection-styles';
     style.textContent = `
@@ -46,250 +527,754 @@
       .snap-target { outline: 6px solid #FFC107 !important; outline-offset: 4px; box-shadow: 0 0 20px 8px rgba(255,193,7,0.8) !important; transition: outline 0.1s ease-out, box-shadow 0.1s ease-out; z-index: 999 !important; }
       .future-position-indicator { position: absolute; border: 3px dashed rgba(0,120,255,0.95) !important; border-radius: 5px; background-color: rgba(0,120,255,0.15) !important; pointer-events: none; z-index: 998; opacity: 0; transition: opacity 0.15s ease-out, left 0.05s linear, top 0.05s linear; display: none; }
       .future-position-indicator.visible { display: block; opacity: 0.9; }
-      .snap-target.snap-left::before { content:''; position:absolute; left:-10px; top:10%; bottom:10%; width:8px; background-color:#FFC107; border-radius:2px; z-index:1000; box-shadow:0 0 10px 2px rgba(255,193,7,0.8); transition:all 0.1s ease-out; }
-      .snap-target.snap-right::after { content:''; position:absolute; right:-10px; top:10%; bottom:10%; width:8px; background-color:#FFC107; border-radius:2px; z-index:1000; box-shadow:0 0 10px 2px rgba(255,193,7,0.8); transition:all 0.1s ease-out; }
+      .snap-target.snap-left::before { content:''; position:absolute; left:-10px; top:40%; bottom:40%; width:8px; background-color:#FFC107; border-radius:2px; z-index:1000; box-shadow:0 0 10px 2px rgba(255,193,7,0.8); transition:all 0.1s ease-out; }
+      .snap-target.snap-right::after { content:''; position:absolute; right:-10px; top:40%; bottom:40%; width:8px; background-color:#FFC107; border-radius:2px; z-index:1000; box-shadow:0 0 10px 2px rgba(255,193,7,0.8); transition:all 0.1s ease-out; }
       @keyframes snapEffect { 0%{transform:scale(1)} 35%{transform:scale(1.05)} 70%{transform:scale(0.98)} 100%{transform:scale(1)} } .snap-animation { animation:snapEffect 0.3s ease-out; }
       @keyframes detachEffect { 0%{transform:translate(0,0) rotate(0)} 30%{transform:translate(3px,1px) rotate(0.8deg)} 60%{transform:translate(-2px,2px) rotate(-0.5deg)} 100%{transform:translate(0,0) rotate(0)} } .detach-animation { animation:detachEffect 0.3s ease-in-out; }
       #detach-menu { position:absolute; background-color:white; border:1px solid #ccc; border-radius:4px; box-shadow:0 3px 8px rgba(0,0,0,0.2); z-index:1100; padding:5px; font-size:14px; min-width:100px; } #detach-menu div { padding:6px 12px; cursor:pointer; border-radius:3px; } #detach-menu div:hover { background-color:#eee; }
       body.user-select-none { user-select:none; -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; }
-      .connected-block, .has-connected-block { /* Optional */ }
+      .connected-block { outline: 2px solid rgba(76, 175, 80, 0.6) !important; outline-offset: 2px; }
+      .has-connected-block { outline: 2px solid rgba(33, 150, 243, 0.6) !important; outline-offset: 2px; }
+      
+      /* Anchor point styles */
+      .anchor-point { 
+        opacity: 0.7; 
+        transition: opacity 0.2s, r 0.2s, fill 0.3s; 
+        pointer-events: none; 
+      }
+      .anchor-point:hover { opacity: 1; r: 5; }
+      .anchor-input { cursor: pointer; fill: #2196F3; }
+      .anchor-output { cursor: pointer; fill: #4CAF50; }
+      
+      /* Highlighted anchor points when close to connection */
+      .anchor-point.highlight-active {
+        opacity: 1 !important;
+        r: 6 !important;
+        fill: #FFC107 !important;
+        stroke: #FFF !important;
+        stroke-width: 2 !important;
+        filter: drop-shadow(0 0 5px rgba(255, 193, 7, 0.8)) !important;
+        animation: pulse 1.5s infinite !important;
+      }
+      
+      /* Pulse animation for active anchor points */
+      @keyframes pulse {
+        0% { r: 6; stroke-width: 2; }
+        50% { r: 8; stroke-width: 3; }
+        100% { r: 6; stroke-width: 2; }
+      }
+      
+      .connection-path { transition: stroke 0.3s; }
+      .connection-path:hover { stroke: rgba(76, 175, 80, 1); stroke-width: 3; }
+      
+      /* Connection line between potential anchors */
+      .potential-connection {
+        stroke: #FFC107;
+        stroke-width: 2;
+        stroke-dasharray: 5,3;
+        opacity: 0.8;
+        pointer-events: none;
+      }
+      
       #sound-test-button { position:fixed; bottom:15px; right:15px; padding:8px 12px; background-color:#2196F3; color:white; border:none; border-radius:4px; cursor:pointer; z-index:9999; font-family:Arial,sans-serif; font-size:14px; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.2); transition:background-color .2s,opacity .5s ease-out; opacity:1; } #sound-test-button:hover { background-color:#0b7dda; } #sound-test-button.success { background-color:#4CAF50; } #sound-test-button.error { background-color:#f44336; } #sound-test-button.loading { background-color:#ff9800; cursor:wait; } #sound-test-button.hidden { opacity:0; pointer-events:none; }
     `;
+    
+    // וודא שהסגנונות נוספים לראש המסמך
     document.head.appendChild(style);
-    if (CONFIG.DEBUG) console.log('Styles added (Yellow Halo, Blue Indicator)');
+    
+    // בדוק אם הסגנונות התווספו כמצופה
+    if (CONFIG.DEBUG) {
+      console.log('Styles added successfully for SVG anchor system');
+      const appliedStyle = document.getElementById('block-connection-styles');
+      if (appliedStyle) {
+        console.log('Connection styles verified in DOM');
+      } else {
+        console.error('Connection styles missing from DOM after append!');
+      }
+    }
   }
 
   // ========================================================================
-  // אתחול אודיו, כפתור בדיקה, נגינת צליל - ללא שינוי מ-v3.4
+  // אתחול אודיו, כפתור בדיקה, נגינת צליל - ללא שינוי מ-v3.5.1
   // ========================================================================
-  function initAudio() { if (!CONFIG.PLAY_SOUND || soundInitialized) return; try { const el=document.getElementById('snap-sound-element'); if(el){snapSound=el;soundInitialized=true;if(CONFIG.DEBUG)console.log('Audio reused.');if(!el.querySelector(`source[src="${CONFIG.SOUND_PATH}"]`)){el.innerHTML='';const s=document.createElement('source');s.src=CONFIG.SOUND_PATH;s.type='audio/mpeg';el.appendChild(s);el.load();}return;} snapSound=document.createElement('audio');snapSound.id='snap-sound-element';snapSound.preload='auto';snapSound.volume=CONFIG.SOUND_VOLUME;const s=document.createElement('source');s.src=CONFIG.SOUND_PATH;s.type='audio/mpeg';snapSound.appendChild(s);snapSound.addEventListener('error',(e)=>{console.error(`Audio Error: ${CONFIG.SOUND_PATH}`,e);const b=document.getElementById('sound-test-button');if(b){b.textContent='שגיאה';b.className='error';b.disabled=true;}CONFIG.PLAY_SOUND=false;snapSound=null;soundInitialized=false;});snapSound.addEventListener('canplaythrough',()=>{soundInitialized=true;if(CONFIG.DEBUG)console.log('Audio ready.');const b=document.getElementById('sound-test-button');if(b?.classList.contains('loading')){b.textContent='בדוק';b.classList.remove('loading');b.disabled=false;}});snapSound.style.display='none';document.body.appendChild(snapSound);if(CONFIG.DEBUG)console.log(`Audio created: ${CONFIG.SOUND_PATH}`);}catch(err){console.error('Audio init error:',err);CONFIG.PLAY_SOUND=false;snapSound=null;soundInitialized=false;}}
+  function initAudio() { if (!CONFIG.PLAY_SOUND || soundInitialized) return; try { const el=document.getElementById('snap-sound-element'); if(el){snapSound=el;soundInitialized=true;if(CONFIG.DEBUG)console.log('Audio reused.');if(!el.querySelector(`source[src="${CONFIG.SOUND_PATH}"]`)){el.innerHTML='';const s=document.createElement('source');s.src=CONFIG.SOUND_PATH;s.type='audio/mpeg';el.appendChild(s);el.load();}return;} snapSound=document.createElement('audio');snapSound.id='snap-sound-element';snapSound.preload='auto';snapSound.volume=CONFIG.SOUND_VOLUME;const s=document.createElement('source');s.src=CONFIG.SOUND_PATH;s.type='audio/mpeg';snapSound.appendChild(s);snapSound.addEventListener('error',(e)=>{console.error(`Audio Error: ${CONFIG.SOUND_PATH}`,e);const b=document.getElementById('sound-test-button');if(b){b.textContent='שגיאה';b.classList.add('error');b.disabled=true;}CONFIG.PLAY_SOUND=false;snapSound=null;soundInitialized=false;});snapSound.addEventListener('canplaythrough',()=>{soundInitialized=true;if(CONFIG.DEBUG)console.log('Audio ready.');const b=document.getElementById('sound-test-button');if(b?.classList.contains('loading')){b.textContent='בדוק';b.classList.remove('loading');b.disabled=false;}});snapSound.style.display='none';document.body.appendChild(snapSound);if(CONFIG.DEBUG)console.log(`Audio created: ${CONFIG.SOUND_PATH}`);}catch(err){console.error('Audio init error:',err);CONFIG.PLAY_SOUND=false;snapSound=null;soundInitialized=false;}}
   function addSoundTestButton() { if(!CONFIG.PLAY_SOUND)return;try{const eb=document.getElementById('sound-test-button');if(eb)eb.remove();const b=document.createElement('button');b.id='sound-test-button';b.title='בדוק צליל';b.className='';if(!snapSound){b.textContent='שמע נכשל';b.classList.add('error');b.disabled=true;}else if(!soundInitialized){b.textContent='טוען...';b.classList.add('loading');b.disabled=true;}else{b.textContent='בדוק';b.disabled=false;}Object.assign(b.style,{position:'fixed',bottom:'15px',right:'15px',zIndex:'9999',padding:'8px 12px',color:'white',border:'none',borderRadius:'4px',cursor:'pointer',boxShadow:'0 2px 5px rgba(0,0,0,0.2)',fontFamily:'Arial,sans-serif',fontSize:'14px',fontWeight:'bold',transition:'background-color .2s,opacity .5s ease-out',opacity:'1'});b.onmouseover=function(){if(!this.disabled&&!this.classList.contains('success')&&!this.classList.contains('error'))this.style.backgroundColor='#0b7dda'};b.onmouseout=function(){if(!this.disabled&&!this.classList.contains('success')&&!this.classList.contains('error'))this.style.backgroundColor='#2196F3'};b.addEventListener('click',function(){if(this.disabled||!snapSound||!soundInitialized)return;snapSound.play().then(()=>{b.textContent='פועל ✓';b.classList.add('success');audioContextAllowed=true;setTimeout(()=>{b.classList.add('hidden');setTimeout(()=>b.remove(),500)},3000);if(snapSound){snapSound.pause();snapSound.currentTime=0;}}).catch(err=>{console.warn('Sound test fail:',err.name);if(err.name==='NotAllowedError'){b.textContent='חסום-לחץ';b.classList.add('error');audioContextAllowed=false;}else{b.textContent='שגיאה';b.classList.add('error');b.disabled=true;}});});document.body.appendChild(b);if(CONFIG.DEBUG)console.log('Sound test button added.');}catch(err){console.error('Err adding sound btn:',err);}}
   function playSnapSound() { if(!CONFIG.PLAY_SOUND||!snapSound||!soundInitialized)return;if(!audioContextAllowed&&CONFIG.DEBUG)console.warn('Playing sound before user interaction.');try{if(snapSound.readyState<3){if(CONFIG.DEBUG)console.log('Snap sound skip: audio not ready.');return;}snapSound.pause();snapSound.currentTime=0;const pp=snapSound.play();if(pp!==undefined){pp.then(()=>{audioContextAllowed=true;if(CONFIG.DEBUG>1)console.log('Snap sound played.');}).catch(err=>{if(err.name==='NotAllowedError'){console.warn('Snap sound blocked.');audioContextAllowed=false;if(!document.getElementById('sound-test-button'))addSoundTestButton();}else if(err.name!=='AbortError'){console.error('Err play snap sound:',err);}});}}catch(err){console.error('Unexpected play sound err:',err);}}
 
   // ========================================================================
-  // מאזינים, זיהוי בלוקים, קליק ימני, MouseDown - ללא שינוי מ-v3.4
+  // Block Drag & Drop Handlers - Updated for SVG anchor system
   // ========================================================================
-  function initProgrammingAreaListeners() { const a=document.getElementById('program-blocks');if(!a)return;a.addEventListener('dragover',(e)=>e.preventDefault());a.addEventListener('dragstart',(e)=>{if(e.target?.closest?.('#program-blocks .block-container'))e.preventDefault();}); }
-  function observeNewBlocks() { const a=document.getElementById('program-blocks');if(!a)return;const o=new MutationObserver((m)=>{m.forEach((mu)=>{if(mu.type==='childList'){mu.addedNodes.forEach((n)=>{if(n.nodeType===1){let b=n.classList?.contains('block-container')?n:n.querySelector?.('.block-container');if(b?.closest('#program-blocks')){if(!b.id)generateUniqueId(b);addBlockDragListeners(b);}}});}});});o.observe(a,{childList:true,subtree:true});if(CONFIG.DEBUG)console.log("MutationObserver watching."); }
-  function initExistingBlocks() { document.querySelectorAll('#program-blocks .block-container').forEach(b=>{if(!b.id)generateUniqueId(b);addBlockDragListeners(b);});if(CONFIG.DEBUG)console.log("Listeners added to existing blocks."); }
-  function addBlockDragListeners(b) { b.removeEventListener('mousedown',handleMouseDown);b.addEventListener('mousedown',handleMouseDown);b.removeEventListener('contextmenu',handleContextMenu);b.addEventListener('contextmenu',handleContextMenu); }
-  function handleContextMenu(e) { e.preventDefault();const b=e.target.closest('.block-container');if(b?.hasAttribute('data-connected-to'))showDetachMenu(e.clientX,e.clientY,b); }
-  function handleMouseDown(e) { if(e.button!==0||!e.target.closest||e.target.matches('input,button,select,textarea,a[href]'))return;const b=e.target.closest('.block-container');if(!b||!b.parentElement||b.parentElement.id!=='program-blocks')return;if(!b.id)generateUniqueId(b);e.preventDefault();b.draggable=false;if(CONFIG.DEBUG)console.log(`[MouseDown] Start drag: ${b.id}`);if(b.hasAttribute('data-connected-to'))detachBlock(b,false);const lId=b.getAttribute('data-connected-from-left');if(lId)detachBlock(document.getElementById(lId),false);const rId=b.getAttribute('data-connected-from-right');if(rId)detachBlock(document.getElementById(rId),false);currentDraggedBlock=b;isDraggingBlock=true;const r=b.getBoundingClientRect();dragOffset.x=e.clientX-r.left;dragOffset.y=e.clientY-r.top;const pE=document.getElementById('program-blocks');const pR=pE.getBoundingClientRect();if(window.getComputedStyle(b).position!=='absolute'){b.style.position='absolute';b.style.left=(r.left-pR.left+pE.scrollLeft)+'px';b.style.top=(r.top-pR.top+pE.scrollTop)+'px';}b.style.margin='0';b.style.zIndex='1001';b.classList.add('snap-source');document.body.classList.add('user-select-none'); }
-
-  // ========================================================================
-  // מאזינים גלובליים, MouseLeave, MouseMove - ללא שינוי מ-v3.4
-  // ========================================================================
-  function initGlobalMouseListeners() { document.removeEventListener('mousemove',handleMouseMove);document.removeEventListener('mouseup',handleMouseUp);document.removeEventListener('mouseleave',handleMouseLeave);document.addEventListener('mousemove',handleMouseMove);document.addEventListener('mouseup',handleMouseUp);document.addEventListener('mouseleave',handleMouseLeave); }
-  function handleMouseLeave(e) { if(isDraggingBlock&&e.target===document.documentElement&&!e.relatedTarget){if(CONFIG.DEBUG)console.warn("Mouse left doc during drag, mouseup.");handleMouseUp(e);} }
-  function handleMouseMove(e) { if(!isDraggingBlock||!currentDraggedBlock)return;e.preventDefault();const pE=document.getElementById('program-blocks');if(!pE){handleMouseUp(e);return;}const pR=pE.getBoundingClientRect();let nL=e.clientX-pR.left-dragOffset.x+pE.scrollLeft;let nT=e.clientY-pR.top-dragOffset.y+pE.scrollTop;const bW=currentDraggedBlock.offsetWidth;const bH=currentDraggedBlock.offsetHeight;const sW=pE.scrollWidth;const sH=pE.scrollHeight;nL=Math.max(0,Math.min(nL,sW-bW));nT=Math.max(0,Math.min(nT,sH-bH));currentDraggedBlock.style.left=Math.round(nL)+'px';currentDraggedBlock.style.top=Math.round(nT)+'px';checkAndHighlightSnapPossibility(); }
-
-  // ========================================================================
-  // *** שינוי מרכזי כאן - חזרה ללוגיקה של v3.3 ***
-  // טיפול בשחרור העכבר (MouseUp) - קפיצה להצמדה אם היה מודגש
-  // ========================================================================
-  function handleMouseUp(e) {
+  function addBlockDragListeners(block) {
+    if (!block || block._hasDragListeners) return;
+    
+    // Create anchor points for this block
+    createAnchorPoints(block);
+    
+    // Mark block to avoid duplicate listeners
+    block._hasDragListeners = true;
+    
+    // Add listeners
+    block.addEventListener('mousedown', handleBlockMouseDown);
+    block.addEventListener('touchstart', handleBlockTouchStart, { passive: false });
+    
+    if (CONFIG.DEBUG > 1) console.log(`Drag listeners added to block ${block.id}`);
+  }
+  
+  function handleBlockMouseDown(e) {
+    // Only handle left mouse button
+    if (e.button !== 0) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const block = e.currentTarget;
+    startDragging(block, e.clientX, e.clientY);
+    
+    // Global mouse move and up handlers
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }
+  
+  function handleBlockTouchStart(e) {
+    e.preventDefault(); // Prevent scrolling
+    
+    const block = e.currentTarget;
+    const touch = e.touches[0];
+    
+    startDragging(block, touch.clientX, touch.clientY);
+    
+    // Global touch move and end handlers
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd);
+    document.addEventListener('touchcancel', handleTouchEnd);
+  }
+  
+  function handleTouchMove(e) {
+    e.preventDefault(); // Prevent scrolling
+    
     if (!isDraggingBlock || !currentDraggedBlock) return;
-
-    const blockReleased = currentDraggedBlock;
-    // שמור את היעד והכיוון שזוהו *במהלך* הגרירה (אם זוהו)
-    const candidateTarget = potentialSnapTarget;
-    const candidateDirection = snapDirection;
-
-    if (CONFIG.DEBUG) console.log(`[MouseUp] Releasing block ${blockReleased.id}. Candidate from move: ${candidateTarget?.id || 'none'}, direction: ${candidateDirection || 'none'}`);
-
-    // --- ניקוי מיידי של מצב הגרירה וההדגשות ---
+    
+    const touch = e.touches[0];
+    handleMove(touch.clientX, touch.clientY);
+  }
+  
+  function handleMouseMove(e) {
+    if (!isDraggingBlock || !currentDraggedBlock) return;
+    
+    e.preventDefault();
+    handleMove(e.clientX, e.clientY);
+  }
+  
+  function startDragging(block, clientX, clientY) {
+    if (!block || isDraggingBlock) return;
+    
+    // Generate ID if needed
+    if (!block.id) generateUniqueId(block);
+    
+    isDraggingBlock = true;
+    currentDraggedBlock = block;
+    
+    // Calculate offset between mouse and block's top-left corner
+    const rect = block.getBoundingClientRect();
+    dragOffset = {
+      x: clientX - rect.left,
+      y: clientY - rect.top
+    };
+    
+    // Add visual feedback
+    document.body.classList.add('user-select-none');
+    block.classList.add('snap-source');
+    
+    // Create future indicator if it doesn't exist
+    if (!futureIndicator) {
+      futureIndicator = document.createElement('div');
+      futureIndicator.className = 'future-position-indicator';
+      document.body.appendChild(futureIndicator);
+    }
+    
+    if (CONFIG.DEBUG > 1) console.log(`Started dragging block: ${block.id}`);
+  }
+  
+  function handleMove(clientX, clientY) {
+    if (!isDraggingBlock || !currentDraggedBlock) return;
+    
+    // Calculate new position
+    const newLeft = clientX - dragOffset.x;
+    const newTop = clientY - dragOffset.y;
+    
+    // Move the dragged block
+    currentDraggedBlock.style.position = 'absolute';
+    currentDraggedBlock.style.left = `${newLeft}px`;
+    currentDraggedBlock.style.top = `${newTop}px`;
+    
+    // Update anchor positions for this block
+    updateAnchorPositions(currentDraggedBlock);
+    
+    // Find potential target for connection
+    findPotentialSnapTarget();
+    
+    // Update future position indicator
+    updateFuturePositionIndicator();
+  }
+  
+  function handleMouseUp(e) {
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+    
+    finishDragging();
+  }
+  
+  function handleTouchEnd(e) {
+    document.removeEventListener('touchmove', handleTouchMove);
+    document.removeEventListener('touchend', handleTouchEnd);
+    document.removeEventListener('touchcancel', handleTouchEnd);
+    
+    finishDragging();
+  }
+  
+  function finishDragging() {
+    if (!isDraggingBlock || !currentDraggedBlock) return;
+    
+    // Clean up visual effects
+    document.body.classList.remove('user-select-none');
+    currentDraggedBlock.classList.remove('snap-source');
+    
+    // Handle connection if there's a snap target
+    if (potentialSnapTarget) {
+      potentialSnapTarget.classList.remove('snap-target');
+      potentialSnapTarget.classList.remove('snap-left', 'snap-right');
+      
+      // Create visual snap effect
+      applySnapAnimation();
+      
+      // Create connection between blocks
+      if (snapDirection === 'right') {
+        // Current block's output connects to target block's input
+        createConnection(currentDraggedBlock.id, potentialSnapTarget.id);
+      } else if (snapDirection === 'left') {
+        // Target block's output connects to current block's input
+        createConnection(potentialSnapTarget.id, currentDraggedBlock.id);
+      }
+      
+      // Play sound effect
+      playSnapSound();
+    }
+    
+    // Hide future position indicator
+    if (futureIndicator) {
+      futureIndicator.classList.remove('visible');
+    }
+    
+    // Reset state
     isDraggingBlock = false;
     currentDraggedBlock = null;
-    potentialSnapTarget = null; // אפס את המצב הגלובלי לזיהוי הבא
+    potentialSnapTarget = null;
     snapDirection = null;
-    document.body.classList.remove('user-select-none');
-    blockReleased.classList.remove('snap-source');
-    blockReleased.style.zIndex = '';
-    // הסר הדגשות מכל הבלוקים
-    document.querySelectorAll('.snap-target').forEach(el => {
-      el.classList.remove('snap-target', 'snap-left', 'snap-right');
-    });
-    removeFuturePositionIndicator();
-    // --- סוף ניקוי ---
-
-    // *** החלטה על הצמדה - מבוססת רק על אם היה מועמד במהלך הגרירה ***
-    // *** אין בדיקת קרבה סופית כאן - זה מה שגורם ל"קפיצה" ***
-    let performSnap = false;
-    if (candidateTarget && candidateDirection && document.body.contains(candidateTarget)) {
-        // היה מועמד תקין במהלך הגרירה, לכן נקבע שננסה להצמיד
-        if (CONFIG.DEBUG) console.log(`[MouseUp] Candidate target ${candidateTarget.id} identified during drag. Attempting snap.`);
-        performSnap = true;
-    } else {
-        if (CONFIG.DEBUG) console.log(`[MouseUp] No valid candidate target identified during drag, or target disappeared. No snap attempt.`);
-    }
-
-    // בצע את ההצמדה אם הוחלט כך
-    if (performSnap) {
-      // הקריאה ל-performBlockSnap תזיז את הבלוק למיקום המדויק ("הקפיצה")
-      const snapSuccess = performBlockSnap(blockReleased, candidateTarget, candidateDirection);
-      if (!snapSuccess) {
-          // אם ההצמדה נכשלה מסיבה טכנית (למשל, היעד נתפס בינתיים), אפשר גרירה מחדש
-          blockReleased.draggable = true;
-          if (CONFIG.DEBUG) console.log(`[MouseUp] Snap attempt failed (performBlockSnap returned false). Block ${blockReleased.id} remains draggable.`);
-      } else {
-           // הצמדה הצליחה, הבלוק מחובר ו-draggable=false
-           if (CONFIG.DEBUG) console.log(`[MouseUp] Snap successful (block jumped to position). Block ${blockReleased.id} is connected.`);
-      }
-    } else {
-      // לא בוצעה הצמדה, הבלוק נשאר במיקום השחרור
-      if (CONFIG.DEBUG) console.log(`[MouseUp] No snap performed. Block ${blockReleased.id} remains free.`);
-      blockReleased.draggable = true; // ודא שניתן לגרור שוב בלוק חופשי
-    }
-
-    if (CONFIG.DEBUG) console.log(`[MouseUp] ----- End MouseUp for ${blockReleased.id} -----`);
   }
-
-  // ========================================================================
-  // בדיקת הצמדה והדגשה (MouseMove) - ללא שינוי מ-v3.4
-  // ========================================================================
-  function checkAndHighlightSnapPossibility() {
-    if (!currentDraggedBlock) return;
-    const programmingArea = document.getElementById('program-blocks'); if (!programmingArea) return;
-    const sourceRect = currentDraggedBlock.getBoundingClientRect();
-    const allVisibleBlocks = Array.from(programmingArea.querySelectorAll('.block-container:not(.snap-source)'))
-                                  .filter(block => block.offsetParent !== null);
-    let bestTarget = null; let bestDirection = null;
-    // *** שים לב שהסף כאן הוא 8px ***
-    let minDistance = CONFIG.CONNECT_THRESHOLD + 1;
-
-    // Reset highlights and global state before checking
-    document.querySelectorAll('.snap-target').forEach(el => { el.classList.remove('snap-target', 'snap-left', 'snap-right'); });
-    potentialSnapTarget = null; snapDirection = null; // איפוס המועמד הגלובלי
-    removeFuturePositionIndicator();
-
-    for (const targetBlock of allVisibleBlocks) {
-      if (!targetBlock.id) generateUniqueId(targetBlock);
-      const targetRect = targetBlock.getBoundingClientRect();
-      const targetConnectedLeft = targetBlock.hasAttribute('data-connected-from-left');
-      const targetConnectedRight = targetBlock.hasAttribute('data-connected-from-right');
-
-      // Calculate returns info only if distance <= threshold (8px) and overlap is sufficient
-      const snapInfo = calculateSnapInfo(sourceRect, targetRect);
-
-      if (snapInfo) {
-         let connectionAllowed = true;
-         if (snapInfo.direction === 'left' && targetConnectedLeft) connectionAllowed = false;
-         else if (snapInfo.direction === 'right' && targetConnectedRight) connectionAllowed = false;
-
-         if (connectionAllowed && snapInfo.distance < minDistance) {
-             minDistance = snapInfo.distance; bestTarget = targetBlock; bestDirection = snapInfo.direction;
-         }
-      }
+  
+  function findPotentialSnapTarget() {
+    // Reset previous potential target
+    if (potentialSnapTarget) {
+      potentialSnapTarget.classList.remove('snap-target', 'snap-left', 'snap-right');
+      potentialSnapTarget = null;
+      snapDirection = null;
     }
-
-    // If a suitable target is found within the threshold during the move
+    
+    // Reset active anchors highlighting
+    resetActiveAnchors();
+    
+    if (!currentDraggedBlock) return;
+    
+    // Get all blocks except the one being dragged
+    const allBlocks = Array.from(document.querySelectorAll('#program-blocks .block-container'))
+      .filter(b => b !== currentDraggedBlock);
+    
+    // Get coordinates of current block
+    const currentCoords = getElementCoordinates(currentDraggedBlock);
+    if (!currentCoords) return;
+    
+    // Variables for best match
+    let bestDistance = CONFIG.CONNECT_THRESHOLD;
+    let bestTarget = null;
+    let bestDirection = null;
+    let bestMatchingAnchors = null;
+    
+    // Check each block for potential connections
+    allBlocks.forEach(targetBlock => {
+      // Skip if no id
+      if (!targetBlock.id) return;
+      
+      // Get target block coordinates
+      const targetCoords = getElementCoordinates(targetBlock);
+      if (!targetCoords) return;
+      
+      // Update anchor positions for accurate connection detection
+      updateAnchorPositions(targetBlock);
+      
+      // Try to connect current block's output to target block's input
+      const outputToInput = findClosestAnchors(currentDraggedBlock, targetBlock);
+      
+      // Try to connect target block's output to current block's input
+      const inputToOutput = findClosestAnchors(targetBlock, currentDraggedBlock);
+      
+      // Choose the closest connection
+      if (outputToInput && outputToInput.distance < bestDistance) {
+        bestDistance = outputToInput.distance;
+        bestTarget = targetBlock;
+        bestDirection = 'right'; // Current block's right side connects to target
+        bestMatchingAnchors = {
+          source: outputToInput.output,
+          target: outputToInput.input
+        };
+      }
+      
+      if (inputToOutput && inputToOutput.distance < bestDistance) {
+        bestDistance = inputToOutput.distance;
+        bestTarget = targetBlock;
+        bestDirection = 'left'; // Target block's right side connects to current
+        bestMatchingAnchors = {
+          source: inputToOutput.output,
+          target: inputToOutput.input
+        };
+      }
+    });
+    
+    // Set the best target if found
     if (bestTarget) {
-      if (CONFIG.DEBUG > 1) console.log(`[Highlight] Threshold met (${CONFIG.CONNECT_THRESHOLD}px): ${currentDraggedBlock.id} -> ${bestTarget.id} (${bestDirection}). Activating visuals.`);
-      // *** עדכון המצב הגלובלי שישמש ב-MouseUp ***
       potentialSnapTarget = bestTarget;
       snapDirection = bestDirection;
-      // הפעל הדגשות
-      bestTarget.classList.add('snap-target', bestDirection === 'left' ? 'snap-left' : 'snap-right');
-      updateFuturePositionIndicator(currentDraggedBlock, bestTarget, bestDirection, programmingArea.getBoundingClientRect());
+      
+      // Add visual feedback
+      potentialSnapTarget.classList.add('snap-target');
+      potentialSnapTarget.classList.add(`snap-${snapDirection}`);
+      
+      // Highlight the matching anchor points
+      highlightActiveAnchors(bestMatchingAnchors.source, bestMatchingAnchors.target);
+      
+      // Show potential connection line
+      showPotentialConnection(bestMatchingAnchors.source, bestMatchingAnchors.target);
+      
+      if (CONFIG.DEBUG > 1) {
+        console.log(`Potential target: ${potentialSnapTarget.id}, Direction: ${snapDirection}, Distance: ${bestDistance.toFixed(2)}px`);
+      }
+    } else {
+      // Hide potential connection line if no match
+      hidePotentialConnection();
     }
-    // אם לא נמצא יעד, ההדגשות כבויות בגלל האיפוס בתחילת הפונקציה
   }
-
+  
   // ========================================================================
-  // חישוב מידע הצמדה (מרחק וחפיפה) - ללא שינוי מ-v3.4
+  // נקודות עיגון פעילות - פונקציות חדשות בגרסה 4.1
   // ========================================================================
-  function calculateSnapInfo(sourceRect, targetRect) {
-    const topOverlap = Math.max(sourceRect.top, targetRect.top);
-    const bottomOverlap = Math.min(sourceRect.bottom, targetRect.bottom);
-    const verticalOverlap = Math.max(0, bottomOverlap - topOverlap);
-    const minHeightReq = Math.min(sourceRect.height, targetRect.height) * CONFIG.VERTICAL_OVERLAP_REQ;
-    if (verticalOverlap < minHeightReq || verticalOverlap <= 0) return null;
-    let distance, direction;
-    const distRightToLeft = Math.abs(sourceRect.right - targetRect.left);
-    const distLeftToRight = Math.abs(sourceRect.left - targetRect.right);
-    if (distRightToLeft < distLeftToRight) { distance = distRightToLeft; direction = 'left'; }
-    else { distance = distLeftToRight; direction = 'right'; }
-    // החזר מידע רק אם המרחק בטווח (עכשיו 8px)
-    if (distance <= CONFIG.CONNECT_THRESHOLD) {
-       if (CONFIG.DEBUG > 1) console.log(`[calculateSnapInfo] Within threshold (${CONFIG.CONNECT_THRESHOLD}px): dir=${direction}, dist=${distance.toFixed(1)}`);
-       return { direction, distance };
+  function highlightActiveAnchors(sourceAnchor, targetAnchor) {
+    if (!sourceAnchor || !targetAnchor) return;
+    
+    // Save reference to active anchors
+    activeAnchors.source = sourceAnchor;
+    activeAnchors.target = targetAnchor;
+    
+    // Find the SVG elements for these anchors
+    const sourceElement = document.querySelector(`.anchor-point[data-anchor-id="${sourceAnchor.blockId}-${sourceAnchor.type}"]`);
+    const targetElement = document.querySelector(`.anchor-point[data-anchor-id="${targetAnchor.blockId}-${targetAnchor.type}"]`);
+    
+    // Highlight anchors
+    if (sourceElement) {
+      sourceElement.classList.add('highlight-active');
     }
-    return null;
+    
+    if (targetElement) {
+      targetElement.classList.add('highlight-active');
+    }
   }
-
-  // ========================================================================
-  // ביצוע ההצמדה הפיזית (כולל הקפיצה) - ללא שינוי מ-v3.4
-  // ========================================================================
-  function performBlockSnap(sourceBlock, targetBlock, direction) {
-    if (!sourceBlock || !targetBlock || !document.body.contains(targetBlock) || targetBlock.offsetParent === null) { console.error("[PerformSnap] Invalid block(s). Snap cancelled."); return false; }
-    // בדיקה אחרונה לפני שינוי (חשוב למקרה של תחרות)
-     if ((direction === 'left' && targetBlock.hasAttribute('data-connected-from-left')) || (direction === 'right' && targetBlock.hasAttribute('data-connected-from-right'))) { console.warn(`[PerformSnap] Snap cancelled: Target ${targetBlock.id} conflict on side '${direction}' just before snap.`); return false; }
-    if (CONFIG.DEBUG) console.log(`[PerformSnap] Snapping ${sourceBlock.id} to ${targetBlock.id} (${direction})`);
-    try {
-      const sourceRect = sourceBlock.getBoundingClientRect(); const targetRect = targetBlock.getBoundingClientRect();
-      const pE = document.getElementById('program-blocks'); const pR = pE.getBoundingClientRect();
-      // המיקום המדויק להצמדה (עם רווח 0)
-      let finalLeft = (direction === 'left') ? (targetRect.left - sourceRect.width - CONFIG.BLOCK_GAP) : (targetRect.right + CONFIG.BLOCK_GAP);
-      const finalTop = targetRect.top; // יישור למעלה
-      let styleLeft = finalLeft - pR.left + pE.scrollLeft; let styleTop = finalTop - pR.top + pE.scrollTop;
-      // *** הזזת הבלוק הנגרר למיקום הסופי - זו ה"קפיצה" ***
-      sourceBlock.style.position = 'absolute'; sourceBlock.style.left = `${Math.round(styleLeft)}px`; sourceBlock.style.top = `${Math.round(styleTop)}px`; sourceBlock.style.margin = '0';
-      // עדכון מאפיינים
-      sourceBlock.setAttribute('data-connected-to', targetBlock.id); sourceBlock.setAttribute('data-connection-direction', direction);
-      targetBlock.setAttribute(direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right', sourceBlock.id);
-      sourceBlock.classList.add('connected-block'); targetBlock.classList.add('has-connected-block');
-      playSnapSound(); // נגן צליל
-      addSnapEffectAnimation(sourceBlock);
-      sourceBlock.draggable = false; // מנע גרירה כשהוא מחובר
-      if (CONFIG.DEBUG) console.log(`[PerformSnap] Success. ${sourceBlock.id} pos: L=${styleLeft.toFixed(0)}, T=${styleTop.toFixed(0)}. Draggable: ${sourceBlock.draggable}`);
-      return true;
-    } catch (err) { console.error(`[PerformSnap] Error during snap for ${sourceBlock.id} -> ${targetBlock.id}:`, err); try { detachBlock(sourceBlock, false); } catch (derr) { console.error(`[PerformSnap] Cleanup detach error:`, derr); } sourceBlock.draggable = true; return false; }
+  
+  function resetActiveAnchors() {
+    // Remove highlight from all anchor points
+    document.querySelectorAll('.anchor-point.highlight-active').forEach(anchor => {
+      anchor.classList.remove('highlight-active');
+    });
+    
+    // Reset active anchors
+    activeAnchors.source = null;
+    activeAnchors.target = null;
+    
+    // Hide potential connection line
+    hidePotentialConnection();
   }
-
+  
+  function showPotentialConnection(sourceAnchor, targetAnchor) {
+    if (!svgContainer || !sourceAnchor || !targetAnchor) return;
+    
+    // Remove existing line if any
+    hidePotentialConnection();
+    
+    // Create new connection line
+    potentialConnectionLine = document.createElementNS(CONFIG.SVG_NAMESPACE, 'path');
+    potentialConnectionLine.setAttribute('class', 'potential-connection');
+    
+    // Calculate control points for a smooth curve
+    const dx = targetAnchor.x - sourceAnchor.x;
+    const dy = targetAnchor.y - sourceAnchor.y;
+    const controlPointOffset = Math.min(Math.abs(dx) * 0.5, 50); // Limit curve
+    
+    // Create a bezier curve path
+    const pathData = `
+      M ${sourceAnchor.x},${sourceAnchor.y} 
+      C ${sourceAnchor.x + controlPointOffset},${sourceAnchor.y} 
+        ${targetAnchor.x - controlPointOffset},${targetAnchor.y} 
+        ${targetAnchor.x},${targetAnchor.y}
+    `;
+    
+    potentialConnectionLine.setAttribute('d', pathData);
+    
+    // Add to SVG container
+    svgContainer.appendChild(potentialConnectionLine);
+  }
+  
+  function hidePotentialConnection() {
+    if (potentialConnectionLine) {
+      potentialConnectionLine.remove();
+      potentialConnectionLine = null;
+    }
+  }
+  
+  function updateFuturePositionIndicator() {
+    if (!futureIndicator || !currentDraggedBlock || !potentialSnapTarget) {
+      if (futureIndicator) futureIndicator.classList.remove('visible');
+      return;
+    }
+    
+    // Get coordinates and anchor points
+    const currentCoords = getElementCoordinates(currentDraggedBlock);
+    
+    if (!currentCoords || !blockAnchors[currentDraggedBlock.id] || !blockAnchors[potentialSnapTarget.id]) {
+      futureIndicator.classList.remove('visible');
+      return;
+    }
+    
+    // Get the relevant anchor points based on snap direction
+    let sourceAnchor, targetAnchor;
+    
+    if (snapDirection === 'right') {
+      // Current block's output connects to target's input
+      sourceAnchor = blockAnchors[currentDraggedBlock.id].outputs[0];
+      targetAnchor = blockAnchors[potentialSnapTarget.id].inputs[0];
+    } else if (snapDirection === 'left') {
+      // Target block's output connects to current's input
+      sourceAnchor = blockAnchors[currentDraggedBlock.id].inputs[0];
+      targetAnchor = blockAnchors[potentialSnapTarget.id].outputs[0];
+    }
+    
+    if (!sourceAnchor || !targetAnchor) {
+      futureIndicator.classList.remove('visible');
+      return;
+    }
+    
+    // Calculate future position based on anchor points alignment
+    let newLeft, newTop;
+    
+    if (snapDirection === 'right') {
+      // Position current block so its output aligns with target's input
+      // Calculate offset from right edge of block to output anchor
+      const outputOffsetFromRight = currentCoords.right - sourceAnchor.x;
+      // Position left edge so output anchor aligns with input anchor
+      newLeft = targetAnchor.x - (currentCoords.width - outputOffsetFromRight);
+      // Vertically align based on anchor point y position
+      newTop = targetAnchor.y - (sourceAnchor.y - currentCoords.top);
+    } else if (snapDirection === 'left') {
+      // Position current block so its input aligns with target's output
+      // Calculate offset from left edge of block to input anchor
+      const inputOffsetFromLeft = sourceAnchor.x - currentCoords.left;
+      // Position left edge so input anchor aligns with output anchor
+      newLeft = targetAnchor.x - inputOffsetFromLeft;
+      // Vertically align based on anchor point y position
+      newTop = targetAnchor.y - (sourceAnchor.y - currentCoords.top);
+    }
+    
+    // Update indicator style
+    futureIndicator.style.left = `${newLeft}px`;
+    futureIndicator.style.top = `${newTop}px`;
+    futureIndicator.style.width = `${currentCoords.width}px`;
+    futureIndicator.style.height = `${currentCoords.height}px`;
+    futureIndicator.classList.add('visible');
+  }
+  
+  function applySnapAnimation() {
+    if (!currentDraggedBlock || !potentialSnapTarget) return;
+    
+    // Apply snap animation
+    currentDraggedBlock.classList.add('snap-animation');
+    
+    // Remove the animation class after it completes
+    setTimeout(() => {
+      if (currentDraggedBlock) {
+        currentDraggedBlock.classList.remove('snap-animation');
+      }
+    }, 300);
+    
+    // Get coordinates and anchor points
+    const currentCoords = getElementCoordinates(currentDraggedBlock);
+    
+    if (!currentCoords || !blockAnchors[currentDraggedBlock.id] || !blockAnchors[potentialSnapTarget.id]) {
+      return;
+    }
+    
+    // Get the relevant anchor points based on snap direction
+    let sourceAnchor, targetAnchor;
+    
+    if (snapDirection === 'right') {
+      // Current block's output connects to target's input
+      sourceAnchor = blockAnchors[currentDraggedBlock.id].outputs[0];
+      targetAnchor = blockAnchors[potentialSnapTarget.id].inputs[0];
+    } else if (snapDirection === 'left') {
+      // Target block's output connects to current's input
+      sourceAnchor = blockAnchors[currentDraggedBlock.id].inputs[0];
+      targetAnchor = blockAnchors[potentialSnapTarget.id].outputs[0];
+    }
+    
+    if (!sourceAnchor || !targetAnchor) return;
+    
+    // Calculate final position based on anchor points alignment
+    let newLeft, newTop;
+    
+    if (snapDirection === 'right') {
+      // Position current block so its output aligns with target's input
+      // Calculate offset from right edge of block to output anchor
+      const outputOffsetFromRight = currentCoords.right - sourceAnchor.x;
+      // Position left edge so output anchor aligns with input anchor
+      newLeft = targetAnchor.x - (currentCoords.width - outputOffsetFromRight);
+      // Vertically align based on anchor point y position
+      newTop = targetAnchor.y - (sourceAnchor.y - currentCoords.top);
+    } else if (snapDirection === 'left') {
+      // Position current block so its input aligns with target's output
+      // Calculate offset from left edge of block to input anchor
+      const inputOffsetFromLeft = sourceAnchor.x - currentCoords.left;
+      // Position left edge so input anchor aligns with output anchor
+      newLeft = targetAnchor.x - inputOffsetFromLeft;
+      // Vertically align based on anchor point y position
+      newTop = targetAnchor.y - (sourceAnchor.y - currentCoords.top);
+    }
+    
+    // Move to final position
+    currentDraggedBlock.style.left = `${newLeft}px`;
+    currentDraggedBlock.style.top = `${newTop}px`;
+    
+    // Update anchor positions after final placement
+    updateAnchorPositions(currentDraggedBlock);
+  }
+  
   // ========================================================================
-  // עדכון/הסרה מחוון, פונקציות ניתוק, אנימציה, ID - ללא שינוי מ-v3.4
+  // Detach & Context Menu - Updated for SVG connections
   // ========================================================================
-  function updateFuturePositionIndicator(sB,tB,dir,pR){const pA=document.getElementById('program-blocks');if(!pA)return;if(!futureIndicator){futureIndicator=document.createElement('div');futureIndicator.id='future-position-indicator';futureIndicator.className='future-position-indicator';pA.appendChild(futureIndicator);}try{const sRN=sB.getBoundingClientRect();const tR=tB.getBoundingClientRect();const pRct=pA.getBoundingClientRect();let dVL=(dir==='left')?(tR.left-sRN.width-CONFIG.BLOCK_GAP):(tR.right+CONFIG.BLOCK_GAP);let dVT=tR.top;let iL=dVL-pRct.left+pA.scrollLeft;let iT=dVT-pRct.top+pA.scrollTop;futureIndicator.style.left=Math.round(iL)+'px';futureIndicator.style.top=Math.round(iT)+'px';futureIndicator.style.width=Math.round(sRN.width)+'px';futureIndicator.style.height=Math.round(sRN.height)+'px';futureIndicator.classList.add('visible');}catch(err){console.error('Err updating future indicator:',err);removeFuturePositionIndicator();}}
-  function removeFuturePositionIndicator() { if(futureIndicator)futureIndicator.classList.remove('visible'); }
-  function showDetachMenu(x,y,b){removeDetachMenu();const m=document.createElement('div');m.id='detach-menu';m.style.left=`${x}px`;m.style.top=`${y}px`;const o=document.createElement('div');o.textContent='נתק בלוק';o.onclick=(e)=>{e.stopPropagation();detachBlock(b,true);removeDetachMenu();};m.appendChild(o);document.body.appendChild(m);setTimeout(()=>{document.addEventListener('click',closeMenuOutside,{capture:true,once:true});window.addEventListener('scroll',removeDetachMenu,{capture:true,once:true});},0);}
-  function closeMenuOutside(e){const m=document.getElementById('detach-menu');if(m&&!m.contains(e.target))removeDetachMenu();else if(m)setTimeout(()=>document.addEventListener('click',closeMenuOutside,{capture:true,once:true}),0);window.removeEventListener('scroll',removeDetachMenu,{capture:true});}
-  function removeDetachMenu(){const m=document.getElementById('detach-menu');if(m){document.removeEventListener('click',closeMenuOutside,{capture:true});window.removeEventListener('scroll',removeDetachMenu,{capture:true});m.remove();}}
-  function detachBlock(btd,animate=true){if(!btd||!btd.hasAttribute('data-connected-to'))return;const tid=btd.getAttribute('data-connected-to');const dir=btd.getAttribute('data-connection-direction');if(!tid||!dir){console.warn(`[Detach] Missing data on ${btd.id}. Clean.`);btd.removeAttribute('data-connected-to');btd.removeAttribute('data-connection-direction');btd.classList.remove('connected-block');btd.draggable=true;return;}if(CONFIG.DEBUG)console.log(`[Detach] Detaching ${btd.id} from ${tid}`);btd.removeAttribute('data-connected-to');btd.removeAttribute('data-connection-direction');btd.classList.remove('connected-block');btd.draggable=true;const tb=document.getElementById(tid);if(tb){tb.removeAttribute(dir==='left'?'data-connected-from-left':'data-connected-from-right');const hoc=tb.hasAttribute('data-connected-from-left')||tb.hasAttribute('data-connected-from-right')||tb.hasAttribute('data-connected-to');if(!hoc)tb.classList.remove('has-connected-block');}else{console.warn(`[Detach] Target ${tid} not found.`);}if(animate)addDetachEffectAnimation(btd);if(CONFIG.DEBUG)console.log(`[Detach] Finished ${btd.id}. Draggable: ${btd.draggable}`);}
-  function addSnapEffectAnimation(b){b.classList.remove('snap-animation');void b.offsetWidth;b.classList.add('snap-animation');b.addEventListener('animationend',()=>b.classList.remove('snap-animation'),{once:true});}
-  function addDetachEffectAnimation(b){b.classList.remove('detach-animation');void b.offsetWidth;b.classList.add('detach-animation');b.addEventListener('animationend',()=>b.classList.remove('detach-animation'),{once:true});}
-  function generateUniqueId(b){if(b.id)return b.id;const p=b.dataset.type||'block';let s=Math.floor(Math.random()*10000).toString().padStart(4,'0');let id=`${p}-${s}`;let i=0;while(document.getElementById(id)&&i<10){id=`${p}-${s}-${i++}`;}if(i>=10)id=`${p}-${Date.now()}`;b.id=id;if(CONFIG.DEBUG)console.log(`Generated ID: ${id}`);return id;}
-
+  function addDetachContextMenu() {
+    // Remove existing menu if any
+    const existingMenu = document.getElementById('detach-menu');
+    if (existingMenu) existingMenu.remove();
+    
+    // Create new menu
+    const menu = document.createElement('div');
+    menu.id = 'detach-menu';
+    menu.style.display = 'none';
+    
+    const detachOption = document.createElement('div');
+    detachOption.textContent = 'נתק חיבור';
+    detachOption.id = 'detach-option';
+    
+    menu.appendChild(detachOption);
+    document.body.appendChild(menu);
+    
+    // Add click handler for detach option
+    detachOption.addEventListener('click', () => {
+      const targetId = menu.getAttribute('data-target');
+      const sourceId = menu.getAttribute('data-source');
+      
+      if (sourceId && targetId) {
+        removeConnection(sourceId, targetId);
+        
+        // Add detach animation
+        const block = document.getElementById(targetId);
+        if (block) {
+          block.classList.add('detach-animation');
+          setTimeout(() => block.classList.remove('detach-animation'), 300);
+        }
+      }
+      
+      // Hide menu
+      menu.style.display = 'none';
+    });
+    
+    // Close menu when clicking elsewhere
+    document.addEventListener('click', (e) => {
+      if (!menu.contains(e.target) && e.target.id !== 'detach-option') {
+        menu.style.display = 'none';
+      }
+    });
+    
+    if (CONFIG.DEBUG) console.log('Detach context menu created');
+  }
+  
+  function setupContextMenuListeners() {
+    // Add right-click handler to SVG container
+    svgContainer.addEventListener('contextmenu', (e) => {
+      // Check if click is on a connection path
+      const path = e.target.closest('.connection-path');
+      if (!path) return;
+      
+      e.preventDefault();
+      
+      // Get connection details
+      const sourceId = path.getAttribute('data-source');
+      const targetId = path.getAttribute('data-target');
+      
+      // Show context menu
+      const menu = document.getElementById('detach-menu');
+      if (menu) {
+        menu.style.display = 'block';
+        menu.style.left = `${e.clientX}px`;
+        menu.style.top = `${e.clientY}px`;
+        menu.setAttribute('data-source', sourceId);
+        menu.setAttribute('data-target', targetId);
+      }
+    });
+    
+    if (CONFIG.DEBUG) console.log('Context menu listeners added');
+  }
+  
   // ========================================================================
-  // אתחול המערכת כולה
+  // מאזינים, זיהוי בלוקים חדשים - מעודכן למערכת עוגנים
   // ========================================================================
-  function initializeSystem() {
-    const initFlag = 'blockLinkageInitialized_v3_5'; // Version specific flag
-    if (window[initFlag]) {
-        if (CONFIG.DEBUG) console.log("Block linkage system v3.5 already initialized. Skipping.");
+  function initProgrammingAreaListeners() { 
+    const a = document.getElementById('program-blocks');
+    if (!a) {
+      if (CONFIG.DEBUG) console.error('Programming area not found! Missing element #program-blocks');
+      return;
+    }
+    
+    // וודא שאין גרירה מובנית של הדפדפן
+    a.addEventListener('dragover', (e) => e.preventDefault());
+    a.addEventListener('dragstart', (e) => {
+      if (e.target?.closest?.('#program-blocks .block-container')) {
+        e.preventDefault();
+        if (CONFIG.DEBUG > 1) console.log('Prevented browser default drag for block');
+      }
+    });
+    
+    // Handle right-click for existing connections
+    a.addEventListener('contextmenu', (e) => {
+      const block = e.target.closest('.block-container');
+      if (!block) return;
+      
+      // Only handle right-click on connected blocks
+      if (!block.classList.contains('connected-block') && 
+          !block.classList.contains('has-connected-block')) {
         return;
+      }
+      
+      e.preventDefault();
+      
+      // Find all connections involving this block
+      const blockId = block.id;
+      const connectionIds = Object.keys(connectionPaths).filter(id => 
+        id.startsWith(`${blockId}-to-`) || id.endsWith(`-to-${blockId}`)
+      );
+      
+      if (connectionIds.length === 0) return;
+      
+      // For simplicity, handle the first connection only
+      // (could be extended to show multiple connection options)
+      const connectionId = connectionIds[0];
+      const parts = connectionId.split('-to-');
+      const sourceId = parts[0];
+      const targetId = parts[1];
+      
+      // Show context menu
+      const menu = document.getElementById('detach-menu');
+      if (menu) {
+        menu.style.display = 'block';
+        menu.style.left = `${e.clientX}px`;
+        menu.style.top = `${e.clientY}px`;
+        menu.setAttribute('data-source', sourceId);
+        menu.setAttribute('data-target', targetId);
+      }
+    });
+    
+    if (CONFIG.DEBUG) console.log('Programming area listeners initialized');
+  }
+  
+  function observeNewBlocks() { 
+    const a = document.getElementById('program-blocks');
+    if (!a) {
+      if (CONFIG.DEBUG) console.error('Programming area not found for block observation!');
+      return;
     }
-
+    
+    // שימוש ב-MutationObserver לזיהוי בלוקים חדשים
+    const o = new MutationObserver((mutations) => {
+      mutations.forEach((mu) => {
+        if (mu.type === 'childList') {
+          mu.addedNodes.forEach((node) => {
+            if (node.nodeType === 1) { // אלמנט DOM
+              let block = node.classList?.contains('block-container') ? node : node.querySelector?.('.block-container');
+              if (block?.closest('#program-blocks')) {
+                if (!block.id) generateUniqueId(block);
+                addBlockDragListeners(block);
+                if (CONFIG.DEBUG > 1) console.log(`Added listeners to new block: ${block.id}`);
+              }
+            }
+          });
+        }
+      });
+    });
+    
+    // עקוב אחרי שינויים באזור התכנות
+    o.observe(a, { childList: true, subtree: true });
+    
+    if (CONFIG.DEBUG) console.log("MutationObserver watching for new blocks.");
+  }
+  
+  // ========================================================================
+  // אתחול המערכת והפעלה - מעודכן לעבודה עם עוגנים
+  // ========================================================================
+  function init() {
+    // Add CSS styles
     addHighlightStyles();
+    
+    // Initialize audio
     initAudio();
+    if (CONFIG.PLAY_SOUND) addSoundTestButton();
+    
+    // Initialize SVG container for connections
+    initSVGContainer();
+    
+    // Add arrowhead marker for connections
+    initArrowheadMarker();
+    
+    // Add context menu for detaching connections
+    addDetachContextMenu();
+    
+    // Add listeners to SVG container
+    setupContextMenuListeners();
+    
+    // Initialize programming area listeners
     initProgrammingAreaListeners();
+    
+    // Add listeners to existing blocks
+    const existingBlocks = document.querySelectorAll('#program-blocks .block-container');
+    existingBlocks.forEach(block => {
+      if (!block.id) generateUniqueId(block);
+      addBlockDragListeners(block);
+    });
+    
+    // Watch for new blocks
     observeNewBlocks();
-    initExistingBlocks();
-    initGlobalMouseListeners();
-
-    if (CONFIG.PLAY_SOUND) { addSoundTestButton(); }
-
-    window[initFlag] = true; // Mark as initialized
-    console.log(`Block linkage system initialized (Version 3.5 - Snap Jump on Release, Threshold=${CONFIG.CONNECT_THRESHOLD}px)`);
-    console.log(`Configuration: Snap Threshold=${CONFIG.CONNECT_THRESHOLD}px, Overlap=${CONFIG.VERTICAL_OVERLAP_REQ*100}%, Gap=${CONFIG.BLOCK_GAP}px, Sound=${CONFIG.PLAY_SOUND ? CONFIG.SOUND_PATH : 'Disabled'}`);
+    
+    if (CONFIG.DEBUG) console.log('SVG Anchor Point Connection System initialized (v4.1.0)');
   }
-
-  // הפעל את האתחול
+  
+  // Initialize when DOM is ready
   if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initializeSystem);
+    document.addEventListener('DOMContentLoaded', init);
   } else {
-      initializeSystem(); // DOM already loaded
+    init();
   }
-
-})(); // סוף IIFE
-
-// --- END OF FILE linkageimproved.js ---
+  
+})();
