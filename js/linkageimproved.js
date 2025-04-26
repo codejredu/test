@@ -1,4 +1,43 @@
-function finishDragging() {
+// משתנים גלובליים במודול
+  let currentDraggedBlock = null;
+  let potentialSnapTarget = null; // Stores the candidate target identified during move
+  let snapDirection = null; // Stores the candidate direction identified during move
+  let isDraggingBlock = false;
+  let dragOffset = { x: 0, y: 0 };
+  let futureIndicator = null;
+  let snapSound = null;
+  let audioContextAllowed = false;
+  let soundInitialized = false;
+  let svgContainer = null; // Will hold reference to the SVG container
+  let connectionPaths = {}; // Stores SVG path elements for visualizing connections
+  let blockAnchors = {}; // Stores anchor points for each block
+  let potentialConnectionLine = null; // קו להצגת חיבור פוטנציאלי
+  let activeAnchors = { source: null, target: null }; // נקודות עיגון פעילות
+  
+  // קונפיגורציה - פרמטרים שניתן להתאים
+  const CONFIG = {
+    PIN_WIDTH: 5,
+    CONNECT_THRESHOLD: 50, // הגדלנו מאוד את הסף לזיהוי חיבורים פוטנציאליים (50px)
+    VERTICAL_ALIGN_THRESHOLD: 20,
+    VERTICAL_OVERLAP_REQ: 0.4, // דרישה ל-40% חפיפה אנכית לפחות
+    BLOCK_GAP: 0, // אין רווח - חיבור שקע-תקע
+    PLAY_SOUND: true,
+    SOUND_VOLUME: 0.8,
+    SOUND_PATH: 'assets/sound/link.mp3', // ודא שהנתיב נכון
+    DEBUG: true, // Set to false for production
+    
+    // SVG Anchor point configuration - New in v4.0
+    SVG_NAMESPACE: "http://www.w3.org/2000/svg",
+    ANCHOR_RADIUS: 8, // הגדלנו את נקודות העיגון
+    SHOW_ANCHORS: true, // מציג תמיד את נקודות העיגון
+    CONNECTION_PATH_WIDTH: 2,
+    CONNECTION_PATH_COLOR: "rgba(76, 175, 80, 0.7)",
+    CONNECTION_PATH_DASH: "5,3",
+    
+    // Definition of anchor points (relative positions)
+    ANCHOR_POINTS: {
+      OUTPUT: { right: 0.5 }, // Output on right center
+      INPUT: {  function finishDragging() {
     if (!isDraggingBlock || !currentDraggedBlock) return;
     
     // Clean up visual effects
@@ -668,22 +707,33 @@ function finishDragging() {
     // Mark block to avoid duplicate listeners
     block._hasDragListeners = true;
     
+    // Explicitly disable HTML5 native drag
+    block.setAttribute('draggable', 'false');
+    
     // Add listeners
     block.addEventListener('mousedown', handleBlockMouseDown);
     block.addEventListener('touchstart', handleBlockTouchStart, { passive: false });
     
+    // Prevent default browser drag behavior
+    block.addEventListener('dragstart', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    });
+    
     if (CONFIG.DEBUG > 1) console.log(`Drag listeners added to block ${block.id}`);
   }
   
-  // ========================================================================
-  // Event handlers for block dragging - Updated to fix disappearing blocks
-  // ========================================================================
   function handleBlockMouseDown(e) {
     // Only handle left mouse button
     if (e.button !== 0) return;
     
     e.preventDefault();
     e.stopPropagation();
+    
+    // Disable native browser drag behavior completely
+    e.dataTransfer?.dropEffect = 'none';
+    e.dataTransfer?.effectAllowed = 'none';
     
     const block = e.currentTarget;
     
@@ -775,6 +825,10 @@ function finishDragging() {
     block.style.opacity = '1';
     block.style.visibility = 'visible';
     block.style.display = 'block';
+    
+    // Prevent clone/ghost effect by removing any previous clone
+    const existingGhost = document.querySelector('.block-ghost');
+    if (existingGhost) existingGhost.remove();
     
     // Mark as being dragged for CSS targeting
     block.classList.add('dragging');
@@ -980,13 +1034,26 @@ function finishDragging() {
     const sourceElement = document.querySelector(`.anchor-point[data-anchor-id="${sourceAnchor.blockId}-${sourceAnchor.type}"]`);
     const targetElement = document.querySelector(`.anchor-point[data-anchor-id="${targetAnchor.blockId}-${targetAnchor.type}"]`);
     
+    // Debug info
+    if (CONFIG.DEBUG > 1) {
+      console.log('Highlighting anchors:');
+      console.log('Source anchor:', sourceAnchor);
+      console.log('Target anchor:', targetAnchor);
+      console.log('Source element found:', !!sourceElement);
+      console.log('Target element found:', !!targetElement);
+    }
+    
     // Highlight anchors
     if (sourceElement) {
       sourceElement.classList.add('highlight-active');
+      // Force repaint to make sure highlighting applies immediately
+      sourceElement.setAttribute('r', CONFIG.ANCHOR_RADIUS * 1.6);
     }
     
     if (targetElement) {
       targetElement.classList.add('highlight-active');
+      // Force repaint to make sure highlighting applies immediately
+      targetElement.setAttribute('r', CONFIG.ANCHOR_RADIUS * 1.6);
     }
   }
   
@@ -1253,13 +1320,22 @@ function finishDragging() {
     }
     
     // וודא שאין גרירה מובנית של הדפדפן
-    a.addEventListener('dragover', (e) => e.preventDefault());
+    a.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      return false;
+    });
+    
     a.addEventListener('dragstart', (e) => {
       if (e.target?.closest?.('#program-blocks .block-container')) {
         e.preventDefault();
+        e.stopPropagation();
         if (CONFIG.DEBUG > 1) console.log('Prevented browser default drag for block');
       }
+      return false;
     });
+    
+    // מנע אירועי גרירה נוספים
+    a.addEventListener('drop', (e) => e.preventDefault());
     
     // Handle right-click for existing connections
     a.addEventListener('contextmenu', (e) => {
