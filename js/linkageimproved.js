@@ -303,7 +303,7 @@
     init();
   }
   
-// --- START OF FILE linkageimproved.js ---
+})();// --- START OF FILE linkageimproved.js ---
 // --- Version 4.1.0: SVG Anchor Points Connection System with Ghost Drag Fix ---
 // Changes from v4.0.0:
 // 1. Fixed ghost drag issue with drag blocker and willChange optimization
