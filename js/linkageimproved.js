@@ -48,10 +48,9 @@
         z-index: 1001 !important; 
       }
       
-      /* הגדרת נקודות העיגון הבסיסיות - נסתרות במצב רגיל */
-      .block-container::before,
-      .block-container::after {
-        content: '';
+      /* הגדרת נקודות העיגון הבסיסיות */
+      .anchor-point-left,
+      .anchor-point-right {
         position: absolute;
         width: 10px;
         height: 10px;
@@ -59,64 +58,30 @@
         background-color: transparent;
         border: 2px solid transparent;
         opacity: 0;
-        transition: opacity 0.2s ease-out, background-color 0.2s ease-out, border-color 0.2s ease-out;
+        transition: all 0.2s ease-out;
         z-index: 1002;
         pointer-events: none;
+        top: 50%;
+        transform: translateY(-50%);
       }
       
       /* נקודת עיגון שמאלית */
-      .block-container::before {
-        top: 50%;
+      .anchor-point-left {
         left: -6px;
-        transform: translateY(-50%);
       }
       
       /* נקודת עיגון ימנית */
-      .block-container::after {
-        top: 50%;
+      .anchor-point-right {
         right: -6px;
-        transform: translateY(-50%);
       }
       
-      /* הופעת נקודות העיגון בעת גרירה */
-      .snap-source::before,
-      .snap-source::after {
-        opacity: 0.7;
-        border-color: #666;
-        background-color: #f0f0f0;
-      }
-      
-      /* הדגשת נקודת עיגון שמאלית כשיש אפשרות חיבור */
-      .snap-target.snap-left::before {
+      /* הדגשת נקודת העיגון כשהיא פעילה */
+      .anchor-point-active {
         opacity: 1;
         border-color: #FFC107;
         background-color: #FFEB3B;
         box-shadow: 0 0 8px 2px rgba(255,193,7,0.6);
         animation: pulseAnchorPoint 1s infinite;
-      }
-      
-      /* הדגשת נקודת עיגון ימנית כשיש אפשרות חיבור */
-      .snap-target.snap-right::after {
-        opacity: 1;
-        border-color: #FFC107;
-        background-color: #FFEB3B;
-        box-shadow: 0 0 8px 2px rgba(255,193,7,0.6);
-        animation: pulseAnchorPoint 1s infinite;
-      }
-      
-      /* הדגשת נקודת העיגון המתאימה בבלוק הנגרר */
-      .snap-source.snap-to-left::after {
-        opacity: 1;
-        border-color: #FFC107;
-        background-color: #FFEB3B;
-        box-shadow: 0 0 8px 2px rgba(255,193,7,0.6);
-      }
-      
-      .snap-source.snap-to-right::before {
-        opacity: 1;
-        border-color: #FFC107;
-        background-color: #FFEB3B;
-        box-shadow: 0 0 8px 2px rgba(255,193,7,0.6);
       }
       
       /* אנימציה לנקודות העיגון */
@@ -159,11 +124,30 @@
   function playSnapSound() { if(!CONFIG.PLAY_SOUND||!snapSound||!soundInitialized)return;if(!audioContextAllowed&&CONFIG.DEBUG)console.warn('Playing sound before user interaction.');try{if(snapSound.readyState<3){if(CONFIG.DEBUG)console.log('Snap sound skip: audio not ready.');return;}snapSound.pause();snapSound.currentTime=0;const pp=snapSound.play();if(pp!==undefined){pp.then(()=>{audioContextAllowed=true;if(CONFIG.DEBUG>1)console.log('Snap sound played.');}).catch(err=>{if(err.name==='NotAllowedError'){console.warn('Snap sound blocked.');audioContextAllowed=false;if(!document.getElementById('sound-test-button'))addSoundTestButton();}else if(err.name!=='AbortError'){console.error('Err play snap sound:',err);}});}}catch(err){console.error('Unexpected play sound err:',err);}}
 
   // ========================================================================
-  // מאזינים, זיהוי בלוקים, קליק ימני, MouseDown - ללא שינוי מ-v3.5
+  // יצירה והוספת נקודות עיגון לבלוקים
+  // ========================================================================
+  function addAnchorPointsToBlock(block) {
+    if (!block || block.querySelector('.anchor-point-left')) return; // כבר יש נקודות עיגון
+    
+    // יצירת נקודת עיגון שמאלית
+    const leftAnchor = document.createElement('div');
+    leftAnchor.className = 'anchor-point-left';
+    block.appendChild(leftAnchor);
+    
+    // יצירת נקודת עיגון ימנית
+    const rightAnchor = document.createElement('div');
+    rightAnchor.className = 'anchor-point-right';
+    block.appendChild(rightAnchor);
+    
+    if (CONFIG.DEBUG > 1) console.log(`Added anchor points to block ${block.id}`);
+  }
+
+  // ========================================================================
+  // מאזינים, זיהוי בלוקים, קליק ימני, MouseDown - עדכונים לעיגון
   // ========================================================================
   function initProgrammingAreaListeners() { const a=document.getElementById('program-blocks');if(!a)return;a.addEventListener('dragover',(e)=>e.preventDefault());a.addEventListener('dragstart',(e)=>{if(e.target?.closest?.('#program-blocks .block-container'))e.preventDefault();}); }
-  function observeNewBlocks() { const a=document.getElementById('program-blocks');if(!a)return;const o=new MutationObserver((m)=>{m.forEach((mu)=>{if(mu.type==='childList'){mu.addedNodes.forEach((n)=>{if(n.nodeType===1){let b=n.classList?.contains('block-container')?n:n.querySelector?.('.block-container');if(b?.closest('#program-blocks')){if(!b.id)generateUniqueId(b);addBlockDragListeners(b);}}});}});});o.observe(a,{childList:true,subtree:true});if(CONFIG.DEBUG)console.log("MutationObserver watching."); }
-  function initExistingBlocks() { document.querySelectorAll('#program-blocks .block-container').forEach(b=>{if(!b.id)generateUniqueId(b);addBlockDragListeners(b);});if(CONFIG.DEBUG)console.log("Listeners added to existing blocks."); }
+  function observeNewBlocks() { const a=document.getElementById('program-blocks');if(!a)return;const o=new MutationObserver((m)=>{m.forEach((mu)=>{if(mu.type==='childList'){mu.addedNodes.forEach((n)=>{if(n.nodeType===1){let b=n.classList?.contains('block-container')?n:n.querySelector?.('.block-container');if(b?.closest('#program-blocks')){if(!b.id)generateUniqueId(b);addBlockDragListeners(b);addAnchorPointsToBlock(b);}}});}});});o.observe(a,{childList:true,subtree:true});if(CONFIG.DEBUG)console.log("MutationObserver watching."); }
+  function initExistingBlocks() { document.querySelectorAll('#program-blocks .block-container').forEach(b=>{if(!b.id)generateUniqueId(b);addBlockDragListeners(b);addAnchorPointsToBlock(b);});if(CONFIG.DEBUG)console.log("Listeners added to existing blocks."); }
   function addBlockDragListeners(b) { b.removeEventListener('mousedown',handleMouseDown);b.addEventListener('mousedown',handleMouseDown);b.removeEventListener('contextmenu',handleContextMenu);b.addEventListener('contextmenu',handleContextMenu); }
   function handleContextMenu(e) { e.preventDefault();const b=e.target.closest('.block-container');if(b?.hasAttribute('data-connected-to'))showDetachMenu(e.clientX,e.clientY,b); }
   function handleMouseDown(e) { if(e.button!==0||!e.target.closest||e.target.matches('input,button,select,textarea,a[href]'))return;const b=e.target.closest('.block-container');if(!b||!b.parentElement||b.parentElement.id!=='program-blocks')return;if(!b.id)generateUniqueId(b);e.preventDefault();b.draggable=false;if(CONFIG.DEBUG)console.log(`[MouseDown] Start drag: ${b.id}`);if(b.hasAttribute('data-connected-to'))detachBlock(b,false);const lId=b.getAttribute('data-connected-from-left');if(lId)detachBlock(document.getElementById(lId),false);const rId=b.getAttribute('data-connected-from-right');if(rId)detachBlock(document.getElementById(rId),false);currentDraggedBlock=b;isDraggingBlock=true;const r=b.getBoundingClientRect();dragOffset.x=e.clientX-r.left;dragOffset.y=e.clientY-r.top;const pE=document.getElementById('program-blocks');const pR=pE.getBoundingClientRect();if(window.getComputedStyle(b).position!=='absolute'){b.style.position='absolute';b.style.left=(r.left-pR.left+pE.scrollLeft)+'px';b.style.top=(r.top-pR.top+pE.scrollTop)+'px';}b.style.margin='0';b.style.zIndex='1001';b.classList.add('snap-source');document.body.classList.add('user-select-none'); }
@@ -195,13 +179,12 @@
     potentialSnapTarget = null; // אפס את המצב הגלובלי לזיהוי הבא
     snapDirection = null;
     document.body.classList.remove('user-select-none');
-    blockReleased.classList.remove('snap-source', 'snap-to-left', 'snap-to-right');
+    blockReleased.classList.remove('snap-source');
     blockReleased.style.zIndex = '';
-    // הסר הדגשות מכל הבלוקים
-    document.querySelectorAll('.snap-target').forEach(el => {
-      el.classList.remove('snap-target', 'snap-left', 'snap-right');
-    });
-    removeFuturePositionIndicator();
+    
+    // ניקוי נקודות העיגון
+    clearAnchorPointHighlights();
+    
     // --- סוף ניקוי ---
 
     // *** החלטה על הצמדה - מבוססת רק על אם היה מועמד במהלך הגרירה ***
@@ -237,6 +220,15 @@
   }
 
   // ========================================================================
+  // ניקוי הדגשות נקודות עיגון
+  // ========================================================================
+  function clearAnchorPointHighlights() {
+    document.querySelectorAll('.anchor-point-left.anchor-point-active, .anchor-point-right.anchor-point-active').forEach(anchor => {
+      anchor.classList.remove('anchor-point-active');
+    });
+  }
+
+  // ========================================================================
   // בדיקת הצמדה והדגשה (MouseMove) - עדכון להדגשת נקודות עיגון
   // ========================================================================
   function checkAndHighlightSnapPossibility() {
@@ -250,17 +242,14 @@
     let minDistance = CONFIG.CONNECT_THRESHOLD + 1;
 
     // Reset highlights and global state before checking
-    document.querySelectorAll('.snap-target').forEach(el => { 
-      el.classList.remove('snap-target', 'snap-left', 'snap-right'); 
-    });
-    // הסר גם את סימון נקודות העיגון על הבלוק הנגרר
-    currentDraggedBlock.classList.remove('snap-to-left', 'snap-to-right');
-    
+    clearAnchorPointHighlights();
     potentialSnapTarget = null; snapDirection = null; // איפוס המועמד הגלובלי
-    removeFuturePositionIndicator();
 
     for (const targetBlock of allVisibleBlocks) {
       if (!targetBlock.id) generateUniqueId(targetBlock);
+      // וודא שיש נקודות עיגון לבלוק היעד
+      addAnchorPointsToBlock(targetBlock);
+      
       const targetRect = targetBlock.getBoundingClientRect();
       const targetConnectedLeft = targetBlock.hasAttribute('data-connected-from-left');
       const targetConnectedRight = targetBlock.hasAttribute('data-connected-from-right');
@@ -281,22 +270,27 @@
 
     // If a suitable target is found within the threshold during the move
     if (bestTarget) {
-      if (CONFIG.DEBUG > 1) console.log(`[Highlight] Threshold met (${CONFIG.CONNECT_THRESHOLD}px): ${currentDraggedBlock.id} -> ${bestTarget.id} (${bestDirection}). Activating visuals.`);
+      if (CONFIG.DEBUG > 1) console.log(`[Highlight] Threshold met (${CONFIG.CONNECT_THRESHOLD}px): ${currentDraggedBlock.id} -> ${bestTarget.id} (${bestDirection}). Activating anchor points.`);
       // *** עדכון המצב הגלובלי שישמש ב-MouseUp ***
       potentialSnapTarget = bestTarget;
       snapDirection = bestDirection;
       
-      // הפעל הדגשות
-      bestTarget.classList.add('snap-target', bestDirection === 'left' ? 'snap-left' : 'snap-right');
-      
-      // הדגש גם את נקודת העיגון המתאימה בבלוק הנגרר
+      // הפעל הדגשות נקודות עיגון
       if (bestDirection === 'left') {
-        currentDraggedBlock.classList.add('snap-to-right'); // הצד הימני של הנגרר מתחבר לצד שמאלי של היעד
-      } else {
-        currentDraggedBlock.classList.add('snap-to-left'); // הצד השמאלי של הנגרר מתחבר לצד ימני של היעד
+        // הצד השמאלי של היעד מתחבר לצד הימני של המקור
+        const targetLeftAnchor = bestTarget.querySelector('.anchor-point-left');
+        const sourceRightAnchor = currentDraggedBlock.querySelector('.anchor-point-right');
+        
+        if (targetLeftAnchor) targetLeftAnchor.classList.add('anchor-point-active');
+        if (sourceRightAnchor) sourceRightAnchor.classList.add('anchor-point-active');
+      } else if (bestDirection === 'right') {
+        // הצד הימני של היעד מתחבר לצד השמאלי של המקור
+        const targetRightAnchor = bestTarget.querySelector('.anchor-point-right');
+        const sourceLeftAnchor = currentDraggedBlock.querySelector('.anchor-point-left');
+        
+        if (targetRightAnchor) targetRightAnchor.classList.add('anchor-point-active');
+        if (sourceLeftAnchor) sourceLeftAnchor.classList.add('anchor-point-active');
       }
-      
-      updateFuturePositionIndicator(currentDraggedBlock, bestTarget, bestDirection, programmingArea.getBoundingClientRect());
     }
     // אם לא נמצא יעד, ההדגשות כבויות בגלל האיפוס בתחילת הפונקציה
   }
@@ -350,3 +344,4 @@
       if (CONFIG.DEBUG) console.log(`[PerformSnap] Success. ${sourceBlock.id} pos: L=${styleLeft.toFixed(0)}, T=${styleTop.toFixed(0)}. Draggable: ${sourceBlock.draggable}`);
       return true;
     } catch (err) { console.error(`[PerformSnap] Error during snap for ${sourceBlock.id} -> ${targetBlock.id}:`, err); try { detachBlock(sourceBlock, false); } catch (derr) { console.error(`[PerformSnap] Cleanup detach error:`, derr); } sourceBlock.draggable = true; return false; }
+  }
