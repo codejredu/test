@@ -1,4 +1,213 @@
-function resetActiveAnchors() {
+// גרסה חדשה של finishDragging המותאמת לפתרון העותק
+  function finishDragging() {
+    if (!isDraggingBlock || !currentDraggedBlock) return;
+    
+    // הסרת שכבת החסימה
+    const blocker = document.getElementById('drag-blocker');
+    if (blocker) blocker.remove();
+    
+    const originalBlock = currentDraggedBlock.original;
+    const ghostBlock = currentDraggedBlock.ghost;
+    
+    // Clean up visual effects
+    document.body.classList.remove('user-select-none');
+    document.body.style.cursor = 'default';
+    ghostBlock.classList.remove('snap-source');
+    
+    // קבל את המיקום הסופי מהעותק
+    const finalLeft = ghostBlock.style.left;
+    const finalTop = ghostBlock.style.top;
+    
+    // Handle connection if there's a snap target
+    if (potentialSnapTarget) {
+      potentialSnapTarget.classList.remove('snap-target');
+      potentialSnapTarget.classList.remove('snap-left', 'snap-right');
+      
+      // Apply final position to original block
+      originalBlock.style.left = finalLeft;
+      originalBlock.style.top = finalTop;
+      
+      // עדכן מיקום עוגנים בבלוק המקורי
+      updateAnchorPositions(originalBlock);
+      
+      // Create visual snap effect
+      originalBlock.classList.add('snap-animation');
+      setTimeout(() => originalBlock.classList.remove('snap-animation'), 300);
+      
+      // Create connection between blocks
+      if (snapDirection === 'right') {
+        // Current block's output connects to target block's input
+        createConnection(originalBlock.id, potentialSnapTarget.id);
+      } else if (snapDirection === 'left') {
+        // Target block's output connects to current block's input
+        createConnection(potentialSnapTarget.id, originalBlock.id);
+      }
+      
+      // Play sound effect
+      playSnapSound();
+    } else {
+      // אם אין חיבור, פשוט עדכן את המיקום
+      originalBlock.style.left = finalLeft;
+      originalBlock.style.top = finalTop;
+    }
+    
+    // עדכן שוב את העוגנים בבלוק המקורי לאחר המיקום הסופי
+    updateAnchorPositions(originalBlock);
+    
+    // הסר את העותק
+    ghostBlock.remove();
+    
+    // הצג שוב את הבלוק המקורי
+    originalBlock.style.visibility = 'visible';
+    
+    // Hide future position indicator
+    if (futureIndicator) {
+      futureIndicator.classList.remove('visible');
+    }
+    
+    // Reset anchor highlighting
+    resetActiveAnchors();
+    
+    // Reset state
+    isDraggingBlock = false;
+    currentDraggedBlock = null;
+    potentialSnapTarget = null;
+    snapDirection = null;
+  }
+  
+  // גרסה מותאמת של findPotentialSnapTarget לעבודה עם עותק
+  function findPotentialSnapTarget() {
+    // Reset previous potential target
+    if (potentialSnapTarget) {
+      potentialSnapTarget.classList.remove('snap-target', 'snap-left', 'snap-right');
+      potentialSnapTarget = null;
+      snapDirection = null;
+    }
+    
+    // Reset active anchors highlighting
+    resetActiveAnchors();
+    
+    if (!isDraggingBlock || !currentDraggedBlock) return;
+    
+    const ghostBlock = currentDraggedBlock.ghost;
+    const originalBlock = currentDraggedBlock.original;
+    
+    // Get all blocks except the one being dragged
+    const allBlocks = Array.from(document.querySelectorAll('#program-blocks .block-container'))
+      .filter(b => b !== originalBlock && b !== ghostBlock && !b.id.endsWith('-ghost'));
+    
+    // Get coordinates of ghost block
+    const currentCoords = getElementCoordinates(ghostBlock);
+    if (!currentCoords) return;
+    
+    // Variables for best match
+    let bestDistance = CONFIG.CONNECT_THRESHOLD;
+    let bestTarget = null;
+    let bestDirection = null;
+    let bestMatchingAnchors = null;
+    
+    // Check each block for potential connections
+    allBlocks.forEach(targetBlock => {
+      // Skip if no id
+      if (!targetBlock.id) return;
+      
+      // Get target block coordinates
+      const targetCoords = getElementCoordinates(targetBlock);
+      if (!targetCoords) return;
+      
+      // Update anchor positions for accurate connection detection
+      updateAnchorPositions(targetBlock);
+      
+      // Try to connect ghost block's output to target block's input
+      const outputToInput = findClosestAnchors(ghostBlock, targetBlock);
+      
+      // Try to connect target block's output to ghost block's input
+      const inputToOutput = findClosestAnchors(targetBlock, ghostBlock);
+      
+      // Choose the closest connection
+      if (outputToInput && outputToInput.distance < bestDistance) {
+        bestDistance = outputToInput.distance;
+        bestTarget = targetBlock;
+        bestDirection = 'right'; // Current block's right side connects to target
+        bestMatchingAnchors = {
+          source: outputToInput.output,
+          target: outputToInput.input
+        };
+      }
+      
+      if (inputToOutput && inputToOutput.distance < bestDistance) {
+        bestDistance = inputToOutput.distance;
+        bestTarget = targetBlock;
+        bestDirection = 'left'; // Target block's right side connects to current
+        bestMatchingAnchors = {
+          source: inputToOutput.output,
+          target: inputToOutput.input
+        };
+      }
+    });
+    
+    // Set the best target if found
+    if (bestTarget) {
+      potentialSnapTarget = bestTarget;
+      snapDirection = bestDirection;
+      
+      // Add visual feedback
+      potentialSnapTarget.classList.add('snap-target');
+      potentialSnapTarget.classList.add(`snap-${snapDirection}`);
+      
+      // Highlight the matching anchor points
+      highlightActiveAnchors(bestMatchingAnchors.source, bestMatchingAnchors.target);
+      
+      // Show potential connection line
+      showPotentialConnection(bestMatchingAnchors.source, bestMatchingAnchors.target);
+      
+      if (CONFIG.DEBUG > 1) {
+        console.log(`Potential target: ${potentialSnapTarget.id}, Direction: ${snapDirection}, Distance: ${bestDistance.toFixed(2)}px`);
+      }
+    } else {
+      // Hide potential connection line if no match
+      hidePotentialConnection();
+    }
+  }
+  
+  // ========================================================================
+  // נקודות עיגון פעילות - פונקציות חדשות בגרסה 4.1
+  // ========================================================================
+  function highlightActiveAnchors(sourceAnchor, targetAnchor) {
+    if (!sourceAnchor || !targetAnchor) return;
+    
+    // Save reference to active anchors
+    activeAnchors.source = sourceAnchor;
+    activeAnchors.target = targetAnchor;
+    
+    // Find the SVG elements for these anchors
+    const sourceElement = document.querySelector(`.anchor-point[data-anchor-id="${sourceAnchor.blockId}-${sourceAnchor.type}"]`);
+    const targetElement = document.querySelector(`.anchor-point[data-anchor-id="${targetAnchor.blockId}-${targetAnchor.type}"]`);
+    
+    // Debug info
+    if (CONFIG.DEBUG > 1) {
+      console.log('Highlighting anchors:');
+      console.log('Source anchor:', sourceAnchor);
+      console.log('Target anchor:', targetAnchor);
+      console.log('Source element found:', !!sourceElement);
+      console.log('Target element found:', !!targetElement);
+    }
+    
+    // Highlight anchors
+    if (sourceElement) {
+      sourceElement.classList.add('highlight-active');
+      // Force repaint to make sure highlighting applies immediately
+      sourceElement.setAttribute('r', CONFIG.ANCHOR_RADIUS * 1.6);
+    }
+    
+    if (targetElement) {
+      targetElement.classList.add('highlight-active');
+      // Force repaint to make sure highlighting applies immediately
+      targetElement.setAttribute('r', CONFIG.ANCHOR_RADIUS * 1.6);
+    }
+  }
+  
+  function resetActiveAnchors() {
     // Remove highlight from all anchor points
     document.querySelectorAll('.anchor-point.highlight-active').forEach(anchor => {
       anchor.classList.remove('highlight-active');
@@ -41,23 +250,18 @@ function resetActiveAnchors() {
     svgContainer.appendChild(potentialConnectionLine);
   }
   
-  function hidePotentialConnection() {
-    if (potentialConnectionLine) {
-      potentialConnectionLine.remove();
-      potentialConnectionLine = null;
-    }
-  }
-  
   function updateFuturePositionIndicator() {
-    if (!futureIndicator || !currentDraggedBlock || !potentialSnapTarget) {
+    if (!futureIndicator || !isDraggingBlock || !currentDraggedBlock || !potentialSnapTarget) {
       if (futureIndicator) futureIndicator.classList.remove('visible');
       return;
     }
     
-    // Get coordinates and anchor points
-    const currentCoords = getElementCoordinates(currentDraggedBlock);
+    const ghostBlock = currentDraggedBlock.ghost;
     
-    if (!currentCoords || !blockAnchors[currentDraggedBlock.id] || !blockAnchors[potentialSnapTarget.id]) {
+    // Get coordinates and anchor points
+    const currentCoords = getElementCoordinates(ghostBlock);
+    
+    if (!currentCoords || !blockAnchors[ghostBlock.id] || !blockAnchors[potentialSnapTarget.id]) {
       futureIndicator.classList.remove('visible');
       return;
     }
@@ -67,11 +271,11 @@ function resetActiveAnchors() {
     
     if (snapDirection === 'right') {
       // Current block's output connects to target's input
-      sourceAnchor = blockAnchors[currentDraggedBlock.id].outputs[0];
+      sourceAnchor = blockAnchors[ghostBlock.id].outputs[0];
       targetAnchor = blockAnchors[potentialSnapTarget.id].inputs[0];
     } else if (snapDirection === 'left') {
       // Target block's output connects to current's input
-      sourceAnchor = blockAnchors[currentDraggedBlock.id].inputs[0];
+      sourceAnchor = blockAnchors[ghostBlock.id].inputs[0];
       targetAnchor = blockAnchors[potentialSnapTarget.id].outputs[0];
     }
     
@@ -107,14 +311,163 @@ function resetActiveAnchors() {
     futureIndicator.style.width = `${currentCoords.width}px`;
     futureIndicator.style.height = `${currentCoords.height}px`;
     futureIndicator.classList.add('visible');
-  }// --- START OF FILE linkageimproved.js ---
-// --- Version 4.0.0: SVG Anchor Points Connection System ---
-// Changes from v3.5.1:
-// 1. Implemented SVG anchor point system for precise connections
-// 2. Added support for detecting and utilizing SVG connection points
-// 3. Improved connection visualization with SVG path elements
-// 4. Added dynamic anchor point assignment to blocks
-// 5. Fixed position calculation to work with SVG coordinate system
+  }
+  
+  // אין צורך לעדכן את applySnapAnimation כי זה מבוצע בתוך finishDragging
+  
+  // ========================================================================
+  // Detach & Context Menu - Updated for SVG connections
+  // ========================================================================
+  function setupContextMenuListeners() {
+    // Add right-click handler to SVG container
+    svgContainer.addEventListener('contextmenu', (e) => {
+      // Check if click is on a connection path
+      const path = e.target.closest('.connection-path');
+      if (!path) return;
+      
+      e.preventDefault();
+      
+      // Get connection details
+      const sourceId = path.getAttribute('data-source');
+      const targetId = path.getAttribute('data-target');
+      
+      // Show context menu
+      const menu = document.getElementById('detach-menu');
+      if (menu) {
+        menu.style.display = 'block';
+        menu.style.left = `${e.clientX}px`;
+        menu.style.top = `${e.clientY}px`;
+        menu.setAttribute('data-source', sourceId);
+        menu.setAttribute('data-target', targetId);
+      }
+    });
+    
+    if (CONFIG.DEBUG) console.log('Context menu listeners added');
+  }
+  
+  // ========================================================================
+  // מאזינים, זיהוי בלוקים חדשים - מעודכן למערכת עוגנים
+  // ========================================================================
+  function initProgrammingAreaListeners() { 
+    const a = document.getElementById('program-blocks');
+    if (!a) {
+      if (CONFIG.DEBUG) console.error('Programming area not found! Missing element #program-blocks');
+      return;
+    }
+    
+    // וודא שאין גרירה מובנית של הדפדפן
+    a.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      return false;
+    });
+    
+    a.addEventListener('dragstart', (e) => {
+      if (e.target?.closest?.('#program-blocks .block-container')) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (CONFIG.DEBUG > 1) console.log('Prevented browser default drag for block');
+      }
+      return false;
+    });
+    
+    // מנע אירועי גרירה נוספים
+    a.addEventListener('drop', (e) => e.preventDefault());
+    
+    // Handle right-click for existing connections
+    a.addEventListener('contextmenu', (e) => {
+      const block = e.target.closest('.block-container');
+      if (!block) return;
+      
+      // Only handle right-click on connected blocks
+      if (!block.classList.contains('connected-block') && 
+          !block.classList.contains('has-connected-block')) {
+        return;
+      }
+      
+      e.preventDefault();
+      
+      // Find all connections involving this block
+      const blockId = block.id;
+      const connectionIds = Object.keys(connectionPaths).filter(id => 
+        id.startsWith(`${blockId}-to-`) || id.endsWith(`-to-${blockId}`)
+      );
+      
+      if (connectionIds.length === 0) return;
+      
+      // For simplicity, handle the first connection only
+      // (could be extended to show multiple connection options)
+      const connectionId = connectionIds[0];
+      const parts = connectionId.split('-to-');
+      const sourceId = parts[0];
+      const targetId = parts[1];
+      
+      // Show context menu
+      const menu = document.getElementById('detach-menu');
+      if (menu) {
+        menu.style.display = 'block';
+        menu.style.left = `${e.clientX}px`;
+        menu.style.top = `${e.clientY}px`;
+        menu.setAttribute('data-source', sourceId);
+        menu.setAttribute('data-target', targetId);
+      }
+    });
+    
+    if (CONFIG.DEBUG) console.log('Programming area listeners initialized');
+  }
+  
+  // ========================================================================
+  // אתחול המערכת והפעלה - מעודכן לעבודה עם עוגנים
+  // ========================================================================
+  function init() {
+    // Add CSS styles
+    addHighlightStyles();
+    
+    // Initialize audio
+    initAudio();
+    if (CONFIG.PLAY_SOUND) addSoundTestButton();
+    
+    // Initialize SVG container for connections
+    initSVGContainer();
+    
+    // Add arrowhead marker for connections
+    initArrowheadMarker();
+    
+    // Add context menu for detaching connections
+    addDetachContextMenu();
+    
+    // Add listeners to SVG container
+    setupContextMenuListeners();
+    
+    // Initialize programming area listeners
+    initProgrammingAreaListeners();
+    
+    // Add listeners to existing blocks
+    const existingBlocks = document.querySelectorAll('#program-blocks .block-container');
+    existingBlocks.forEach(block => {
+      if (!block.id) generateUniqueId(block);
+      addBlockDragListeners(block);
+    });
+    
+    // Watch for new blocks
+    observeNewBlocks();
+    
+    if (CONFIG.DEBUG) console.log('SVG Anchor Point Connection System initialized with Ghost Drag Fix (v4.1.1)');
+  }
+  
+  // Initialize when DOM is ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+  
+})();// --- START OF FILE linkageimproved.js ---
+// --- Version 4.1.0: SVG Anchor Points Connection System with Ghost Drag Fix ---
+// Changes from v4.0.0:
+// 1. Fixed ghost drag issue with clone-based dragging system
+// 2. Improved anchor point visibility
+// 3. Enhanced connection visualization
+// 4. Fixed cursor and pointer-events handling
 
 (function() {
   // משתנים גלובליים במודול
@@ -666,9 +1019,24 @@ function resetActiveAnchors() {
         z-index: 1000 !important;
       }
 
-      /* מניעת אפקט של צל/רפאים בגרירה */
-      .block-container.snap-source * {
+      /* סגנונות עבור פתרון "רוח רפאים" */
+      .dragging-ghost {
+        opacity: 0.9 !important;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.4) !important;
+        border: 2px dashed #2196F3 !important;
         pointer-events: none !important;
+        user-select: none !important;
+      }
+
+      #drag-blocker {
+        cursor: grabbing;
+        background: transparent;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 990;
       }
       
       #sound-test-button { position:fixed; bottom:15px; right:15px; padding:8px 12px; background-color:#2196F3; color:white; border:none; border-radius:4px; cursor:pointer; z-index:9999; font-family:Arial,sans-serif; font-size:14px; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.2); transition:background-color .2s,opacity .5s ease-out; opacity:1; } #sound-test-button:hover { background-color:#0b7dda; } #sound-test-button.success { background-color:#4CAF50; } #sound-test-button.error { background-color:#f44336; } #sound-test-button.loading { background-color:#ff9800; cursor:wait; } #sound-test-button.hidden { opacity:0; pointer-events:none; }
@@ -688,9 +1056,3 @@ function resetActiveAnchors() {
       }
     }
   }
-
-  // ========================================================================
-  // אתחול אודיו, כפתור בדיקה, נגינת צליל - ללא שינוי מ-v3.5.1
-  // ========================================================================
-  function initAudio() { if (!CONFIG.PLAY_SOUND || soundInitialized) return; try { const el=document.getElementById('snap-sound-element'); if(el){snapSound=el;soundInitialized=true;if(CONFIG.DEBUG)console.log('Audio reused.');if(!el.querySelector(`source[src="${CONFIG.SOUND_PATH}"]`)){el.innerHTML='';const s=document.createElement('source');s.src=CONFIG.SOUND_PATH;s.type='audio/mpeg';el.appendChild(s);el.load();}return;} snapSound=document.createElement('audio');snapSound.id='snap-sound-element';snapSound.preload='auto';snapSound.volume=CONFIG.SOUND_VOLUME;const s=document.createElement('source');s.src=CONFIG.SOUND_PATH;s.type='audio/mpeg';snapSound.appendChild(s);snapSound.addEventListener('error',(e)=>{console.error(`Audio Error: ${CONFIG.SOUND_PATH}`,e);const b=document.getElementById('sound-test-button');if(b){b.textContent='שגיאה';b.classList.add('error');b.disabled=true;}CONFIG.PLAY_SOUND=false;snapSound=null;soundInitialized=false;});snapSound.addEventListener('canplaythrough',()=>{soundInitialized=true;if(CONFIG.DEBUG)console.log('Audio ready.');const b=document.getElementById('sound-test-button');if(b?.classList.contains('loading')){b.textContent='בדוק';b.classList.remove('loading');b.disabled=false;}});snapSound.style.display='none';document.body.appendChild(snapSound);if(CONFIG.DEBUG)console.log(`Audio created: ${CONFIG.SOUND_PATH}`);}catch(err){console.error('Audio init error:',err);CONFIG.PLAY_SOUND=false;snapSound=null;soundInitialized=false;}}
-  function addSoundTestButton() { if(!CONFIG.PLAY_SOUND)return;try{const eb=document.getElementById('sound-test-button');if(eb)eb.remove();const b=document.createElement('button');b.id='sound-test-button';b.title='בדוק צליל';b.className='';if(!snapSound){b.textContent='שמע נכשל';b.classList.add('error');b.disabled=true;}else if(!soundInitialized){b.textContent='טוען...';b.classList.add('loading');b.disabled=true;}else{b.textContent='בדוק';b.disabled=false;}Object.assign(b.style,{position:'fixed',bottom:'15px',right:'15px',zIndex:'9999',padding:'8px 12px',color:'white',border:'none',borderRadius:'4px',cursor:'pointer',boxShadow:'0 2px 5px rgba(0,0,0,0.2)',fontFamily:'Arial,sans-serif',fontSize:'14px',fontWeight:'bold',transition:'background-color .2s,opacity .5s ease-out',opacity:'1'});b.onmouseover=function(){if(!this.disabled&&!this.classList.contains('success')&&!this.classList.contains('error'))this.style.backgroundColor='#0b7dda'};b.onmouseout=function(){if(!this.disabled&&!this.classList.contains('success')&&!this.classList.contains('error'))this.style.backgroundColor='#2196F3'};b.addEventListener('click',function(){if(this.disabled||!snapSound||!soundInitialized)return;snapSound.play().then(()=>{b.textContent='פועל ✓';b.classList.add('success');audioContextAllowed=true;setTimeout(()=>{b.classList.add('hidden');setTimeout(()=>b.remove(),500)},3000);if(snapSound){snapSound.pause();snapSound.currentTime=0;}}).catch(err=>{console.warn('Sound test fail:',err.name);if(err.name==='NotAllowedError'){b.textContent='חסום-לחץ';b.classList.add('error');audioContextAllowed=false;}else{b.textContent='שגיאה';b.classList.add('error');b.disabled=true;}});});document.body.appendChild(b);if(CONFIG.DEBUG)console.log('Sound test button added.');}catch(err){console.error('Err adding sound btn:',err);}}
