@@ -1,5 +1,5 @@
- // --- Linkage Improved JS - SVG Anchor Point Connection System ---
-// Version 4.2.0 - Ghost Drag Fixed, Simple Edition
+// --- SVG Anchor Point Connection System with Complete Ghost Drag Fix ---
+// Version 4.3.0 - Fix for both initial drag and repositioning
 
 (function() {
   // Global variables
@@ -91,8 +91,6 @@
       programmingArea.style.position = 'relative';
       programmingArea.appendChild(svgContainer);
       if (CONFIG.DEBUG) console.log('SVG container created for connections');
-    } else {
-      console.error('Programming area not found for SVG container');
     }
   }
 
@@ -403,8 +401,6 @@
     marker.appendChild(polygon);
     defs.appendChild(marker);
     svgContainer.appendChild(defs);
-    
-    if (CONFIG.DEBUG) console.log('Added arrowhead marker to SVG');
   }
 
   // CSS Styles
@@ -484,25 +480,26 @@
         transition: none !important; /* Prevent transitions from causing disappearing */
       }
       
-      /* Ghost drag fix */
-      .dragging {
-        box-shadow: 0 5px 15px rgba(0,0,0,0.4) !important;
-        cursor: grabbing !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-        display: block !important;
-        z-index: 1000 !important;
+      /* Clone-Based Drag Ghost Fix */
+      .dragging-ghost {
+        position: absolute;
+        pointer-events: none;
+        opacity: 0.9;
+        z-index: 1001;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        border: 2px dashed #2196F3;
       }
 
+      /* Blocker for avoiding ghost clicks */
       #drag-blocker {
-        cursor: grabbing;
-        background: transparent;
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
         z-index: 990;
+        cursor: grabbing;
+        background: transparent;
         pointer-events: all;
       }
       
@@ -510,16 +507,6 @@
     `;
     
     document.head.appendChild(style);
-    
-    if (CONFIG.DEBUG) {
-      console.log('Styles added successfully');
-      const appliedStyle = document.getElementById('block-connection-styles');
-      if (appliedStyle) {
-        console.log('Connection styles verified in DOM');
-      } else {
-        console.error('Connection styles missing from DOM after append!');
-      }
-    }
   }
 
   // Audio Functions
@@ -531,7 +518,6 @@
       if (el) {
         snapSound = el;
         soundInitialized = true;
-        if (CONFIG.DEBUG) console.log('Audio reused.');
         if (!el.querySelector(`source[src="${CONFIG.SOUND_PATH}"]`)) {
           el.innerHTML = '';
           const s = document.createElement('source');
@@ -578,7 +564,6 @@
       
       snapSound.style.display = 'none';
       document.body.appendChild(snapSound);
-      if (CONFIG.DEBUG) console.log(`Audio created: ${CONFIG.SOUND_PATH}`);
     } catch (err) {
       console.error('Audio init error:', err);
       CONFIG.PLAY_SOUND = false;
@@ -671,7 +656,6 @@
       });
       
       document.body.appendChild(b);
-      if (CONFIG.DEBUG) console.log('Sound test button added.');
     } catch (err) {
       console.error('Err adding sound btn:', err);
     }
@@ -695,7 +679,6 @@
       if (pp !== undefined) {
         pp.then(() => {
           audioContextAllowed = true;
-          if (CONFIG.DEBUG > 1) console.log('Snap sound played.');
         }).catch(err => {
           if (err.name === 'NotAllowedError') {
             console.warn('Snap sound blocked.');
@@ -711,7 +694,7 @@
     }
   }
 
-  // Drag & Drop Handlers with Ghost Fix
+  // Clone-Based Drag & Drop System
   function addBlockDragListeners(block) {
     if (!block || block._hasDragListeners) return;
     
@@ -747,7 +730,6 @@
     if (!block.id) generateUniqueId(block);
     
     startDragging(block, e.clientX, e.clientY);
-    handleMove(e.clientX, e.clientY);
     
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
@@ -762,7 +744,6 @@
     if (!block.id) generateUniqueId(block);
     
     startDragging(block, touch.clientX, touch.clientY);
-    handleMove(touch.clientX, touch.clientY);
     
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
@@ -785,12 +766,21 @@
     handleMove(e.clientX, e.clientY);
   }
   
-  // Ghost Drag Fix Implementation
+  // Complete Ghost Fix Implementation using Clone-based Approach
   function startDragging(block, clientX, clientY) {
     if (!block || isDraggingBlock) return;
     
-    isDraggingBlock = true;
-    currentDraggedBlock = block;
+    // Remove any existing ghost blocks
+    const existingGhosts = document.querySelectorAll('.dragging-ghost');
+    existingGhosts.forEach(ghost => ghost.remove());
+    
+    // Create blocker first to prevent events
+    const blocker = document.createElement('div');
+    blocker.id = 'drag-blocker';
+    document.body.appendChild(blocker);
+    
+    // Generate ID if needed
+    if (!block.id) generateUniqueId(block);
     
     // Calculate offset
     const rect = block.getBoundingClientRect();
@@ -799,42 +789,34 @@
       y: clientY - rect.top
     };
     
-    // Position before dragging
-    const computedStyle = window.getComputedStyle(block);
-    const currentLeft = computedStyle.left !== 'auto' ? parseInt(computedStyle.left) : rect.left;
-    const currentTop = computedStyle.top !== 'auto' ? parseInt(computedStyle.top) : rect.top;
+    // Create a clone (ghost) of the block
+    const ghost = block.cloneNode(true);
+    ghost.id = block.id + '-ghost';
+    ghost.classList.add('dragging-ghost');
+    ghost.style.position = 'absolute';
+    ghost.style.left = rect.left + 'px';
+    ghost.style.top = rect.top + 'px';
+    ghost.style.width = rect.width + 'px';
+    ghost.style.height = rect.height + 'px';
+    ghost.style.zIndex = '1001';
     
-    block.style.left = `${currentLeft}px`;
-    block.style.top = `${currentTop}px`;
-    block.style.position = 'absolute';
+    // Hide the original block but keep its place
+    block.style.visibility = 'hidden';
+    block.style.opacity = '0';
     
-    // Ensure visibility
-    block.style.opacity = '1';
-    block.style.visibility = 'visible';
-    block.style.display = 'block';
-    block.style.zIndex = '1000';
+    // Add the ghost to the document
+    document.body.appendChild(ghost);
     
-    // Prevent ghost effect
-    block.style.willChange = 'transform';
-    
-    // Create blocker to prevent mouse events on other elements
-    const blocker = document.createElement('div');
-    blocker.id = 'drag-blocker';
-    blocker.style.position = 'fixed';
-    blocker.style.top = '0';
-    blocker.style.left = '0';
-    blocker.style.width = '100%';
-    blocker.style.height = '100%';
-    blocker.style.zIndex = '990';
-    blocker.style.pointerEvents = 'all';
-    blocker.style.cursor = 'grabbing';
-    document.body.appendChild(blocker);
+    // Save references
+    isDraggingBlock = true;
+    currentDraggedBlock = {
+      original: block,
+      ghost: ghost
+    };
     
     // Visual feedback
-    block.classList.add('dragging');
     document.body.classList.add('user-select-none');
     document.body.style.cursor = 'grabbing';
-    block.classList.add('snap-source');
     
     // Initialize future indicator
     if (!futureIndicator) {
@@ -842,26 +824,26 @@
       futureIndicator.className = 'future-position-indicator';
       document.body.appendChild(futureIndicator);
     }
+    
+    // Move the ghost to initial position right away
+    handleMove(clientX, clientY);
   }
   
   function handleMove(clientX, clientY) {
     if (!isDraggingBlock || !currentDraggedBlock) return;
     
+    const ghost = currentDraggedBlock.ghost;
+    
     // Calculate new position
     const newLeft = clientX - dragOffset.x;
     const newTop = clientY - dragOffset.y;
     
-    // Move the block
-    currentDraggedBlock.style.left = `${newLeft}px`;
-    currentDraggedBlock.style.top = `${newTop}px`;
+    // Move the ghost block
+    ghost.style.left = `${newLeft}px`;
+    ghost.style.top = `${newTop}px`;
     
-    // Ensure visibility
-    currentDraggedBlock.style.opacity = '1';
-    currentDraggedBlock.style.visibility = 'visible';
-    currentDraggedBlock.style.display = 'block';
-    
-    // Update anchors and find connections
-    updateAnchorPositions(currentDraggedBlock);
+    // Update anchors using the ghost (since original is hidden)
+    updateAnchorPositions(ghost);
     findPotentialSnapTarget();
     updateFuturePositionIndicator();
   }
@@ -882,6 +864,9 @@
   function finishDragging() {
     if (!isDraggingBlock || !currentDraggedBlock) return;
     
+    const original = currentDraggedBlock.original;
+    const ghost = currentDraggedBlock.ghost;
+    
     // Remove blocker
     const blocker = document.getElementById('drag-blocker');
     if (blocker) blocker.remove();
@@ -889,21 +874,34 @@
     // Clean up effects
     document.body.classList.remove('user-select-none');
     document.body.style.cursor = 'default';
-    currentDraggedBlock.classList.remove('snap-source');
-    currentDraggedBlock.classList.remove('dragging');
-    currentDraggedBlock.style.willChange = 'auto';
+    
+    // Get final position from ghost
+    const finalLeft = ghost.style.left;
+    const finalTop = ghost.style.top;
+    
+    // Apply final position to original block
+    original.style.position = 'absolute';
+    original.style.left = finalLeft;
+    original.style.top = finalTop;
+    
+    // Show original block again
+    original.style.visibility = 'visible';
+    original.style.opacity = '1';
     
     // Handle connection
     if (potentialSnapTarget) {
       potentialSnapTarget.classList.remove('snap-target');
       potentialSnapTarget.classList.remove('snap-left', 'snap-right');
       
-      applySnapAnimation();
+      // Apply snap animation to original
+      original.classList.add('snap-animation');
+      setTimeout(() => original.classList.remove('snap-animation'), 300);
       
+      // Create connection
       if (snapDirection === 'right') {
-        createConnection(currentDraggedBlock.id, potentialSnapTarget.id);
+        createConnection(original.id, potentialSnapTarget.id);
       } else if (snapDirection === 'left') {
-        createConnection(potentialSnapTarget.id, currentDraggedBlock.id);
+        createConnection(potentialSnapTarget.id, original.id);
       }
       
       playSnapSound();
@@ -916,6 +914,12 @@
     
     // Reset anchors
     resetActiveAnchors();
+    
+    // Remove ghost
+    ghost.remove();
+    
+    // Update original's anchors
+    updateAnchorPositions(original);
     
     // Reset state
     isDraggingBlock = false;
@@ -936,10 +940,14 @@
     
     if (!isDraggingBlock || !currentDraggedBlock) return;
     
-    const allBlocks = Array.from(document.querySelectorAll('#program-blocks .block-container'))
-      .filter(b => b !== currentDraggedBlock);
+    const ghost = currentDraggedBlock.ghost;
+    const original = currentDraggedBlock.original;
     
-    const currentCoords = getElementCoordinates(currentDraggedBlock);
+    // Get all blocks except the one being dragged
+    const allBlocks = Array.from(document.querySelectorAll('#program-blocks .block-container'))
+      .filter(b => b !== original && !b.classList.contains('dragging-ghost'));
+    
+    const currentCoords = getElementCoordinates(ghost);
     if (!currentCoords) return;
     
     let bestDistance = CONFIG.CONNECT_THRESHOLD;
@@ -955,8 +963,8 @@
       
       updateAnchorPositions(targetBlock);
       
-      const outputToInput = findClosestAnchors(currentDraggedBlock, targetBlock);
-      const inputToOutput = findClosestAnchors(targetBlock, currentDraggedBlock);
+      const outputToInput = findClosestAnchors(ghost, targetBlock);
+      const inputToOutput = findClosestAnchors(targetBlock, ghost);
       
       if (outputToInput && outputToInput.distance < bestDistance) {
         bestDistance = outputToInput.distance;
@@ -991,6 +999,56 @@
     } else {
       hidePotentialConnection();
     }
+  }
+
+  // Update future indicator for ghost-based system
+  function updateFuturePositionIndicator() {
+    if (!futureIndicator || !isDraggingBlock || !currentDraggedBlock || !potentialSnapTarget) {
+      if (futureIndicator) futureIndicator.classList.remove('visible');
+      return;
+    }
+    
+    const ghost = currentDraggedBlock.ghost;
+    
+    const currentCoords = getElementCoordinates(ghost);
+    
+    if (!currentCoords || !blockAnchors[ghost.id] || !blockAnchors[potentialSnapTarget.id]) {
+      futureIndicator.classList.remove('visible');
+      return;
+    }
+    
+    let sourceAnchor, targetAnchor;
+    
+    if (snapDirection === 'right') {
+      sourceAnchor = blockAnchors[ghost.id].outputs[0];
+      targetAnchor = blockAnchors[potentialSnapTarget.id].inputs[0];
+    } else if (snapDirection === 'left') {
+      sourceAnchor = blockAnchors[ghost.id].inputs[0];
+      targetAnchor = blockAnchors[potentialSnapTarget.id].outputs[0];
+    }
+    
+    if (!sourceAnchor || !targetAnchor) {
+      futureIndicator.classList.remove('visible');
+      return;
+    }
+    
+    let newLeft, newTop;
+    
+    if (snapDirection === 'right') {
+      const outputOffsetFromRight = currentCoords.right - sourceAnchor.x;
+      newLeft = targetAnchor.x - (currentCoords.width - outputOffsetFromRight);
+      newTop = targetAnchor.y - (sourceAnchor.y - currentCoords.top);
+    } else if (snapDirection === 'left') {
+      const inputOffsetFromLeft = sourceAnchor.x - currentCoords.left;
+      newLeft = targetAnchor.x - inputOffsetFromLeft;
+      newTop = targetAnchor.y - (sourceAnchor.y - currentCoords.top);
+    }
+    
+    futureIndicator.style.left = `${newLeft}px`;
+    futureIndicator.style.top = `${newTop}px`;
+    futureIndicator.style.width = `${currentCoords.width}px`;
+    futureIndicator.style.height = `${currentCoords.height}px`;
+    futureIndicator.classList.add('visible');
   }
 
   // Anchor Highlighting
@@ -1048,108 +1106,6 @@
     svgContainer.appendChild(potentialConnectionLine);
   }
   
-  function hidePotentialConnection() {
-    if (potentialConnectionLine) {
-      potentialConnectionLine.remove();
-      potentialConnectionLine = null;
-    }
-  }
-
-  // Position Indicator
-  function updateFuturePositionIndicator() {
-    if (!futureIndicator || !isDraggingBlock || !currentDraggedBlock || !potentialSnapTarget) {
-      if (futureIndicator) futureIndicator.classList.remove('visible');
-      return;
-    }
-    
-    const currentCoords = getElementCoordinates(currentDraggedBlock);
-    
-    if (!currentCoords || !blockAnchors[currentDraggedBlock.id] || !blockAnchors[potentialSnapTarget.id]) {
-      futureIndicator.classList.remove('visible');
-      return;
-    }
-    
-    let sourceAnchor, targetAnchor;
-    
-    if (snapDirection === 'right') {
-      sourceAnchor = blockAnchors[currentDraggedBlock.id].outputs[0];
-      targetAnchor = blockAnchors[potentialSnapTarget.id].inputs[0];
-    } else if (snapDirection === 'left') {
-      sourceAnchor = blockAnchors[currentDraggedBlock.id].inputs[0];
-      targetAnchor = blockAnchors[potentialSnapTarget.id].outputs[0];
-    }
-    
-    if (!sourceAnchor || !targetAnchor) {
-      futureIndicator.classList.remove('visible');
-      return;
-    }
-    
-    let newLeft, newTop;
-    
-    if (snapDirection === 'right') {
-      const outputOffsetFromRight = currentCoords.right - sourceAnchor.x;
-      newLeft = targetAnchor.x - (currentCoords.width - outputOffsetFromRight);
-      newTop = targetAnchor.y - (sourceAnchor.y - currentCoords.top);
-    } else if (snapDirection === 'left') {
-      const inputOffsetFromLeft = sourceAnchor.x - currentCoords.left;
-      newLeft = targetAnchor.x - inputOffsetFromLeft;
-      newTop = targetAnchor.y - (sourceAnchor.y - currentCoords.top);
-    }
-    
-    futureIndicator.style.left = `${newLeft}px`;
-    futureIndicator.style.top = `${newTop}px`;
-    futureIndicator.style.width = `${currentCoords.width}px`;
-    futureIndicator.style.height = `${currentCoords.height}px`;
-    futureIndicator.classList.add('visible');
-  }
-
-  function applySnapAnimation() {
-    if (!currentDraggedBlock || !potentialSnapTarget) return;
-    
-    currentDraggedBlock.classList.add('snap-animation');
-    
-    setTimeout(() => {
-      if (currentDraggedBlock) {
-        currentDraggedBlock.classList.remove('snap-animation');
-      }
-    }, 300);
-    
-    const currentCoords = getElementCoordinates(currentDraggedBlock);
-    
-    if (!currentCoords || !blockAnchors[currentDraggedBlock.id] || !blockAnchors[potentialSnapTarget.id]) {
-      return;
-    }
-    
-    let sourceAnchor, targetAnchor;
-    
-    if (snapDirection === 'right') {
-      sourceAnchor = blockAnchors[currentDraggedBlock.id].outputs[0];
-      targetAnchor = blockAnchors[potentialSnapTarget.id].inputs[0];
-    } else if (snapDirection === 'left') {
-      sourceAnchor = blockAnchors[currentDraggedBlock.id].inputs[0];
-      targetAnchor = blockAnchors[potentialSnapTarget.id].outputs[0];
-    }
-    
-    if (!sourceAnchor || !targetAnchor) return;
-    
-    let newLeft, newTop;
-    
-    if (snapDirection === 'right') {
-      const outputOffsetFromRight = currentCoords.right - sourceAnchor.x;
-      newLeft = targetAnchor.x - (currentCoords.width - outputOffsetFromRight);
-      newTop = targetAnchor.y - (sourceAnchor.y - currentCoords.top);
-    } else if (snapDirection === 'left') {
-      const inputOffsetFromLeft = sourceAnchor.x - currentCoords.left;
-      newLeft = targetAnchor.x - inputOffsetFromLeft;
-      newTop = targetAnchor.y - (sourceAnchor.y - currentCoords.top);
-    }
-    
-    currentDraggedBlock.style.left = `${newLeft}px`;
-    currentDraggedBlock.style.top = `${newTop}px`;
-    
-    updateAnchorPositions(currentDraggedBlock);
-  }
-
   // Context Menu
   function addDetachContextMenu() {
     const existingMenu = document.getElementById('detach-menu');
@@ -1211,7 +1167,7 @@
     });
   }
 
-  // Area Listeners
+  // Programming Area Listeners
   function initProgrammingAreaListeners() {
     const a = document.getElementById('program-blocks');
     if (!a) {
@@ -1276,7 +1232,7 @@
           mu.addedNodes.forEach((node) => {
             if (node.nodeType === 1) {
               let block = node.classList?.contains('block-container') ? node : node.querySelector?.('.block-container');
-              if (block?.closest('#program-blocks')) {
+              if (block?.closest('#program-blocks') && !block.classList.contains('dragging-ghost')) {
                 if (!block.id) generateUniqueId(block);
                 addBlockDragListeners(block);
               }
@@ -1312,7 +1268,7 @@
     
     observeNewBlocks();
     
-    if (CONFIG.DEBUG) console.log('SVG Anchor Point Connection System initialized with Ghost Drag Fix (v4.2.0)');
+    if (CONFIG.DEBUG) console.log('SVG Anchor Point Connection System initialized with Ghost Drag Fix (v4.3.0)');
   }
   
   // Start when DOM is ready
