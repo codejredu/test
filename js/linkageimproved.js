@@ -1,10 +1,10 @@
 // --- START OF FILE linkageimproved.js ---
-// --- Version 3.6: With Anchor Points Highlights ---
+// --- Version 3.6: Using SVG anchor points ---
 // Changes from v3.5:
-// 1. Replaced yellow halo with anchor point highlights
-// 2. Maintained the same 8px CONNECT_THRESHOLD
-// 3. Preserved the jumping behavior on release
-// 4. Enhanced anchor point visibility
+// 1. Utilizes existing anchor points in SVG blocks
+// 2. Highlights the connection points (protrusion on right, socket on left)
+// 3. Maintained the same 8px CONNECT_THRESHOLD
+// 4. Preserved the jumping behavior on release
 
 (function() {
   // משתנים גלובליים במודול
@@ -28,11 +28,13 @@
     PLAY_SOUND: true,
     SOUND_VOLUME: 0.8,
     SOUND_PATH: 'assets/sound/link.mp3',
-    DEBUG: true // Set to false for production
+    DEBUG: true, // Set to false for production
+    HIGHLIGHT_COLOR: '#FFC107', // צבע ההדגשה לנקודות עיגון
+    HIGHLIGHT_OPACITY: '0.8' // שקיפות ההדגשה
   };
 
   // ========================================================================
-  // הוספת סגנונות CSS - עם נקודות עיגון משופרות
+  // הוספת סגנונות CSS - הדגשת נקודות העיגון ב-SVG
   // ========================================================================
   function addHighlightStyles() {
     if (document.getElementById('block-connection-styles')) return;
@@ -45,50 +47,56 @@
         z-index: 1001 !important; 
       }
       
-      /* נקודות עיגון - יותר בולטות */
-      .anchor-point {
+      /* הדגשת נקודות עיגון SVG */
+      .connection-point-highlight {
+        fill: ${CONFIG.HIGHLIGHT_COLOR} !important;
+        stroke: ${CONFIG.HIGHLIGHT_COLOR} !important;
+        stroke-width: 2px !important;
+        fill-opacity: ${CONFIG.HIGHLIGHT_OPACITY} !important;
+        stroke-opacity: 1 !important;
+        filter: drop-shadow(0 0 4px rgba(255,193,7,0.8)) !important;
+        animation: pulseSVGAnchor 0.8s infinite !important;
+      }
+      
+      /* אנימציית פעימה לנקודות עיגון SVG */
+      @keyframes pulseSVGAnchor {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+      }
+      
+      /* סמן חיצוני למקרה שאין נקודות עיגון SVG */
+      .svg-anchor-marker {
         position: absolute;
-        width: 14px;
-        height: 14px;
+        width: 12px;
+        height: 12px;
         border-radius: 50%;
-        background-color: #f0f0f0;
-        border: 2px solid #666;
-        top: 50%;
-        transform: translateY(-50%);
-        z-index: 1005;
+        background-color: rgba(255, 193, 7, 0.6);
+        border: 2px solid ${CONFIG.HIGHLIGHT_COLOR};
         pointer-events: none;
-        opacity: 0.8;
-        transition: all 0.2s ease-out;
+        opacity: 0;
+        transition: opacity 0.2s ease-out;
+        z-index: 1002;
+        box-shadow: 0 0 8px 2px rgba(255,193,7,0.4);
       }
       
-      /* מיקומי נקודות העיגון */
-      .anchor-point-left {
-        left: -8px;
+      .marker-left {
+        left: 0px;
+        top: 50%;
+        transform: translate(-50%, -50%);
       }
       
-      .anchor-point-right {
-        right: -8px;
+      .marker-right {
+        right: 0px;
+        top: 50%;
+        transform: translate(50%, -50%);
       }
       
-      /* נקודת עיגון מודגשת - צבע בולט יותר */
-      .anchor-point-highlight {
-        background-color: #FFEB3B !important;
-        border-color: #FFC107 !important;
-        box-shadow: 0 0 10px 3px rgba(255,193,7,0.8) !important;
-        opacity: 1 !important;
-        animation: pulseAnchor 0.8s infinite !important;
-        width: 16px !important;
-        height: 16px !important;
+      .marker-visible {
+        opacity: 1;
       }
       
-      /* אנימציית פעימה משופרת */
-      @keyframes pulseAnchor {
-        0% { transform: translateY(-50%) scale(1); }
-        50% { transform: translateY(-50%) scale(1.3); }
-        100% { transform: translateY(-50%) scale(1); }
-      }
-      
-      /* שאר הסגנונות */
+      /* אנימציות לחיבור וניתוק */
       @keyframes snapEffect { 0%{transform:scale(1)} 35%{transform:scale(1.05)} 70%{transform:scale(0.98)} 100%{transform:scale(1)} } 
       .snap-animation { animation:snapEffect 0.3s ease-out; }
       
@@ -110,7 +118,7 @@
       #sound-test-button.hidden { opacity:0; pointer-events:none; }
     `;
     document.head.appendChild(style);
-    if (CONFIG.DEBUG) console.log('Styles added (Enhanced Anchor Points)');
+    if (CONFIG.DEBUG) console.log('Styles added (SVG Connection Points)');
   }
 
   // ========================================================================
@@ -121,49 +129,146 @@
   function playSnapSound() { if(!CONFIG.PLAY_SOUND||!snapSound||!soundInitialized)return;if(!audioContextAllowed&&CONFIG.DEBUG)console.warn('Playing sound before user interaction.');try{if(snapSound.readyState<3){if(CONFIG.DEBUG)console.log('Snap sound skip: audio not ready.');return;}snapSound.pause();snapSound.currentTime=0;const pp=snapSound.play();if(pp!==undefined){pp.then(()=>{audioContextAllowed=true;if(CONFIG.DEBUG>1)console.log('Snap sound played.');}).catch(err=>{if(err.name==='NotAllowedError'){console.warn('Snap sound blocked.');audioContextAllowed=false;if(!document.getElementById('sound-test-button'))addSoundTestButton();}else if(err.name!=='AbortError'){console.error('Err play snap sound:',err);}});}}catch(err){console.error('Unexpected play sound err:',err);}}
 
   // ========================================================================
-  // יצירה והוספת נקודות עיגון לבלוקים - משופר
+  // איתור והדגשת נקודות עיגון בתוך ה-SVG
   // ========================================================================
-  function addAnchorPointsToBlock(block) {
-    // בדיקה שהבלוק תקף
-    if (!block || !block.parentElement) return;
+  
+  // חיפוש נקודות עיגון בתוך ה-SVG
+  function findSVGConnectionPoints(block, direction) {
+    if (!block) return null;
     
-    // הסר נקודות עיגון קיימות למניעת כפילויות
-    const existingAnchors = block.querySelectorAll('.anchor-point');
-    existingAnchors.forEach(anchor => anchor.remove());
+    // חיפוש אלמנט ה-SVG בתוך הבלוק
+    const svg = block.querySelector('svg');
+    if (!svg) {
+      if (CONFIG.DEBUG > 1) console.log(`No SVG found in block ${block.id}`);
+      return null;
+    }
     
-    // יצירת נקודת עיגון שמאלית
-    const leftAnchor = document.createElement('div');
-    leftAnchor.className = 'anchor-point anchor-point-left';
-    block.appendChild(leftAnchor);
+    let svgElements = [];
     
-    // יצירת נקודת עיגון ימנית
-    const rightAnchor = document.createElement('div');
-    rightAnchor.className = 'anchor-point anchor-point-right';
-    block.appendChild(rightAnchor);
+    try {
+      // חיפוש אלמנטים בצד המתאים של ה-SVG
+      if (direction === 'left') {
+        // חפש אלמנטים בצד שמאל (שקע)
+        svgElements = Array.from(svg.querySelectorAll('path, circle, ellipse, rect'))
+          .filter(el => {
+            // נבדוק את המיקום היחסי בתוך ה-SVG
+            const bbox = el.getBBox();
+            const svgWidth = svg.viewBox.baseVal.width || svg.width.baseVal.value;
+            const relativeX = bbox.x / svgWidth;
+            
+            // אלמנטים בצד שמאל של ה-SVG
+            return relativeX <= 0.2;
+          });
+      } else if (direction === 'right') {
+        // חפש אלמנטים בצד ימין (בליטה)
+        svgElements = Array.from(svg.querySelectorAll('path, circle, ellipse, rect'))
+          .filter(el => {
+            // נבדוק את המיקום היחסי בתוך ה-SVG
+            const bbox = el.getBBox();
+            const svgWidth = svg.viewBox.baseVal.width || svg.width.baseVal.value;
+            const relativeRight = (bbox.x + bbox.width) / svgWidth;
+            
+            // אלמנטים בצד ימין של ה-SVG
+            return relativeRight >= 0.8;
+          });
+      }
+    } catch (err) {
+      console.error(`Error finding SVG elements for ${direction} side:`, err);
+    }
     
-    if (CONFIG.DEBUG > 1) console.log(`Added anchor points to block ${block.id || 'unknown'}`);
+    if (CONFIG.DEBUG > 1) console.log(`Found ${svgElements.length} potential ${direction} connection points in block ${block.id}`);
+    
+    return svgElements.length > 0 ? svgElements : null;
   }
-
-  // ========================================================================
-  // ניקוי הדגשות נקודות עיגון - משופר
-  // ========================================================================
-  function clearAllAnchorPointHighlights() {
-    const highlights = document.querySelectorAll('.anchor-point-highlight');
-    highlights.forEach(anchor => {
-      anchor.classList.remove('anchor-point-highlight');
+  
+  // הדגשת נקודות עיגון ב-SVG
+  function highlightSVGConnectionPoints(block, direction) {
+    if (!block) return false;
+    
+    // איתור נקודות עיגון
+    const connectionPoints = findSVGConnectionPoints(block, direction);
+    
+    if (!connectionPoints || connectionPoints.length === 0) {
+      // אם לא נמצאו נקודות עיגון ב-SVG, נשתמש בסמן חיצוני
+      addExternalMarker(block, direction);
+      return false;
+    }
+    
+    // הדגשת כל נקודות העיגון שנמצאו
+    connectionPoints.forEach(element => {
+      element.classList.add('connection-point-highlight');
+      
+      // שמור את הצבע המקורי אם צריך לשחזר אותו
+      if (!element.hasAttribute('data-original-fill')) {
+        element.setAttribute('data-original-fill', element.getAttribute('fill') || 'none');
+      }
+      if (!element.hasAttribute('data-original-stroke')) {
+        element.setAttribute('data-original-stroke', element.getAttribute('stroke') || 'none');
+      }
     });
-    if (CONFIG.DEBUG > 1 && highlights.length > 0) console.log(`Cleared ${highlights.length} highlighted anchor points`);
+    
+    return true;
+  }
+  
+  // הסרת הדגשות מכל נקודות העיגון
+  function clearAllSVGHighlights() {
+    // הסר הדגשות מכל אלמנטי ה-SVG
+    document.querySelectorAll('.connection-point-highlight').forEach(element => {
+      element.classList.remove('connection-point-highlight');
+      
+      // שחזר צבעים מקוריים אם יש
+      if (element.hasAttribute('data-original-fill')) {
+        const originalFill = element.getAttribute('data-original-fill');
+        if (originalFill === 'none') {
+          element.removeAttribute('fill');
+        } else {
+          element.setAttribute('fill', originalFill);
+        }
+      }
+      
+      if (element.hasAttribute('data-original-stroke')) {
+        const originalStroke = element.getAttribute('data-original-stroke');
+        if (originalStroke === 'none') {
+          element.removeAttribute('stroke');
+        } else {
+          element.setAttribute('stroke', originalStroke);
+        }
+      }
+    });
+    
+    // הסר סמנים חיצוניים
+    document.querySelectorAll('.marker-visible').forEach(marker => {
+      marker.classList.remove('marker-visible');
+    });
+  }
+  
+  // הוספת סמן חיצוני במקרה שאין נקודות עיגון ב-SVG
+  function addExternalMarker(block, direction) {
+    if (!block) return;
+    
+    // בדוק אם כבר קיים סמן
+    let marker = block.querySelector(`.svg-anchor-marker.marker-${direction}`);
+    
+    // אם לא, צור אחד חדש
+    if (!marker) {
+      marker = document.createElement('div');
+      marker.className = `svg-anchor-marker marker-${direction}`;
+      block.appendChild(marker);
+    }
+    
+    // הצג את הסמן
+    marker.classList.add('marker-visible');
   }
 
   // ========================================================================
   // מאזינים, זיהוי בלוקים, קליק ימני, MouseDown - שמירה על גרירה מקורית
   // ========================================================================
   function initProgrammingAreaListeners() { const a=document.getElementById('program-blocks');if(!a)return;a.addEventListener('dragover',(e)=>e.preventDefault());a.addEventListener('dragstart',(e)=>{if(e.target?.closest?.('#program-blocks .block-container'))e.preventDefault();}); }
-  function observeNewBlocks() { const a=document.getElementById('program-blocks');if(!a)return;const o=new MutationObserver((m)=>{m.forEach((mu)=>{if(mu.type==='childList'){mu.addedNodes.forEach((n)=>{if(n.nodeType===1){let b=n.classList?.contains('block-container')?n:n.querySelector?.('.block-container');if(b?.closest('#program-blocks')){if(!b.id)generateUniqueId(b);addBlockDragListeners(b);addAnchorPointsToBlock(b);}}});}});});o.observe(a,{childList:true,subtree:true});if(CONFIG.DEBUG)console.log("MutationObserver watching."); }
-  function initExistingBlocks() { document.querySelectorAll('#program-blocks .block-container').forEach(b=>{if(!b.id)generateUniqueId(b);addBlockDragListeners(b);addAnchorPointsToBlock(b);});if(CONFIG.DEBUG)console.log("Listeners added to existing blocks."); }
+  function observeNewBlocks() { const a=document.getElementById('program-blocks');if(!a)return;const o=new MutationObserver((m)=>{m.forEach((mu)=>{if(mu.type==='childList'){mu.addedNodes.forEach((n)=>{if(n.nodeType===1){let b=n.classList?.contains('block-container')?n:n.querySelector?.('.block-container');if(b?.closest('#program-blocks')){if(!b.id)generateUniqueId(b);addBlockDragListeners(b);}}});}});});o.observe(a,{childList:true,subtree:true});if(CONFIG.DEBUG)console.log("MutationObserver watching."); }
+  function initExistingBlocks() { document.querySelectorAll('#program-blocks .block-container').forEach(b=>{if(!b.id)generateUniqueId(b);addBlockDragListeners(b);});if(CONFIG.DEBUG)console.log("Listeners added to existing blocks."); }
   function addBlockDragListeners(b) { b.removeEventListener('mousedown',handleMouseDown);b.addEventListener('mousedown',handleMouseDown);b.removeEventListener('contextmenu',handleContextMenu);b.addEventListener('contextmenu',handleContextMenu); }
   function handleContextMenu(e) { e.preventDefault();const b=e.target.closest('.block-container');if(b?.hasAttribute('data-connected-to'))showDetachMenu(e.clientX,e.clientY,b); }
-  function handleMouseDown(e) { if(e.button!==0||!e.target.closest||e.target.matches('input,button,select,textarea,a[href]'))return;const b=e.target.closest('.block-container');if(!b||!b.parentElement||b.parentElement.id!=='program-blocks')return;if(!b.id)generateUniqueId(b);e.preventDefault();b.draggable=false;if(CONFIG.DEBUG)console.log(`[MouseDown] Start drag: ${b.id}`);if(b.hasAttribute('data-connected-to'))detachBlock(b,false);const lId=b.getAttribute('data-connected-from-left');if(lId)detachBlock(document.getElementById(lId),false);const rId=b.getAttribute('data-connected-from-right');if(rId)detachBlock(document.getElementById(rId),false);currentDraggedBlock=b;isDraggingBlock=true;const r=b.getBoundingClientRect();dragOffset.x=e.clientX-r.left;dragOffset.y=e.clientY-r.top;const pE=document.getElementById('program-blocks');const pR=pE.getBoundingClientRect();if(window.getComputedStyle(b).position!=='absolute'){b.style.position='absolute';b.style.left=(r.left-pR.left+pE.scrollLeft)+'px';b.style.top=(r.top-pR.top+pE.scrollTop)+'px';}b.style.margin='0';b.style.zIndex='1001';b.classList.add('snap-source');document.body.classList.add('user-select-none');addAnchorPointsToBlock(b); }
+  function handleMouseDown(e) { if(e.button!==0||!e.target.closest||e.target.matches('input,button,select,textarea,a[href]'))return;const b=e.target.closest('.block-container');if(!b||!b.parentElement||b.parentElement.id!=='program-blocks')return;if(!b.id)generateUniqueId(b);e.preventDefault();b.draggable=false;if(CONFIG.DEBUG)console.log(`[MouseDown] Start drag: ${b.id}`);if(b.hasAttribute('data-connected-to'))detachBlock(b,false);const lId=b.getAttribute('data-connected-from-left');if(lId)detachBlock(document.getElementById(lId),false);const rId=b.getAttribute('data-connected-from-right');if(rId)detachBlock(document.getElementById(rId),false);currentDraggedBlock=b;isDraggingBlock=true;const r=b.getBoundingClientRect();dragOffset.x=e.clientX-r.left;dragOffset.y=e.clientY-r.top;const pE=document.getElementById('program-blocks');const pR=pE.getBoundingClientRect();if(window.getComputedStyle(b).position!=='absolute'){b.style.position='absolute';b.style.left=(r.left-pR.left+pE.scrollLeft)+'px';b.style.top=(r.top-pR.top+pE.scrollTop)+'px';}b.style.margin='0';b.style.zIndex='1001';b.classList.add('snap-source');document.body.classList.add('user-select-none'); }
 
   // ========================================================================
   // מאזינים גלובליים, MouseLeave, MouseMove - ללא שינוי
@@ -173,7 +278,7 @@
   function handleMouseMove(e) { if(!isDraggingBlock||!currentDraggedBlock)return;e.preventDefault();const pE=document.getElementById('program-blocks');if(!pE){handleMouseUp(e);return;}const pR=pE.getBoundingClientRect();let nL=e.clientX-pR.left-dragOffset.x+pE.scrollLeft;let nT=e.clientY-pR.top-dragOffset.y+pE.scrollTop;const bW=currentDraggedBlock.offsetWidth;const bH=currentDraggedBlock.offsetHeight;const sW=pE.scrollWidth;const sH=pE.scrollHeight;nL=Math.max(0,Math.min(nL,sW-bW));nT=Math.max(0,Math.min(nT,sH-bH));currentDraggedBlock.style.left=Math.round(nL)+'px';currentDraggedBlock.style.top=Math.round(nT)+'px';checkAndHighlightSnapPossibility(); }
 
   // ========================================================================
-  // בדיקת הצמדה והדגשה (MouseMove) - משופר להדגשה ברורה
+  // בדיקת הצמדה והדגשה של נקודות עיגון SVG
   // ========================================================================
   function checkAndHighlightSnapPossibility() {
     if (!currentDraggedBlock) return;
@@ -188,14 +293,13 @@
     let bestDirection = null;
     let minDistance = CONFIG.CONNECT_THRESHOLD + 1;
 
-    // Reset highlights and global state before checking
-    clearAllAnchorPointHighlights();
+    // ניקוי כל ההדגשות הקודמות
+    clearAllSVGHighlights();
     potentialSnapTarget = null; 
     snapDirection = null;
 
     for (const targetBlock of allVisibleBlocks) {
       if (!targetBlock.id) generateUniqueId(targetBlock);
-      addAnchorPointsToBlock(targetBlock); // וודא שלכל בלוק יש נקודות עיגון
       
       const targetRect = targetBlock.getBoundingClientRect();
       const targetConnectedLeft = targetBlock.hasAttribute('data-connected-from-left');
@@ -216,41 +320,25 @@
       }
     }
 
-    // If a suitable target is found within the threshold
+    // אם נמצא יעד מתאים באיזור הסף
     if (bestTarget) {
       if (CONFIG.DEBUG > 1) console.log(`[Highlight] Threshold met: ${currentDraggedBlock.id} -> ${bestTarget.id} (${bestDirection}). Dist=${minDistance.toFixed(1)}px`);
       potentialSnapTarget = bestTarget;
       snapDirection = bestDirection;
       
-      // הפעל הדגשות נקודות עיגון עם הצבעים המשופרים
+      // הדגש את נקודות העיגון ב-SVG
       try {
         if (bestDirection === 'left') {
           // הצד השמאלי של היעד מתחבר לצד הימני של המקור
-          const targetLeftAnchor = bestTarget.querySelector('.anchor-point-left');
-          const sourceRightAnchor = currentDraggedBlock.querySelector('.anchor-point-right');
-          
-          if (targetLeftAnchor) {
-            targetLeftAnchor.classList.add('anchor-point-highlight');
-          }
-          
-          if (sourceRightAnchor) {
-            sourceRightAnchor.classList.add('anchor-point-highlight');
-          }
+          highlightSVGConnectionPoints(bestTarget, 'left');
+          highlightSVGConnectionPoints(currentDraggedBlock, 'right');
         } else if (bestDirection === 'right') {
           // הצד הימני של היעד מתחבר לצד השמאלי של המקור
-          const targetRightAnchor = bestTarget.querySelector('.anchor-point-right');
-          const sourceLeftAnchor = currentDraggedBlock.querySelector('.anchor-point-left');
-          
-          if (targetRightAnchor) {
-            targetRightAnchor.classList.add('anchor-point-highlight');
-          }
-          
-          if (sourceLeftAnchor) {
-            sourceLeftAnchor.classList.add('anchor-point-highlight');
-          }
+          highlightSVGConnectionPoints(bestTarget, 'right');
+          highlightSVGConnectionPoints(currentDraggedBlock, 'left');
         }
       } catch (err) {
-        console.error("Error highlighting anchor points:", err);
+        console.error("Error highlighting SVG connection points:", err);
       }
     }
   }
@@ -277,7 +365,7 @@
     blockReleased.style.zIndex = '';
     
     // ניקוי נקודות העיגון
-    clearAllAnchorPointHighlights();
+    clearAllSVGHighlights();
 
     // החלטה על הצמדה - מבוססת רק על אם היה מועמד במהלך הגרירה
     let performSnap = false;
@@ -402,7 +490,7 @@
   }
 
   // ========================================================================
-  // פונקציות ניתוק, תפריט, אנימציה, יצירת מזהה - עם תיקונים לתאימות
+  // פונקציות ניתוק, תפריט, אנימציה, יצירת מזהה
   // ========================================================================
   function showDetachMenu(x, y, b) {
     removeDetachMenu();
@@ -467,7 +555,7 @@
     btd.draggable = true;
     
     // נקה הדגשות נקודות עיגון
-    clearAllAnchorPointHighlights();
+    clearAllSVGHighlights();
     
     const tb = document.getElementById(tid);
     if (tb) {
@@ -515,16 +603,16 @@
   }
 
   // ========================================================================
-  // אתחול המערכת כולה - עם שיפורים נוספים
+  // אתחול המערכת כולה
   // ========================================================================
   function initializeSystem() {
-    const initFlag = 'blockLinkageInitialized_v3_6';
+    const initFlag = 'blockLinkageInitialized_v3_6_svg';
     if (window[initFlag]) {
-        if (CONFIG.DEBUG) console.log("Block linkage system v3.6 already initialized. Skipping.");
+        if (CONFIG.DEBUG) console.log("Block linkage system v3.6 SVG already initialized. Skipping.");
         return;
     }
 
-    // גרסה 3.6 - החלפת מסגרות בנקודות עיגון
+    // גרסה 3.6 SVG - שימוש בנקודות עיגון מובנות בקבצי SVG
     addHighlightStyles();
     initAudio();
     initProgrammingAreaListeners();
@@ -535,14 +623,9 @@
     if (CONFIG.PLAY_SOUND) { 
       addSoundTestButton(); 
     }
-    
-    // החל נקודות עיגון על כל הבלוקים הקיימים
-    document.querySelectorAll('#program-blocks .block-container').forEach(block => {
-      if (block) addAnchorPointsToBlock(block);
-    });
 
     window[initFlag] = true;
-    console.log(`Block linkage system initialized (Version 3.6 - Enhanced Anchor Points, Threshold=${CONFIG.CONNECT_THRESHOLD}px)`);
+    console.log(`Block linkage system initialized (Version 3.6 SVG - Using SVG connection points, Threshold=${CONFIG.CONNECT_THRESHOLD}px)`);
     console.log(`Configuration: Snap Threshold=${CONFIG.CONNECT_THRESHOLD}px, Overlap=${CONFIG.VERTICAL_OVERLAP_REQ*100}%, Gap=${CONFIG.BLOCK_GAP}px, Sound=${CONFIG.PLAY_SOUND ? CONFIG.SOUND_PATH : 'Disabled'}`);
   }
 
