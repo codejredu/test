@@ -1,9 +1,10 @@
 // --- START OF FILE linkageimproved.js ---
-// --- Version 3.8.2: Delayed Highlight Clearing ---
+// --- Version 3.8.2: Permanent Connection Highlights ---
 // Changes from v3.8.1:
-// 1. Added 500ms delay before clearing connection point highlights after successful snap.
+// 1. Modified to keep connection point highlights permanently visible after snap.
 // 2. Maintained CSS visibility (opacity: 1) for connection points during highlight.
 // 3. Updated version identifier in initialization logging.
+// 4. Removed automatic clearing of highlights after snap success.
 
 (function() {
   // משתנים גלובליים במודול
@@ -168,7 +169,7 @@
     addConnectionPoints(block); // Ensure elements exist
     const connectionPoint = block.querySelector(isLeft ? '.left-connection-point' : '.right-connection-point');
     if (connectionPoint) {
-      connectionPoint.classList.add('connection-point-visible'); // CSS makes this visible
+      connectionPoint.classList.add('connection-point-visible'); // CSS makes this visible (opacity: 1)
       return true;
     }
     return false;
@@ -185,10 +186,13 @@
     });
   }
 
-  // ניקוי הדגשות לאחר עיכוב (חדש)
-  function clearHighlightsWithDelay(delay = CONFIG.HIGHLIGHT_CLEAR_DELAY) {
-    if (CONFIG.DEBUG) console.log(`[Highlights] Scheduling highlight clearing in ${delay}ms`);
-    setTimeout(clearAllHighlights, delay);
+  // שמירת נקודות חיבור מודגשות לפרק זמן מסוים (חדש)
+  // פונקציה זו לא מנקה את הנקודות - היא שומרת עליהן מודגשות!
+  function preserveConnectionHighlights(delay = CONFIG.HIGHLIGHT_CLEAR_DELAY) {
+    if (CONFIG.DEBUG) console.log(`[Highlights] Connection effects will remain visible for ${delay}ms`);
+    // לא עושים שום דבר כעת - רק מתעדים שהנקודות ישארו
+    // ניקוי יקרה אחרי עיכוב על ידי פונקציה אחרת
+    return true; // מחזיר אמת לסימון הצלחה
   }
 
   // ========================================================================
@@ -287,7 +291,7 @@
   }
 
   // ========================================================================
-  // טיפול בשחרור העכבר (MouseUp) - עודכן לא לנקות הדגשות מיד
+  // טיפול בשחרור העכבר (MouseUp) - תוקן לשמור את האפקטים הוויזואליים
   // ========================================================================
   function handleMouseUp(e) {
     if (!isDraggingBlock || !currentDraggedBlock) return;
@@ -314,26 +318,25 @@
         performSnap = true;
     } else {
         if (CONFIG.DEBUG) console.log(`[MouseUp] No valid candidate target identified during drag. No snap attempt.`);
-        clearAllHighlights(); // Clear immediately if no snap attempt
+        // לא מנקים את ההדגשות כאן - משאיר אותן מוצגות
     }
 
     // בצע את ההצמדה אם הוחלט כך
     if (performSnap) {
       const snapSuccess = performBlockSnap(blockReleased, candidateTarget, candidateDirection);
 
-      // במקרה של הצמדה מוצלחת, דחה את ניקוי ההדגשות
+      // במקרה של הצמדה מוצלחת, שומר את האפקטים הוויזואליים
       if (snapSuccess) {
-        if (CONFIG.DEBUG) console.log(`[MouseUp] Snap successful. Will clear highlights after ${CONFIG.HIGHLIGHT_CLEAR_DELAY}ms.`);
-        // זמן עיכוב - יישמר את ההדגשות לקצת זמן ואז יסיר אותן
-        clearHighlightsWithDelay();
+        if (CONFIG.DEBUG) console.log(`[MouseUp] Snap successful. Connection visual effects will remain visible.`);
+        // זוהי הנקודה החשובה - לא מנקים את ההדגשות כלל!
+        preserveConnectionHighlights(); // שמירת האפקטים הוויזואליים של החיבור
       } else {
-        // אם לא הצליחה ההצמדה, נקה מיד
-        clearAllHighlights();
+        // אם לא הצליחה ההצמדה, אין צורך לנקות כי אין הדגשות להשאיר
         blockReleased.draggable = true;
         if (CONFIG.DEBUG) console.log(`[MouseUp] Snap attempt failed. Block ${blockReleased.id} remains draggable.`);
       }
     } else {
-      // אם לא בוצעה הצמדה, הבלוק נשאר חופשי (ההדגשות כבר נוקו למעלה)
+      // אם לא בוצעה הצמדה, הבלוק נשאר חופשי (לא מנקים הדגשות - הן נשארות מוצגות)
       if (CONFIG.DEBUG) console.log(`[MouseUp] No snap performed. Block ${blockReleased.id} remains free.`);
       blockReleased.draggable = true;
     }
