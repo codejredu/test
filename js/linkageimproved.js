@@ -1,10 +1,9 @@
 // --- START OF FILE linkageimproved.js ---
-// --- Version 3.9: True Puzzle Connection with Fading Indicators ---
+// --- Version 3.8: True Puzzle Connection ---
 // Changes from previous versions:
 // 1. Creates real puzzle-piece connections
 // 2. Uses hardcoded offset values for puzzle piece alignment
 // 3. Visualizes connection points based on actual SVG structure
-// 4. Indicators now disappear after 500 milliseconds
 
 (function() {
   // משתנים גלובליים במודול
@@ -17,7 +16,6 @@
   let snapSound = null;
   let audioContextAllowed = false;
   let soundInitialized = false;
-  let indicatorsTimeout = null; // חדש: טיימר למחיקת חיווים
 
   // קונפיגורציה - פרמטרים שניתן להתאים
   const CONFIG = {
@@ -32,7 +30,6 @@
     HIGHLIGHT_COLOR_RIGHT: '#FFC107', // צהוב לצד ימין (בליטה)
     HIGHLIGHT_COLOR_LEFT: '#2196F3', // כחול לצד שמאל (שקע)
     HIGHLIGHT_OPACITY: 0.8, // אטימות ההדגשה
-    INDICATORS_FADE_DELAY: 500, // חדש: זמן בms להעלמת חיווים אחרי התחברות
     
     // ערכי היסט קבועים לחיבור פאזל מדויק - ערכים אלה יכולים להשתנות בהתאם לעיצוב ה-SVG
     PUZZLE_RIGHT_BULGE_WIDTH: 10, // רוחב הבליטה בצד ימין (בפיקסלים)
@@ -190,12 +187,6 @@
   
   // ניקוי כל ההדגשות
   function clearAllHighlights() {
-    // בטל טיימר קודם אם קיים
-    if (indicatorsTimeout) {
-      clearTimeout(indicatorsTimeout);
-      indicatorsTimeout = null;
-    }
-    
     // הסר הדגשות מכל נקודות החיבור
     document.querySelectorAll('.connection-point-visible').forEach(point => {
       point.classList.remove('connection-point-visible');
@@ -205,23 +196,6 @@
     document.querySelectorAll('.connection-area.visible').forEach(area => {
       area.classList.remove('visible');
     });
-  }
-  
-  // חדש: הגדרת טיימר להעלמת חיווים
-  function scheduleIndicatorsFade() {
-    // ביטול טיימר קיים אם יש
-    if (indicatorsTimeout) {
-      clearTimeout(indicatorsTimeout);
-    }
-    
-    // הגדרת טיימר חדש
-    indicatorsTimeout = setTimeout(() => {
-      clearAllHighlights();
-      indicatorsTimeout = null;
-      if (CONFIG.DEBUG) console.log(`[Indicators] Faded after ${CONFIG.INDICATORS_FADE_DELAY}ms`);
-    }, CONFIG.INDICATORS_FADE_DELAY);
-    
-    if (CONFIG.DEBUG) console.log(`[Indicators] Set to fade in ${CONFIG.INDICATORS_FADE_DELAY}ms`);
   }
 
   // ========================================================================
@@ -343,7 +317,8 @@
     blockReleased.classList.remove('snap-source');
     blockReleased.style.zIndex = '';
     
-    // שים לב - לא מנקים עדיין את החיווים כאן!
+    // ניקוי נקודות חיבור
+    clearAllHighlights();
 
     // החלטה על הצמדה - מבוססת רק על אם היה מועמד במהלך הגרירה
     let performSnap = false;
@@ -352,8 +327,6 @@
         performSnap = true;
     } else {
         if (CONFIG.DEBUG) console.log(`[MouseUp] No valid candidate target identified during drag. No snap attempt.`);
-        // במקרה שאין חיבור - נקה את החיווים
-        clearAllHighlights();
     }
 
     // בצע את ההצמדה אם הוחלט כך
@@ -361,12 +334,9 @@
       const snapSuccess = performBlockSnap(blockReleased, candidateTarget, candidateDirection);
       if (!snapSuccess) {
           blockReleased.draggable = true;
-          // אם חיבור נכשל - נקה את החיווים
-          clearAllHighlights();
           if (CONFIG.DEBUG) console.log(`[MouseUp] Snap attempt failed. Block ${blockReleased.id} remains draggable.`);
       } else {
            if (CONFIG.DEBUG) console.log(`[MouseUp] Snap successful. Block ${blockReleased.id} is connected.`);
-           // החיווים יעלמו אוטומטית אחרי הזמן המוגדר
       }
     } else {
       if (CONFIG.DEBUG) console.log(`[MouseUp] No snap performed. Block ${blockReleased.id} remains free.`);
@@ -440,22 +410,9 @@
       sourceBlock.classList.add('connected-block');
       targetBlock.classList.add('has-connected-block');
       
-      // *** שינוי חדש - לאחר החיבור נראה את החיווים וצליל, ואז נתזמן העלמה ***
-      // הדגש נקודות חיבור גם לאחר החיבור - חדש: יתאפשר בחלון של 500 אלפיות שניה
-      if (direction === 'left') {
-        highlightConnectionPoint(targetBlock, true);
-        highlightConnectionPoint(sourceBlock, false);
-      } else {
-        highlightConnectionPoint(targetBlock, false);
-        highlightConnectionPoint(sourceBlock, true);
-      }
-      
       playSnapSound(); // נגן צליל
       addSnapEffectAnimation(sourceBlock);
       sourceBlock.draggable = false; // מנע גרירה כשהוא מחובר
-      
-      // קבע זמן לעלמות החיווים
-      scheduleIndicatorsFade();
       
       if (CONFIG.DEBUG) console.log(`[PerformSnap] Success. ${sourceBlock.id} pos: L=${styleLeft.toFixed(0)}, T=${styleTop.toFixed(0)}.`);
       return true;
@@ -469,3 +426,155 @@
       sourceBlock.draggable = true;
       return false;
     }
+  }
+
+  // ========================================================================
+  // פונקציות ניתוק, תפריט, אנימציה, יצירת מזהה
+  // ========================================================================
+  function showDetachMenu(x, y, b) {
+    removeDetachMenu();
+    const m = document.createElement('div');
+    m.id = 'detach-menu';
+    m.style.left = `${x}px`;
+    m.style.top = `${y}px`;
+    const o = document.createElement('div');
+    o.textContent = 'נתק בלוק';
+    o.onclick = (e) => {
+      e.stopPropagation();
+      detachBlock(b, true);
+      removeDetachMenu();
+    };
+    m.appendChild(o);
+    document.body.appendChild(m);
+    setTimeout(() => {
+      document.addEventListener('click', closeMenuOutside, {capture: true, once: true});
+      window.addEventListener('scroll', removeDetachMenu, {capture: true, once: true});
+    }, 0);
+  }
+  
+  function closeMenuOutside(e) {
+    const m = document.getElementById('detach-menu');
+    if (m && !m.contains(e.target)) {
+      removeDetachMenu();
+    } else if (m) {
+      setTimeout(() => document.addEventListener('click', closeMenuOutside, {capture: true, once: true}), 0);
+    }
+    window.removeEventListener('scroll', removeDetachMenu, {capture: true});
+  }
+  
+  function removeDetachMenu() {
+    const m = document.getElementById('detach-menu');
+    if (m) {
+      document.removeEventListener('click', closeMenuOutside, {capture: true});
+      window.removeEventListener('scroll', removeDetachMenu, {capture: true});
+      m.remove();
+    }
+  }
+  
+  function detachBlock(btd, animate=true) {
+    if (!btd || !btd.hasAttribute('data-connected-to')) return;
+    
+    const tid = btd.getAttribute('data-connected-to');
+    const dir = btd.getAttribute('data-connection-direction');
+    
+    if (!tid || !dir) {
+      console.warn(`[Detach] Missing data on ${btd.id}. Clean.`);
+      btd.removeAttribute('data-connected-to');
+      btd.removeAttribute('data-connection-direction');
+      btd.classList.remove('connected-block');
+      btd.draggable = true;
+      return;
+    }
+    
+    if (CONFIG.DEBUG) console.log(`[Detach] Detaching ${btd.id} from ${tid}`);
+    
+    btd.removeAttribute('data-connected-to');
+    btd.removeAttribute('data-connection-direction');
+    btd.classList.remove('connected-block');
+    btd.draggable = true;
+    
+    // נקה הדגשות נקודות חיבור
+    clearAllHighlights();
+    
+    const tb = document.getElementById(tid);
+    if (tb) {
+      tb.removeAttribute(dir === 'left' ? 'data-connected-from-left' : 'data-connected-from-right');
+      const hoc = tb.hasAttribute('data-connected-from-left') || 
+                  tb.hasAttribute('data-connected-from-right') || 
+                  tb.hasAttribute('data-connected-to');
+      if (!hoc) tb.classList.remove('has-connected-block');
+    } else {
+      console.warn(`[Detach] Target ${tid} not found.`);
+    }
+    
+    if (animate) addDetachEffectAnimation(btd);
+    
+    if (CONFIG.DEBUG) console.log(`[Detach] Finished ${btd.id}. Draggable: ${btd.draggable}`);
+  }
+  
+  function addSnapEffectAnimation(b) {
+    b.classList.remove('snap-animation');
+    void b.offsetWidth;
+    b.classList.add('snap-animation');
+    b.addEventListener('animationend', () => b.classList.remove('snap-animation'), {once: true});
+  }
+  
+  function addDetachEffectAnimation(b) {
+    b.classList.remove('detach-animation');
+    void b.offsetWidth;
+    b.classList.add('detach-animation');
+    b.addEventListener('animationend', () => b.classList.remove('detach-animation'), {once: true});
+  }
+  
+  function generateUniqueId(b) {
+    if (b.id) return b.id;
+    const p = b.dataset.type || 'block';
+    let s = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    let id = `${p}-${s}`;
+    let i = 0;
+    while (document.getElementById(id) && i < 10) {
+      id = `${p}-${s}-${i++}`;
+    }
+    if (i >= 10) id = `${p}-${Date.now()}`;
+    b.id = id;
+    if (CONFIG.DEBUG) console.log(`Generated ID: ${id}`);
+    return id;
+  }
+
+  // ========================================================================
+  // אתחול המערכת כולה
+  // ========================================================================
+  function initializeSystem() {
+    const initFlag = 'blockLinkageInitialized_v3_8';
+    if (window[initFlag]) {
+        if (CONFIG.DEBUG) console.log("Block linkage system v3.8 already initialized. Skipping.");
+        return;
+    }
+
+    // גרסה 3.8 - חיבור פאזל מדויק
+    addHighlightStyles();
+    initAudio();
+    initProgrammingAreaListeners();
+    observeNewBlocks();
+    initExistingBlocks();
+    initGlobalMouseListeners();
+
+    if (CONFIG.PLAY_SOUND) { 
+      addSoundTestButton(); 
+    }
+
+    window[initFlag] = true;
+    console.log(`Block linkage system initialized (Version 3.8 - True Puzzle Connection)`);
+    console.log(`Configuration: Right Bulge Width=${CONFIG.PUZZLE_RIGHT_BULGE_WIDTH}px, Left Socket Width=${CONFIG.PUZZLE_LEFT_SOCKET_WIDTH}px`);
+  }
+
+  // הפעל את האתחול
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeSystem);
+  } else {
+    initializeSystem(); // DOM already loaded
+  }
+
+})(); // סוף IIFE
+
+// --- END OF FILE linkageimproved.js ---
