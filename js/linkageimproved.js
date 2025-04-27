@@ -1,10 +1,9 @@
- // --- START OF FILE linkageimproved.js ---
-// --- Version 3.8: True Puzzle Connection ---
-// Changes from previous versions:
-// 1. Creates real puzzle-piece connections
-// 2. Uses hardcoded offset values for puzzle piece alignment
-// 3. Visualizes connection points based on actual SVG structure
-// Change requested: Hide the blue/yellow connection point circles during drag highlight.
+// --- START OF FILE linkageimproved.js ---
+// --- Version 3.8.1: Visible Highlight Fix ---
+// Changes from v3.8:
+// 1. Reverted CSS to make connection points visible during highlight (opacity: 1).
+// 2. Added call to clearAllHighlights() after snap attempt in handleMouseUp
+//    to ensure points disappear immediately after connection sound.
 
 (function() {
   // משתנים גלובליים במודול
@@ -13,7 +12,7 @@
   let snapDirection = null;
   let isDraggingBlock = false;
   let dragOffset = { x: 0, y: 0 };
-  let futureIndicator = null; // Note: This variable is declared but never used in the provided code.
+  let futureIndicator = null; // Note: Declared but not used
   let snapSound = null;
   let audioContextAllowed = false;
   let soundInitialized = false;
@@ -21,22 +20,22 @@
   // קונפיגורציה - פרמטרים שניתן להתאים
   const CONFIG = {
     CONNECT_THRESHOLD: 25, // סף רחב יותר להפעלת זיהוי חיבור
-    VERTICAL_ALIGN_THRESHOLD: 20, // Note: This variable is declared but never used in the provided code.
+    VERTICAL_ALIGN_THRESHOLD: 20, // Note: Declared but not used
     VERTICAL_OVERLAP_REQ: 0.4, // דרישה ל-40% חפיפה אנכית לפחות
-    BLOCK_GAP: 0, // Note: This variable is declared but never used in the provided code.
+    BLOCK_GAP: 0, // Note: Declared but not used
     PLAY_SOUND: true,
     SOUND_VOLUME: 0.8,
     SOUND_PATH: 'assets/sound/link.mp3',
     DEBUG: true, // Set to false for production
     HIGHLIGHT_COLOR_RIGHT: '#FFC107', // צהוב לצד ימין (בליטה)
     HIGHLIGHT_COLOR_LEFT: '#2196F3', // כחול לצד שמאל (שקע)
-    HIGHLIGHT_OPACITY: 0.8, // אטימות ההדגשה - This is set but the connection points override it with opacity: 1 when visible by default.
-    
-    // ערכי היסט קבועים לחיבור פאזל מדויק - ערכים אלה יכולים להשתנות בהתאם לעיצוב ה-SVG
-    PUZZLE_RIGHT_BULGE_WIDTH: 10, // רוחב הבליטה בצד ימין (בפיקסלים)
-    PUZZLE_LEFT_SOCKET_WIDTH: 10, // רוחב השקע בצד שמאל (בפיקסלים)
-    VERTICAL_CENTER_OFFSET: 0, // היסט אנכי למרכוז (בפיקסלים)
-    HORIZONTAL_FINE_TUNING: -9 // כוונון עדין אופקי (בפיקסלים)
+    HIGHLIGHT_OPACITY: 0.8, // Note: Declared but not used directly for points
+
+    // ערכי היסט קבועים לחיבור פאזל מדויק
+    PUZZLE_RIGHT_BULGE_WIDTH: 10,
+    PUZZLE_LEFT_SOCKET_WIDTH: 10,
+    VERTICAL_CENTER_OFFSET: 0,
+    HORIZONTAL_FINE_TUNING: -9
   };
 
   // ========================================================================
@@ -47,12 +46,12 @@
     const style = document.createElement('style');
     style.id = 'block-connection-styles';
     style.textContent = `
-      .snap-source { 
-        box-shadow: 0 5px 15px rgba(0,0,0,0.4) !important; 
-        cursor: grabbing !important; 
-        z-index: 1001 !important; 
+      .snap-source {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.4) !important;
+        cursor: grabbing !important;
+        z-index: 1001 !important;
       }
-      
+
       /* נקודות חיבור - צד ימין (בליטה) */
       .right-connection-point {
         position: absolute;
@@ -69,7 +68,7 @@
         z-index: 1005;
         box-shadow: 0 0 6px 2px rgba(255,193,7,0.8);
       }
-      
+
       /* נקודות חיבור - צד שמאל (שקע) */
       .left-connection-point {
         position: absolute;
@@ -86,22 +85,21 @@
         z-index: 1005;
         box-shadow: 0 0 6px 2px rgba(33,150,243,0.8);
       }
-      
-      /* הדגשה נראית - שינוי כאן: הגדרת האטימות ל-0 כדי להסתיר */
+
+      /* הדגשה נראית - חזר להיות opacity: 1 */
       .connection-point-visible {
-        /* opacity: 1;  <-- This was the original line making it visible */
-        opacity: 0; /* <-- Change: Keep the point invisible even when highlighted */
-        animation: pulseConnectionPoint 0.8s infinite; /* Animation still runs but is invisible */
+        opacity: 1; /* <-- Points become VISIBLE when this class is added */
+        animation: pulseConnectionPoint 0.8s infinite;
       }
-      
-      /* אנימציית פעימה לנקודות חיבור (נשארת למקרה הצורך, אך לא תיראה) */
+
+      /* אנימציית פעימה לנקודות חיבור */
       @keyframes pulseConnectionPoint {
         0% { transform: translateY(-50%) scale(1); }
         50% { transform: translateY(-50%) scale(1.2); }
         100% { transform: translateY(-50%) scale(1); }
       }
-      
-      /* תצוגת עזר לאיזור חיבור (נשארת למקרה הצורך, אך לא בשימוש כרגע בקוד ההדגשה) */
+
+      /* תצוגת עזר לאיזור חיבור (לא בשימוש כרגע) */
       .connection-area {
         position: absolute;
         background-color: rgba(255,0,0,0.2);
@@ -109,34 +107,34 @@
         z-index: 900;
         display: none;
       }
-      
+
       .connection-area.visible {
         display: block;
       }
-      
+
       /* אנימציות חיבור וניתוק */
-      @keyframes snapEffect { 0%{transform:scale(1)} 35%{transform:scale(1.05)} 70%{transform:scale(0.98)} 100%{transform:scale(1)} } 
+      @keyframes snapEffect { 0%{transform:scale(1)} 35%{transform:scale(1.05)} 70%{transform:scale(0.98)} 100%{transform:scale(1)} }
       .snap-animation { animation:snapEffect 0.3s ease-out; }
-      
-      @keyframes detachEffect { 0%{transform:translate(0,0) rotate(0)} 30%{transform:translate(3px,1px) rotate(0.8deg)} 60%{transform:translate(-2px,2px) rotate(-0.5deg)} 100%{transform:translate(0,0) rotate(0)} } 
+
+      @keyframes detachEffect { 0%{transform:translate(0,0) rotate(0)} 30%{transform:translate(3px,1px) rotate(0.8deg)} 60%{transform:translate(-2px,2px) rotate(-0.5deg)} 100%{transform:translate(0,0) rotate(0)} }
       .detach-animation { animation:detachEffect 0.3s ease-in-out; }
-      
-      #detach-menu { position:absolute; background-color:white; border:1px solid #ccc; border-radius:4px; box-shadow:0 3px 8px rgba(0,0,0,0.2); z-index:1100; padding:5px; font-size:14px; min-width:100px; } 
-      #detach-menu div { padding:6px 12px; cursor:pointer; border-radius:3px; } 
+
+      #detach-menu { position:absolute; background-color:white; border:1px solid #ccc; border-radius:4px; box-shadow:0 3px 8px rgba(0,0,0,0.2); z-index:1100; padding:5px; font-size:14px; min-width:100px; }
+      #detach-menu div { padding:6px 12px; cursor:pointer; border-radius:3px; }
       #detach-menu div:hover { background-color:#eee; }
-      
+
       body.user-select-none { user-select:none; -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; }
-      .connected-block, .has-connected-block { /* Optional styling for connected state */ }
-      
-      #sound-test-button { position:fixed; bottom:15px; right:15px; padding:8px 12px; background-color:#2196F3; color:white; border:none; border-radius:4px; cursor:pointer; z-index:9999; font-family:Arial,sans-serif; font-size:14px; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.2); transition:background-color .2s,opacity .5s ease-out; opacity:1; } 
-      #sound-test-button:hover { background-color:#0b7dda; } 
-      #sound-test-button.success { background-color:#4CAF50; } 
-      #sound-test-button.error { background-color:#f44336; } 
-      #sound-test-button.loading { background-color:#ff9800; cursor:wait; } 
+      .connected-block, .has-connected-block { /* Optional */ }
+
+      #sound-test-button { position:fixed; bottom:15px; right:15px; padding:8px 12px; background-color:#2196F3; color:white; border:none; border-radius:4px; cursor:pointer; z-index:9999; font-family:Arial,sans-serif; font-size:14px; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,0.2); transition:background-color .2s,opacity .5s ease-out; opacity:1; }
+      #sound-test-button:hover { background-color:#0b7dda; }
+      #sound-test-button.success { background-color:#4CAF50; }
+      #sound-test-button.error { background-color:#f44336; }
+      #sound-test-button.loading { background-color:#ff9800; cursor:wait; }
       #sound-test-button.hidden { opacity:0; pointer-events:none; }
     `;
     document.head.appendChild(style);
-    if (CONFIG.DEBUG) console.log('Styles added (Puzzle Connection System)');
+    if (CONFIG.DEBUG) console.log('Styles added (Puzzle Connection System - Visible Highlights)');
   }
 
   // ========================================================================
@@ -147,55 +145,40 @@
   function playSnapSound() { if(!CONFIG.PLAY_SOUND||!snapSound||!soundInitialized)return;if(!audioContextAllowed&&CONFIG.DEBUG)console.warn('Playing sound before user interaction.');try{if(snapSound.readyState<3){if(CONFIG.DEBUG)console.log('Snap sound skip: audio not ready.');return;}snapSound.pause();snapSound.currentTime=0;const pp=snapSound.play();if(pp!==undefined){pp.then(()=>{audioContextAllowed=true;if(CONFIG.DEBUG>1)console.log('Snap sound played.');}).catch(err=>{if(err.name==='NotAllowedError'){console.warn('Snap sound blocked.');audioContextAllowed=false;if(!document.getElementById('sound-test-button'))addSoundTestButton();}else if(err.name!=='AbortError'){console.error('Err play snap sound:',err);}});}}catch(err){console.error('Unexpected play sound err:',err);}}
 
   // ========================================================================
-  // ניהול נקודות חיבור - טיפול בנקודות החיבור הויזואליות (ללא שינוי פונקציונלי)
+  // ניהול נקודות חיבור - טיפול בנקודות החיבור הויזואליות
   // ========================================================================
-  
+
   // הוספת נקודות חיבור לבלוק
   function addConnectionPoints(block) {
     if (!block) return;
-    
-    // בדוק אם כבר יש נקודות חיבור
     if (block.querySelector('.right-connection-point')) return;
-    
-    // צור נקודת חיבור ימנית (בליטה)
     const rightPoint = document.createElement('div');
     rightPoint.className = 'right-connection-point';
     block.appendChild(rightPoint);
-    
-    // צור נקודת חיבור שמאלית (שקע)
     const leftPoint = document.createElement('div');
     leftPoint.className = 'left-connection-point';
     block.appendChild(leftPoint);
-    
     if (CONFIG.DEBUG > 1) console.log(`Added connection points (DOM elements) to block ${block.id}`);
   }
-  
-  // "הדגשת" נקודת חיבור - הפונקציה עדיין מוסיפה את הקלאס, אך ה-CSS מונע ממנו להיראות
+
+  // הדגשת נקודת חיבור (הופכת לנראית בזכות ה-CSS)
   function highlightConnectionPoint(block, isLeft) {
     if (!block) return false;
-    
-    // ודא שיש נקודות חיבור (אלמנטים)
-    addConnectionPoints(block);
-    
-    // בחר את נקודת החיבור המתאימה והוסף לה את הקלאס (שכעת לא הופך אותה לנראית)
+    addConnectionPoints(block); // Ensure elements exist
     const connectionPoint = block.querySelector(isLeft ? '.left-connection-point' : '.right-connection-point');
     if (connectionPoint) {
-      connectionPoint.classList.add('connection-point-visible');
-      // אין צורך בשינוי כאן - הקלאס מתווסף, אך ה-CSS מונע את הופעת הנקודה
+      connectionPoint.classList.add('connection-point-visible'); // CSS makes this visible
       return true;
     }
-    
     return false;
   }
-  
-  // ניקוי כל ה"הדגשות" - מסיר את הקלאס
+
+  // ניקוי כל ההדגשות (מסיר את הקלאס שהופך אותן לנראות)
   function clearAllHighlights() {
-    // הסר את הקלאס connection-point-visible מכל הנקודות
     document.querySelectorAll('.connection-point-visible').forEach(point => {
       point.classList.remove('connection-point-visible');
     });
-    
-    // הסר תצוגות אזורי חיבור (אם היו כאלה בשימוש)
+    // גם מנקה את אזורי החיבור אם היו בשימוש
     document.querySelectorAll('.connection-area.visible').forEach(area => {
       area.classList.remove('visible');
     });
@@ -219,43 +202,42 @@
   function handleMouseMove(e) { if(!isDraggingBlock||!currentDraggedBlock)return;e.preventDefault();const pE=document.getElementById('program-blocks');if(!pE){handleMouseUp(e);return;}const pR=pE.getBoundingClientRect();let nL=e.clientX-pR.left-dragOffset.x+pE.scrollLeft;let nT=e.clientY-pR.top-dragOffset.y+pE.scrollTop;const bW=currentDraggedBlock.offsetWidth;const bH=currentDraggedBlock.offsetHeight;const sW=pE.scrollWidth;const sH=pE.scrollHeight;nL=Math.max(0,Math.min(nL,sW-bW));nT=Math.max(0,Math.min(nT,sH-bH));currentDraggedBlock.style.left=Math.round(nL)+'px';currentDraggedBlock.style.top=Math.round(nT)+'px';checkAndHighlightSnapPossibility(); }
 
   // ========================================================================
-  // בדיקת הצמדה ו"הדגשה" (בלתי נראית) - ללא שינוי פונקציונלי בלוגיקה
+  // בדיקת הצמדה והדגשה (נראית) - ללא שינוי פונקציונלי בלוגיקה
   // ========================================================================
   function checkAndHighlightSnapPossibility() {
     if (!currentDraggedBlock) return;
-    const programmingArea = document.getElementById('program-blocks'); 
+    const programmingArea = document.getElementById('program-blocks');
     if (!programmingArea) return;
-    
+
     const sourceRect = currentDraggedBlock.getBoundingClientRect();
     const allVisibleBlocks = Array.from(programmingArea.querySelectorAll('.block-container:not(.snap-source)'))
                               .filter(block => block.offsetParent !== null);
-    
-    let bestTarget = null; 
+
+    let bestTarget = null;
     let bestDirection = null;
     let minDistance = CONFIG.CONNECT_THRESHOLD + 1;
 
-    // ניקוי כל ה"הדגשות" הקודמות (מסיר את הקלאס .connection-point-visible)
+    // ניקוי כל ההדגשות הקודמות (מסיר קלאס .connection-point-visible)
     clearAllHighlights();
-    potentialSnapTarget = null; 
+    potentialSnapTarget = null;
     snapDirection = null;
 
     for (const targetBlock of allVisibleBlocks) {
       if (!targetBlock.id) generateUniqueId(targetBlock);
-      
+
       const targetRect = targetBlock.getBoundingClientRect();
       const targetConnectedLeft = targetBlock.hasAttribute('data-connected-from-left');
       const targetConnectedRight = targetBlock.hasAttribute('data-connected-from-right');
 
-      // בדיקת חפיפה אנכית בסיסית
+      // בדיקת חפיפה אנכית
       const topOverlap = Math.max(sourceRect.top, targetRect.top);
       const bottomOverlap = Math.min(sourceRect.bottom, targetRect.bottom);
       const verticalOverlap = Math.max(0, bottomOverlap - topOverlap);
       const minHeightReq = Math.min(sourceRect.height, targetRect.height) * CONFIG.VERTICAL_OVERLAP_REQ;
-      
-      // אם אין מספיק חפיפה אנכית, המשך לבלוק הבא
+
       if (verticalOverlap < minHeightReq || verticalOverlap <= 0) continue;
-      
-      // 1. בדיקת צד ימין של מקור לצד שמאל של יעד
+
+      // בדיקת צד ימין של מקור לשמאל יעד
       if (!targetConnectedLeft) {
         const distance = Math.abs(sourceRect.right - targetRect.left);
         if (distance < minDistance) {
@@ -264,8 +246,8 @@
           bestDirection = 'left';
         }
       }
-      
-      // 2. בדיקת צד שמאל של מקור לצד ימין של יעד
+
+      // בדיקת צד שמאל של מקור לימין יעד
       if (!targetConnectedRight) {
         const distance = Math.abs(sourceRect.left - targetRect.right);
         if (distance < minDistance) {
@@ -276,30 +258,29 @@
       }
     }
 
-    // אם נמצא יעד מתאים בתחום הסף
+    // אם נמצא יעד מתאים, הדגש (הפוך לנראה)
     if (bestTarget && minDistance <= CONFIG.CONNECT_THRESHOLD) {
-      if (CONFIG.DEBUG > 1) console.log(`[Highlight] Threshold met: ${currentDraggedBlock.id} -> ${bestTarget.id} (${bestDirection}). Dist=${minDistance.toFixed(1)}px. (Highlight points are hidden via CSS)`);
+      if (CONFIG.DEBUG > 1) console.log(`[Highlight] Threshold met: ${currentDraggedBlock.id} -> ${bestTarget.id} (${bestDirection}). Dist=${minDistance.toFixed(1)}px. Highlighting points.`);
       potentialSnapTarget = bestTarget;
       snapDirection = bestDirection;
-      
-      // הפעלת ה"הדגשה" (מוסיף קלאס, אך CSS מונע נראות)
+
       try {
         if (bestDirection === 'left') {
-          highlightConnectionPoint(bestTarget, true); // "Highlight" (invisible) left point on target
-          highlightConnectionPoint(currentDraggedBlock, false); // "Highlight" (invisible) right point on source
+          highlightConnectionPoint(bestTarget, true); // Highlight (visible) left point on target
+          highlightConnectionPoint(currentDraggedBlock, false); // Highlight (visible) right point on source
         } else if (bestDirection === 'right') {
-          highlightConnectionPoint(bestTarget, false); // "Highlight" (invisible) right point on target
-          highlightConnectionPoint(currentDraggedBlock, true); // "Highlight" (invisible) left point on source
+          highlightConnectionPoint(bestTarget, false); // Highlight (visible) right point on target
+          highlightConnectionPoint(currentDraggedBlock, true); // Highlight (visible) left point on source
         }
       } catch (err) {
-        console.error("Error calling highlightConnectionPoint (points hidden anyway):", err);
+        console.error("Error calling highlightConnectionPoint:", err);
       }
     }
-    // אין צורך ב-else לניקוי הדגשות, clearAllHighlights בתחילת הפונקציה מטפל בזה.
+    // No else needed, clearAllHighlights at the start handles removal
   }
 
   // ========================================================================
-  // טיפול בשחרור העכבר (MouseUp) - ללא שינוי בלוגיקה
+  // טיפול בשחרור העכבר (MouseUp) - נוספה קריאה ל-clearAllHighlights
   // ========================================================================
   function handleMouseUp(e) {
     if (!isDraggingBlock || !currentDraggedBlock) return;
@@ -310,7 +291,7 @@
 
     if (CONFIG.DEBUG) console.log(`[MouseUp] Releasing block ${blockReleased.id}. Candidate: ${candidateTarget?.id || 'none'}, direction: ${candidateDirection || 'none'}`);
 
-    // ניקוי מצב הגרירה וה"הדגשות" (מסיר קלאס connection-point-visible)
+    // ניקוי מצב הגרירה וההדגשות הראשוניות (מהמיקום האחרון של הגרירה)
     isDraggingBlock = false;
     currentDraggedBlock = null;
     potentialSnapTarget = null;
@@ -318,11 +299,11 @@
     document.body.classList.remove('user-select-none');
     blockReleased.classList.remove('snap-source');
     blockReleased.style.zIndex = '';
-    
-    // ניקוי נקודות חיבור ויזואליות (בכל מקרה לא נראו)
+
+    // ניקוי ראשוני של נקודות החיבור שהודגשו ב-MouseMove האחרון
     clearAllHighlights();
 
-    // החלטה על הצמדה - מבוססת רק על אם היה מועמד במהלך הגרירה
+    // החלטה על הצמדה
     let performSnap = false;
     if (candidateTarget && candidateDirection && document.body.contains(candidateTarget)) {
         if (CONFIG.DEBUG) console.log(`[MouseUp] Candidate target ${candidateTarget.id} identified during drag. Attempting snap.`);
@@ -334,6 +315,11 @@
     // בצע את ההצמדה אם הוחלט כך
     if (performSnap) {
       const snapSuccess = performBlockSnap(blockReleased, candidateTarget, candidateDirection);
+
+      // *** התיקון כאן: ודא שההדגשות מנוקות *לאחר* ניסיון ההצמדה ***
+      // זה קורה אחרי שהצליל מתנגן בתוך performBlockSnap (אם הצליח)
+      clearAllHighlights(); // Ensure points are hidden immediately after snap attempt/success
+
       if (!snapSuccess) {
           blockReleased.draggable = true;
           if (CONFIG.DEBUG) console.log(`[MouseUp] Snap attempt failed. Block ${blockReleased.id} remains draggable.`);
@@ -341,82 +327,76 @@
            if (CONFIG.DEBUG) console.log(`[MouseUp] Snap successful. Block ${blockReleased.id} is connected.`);
       }
     } else {
+      // אם לא בוצעה הצמדה, הבלוק נשאר חופשי וההדגשות כבר נוקו למעלה
       if (CONFIG.DEBUG) console.log(`[MouseUp] No snap performed. Block ${blockReleased.id} remains free.`);
-      blockReleased.draggable = true; // Make sure it's draggable if not snapped
+      blockReleased.draggable = true;
     }
   }
+
 
   // ========================================================================
   // ביצוע ההצמדה הפיזית - חיבור פאזל מדויק - ללא שינוי
   // ========================================================================
   function performBlockSnap(sourceBlock, targetBlock, direction) {
-    if (!sourceBlock || !targetBlock || !document.body.contains(targetBlock) || targetBlock.offsetParent === null) { 
-      console.error("[PerformSnap] Invalid block(s). Snap cancelled."); 
-      return false; 
+    if (!sourceBlock || !targetBlock || !document.body.contains(targetBlock) || targetBlock.offsetParent === null) {
+      console.error("[PerformSnap] Invalid block(s). Snap cancelled.");
+      return false;
     }
-    
-    // בדיקה אחרונה לפני שינוי (חשוב למקרה של תחרות)
-    if ((direction === 'left' && targetBlock.hasAttribute('data-connected-from-left')) || 
-        (direction === 'right' && targetBlock.hasAttribute('data-connected-from-right'))) { 
-      console.warn(`[PerformSnap] Snap cancelled: Target ${targetBlock.id} conflict on side '${direction}'.`); 
-      return false; 
+
+    if ((direction === 'left' && targetBlock.hasAttribute('data-connected-from-left')) ||
+        (direction === 'right' && targetBlock.hasAttribute('data-connected-from-right'))) {
+      console.warn(`[PerformSnap] Snap cancelled: Target ${targetBlock.id} conflict on side '${direction}'.`);
+      return false;
     }
-    
+
     if (CONFIG.DEBUG) console.log(`[PerformSnap] Snapping ${sourceBlock.id} to ${targetBlock.id} (${direction})`);
-    
+
     try {
       const sourceRect = sourceBlock.getBoundingClientRect();
       const targetRect = targetBlock.getBoundingClientRect();
       const pE = document.getElementById('program-blocks');
       const pR = pE.getBoundingClientRect();
-      
+
       let finalLeft, finalTop;
-      
-      // חיבור פאזל מדויק - החישוב השתנה לחלוטין!
+
       if (direction === 'left') {
-        // המקור מימין ליעד - השקע במקור חייב לכסות את הבליטה ביעד
         finalLeft = targetRect.left - sourceRect.width + CONFIG.PUZZLE_LEFT_SOCKET_WIDTH;
         finalTop = targetRect.top + CONFIG.VERTICAL_CENTER_OFFSET;
       } else { // direction === 'right'
-        // המקור משמאל ליעד - השקע ביעד חייב לכסות את הבליטה במקור
         finalLeft = targetRect.right - CONFIG.PUZZLE_RIGHT_BULGE_WIDTH;
         finalTop = targetRect.top + CONFIG.VERTICAL_CENTER_OFFSET;
       }
-      
-      // התאמה עדינה אופקית נוספת
+
       finalLeft += CONFIG.HORIZONTAL_FINE_TUNING;
-      
-      // המרה למיקום יחסי לאיזור התכנות
+
       let styleLeft = finalLeft - pR.left + pE.scrollLeft;
       let styleTop = finalTop - pR.top + pE.scrollTop;
-      
-      // *** הזזת הבלוק הנגרר למיקום הסופי - זו ה"קפיצה" לחיבור פאזל ***
+
       sourceBlock.style.position = 'absolute';
       sourceBlock.style.left = `${Math.round(styleLeft)}px`;
       sourceBlock.style.top = `${Math.round(styleTop)}px`;
       sourceBlock.style.margin = '0';
-      
-      // עדכון מאפיינים
+
       sourceBlock.setAttribute('data-connected-to', targetBlock.id);
       sourceBlock.setAttribute('data-connection-direction', direction);
       targetBlock.setAttribute(
-        direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right', 
+        direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right',
         sourceBlock.id
       );
       sourceBlock.classList.add('connected-block');
       targetBlock.classList.add('has-connected-block');
-      
-      playSnapSound(); // נגן צליל
+
+      playSnapSound(); // Play sound on successful snap logic start
       addSnapEffectAnimation(sourceBlock);
-      sourceBlock.draggable = false; // מנע גרירה כשהוא מחובר
-      
+      sourceBlock.draggable = false;
+
       if (CONFIG.DEBUG) console.log(`[PerformSnap] Success. ${sourceBlock.id} pos: L=${styleLeft.toFixed(0)}, T=${styleTop.toFixed(0)}.`);
       return true;
     } catch (err) {
       console.error(`[PerformSnap] Error:`, err);
-      try { 
-        detachBlock(sourceBlock, false); // Try to clean up on error
-      } catch (derr) { 
+      try {
+        detachBlock(sourceBlock, false);
+      } catch (derr) {
         console.error(`[PerformSnap] Cleanup detach error:`, derr);
       }
       sourceBlock.draggable = true;
@@ -447,19 +427,17 @@
       window.addEventListener('scroll', removeDetachMenu, {capture: true, once: true});
     }, 0);
   }
-  
+
   function closeMenuOutside(e) {
     const m = document.getElementById('detach-menu');
     if (m && !m.contains(e.target)) {
       removeDetachMenu();
     } else if (m) {
-      // If clicked inside menu, re-add listener after this event bubbles up
       setTimeout(() => document.addEventListener('click', closeMenuOutside, {capture: true, once: true}), 0);
     }
-    // Always remove scroll listener if menu exists after click logic
     if (m) window.removeEventListener('scroll', removeDetachMenu, {capture: true});
   }
-  
+
   function removeDetachMenu() {
     const m = document.getElementById('detach-menu');
     if (m) {
@@ -468,78 +446,74 @@
       m.remove();
     }
   }
-  
+
   function detachBlock(btd, animate=true) {
     if (!btd || !btd.hasAttribute('data-connected-to')) return;
-    
+
     const tid = btd.getAttribute('data-connected-to');
     const dir = btd.getAttribute('data-connection-direction');
-    
+
     if (!tid || !dir) {
       console.warn(`[Detach] Missing data on ${btd.id}. Cleaning attributes.`);
       btd.removeAttribute('data-connected-to');
       btd.removeAttribute('data-connection-direction');
       btd.classList.remove('connected-block');
-      btd.draggable = true; // Ensure it becomes draggable
+      btd.draggable = true;
       return;
     }
-    
+
     if (CONFIG.DEBUG) console.log(`[Detach] Detaching ${btd.id} from ${tid}`);
-    
+
     btd.removeAttribute('data-connected-to');
     btd.removeAttribute('data-connection-direction');
     btd.classList.remove('connected-block');
-    btd.draggable = true; // Block is now free, make it draggable
-    
-    // נקה הדגשות נקודות חיבור (למקרה שהיו פעילות איכשהו, לא צפוי כאן)
-    clearAllHighlights(); // Added for robustness, though points are hidden
-    
+    btd.draggable = true;
+
+    // Clear potential lingering highlights on detach
+    clearAllHighlights(); // Ensures points are hidden after detach
+
     const tb = document.getElementById(tid);
     if (tb) {
       tb.removeAttribute(dir === 'left' ? 'data-connected-from-left' : 'data-connected-from-right');
-      // Check if target block still has any connections left
-      const isStillConnected = tb.hasAttribute('data-connected-from-left') || 
-                               tb.hasAttribute('data-connected-from-right') || 
-                               tb.hasAttribute('data-connected-to'); // Check if it's connected TO something else
+      const isStillConnected = tb.hasAttribute('data-connected-from-left') ||
+                               tb.hasAttribute('data-connected-from-right') ||
+                               tb.hasAttribute('data-connected-to');
       if (!isStillConnected) {
           tb.classList.remove('has-connected-block');
       }
     } else {
       console.warn(`[Detach] Target block with ID ${tid} not found.`);
     }
-    
+
     if (animate) addDetachEffectAnimation(btd);
-    
+
     if (CONFIG.DEBUG) console.log(`[Detach] Finished detaching ${btd.id}. Draggable: ${btd.draggable}`);
   }
-  
+
   function addSnapEffectAnimation(b) {
     b.classList.remove('snap-animation');
-    void b.offsetWidth; // Trigger reflow
+    void b.offsetWidth;
     b.classList.add('snap-animation');
     b.addEventListener('animationend', () => b.classList.remove('snap-animation'), {once: true});
   }
-  
+
   function addDetachEffectAnimation(b) {
     b.classList.remove('detach-animation');
-    void b.offsetWidth; // Trigger reflow
+    void b.offsetWidth;
     b.classList.add('detach-animation');
     b.addEventListener('animationend', () => b.classList.remove('detach-animation'), {once: true});
   }
-  
+
   function generateUniqueId(b) {
     if (b.id) return b.id;
-    // Use a more robust prefix or random generation
     const p = b.dataset.type || 'block';
-    let s = Math.random().toString(36).substring(2, 8); // Generate a random string
+    let s = Math.random().toString(36).substring(2, 8);
     let id = `${p}-${s}`;
     let i = 0;
-    // Ensure uniqueness (highly unlikely collision, but good practice)
     while (document.getElementById(id) && i < 10) {
       s = Math.random().toString(36).substring(2, 8);
       id = `${p}-${s}-${i++}`;
     }
-    // Fallback if somehow still colliding after 10 tries
     if (document.getElementById(id)) {
          id = `${p}-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
     }
@@ -549,29 +523,28 @@
   }
 
   // ========================================================================
-  // אתחול המערכת כולה - ללא שינוי
+  // אתחול המערכת כולה
   // ========================================================================
   function initializeSystem() {
-    const initFlag = 'blockLinkageInitialized_v3_8_hiddenPoints'; // Changed flag slightly
+    const initFlag = 'blockLinkageInitialized_v3_8_1_VisFix'; // Updated flag
     if (window[initFlag]) {
-        if (CONFIG.DEBUG) console.log("Block linkage system v3.8 (hidden points) already initialized. Skipping.");
+        if (CONFIG.DEBUG) console.log("Block linkage system v3.8.1 (Visible Highlight Fix) already initialized. Skipping.");
         return;
     }
 
-    // גרסה 3.8 - חיבור פאזל מדויק, עם נקודות חיבור מוסתרות
-    addHighlightStyles(); // Adds styles with opacity: 0 for .connection-point-visible
+    addHighlightStyles(); // Adds styles with opacity: 1 for .connection-point-visible
     initAudio();
     initProgrammingAreaListeners();
     observeNewBlocks();
     initExistingBlocks();
     initGlobalMouseListeners();
 
-    if (CONFIG.PLAY_SOUND) { 
-      addSoundTestButton(); 
+    if (CONFIG.PLAY_SOUND) {
+      addSoundTestButton();
     }
 
     window[initFlag] = true;
-    console.log(`Block linkage system initialized (Version 3.8 - True Puzzle Connection - Hidden Points)`);
+    console.log(`Block linkage system initialized (Version 3.8.1 - Visible Highlight Fix)`);
     console.log(`Configuration: Right Bulge Width=${CONFIG.PUZZLE_RIGHT_BULGE_WIDTH}px, Left Socket Width=${CONFIG.PUZZLE_LEFT_SOCKET_WIDTH}px`);
   }
 
