@@ -21,7 +21,7 @@
 
   // קונפיגורציה - פרמטרים שניתן להתאים
   const CONFIG = {
-    CONNECT_THRESHOLD: 25, // סף רחב יותר להפעלת זיהוי חיבור
+    CONNECT_THRESHOLD: 35, // סף רחב יותר להפעלת זיהוי חיבור
     VERTICAL_ALIGN_THRESHOLD: 20,
     VERTICAL_OVERLAP_REQ: 0.4, // דרישה ל-40% חפיפה אנכית לפחות
     BLOCK_GAP: 0, // אין רווח - חיבור שקע-תקע
