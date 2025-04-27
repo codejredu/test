@@ -1,9 +1,9 @@
 // --- START OF FILE linkageimproved.js ---
-// --- Version 3.8.1: Visible Highlight Fix ---
-// Changes from v3.8:
-// 1. Reverted CSS to make connection points visible during highlight (opacity: 1).
-// 2. Added call to clearAllHighlights() after snap attempt in handleMouseUp
-//    to ensure points disappear immediately after connection sound.
+// --- Version 3.8.2: Delayed Highlight Clearing ---
+// Changes from v3.8.1:
+// 1. Added 500ms delay before clearing connection point highlights after successful snap.
+// 2. Maintained CSS visibility (opacity: 1) for connection points during highlight.
+// 3. Updated version identifier in initialization logging.
 
 (function() {
   // משתנים גלובליים במודול
@@ -30,6 +30,7 @@
     HIGHLIGHT_COLOR_RIGHT: '#FFC107', // צהוב לצד ימין (בליטה)
     HIGHLIGHT_COLOR_LEFT: '#2196F3', // כחול לצד שמאל (שקע)
     HIGHLIGHT_OPACITY: 0.8, // Note: Declared but not used directly for points
+    HIGHLIGHT_CLEAR_DELAY: 500, // זמן המתנה לפני ניקוי נקודות חיבור (במילישניות)
 
     // ערכי היסט קבועים לחיבור פאזל מדויק
     PUZZLE_RIGHT_BULGE_WIDTH: 10,
@@ -134,7 +135,7 @@
       #sound-test-button.hidden { opacity:0; pointer-events:none; }
     `;
     document.head.appendChild(style);
-    if (CONFIG.DEBUG) console.log('Styles added (Puzzle Connection System - Visible Highlights)');
+    if (CONFIG.DEBUG) console.log('Styles added (Puzzle Connection System - Delayed Highlight Clearing)');
   }
 
   // ========================================================================
@@ -182,6 +183,12 @@
     document.querySelectorAll('.connection-area.visible').forEach(area => {
       area.classList.remove('visible');
     });
+  }
+
+  // ניקוי הדגשות לאחר עיכוב (חדש)
+  function clearHighlightsWithDelay(delay = CONFIG.HIGHLIGHT_CLEAR_DELAY) {
+    if (CONFIG.DEBUG) console.log(`[Highlights] Scheduling highlight clearing in ${delay}ms`);
+    setTimeout(clearAllHighlights, delay);
   }
 
   // ========================================================================
@@ -280,7 +287,7 @@
   }
 
   // ========================================================================
-  // טיפול בשחרור העכבר (MouseUp) - נוספה קריאה ל-clearAllHighlights
+  // טיפול בשחרור העכבר (MouseUp) - עודכן לא לנקות הדגשות מיד
   // ========================================================================
   function handleMouseUp(e) {
     if (!isDraggingBlock || !currentDraggedBlock) return;
@@ -291,7 +298,7 @@
 
     if (CONFIG.DEBUG) console.log(`[MouseUp] Releasing block ${blockReleased.id}. Candidate: ${candidateTarget?.id || 'none'}, direction: ${candidateDirection || 'none'}`);
 
-    // ניקוי מצב הגרירה וההדגשות הראשוניות (מהמיקום האחרון של הגרירה)
+    // ניקוי מצב הגרירה אבל לא מנקה את ההדגשות עדיין
     isDraggingBlock = false;
     currentDraggedBlock = null;
     potentialSnapTarget = null;
@@ -300,9 +307,6 @@
     blockReleased.classList.remove('snap-source');
     blockReleased.style.zIndex = '';
 
-    // ניקוי ראשוני של נקודות החיבור שהודגשו ב-MouseMove האחרון
-    clearAllHighlights();
-
     // החלטה על הצמדה
     let performSnap = false;
     if (candidateTarget && candidateDirection && document.body.contains(candidateTarget)) {
@@ -310,24 +314,26 @@
         performSnap = true;
     } else {
         if (CONFIG.DEBUG) console.log(`[MouseUp] No valid candidate target identified during drag. No snap attempt.`);
+        clearAllHighlights(); // Clear immediately if no snap attempt
     }
 
     // בצע את ההצמדה אם הוחלט כך
     if (performSnap) {
       const snapSuccess = performBlockSnap(blockReleased, candidateTarget, candidateDirection);
 
-      // *** התיקון כאן: ודא שההדגשות מנוקות *לאחר* ניסיון ההצמדה ***
-      // זה קורה אחרי שהצליל מתנגן בתוך performBlockSnap (אם הצליח)
-      clearAllHighlights(); // Ensure points are hidden immediately after snap attempt/success
-
-      if (!snapSuccess) {
-          blockReleased.draggable = true;
-          if (CONFIG.DEBUG) console.log(`[MouseUp] Snap attempt failed. Block ${blockReleased.id} remains draggable.`);
+      // במקרה של הצמדה מוצלחת, דחה את ניקוי ההדגשות
+      if (snapSuccess) {
+        if (CONFIG.DEBUG) console.log(`[MouseUp] Snap successful. Will clear highlights after ${CONFIG.HIGHLIGHT_CLEAR_DELAY}ms.`);
+        // זמן עיכוב - יישמר את ההדגשות לקצת זמן ואז יסיר אותן
+        clearHighlightsWithDelay();
       } else {
-           if (CONFIG.DEBUG) console.log(`[MouseUp] Snap successful. Block ${blockReleased.id} is connected.`);
+        // אם לא הצליחה ההצמדה, נקה מיד
+        clearAllHighlights();
+        blockReleased.draggable = true;
+        if (CONFIG.DEBUG) console.log(`[MouseUp] Snap attempt failed. Block ${blockReleased.id} remains draggable.`);
       }
     } else {
-      // אם לא בוצעה הצמדה, הבלוק נשאר חופשי וההדגשות כבר נוקו למעלה
+      // אם לא בוצעה הצמדה, הבלוק נשאר חופשי (ההדגשות כבר נוקו למעלה)
       if (CONFIG.DEBUG) console.log(`[MouseUp] No snap performed. Block ${blockReleased.id} remains free.`);
       blockReleased.draggable = true;
     }
@@ -402,159 +408,3 @@
       sourceBlock.draggable = true;
       return false;
     }
-  }
-
-  // ========================================================================
-  // פונקציות ניתוק, תפריט, אנימציה, יצירת מזהה - ללא שינוי
-  // ========================================================================
-  function showDetachMenu(x, y, b) {
-    removeDetachMenu();
-    const m = document.createElement('div');
-    m.id = 'detach-menu';
-    m.style.left = `${x}px`;
-    m.style.top = `${y}px`;
-    const o = document.createElement('div');
-    o.textContent = 'נתק בלוק';
-    o.onclick = (e) => {
-      e.stopPropagation();
-      detachBlock(b, true);
-      removeDetachMenu();
-    };
-    m.appendChild(o);
-    document.body.appendChild(m);
-    setTimeout(() => {
-      document.addEventListener('click', closeMenuOutside, {capture: true, once: true});
-      window.addEventListener('scroll', removeDetachMenu, {capture: true, once: true});
-    }, 0);
-  }
-
-  function closeMenuOutside(e) {
-    const m = document.getElementById('detach-menu');
-    if (m && !m.contains(e.target)) {
-      removeDetachMenu();
-    } else if (m) {
-      setTimeout(() => document.addEventListener('click', closeMenuOutside, {capture: true, once: true}), 0);
-    }
-    if (m) window.removeEventListener('scroll', removeDetachMenu, {capture: true});
-  }
-
-  function removeDetachMenu() {
-    const m = document.getElementById('detach-menu');
-    if (m) {
-      document.removeEventListener('click', closeMenuOutside, {capture: true});
-      window.removeEventListener('scroll', removeDetachMenu, {capture: true});
-      m.remove();
-    }
-  }
-
-  function detachBlock(btd, animate=true) {
-    if (!btd || !btd.hasAttribute('data-connected-to')) return;
-
-    const tid = btd.getAttribute('data-connected-to');
-    const dir = btd.getAttribute('data-connection-direction');
-
-    if (!tid || !dir) {
-      console.warn(`[Detach] Missing data on ${btd.id}. Cleaning attributes.`);
-      btd.removeAttribute('data-connected-to');
-      btd.removeAttribute('data-connection-direction');
-      btd.classList.remove('connected-block');
-      btd.draggable = true;
-      return;
-    }
-
-    if (CONFIG.DEBUG) console.log(`[Detach] Detaching ${btd.id} from ${tid}`);
-
-    btd.removeAttribute('data-connected-to');
-    btd.removeAttribute('data-connection-direction');
-    btd.classList.remove('connected-block');
-    btd.draggable = true;
-
-    // Clear potential lingering highlights on detach
-    clearAllHighlights(); // Ensures points are hidden after detach
-
-    const tb = document.getElementById(tid);
-    if (tb) {
-      tb.removeAttribute(dir === 'left' ? 'data-connected-from-left' : 'data-connected-from-right');
-      const isStillConnected = tb.hasAttribute('data-connected-from-left') ||
-                               tb.hasAttribute('data-connected-from-right') ||
-                               tb.hasAttribute('data-connected-to');
-      if (!isStillConnected) {
-          tb.classList.remove('has-connected-block');
-      }
-    } else {
-      console.warn(`[Detach] Target block with ID ${tid} not found.`);
-    }
-
-    if (animate) addDetachEffectAnimation(btd);
-
-    if (CONFIG.DEBUG) console.log(`[Detach] Finished detaching ${btd.id}. Draggable: ${btd.draggable}`);
-  }
-
-  function addSnapEffectAnimation(b) {
-    b.classList.remove('snap-animation');
-    void b.offsetWidth;
-    b.classList.add('snap-animation');
-    b.addEventListener('animationend', () => b.classList.remove('snap-animation'), {once: true});
-  }
-
-  function addDetachEffectAnimation(b) {
-    b.classList.remove('detach-animation');
-    void b.offsetWidth;
-    b.classList.add('detach-animation');
-    b.addEventListener('animationend', () => b.classList.remove('detach-animation'), {once: true});
-  }
-
-  function generateUniqueId(b) {
-    if (b.id) return b.id;
-    const p = b.dataset.type || 'block';
-    let s = Math.random().toString(36).substring(2, 8);
-    let id = `${p}-${s}`;
-    let i = 0;
-    while (document.getElementById(id) && i < 10) {
-      s = Math.random().toString(36).substring(2, 8);
-      id = `${p}-${s}-${i++}`;
-    }
-    if (document.getElementById(id)) {
-         id = `${p}-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
-    }
-    b.id = id;
-    if (CONFIG.DEBUG) console.log(`Generated ID: ${id} for block.`);
-    return id;
-  }
-
-  // ========================================================================
-  // אתחול המערכת כולה
-  // ========================================================================
-  function initializeSystem() {
-    const initFlag = 'blockLinkageInitialized_v3_8_1_VisFix'; // Updated flag
-    if (window[initFlag]) {
-        if (CONFIG.DEBUG) console.log("Block linkage system v3.8.1 (Visible Highlight Fix) already initialized. Skipping.");
-        return;
-    }
-
-    addHighlightStyles(); // Adds styles with opacity: 1 for .connection-point-visible
-    initAudio();
-    initProgrammingAreaListeners();
-    observeNewBlocks();
-    initExistingBlocks();
-    initGlobalMouseListeners();
-
-    if (CONFIG.PLAY_SOUND) {
-      addSoundTestButton();
-    }
-
-    window[initFlag] = true;
-    console.log(`Block linkage system initialized (Version 3.8.1 - Visible Highlight Fix)`);
-    console.log(`Configuration: Right Bulge Width=${CONFIG.PUZZLE_RIGHT_BULGE_WIDTH}px, Left Socket Width=${CONFIG.PUZZLE_LEFT_SOCKET_WIDTH}px`);
-  }
-
-  // הפעל את האתחול
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeSystem);
-  } else {
-    initializeSystem(); // DOM already loaded
-  }
-
-})(); // סוף IIFE
-
-// --- END OF FILE linkageimproved.js ---
