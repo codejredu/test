@@ -1,10 +1,10 @@
 // --- START OF FILE linkageimproved.js ---
-// --- Version 3.8.1: True Puzzle Connection with Auto-Hide All Indicators ---
+// --- Version 3.9: True Puzzle Connection with Fading Indicators ---
 // Changes from previous versions:
 // 1. Creates real puzzle-piece connections
 // 2. Uses hardcoded offset values for puzzle piece alignment
 // 3. Visualizes connection points based on actual SVG structure
-// 4. Auto-hides ALL visual indicators after connection (frames and connection points)
+// 4. Indicators now disappear after 500 milliseconds
 
 (function() {
   // משתנים גלובליים במודול
@@ -17,7 +17,7 @@
   let snapSound = null;
   let audioContextAllowed = false;
   let soundInitialized = false;
-  let indicatorsHideTimeout = null; // משתנה חדש לשמירת מזהה הטיימר
+  let indicatorsTimeout = null; // חדש: טיימר למחיקת חיווים
 
   // קונפיגורציה - פרמטרים שניתן להתאים
   const CONFIG = {
@@ -32,15 +32,13 @@
     HIGHLIGHT_COLOR_RIGHT: '#FFC107', // צהוב לצד ימין (בליטה)
     HIGHLIGHT_COLOR_LEFT: '#2196F3', // כחול לצד שמאל (שקע)
     HIGHLIGHT_OPACITY: 0.8, // אטימות ההדגשה
+    INDICATORS_FADE_DELAY: 500, // חדש: זמן בms להעלמת חיווים אחרי התחברות
     
     // ערכי היסט קבועים לחיבור פאזל מדויק - ערכים אלה יכולים להשתנות בהתאם לעיצוב ה-SVG
     PUZZLE_RIGHT_BULGE_WIDTH: 10, // רוחב הבליטה בצד ימין (בפיקסלים)
     PUZZLE_LEFT_SOCKET_WIDTH: 10, // רוחב השקע בצד שמאל (בפיקסלים)
     VERTICAL_CENTER_OFFSET: 0, // היסט אנכי למרכוז (בפיקסלים)
-    HORIZONTAL_FINE_TUNING: -9, // כוונון עדין אופקי (בפיקסלים)
-    
-    // הגדרה חדשה - זמן להסתרת כל החיוויים (במילישניות)
-    INDICATORS_HIDE_DELAY: 800 // זמן קצר מאוד כמבוקש
+    HORIZONTAL_FINE_TUNING: -9 // כוונון עדין אופקי (בפיקסלים)
   };
 
   // ========================================================================
@@ -95,17 +93,6 @@
       .connection-point-visible {
         opacity: 1;
         animation: pulseConnectionPoint 0.8s infinite;
-      }
-      
-      /* מסגרות חיבור */
-      .blue-frame {
-        box-shadow: 0 0 0 2px #2196F3, 0 0 8px 2px rgba(33,150,243,0.6);
-        z-index: 1004;
-      }
-      
-      .green-frame {
-        box-shadow: 0 0 0 2px #4CAF50, 0 0 8px 2px rgba(76,175,80,0.6);
-        z-index: 1004;
       }
       
       /* אנימציית פעימה לנקודות חיבור */
@@ -191,11 +178,6 @@
     // ודא שיש נקודות חיבור
     addConnectionPoints(block);
     
-    // הוסף מסגרת צבעונית בהתאם לכיוון
-    if (!block.classList.contains(isLeft ? 'blue-frame' : 'green-frame')) {
-      block.classList.add(isLeft ? 'blue-frame' : 'green-frame');
-    }
-    
     // בחר את נקודת החיבור המתאימה והדגש אותה
     const connectionPoint = block.querySelector(isLeft ? '.left-connection-point' : '.right-connection-point');
     if (connectionPoint) {
@@ -209,19 +191,14 @@
   // ניקוי כל ההדגשות
   function clearAllHighlights() {
     // בטל טיימר קודם אם קיים
-    if (indicatorsHideTimeout) {
-      clearTimeout(indicatorsHideTimeout);
-      indicatorsHideTimeout = null;
+    if (indicatorsTimeout) {
+      clearTimeout(indicatorsTimeout);
+      indicatorsTimeout = null;
     }
     
     // הסר הדגשות מכל נקודות החיבור
     document.querySelectorAll('.connection-point-visible').forEach(point => {
       point.classList.remove('connection-point-visible');
-    });
-    
-    // הסר מסגרות כחולות וירוקות
-    document.querySelectorAll('.blue-frame, .green-frame').forEach(block => {
-      block.classList.remove('blue-frame', 'green-frame');
     });
     
     // הסר תצוגות אזורי חיבור
@@ -230,29 +207,21 @@
     });
   }
   
-  // פונקציה חדשה: קביעת טיימר אוטומטי להסתרת כל החיוויים
-  function autoHideAllIndicators() {
-    // בטל טיימר קודם אם קיים
-    if (indicatorsHideTimeout) {
-      clearTimeout(indicatorsHideTimeout);
+  // חדש: הגדרת טיימר להעלמת חיווים
+  function scheduleIndicatorsFade() {
+    // ביטול טיימר קיים אם יש
+    if (indicatorsTimeout) {
+      clearTimeout(indicatorsTimeout);
     }
     
-    // קבע טיימר חדש להסתרת כל החיוויים
-    indicatorsHideTimeout = setTimeout(() => {
-      // הסר את כל החיוויים - גם מסגרות וגם נקודות חיבור
-      document.querySelectorAll('.connection-point-visible').forEach(point => {
-        point.classList.remove('connection-point-visible');
-      });
-      
-      document.querySelectorAll('.blue-frame, .green-frame').forEach(block => {
-        block.classList.remove('blue-frame', 'green-frame');
-      });
-      
-      indicatorsHideTimeout = null;
-      if (CONFIG.DEBUG) console.log("Auto-hide: All visual indicators hidden");
-    }, CONFIG.INDICATORS_HIDE_DELAY);
+    // הגדרת טיימר חדש
+    indicatorsTimeout = setTimeout(() => {
+      clearAllHighlights();
+      indicatorsTimeout = null;
+      if (CONFIG.DEBUG) console.log(`[Indicators] Faded after ${CONFIG.INDICATORS_FADE_DELAY}ms`);
+    }, CONFIG.INDICATORS_FADE_DELAY);
     
-    if (CONFIG.DEBUG) console.log(`Auto-hide: Indicators timer set for ${CONFIG.INDICATORS_HIDE_DELAY}ms`);
+    if (CONFIG.DEBUG) console.log(`[Indicators] Set to fade in ${CONFIG.INDICATORS_FADE_DELAY}ms`);
   }
 
   // ========================================================================
@@ -288,7 +257,7 @@
     let bestDirection = null;
     let minDistance = CONFIG.CONNECT_THRESHOLD + 1;
 
-    // ניקוי כל ההדגשות הקודמות - בזמן גרירה אין צורך בביטול עם טיימר
+    // ניקוי כל ההדגשות הקודמות
     clearAllHighlights();
     potentialSnapTarget = null; 
     snapDirection = null;
@@ -340,12 +309,12 @@
       try {
         if (bestDirection === 'left') {
           // יעד שמאלי (הבלוק המטרה בצד שמאל של המקור)
-          highlightConnectionPoint(bestTarget, true); // נקודת חיבור שמאלית ביעד (מסגרת כחולה)
-          highlightConnectionPoint(currentDraggedBlock, false); // נקודת חיבור ימנית במקור (מסגרת ירוקה)
+          highlightConnectionPoint(bestTarget, true); // נקודת חיבור שמאלית ביעד
+          highlightConnectionPoint(currentDraggedBlock, false); // נקודת חיבור ימנית במקור
         } else if (bestDirection === 'right') {
           // יעד ימני (הבלוק המטרה בצד ימין של המקור)
-          highlightConnectionPoint(bestTarget, false); // נקודת חיבור ימנית ביעד (מסגרת ירוקה)
-          highlightConnectionPoint(currentDraggedBlock, true); // נקודת חיבור שמאלית במקור (מסגרת כחולה)
+          highlightConnectionPoint(bestTarget, false); // נקודת חיבור ימנית ביעד
+          highlightConnectionPoint(currentDraggedBlock, true); // נקודת חיבור שמאלית במקור
         }
       } catch (err) {
         console.error("Error highlighting connection points:", err);
@@ -374,7 +343,7 @@
     blockReleased.classList.remove('snap-source');
     blockReleased.style.zIndex = '';
     
-    // אין לנקות הדגשות כאן - נשמור אותן לחיבור
+    // שים לב - לא מנקים עדיין את החיווים כאן!
 
     // החלטה על הצמדה - מבוססת רק על אם היה מועמד במהלך הגרירה
     let performSnap = false;
@@ -383,7 +352,7 @@
         performSnap = true;
     } else {
         if (CONFIG.DEBUG) console.log(`[MouseUp] No valid candidate target identified during drag. No snap attempt.`);
-        // אם אין חיבור, הסר את ההדגשות
+        // במקרה שאין חיבור - נקה את החיווים
         clearAllHighlights();
     }
 
@@ -392,16 +361,111 @@
       const snapSuccess = performBlockSnap(blockReleased, candidateTarget, candidateDirection);
       if (!snapSuccess) {
           blockReleased.draggable = true;
-          if (CONFIG.DEBUG) console.log(`[MouseUp] Snap attempt failed. Block ${blockReleased.id} remains draggable.`);
-          // אם החיבור נכשל, הסר את ההדגשות
+          // אם חיבור נכשל - נקה את החיווים
           clearAllHighlights();
+          if (CONFIG.DEBUG) console.log(`[MouseUp] Snap attempt failed. Block ${blockReleased.id} remains draggable.`);
       } else {
-          if (CONFIG.DEBUG) console.log(`[MouseUp] Snap successful. Block ${blockReleased.id} is connected.`);
-          // החיבור הצליח - כל החיוויים ייעלמו אוטומטית
-          autoHideAllIndicators();
+           if (CONFIG.DEBUG) console.log(`[MouseUp] Snap successful. Block ${blockReleased.id} is connected.`);
+           // החיווים יעלמו אוטומטית אחרי הזמן המוגדר
       }
     } else {
       if (CONFIG.DEBUG) console.log(`[MouseUp] No snap performed. Block ${blockReleased.id} remains free.`);
       blockReleased.draggable = true;
     }
   }
+
+  // ========================================================================
+  // ביצוע ההצמדה הפיזית - חיבור פאזל מדויק!!!
+  // ========================================================================
+  function performBlockSnap(sourceBlock, targetBlock, direction) {
+    if (!sourceBlock || !targetBlock || !document.body.contains(targetBlock) || targetBlock.offsetParent === null) { 
+      console.error("[PerformSnap] Invalid block(s). Snap cancelled."); 
+      return false; 
+    }
+    
+    // בדיקה אחרונה לפני שינוי (חשוב למקרה של תחרות)
+    if ((direction === 'left' && targetBlock.hasAttribute('data-connected-from-left')) || 
+        (direction === 'right' && targetBlock.hasAttribute('data-connected-from-right'))) { 
+      console.warn(`[PerformSnap] Snap cancelled: Target ${targetBlock.id} conflict on side '${direction}'.`); 
+      return false; 
+    }
+    
+    if (CONFIG.DEBUG) console.log(`[PerformSnap] Snapping ${sourceBlock.id} to ${targetBlock.id} (${direction})`);
+    
+    try {
+      const sourceRect = sourceBlock.getBoundingClientRect();
+      const targetRect = targetBlock.getBoundingClientRect();
+      const pE = document.getElementById('program-blocks');
+      const pR = pE.getBoundingClientRect();
+      
+      let finalLeft, finalTop;
+      
+      // חיבור פאזל מדויק - החישוב השתנה לחלוטין!
+      if (direction === 'left') {
+        // המקור מימין ליעד - השקע במקור חייב לכסות את הבליטה ביעד
+        
+        // המיקום האופקי מחושב כך שימין המקור יכסה את שמאל היעד + רוחב הבליטה
+        finalLeft = targetRect.left - sourceRect.width + CONFIG.PUZZLE_LEFT_SOCKET_WIDTH;
+        // המיקום האנכי הוא יישור למרכז עם כיוונון עדין
+        finalTop = targetRect.top + CONFIG.VERTICAL_CENTER_OFFSET;
+      } else { // direction === 'right'
+        // המקור משמאל ליעד - השקע ביעד חייב לכסות את הבליטה במקור
+        
+        // המיקום האופקי מחושב כך ששמאל המקור יהיה צמוד לימין היעד פחות רוחב השקע
+        finalLeft = targetRect.right - CONFIG.PUZZLE_RIGHT_BULGE_WIDTH;
+        // המיקום האנכי הוא יישור למרכז עם כיוונון עדין
+        finalTop = targetRect.top + CONFIG.VERTICAL_CENTER_OFFSET;
+      }
+      
+      // התאמה עדינה אופקית נוספת
+      finalLeft += CONFIG.HORIZONTAL_FINE_TUNING;
+      
+      // המרה למיקום יחסי לאיזור התכנות
+      let styleLeft = finalLeft - pR.left + pE.scrollLeft;
+      let styleTop = finalTop - pR.top + pE.scrollTop;
+      
+      // *** הזזת הבלוק הנגרר למיקום הסופי - זו ה"קפיצה" לחיבור פאזל ***
+      sourceBlock.style.position = 'absolute';
+      sourceBlock.style.left = `${Math.round(styleLeft)}px`;
+      sourceBlock.style.top = `${Math.round(styleTop)}px`;
+      sourceBlock.style.margin = '0';
+      
+      // עדכון מאפיינים
+      sourceBlock.setAttribute('data-connected-to', targetBlock.id);
+      sourceBlock.setAttribute('data-connection-direction', direction);
+      targetBlock.setAttribute(
+        direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right', 
+        sourceBlock.id
+      );
+      sourceBlock.classList.add('connected-block');
+      targetBlock.classList.add('has-connected-block');
+      
+      // *** שינוי חדש - לאחר החיבור נראה את החיווים וצליל, ואז נתזמן העלמה ***
+      // הדגש נקודות חיבור גם לאחר החיבור - חדש: יתאפשר בחלון של 500 אלפיות שניה
+      if (direction === 'left') {
+        highlightConnectionPoint(targetBlock, true);
+        highlightConnectionPoint(sourceBlock, false);
+      } else {
+        highlightConnectionPoint(targetBlock, false);
+        highlightConnectionPoint(sourceBlock, true);
+      }
+      
+      playSnapSound(); // נגן צליל
+      addSnapEffectAnimation(sourceBlock);
+      sourceBlock.draggable = false; // מנע גרירה כשהוא מחובר
+      
+      // קבע זמן לעלמות החיווים
+      scheduleIndicatorsFade();
+      
+      if (CONFIG.DEBUG) console.log(`[PerformSnap] Success. ${sourceBlock.id} pos: L=${styleLeft.toFixed(0)}, T=${styleTop.toFixed(0)}.`);
+      return true;
+    } catch (err) {
+      console.error(`[PerformSnap] Error:`, err);
+      try { 
+        detachBlock(sourceBlock, false); 
+      } catch (derr) { 
+        console.error(`[PerformSnap] Cleanup detach error:`, derr);
+      }
+      sourceBlock.draggable = true;
+      return false;
+    }
