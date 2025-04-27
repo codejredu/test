@@ -1,10 +1,10 @@
 // --- START OF FILE linkageimproved.js ---
-// --- Version 3.8.1: True Puzzle Connection with Auto-Hiding Frames ---
+// --- Version 3.8.1: True Puzzle Connection with Auto-Hide All Indicators ---
 // Changes from previous versions:
 // 1. Creates real puzzle-piece connections
 // 2. Uses hardcoded offset values for puzzle piece alignment
 // 3. Visualizes connection points based on actual SVG structure
-// 4. Auto-hides connection frames after a short delay while keeping the connection points
+// 4. Auto-hides ALL visual indicators after connection (frames and connection points)
 
 (function() {
   // משתנים גלובליים במודול
@@ -17,7 +17,7 @@
   let snapSound = null;
   let audioContextAllowed = false;
   let soundInitialized = false;
-  let frameHideTimeout = null; // משתנה חדש לשמירת מזהה הטיימר למסגרות
+  let indicatorsHideTimeout = null; // משתנה חדש לשמירת מזהה הטיימר
 
   // קונפיגורציה - פרמטרים שניתן להתאים
   const CONFIG = {
@@ -39,8 +39,8 @@
     VERTICAL_CENTER_OFFSET: 0, // היסט אנכי למרכוז (בפיקסלים)
     HORIZONTAL_FINE_TUNING: -9, // כוונון עדין אופקי (בפיקסלים)
     
-    // הגדרה חדשה - זמן להסתרת מסגרות חיבור (במילישניות)
-    FRAMES_HIDE_DELAY: 800 // זמן קצר מאוד כמבוקש
+    // הגדרה חדשה - זמן להסתרת כל החיוויים (במילישניות)
+    INDICATORS_HIDE_DELAY: 800 // זמן קצר מאוד כמבוקש
   };
 
   // ========================================================================
@@ -97,7 +97,7 @@
         animation: pulseConnectionPoint 0.8s infinite;
       }
       
-      /* מסגרות חיבור - חדש */
+      /* מסגרות חיבור */
       .blue-frame {
         box-shadow: 0 0 0 2px #2196F3, 0 0 8px 2px rgba(33,150,243,0.6);
         z-index: 1004;
@@ -209,9 +209,9 @@
   // ניקוי כל ההדגשות
   function clearAllHighlights() {
     // בטל טיימר קודם אם קיים
-    if (frameHideTimeout) {
-      clearTimeout(frameHideTimeout);
-      frameHideTimeout = null;
+    if (indicatorsHideTimeout) {
+      clearTimeout(indicatorsHideTimeout);
+      indicatorsHideTimeout = null;
     }
     
     // הסר הדגשות מכל נקודות החיבור
@@ -230,25 +230,29 @@
     });
   }
   
-  // פונקציה חדשה: קביעת טיימר אוטומטי להסתרת מסגרות חיבור בלבד
-  function autoHideFrames() {
+  // פונקציה חדשה: קביעת טיימר אוטומטי להסתרת כל החיוויים
+  function autoHideAllIndicators() {
     // בטל טיימר קודם אם קיים
-    if (frameHideTimeout) {
-      clearTimeout(frameHideTimeout);
+    if (indicatorsHideTimeout) {
+      clearTimeout(indicatorsHideTimeout);
     }
     
-    // קבע טיימר חדש להסתרת מסגרות החיבור הכחולות והירוקות בלבד
-    frameHideTimeout = setTimeout(() => {
-      // הסר רק את המסגרות אך השאר את נקודות החיבור
+    // קבע טיימר חדש להסתרת כל החיוויים
+    indicatorsHideTimeout = setTimeout(() => {
+      // הסר את כל החיוויים - גם מסגרות וגם נקודות חיבור
+      document.querySelectorAll('.connection-point-visible').forEach(point => {
+        point.classList.remove('connection-point-visible');
+      });
+      
       document.querySelectorAll('.blue-frame, .green-frame').forEach(block => {
         block.classList.remove('blue-frame', 'green-frame');
       });
       
-      frameHideTimeout = null;
-      if (CONFIG.DEBUG) console.log("Auto-hide: Connection frames hidden (points remain visible)");
-    }, CONFIG.FRAMES_HIDE_DELAY);
+      indicatorsHideTimeout = null;
+      if (CONFIG.DEBUG) console.log("Auto-hide: All visual indicators hidden");
+    }, CONFIG.INDICATORS_HIDE_DELAY);
     
-    if (CONFIG.DEBUG) console.log(`Auto-hide: Frame hide timer set for ${CONFIG.FRAMES_HIDE_DELAY}ms`);
+    if (CONFIG.DEBUG) console.log(`Auto-hide: Indicators timer set for ${CONFIG.INDICATORS_HIDE_DELAY}ms`);
   }
 
   // ========================================================================
@@ -393,262 +397,11 @@
           clearAllHighlights();
       } else {
           if (CONFIG.DEBUG) console.log(`[MouseUp] Snap successful. Block ${blockReleased.id} is connected.`);
-          // החיבור הצליח - רק המסגרות ייעלמו אוטומטית (נקודות החיבור יישארו)
-          autoHideFrames();
+          // החיבור הצליח - כל החיוויים ייעלמו אוטומטית
+          autoHideAllIndicators();
       }
     } else {
       if (CONFIG.DEBUG) console.log(`[MouseUp] No snap performed. Block ${blockReleased.id} remains free.`);
       blockReleased.draggable = true;
     }
   }
-
-  // ========================================================================
-  // ביצוע ההצמדה הפיזית - חיבור פאזל מדויק!!!
-  // ========================================================================
-  function performBlockSnap(sourceBlock, targetBlock, direction) {
-    if (!sourceBlock || !targetBlock || !document.body.contains(targetBlock) || targetBlock.offsetParent === null) { 
-      console.error("[PerformSnap] Invalid block(s). Snap cancelled."); 
-      return false; 
-    }
-    
-    // בדיקה אחרונה לפני שינוי (חשוב למקרה של תחרות)
-    if ((direction === 'left' && targetBlock.hasAttribute('data-connected-from-left')) || 
-        (direction === 'right' && targetBlock.hasAttribute('data-connected-from-right'))) { 
-      console.warn(`[PerformSnap] Snap cancelled: Target ${targetBlock.id} conflict on side '${direction}'.`); 
-      return false; 
-    }
-    
-    if (CONFIG.DEBUG) console.log(`[PerformSnap] Snapping ${sourceBlock.id} to ${targetBlock.id} (${direction})`);
-    
-    try {
-      const sourceRect = sourceBlock.getBoundingClientRect();
-      const targetRect = targetBlock.getBoundingClientRect();
-      const pE = document.getElementById('program-blocks');
-      const pR = pE.getBoundingClientRect();
-      
-      let finalLeft, finalTop;
-      
-      // חיבור פאזל מדויק - החישוב השתנה לחלוטין!
-      if (direction === 'left') {
-        // המקור מימין ליעד - השקע במקור חייב לכסות את הבליטה ביעד
-        
-        // המיקום האופקי מחושב כך שימין המקור יכסה את שמאל היעד + רוחב הבליטה
-        finalLeft = targetRect.left - sourceRect.width + CONFIG.PUZZLE_LEFT_SOCKET_WIDTH;
-        // המיקום האנכי הוא יישור למרכז עם כיוונון עדין
-        finalTop = targetRect.top + CONFIG.VERTICAL_CENTER_OFFSET;
-      } else { // direction === 'right'
-        // המקור משמאל ליעד - השקע ביעד חייב לכסות את הבליטה במקור
-        
-        // המיקום האופקי מחושב כך ששמאל המקור יהיה צמוד לימין היעד פחות רוחב השקע
-        finalLeft = targetRect.right - CONFIG.PUZZLE_RIGHT_BULGE_WIDTH;
-        // המיקום האנכי הוא יישור למרכז עם כיוונון עדין
-        finalTop = targetRect.top + CONFIG.VERTICAL_CENTER_OFFSET;
-      }
-      
-      // התאמה עדינה אופקית נוספת
-      finalLeft += CONFIG.HORIZONTAL_FINE_TUNING;
-      
-      // המרה למיקום יחסי לאיזור התכנות
-      let styleLeft = finalLeft - pR.left + pE.scrollLeft;
-      let styleTop = finalTop - pR.top + pE.scrollTop;
-      
-      // *** הזזת הבלוק הנגרר למיקום הסופי - זו ה"קפיצה" לחיבור פאזל ***
-      sourceBlock.style.position = 'absolute';
-      sourceBlock.style.left = `${Math.round(styleLeft)}px`;
-      sourceBlock.style.top = `${Math.round(styleTop)}px`;
-      sourceBlock.style.margin = '0';
-      
-      // עדכון מאפיינים
-      sourceBlock.setAttribute('data-connected-to', targetBlock.id);
-      sourceBlock.setAttribute('data-connection-direction', direction);
-      targetBlock.setAttribute(
-        direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right', 
-        sourceBlock.id
-      );
-      sourceBlock.classList.add('connected-block');
-      targetBlock.classList.add('has-connected-block');
-      
-      playSnapSound(); // נגן צליל
-      addSnapEffectAnimation(sourceBlock);
-      sourceBlock.draggable = false; // מנע גרירה כשהוא מחובר
-      
-      if (CONFIG.DEBUG) console.log(`[PerformSnap] Success. ${sourceBlock.id} pos: L=${styleLeft.toFixed(0)}, T=${styleTop.toFixed(0)}.`);
-      return true;
-    } catch (err) {
-      console.error(`[PerformSnap] Error:`, err);
-      try { 
-        detachBlock(sourceBlock, false); 
-      } catch (derr) { 
-        console.error(`[PerformSnap] Cleanup detach error:`, derr);
-      }
-      sourceBlock.draggable = true;
-      return false;
-    }
-  }
-
-  // ========================================================================
-  // פונקציות ניתוק, תפריט, אנימציה, יצירת מזהה
-  // ========================================================================
-  function showDetachMenu(x, y, b) {
-    removeDetachMenu();
-    const m = document.createElement('div');
-    m.id = 'detach-menu';
-    m.style.left = `${x}px`;
-    m.style.top = `${y}px`;
-    const o = document.createElement('div');
-    o.textContent = 'נתק בלוק';
-    o.onclick = (e) => {
-      e.stopPropagation();
-      detachBlock(b, true);
-      removeDetachMenu();
-    };
-    m.appendChild(o);
-    document.body.appendChild(m);
-    setTimeout(() => {
-      document.addEventListener('click', closeMenuOutside, {capture: true, once: true});
-      window.addEventListener('scroll', removeDetachMenu, {capture: true, once: true});
-    }, 0);
-  }
-  
-  function closeMenuOutside(e) {
-    const m = document.getElementById('detach-menu');
-    if (m && !m.contains(e.target)) {
-      removeDetachMenu();
-    } else if (m) {
-      setTimeout(() => document.addEventListener('click', closeMenuOutside, {capture: true, once: true}), 0);
-    }
-    window.removeEventListener('scroll', removeDetachMenu, {capture: true});
-  }
-  
-  function removeDetachMenu() {
-    const m = document.getElementById('detach-menu');
-    if (m) {
-      document.removeEventListener('click', closeMenuOutside, {capture: true});
-      window.removeEventListener('scroll', removeDetachMenu, {capture: true});
-      m.remove();
-    }
-  }
-  
-  function detachBlock(btd, animate=true) {
-    if (!btd || !btd.hasAttribute('data-connected-to')) return;
-    
-    const tid = btd.getAttribute('data-connected-to');
-    const dir = btd.getAttribute('data-connection-direction');
-    
-    if (!tid || !dir) {
-      console.warn(`[Detach] Missing data on ${btd.id}. Clean.`);
-      btd.removeAttribute('data-connected-to');
-      btd.removeAttribute('data-connection-direction');
-      btd.classList.remove('connected-block');
-      btd.draggable = true;
-      return;
-    }
-    
-    if (CONFIG.DEBUG) console.log(`[Detach] Detaching ${btd.id} from ${tid}`);
-    
-    btd.removeAttribute('data-connected-to');
-    btd.removeAttribute('data-connection-direction');
-    btd.classList.remove('connected-block');
-    btd.draggable = true;
-    
-    // נקה הדגשות ומסגרות
-    btd.classList.remove('blue-frame', 'green-frame');
-    
-    // הסר נקודות חיבור נראות
-    const leftPoint = btd.querySelector('.left-connection-point');
-    if (leftPoint) leftPoint.classList.remove('connection-point-visible');
-    
-    const rightPoint = btd.querySelector('.right-connection-point');
-    if (rightPoint) rightPoint.classList.remove('connection-point-visible');
-    
-    const tb = document.getElementById(tid);
-    if (tb) {
-      tb.removeAttribute(dir === 'left' ? 'data-connected-from-left' : 'data-connected-from-right');
-      tb.classList.remove('blue-frame', 'green-frame');
-      
-      // הסר נקודות חיבור נראות מהיעד
-      const tbLeftPoint = tb.querySelector('.left-connection-point');
-      if (tbLeftPoint) tbLeftPoint.classList.remove('connection-point-visible');
-      
-      const tbRightPoint = tb.querySelector('.right-connection-point');
-      if (tbRightPoint) tbRightPoint.classList.remove('connection-point-visible');
-      
-      const hoc = tb.hasAttribute('data-connected-from-left') || 
-                  tb.hasAttribute('data-connected-from-right') || 
-                  tb.hasAttribute('data-connected-to');
-      if (!hoc) tb.classList.remove('has-connected-block');
-    } else {
-      console.warn(`[Detach] Target ${tid} not found.`);
-    }
-    
-    if (animate) addDetachEffectAnimation(btd);
-    
-    if (CONFIG.DEBUG) console.log(`[Detach] Finished ${btd.id}. Draggable: ${btd.draggable}`);
-  }
-  
-  function addSnapEffectAnimation(b) {
-    b.classList.remove('snap-animation');
-    void b.offsetWidth;
-    b.classList.add('snap-animation');
-    b.addEventListener('animationend', () => b.classList.remove('snap-animation'), {once: true});
-  }
-  
-  function addDetachEffectAnimation(b) {
-    b.classList.remove('detach-animation');
-    void b.offsetWidth;
-    b.classList.add('detach-animation');
-    b.addEventListener('animationend', () => b.classList.remove('detach-animation'), {once: true});
-  }
-  
-  function generateUniqueId(b) {
-    if (b.id) return b.id;
-    const p = b.dataset.type || 'block';
-    let s = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-    let id = `${p}-${s}`;
-    let i = 0;
-    while (document.getElementById(id) && i < 10) {
-      id = `${p}-${s}-${i++}`;
-    }
-    if (i >= 10) id = `${p}-${Date.now()}`;
-    b.id = id;
-    if (CONFIG.DEBUG) console.log(`Generated ID: ${id}`);
-    return id;
-  }
-
-  // ========================================================================
-  // אתחול המערכת כולה
-  // ========================================================================
-  function initializeSystem() {
-    const initFlag = 'blockLinkageInitialized_v3_8_1';
-    if (window[initFlag]) {
-        if (CONFIG.DEBUG) console.log("Block linkage system v3.8.1 already initialized. Skipping.");
-        return;
-    }
-
-    // גרסה 3.8.1 - חיבור פאזל מדויק עם הסתרת מסגרות אוטומטית
-    addHighlightStyles();
-    initAudio();
-    initProgrammingAreaListeners();
-    observeNewBlocks();
-    initExistingBlocks();
-    initGlobalMouseListeners();
-
-    if (CONFIG.PLAY_SOUND) { 
-      addSoundTestButton(); 
-    }
-
-    window[initFlag] = true;
-    console.log(`Block linkage system initialized (Version 3.8.1 - True Puzzle Connection with Auto-Hiding Frames)`);
-    console.log(`Configuration: Right Bulge Width=${CONFIG.PUZZLE_RIGHT_BULGE_WIDTH}px, Left Socket Width=${CONFIG.PUZZLE_LEFT_SOCKET_WIDTH}px, Frame Hide Delay=${CONFIG.FRAMES_HIDE_DELAY}ms`);
-  }
-
-  // הפעל את האתחול
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeSystem);
-  } else {
-    initializeSystem(); // DOM already loaded
-  }
-
-})(); // סוף IIFE
-
-// --- END OF FILE linkageimproved.js ---
