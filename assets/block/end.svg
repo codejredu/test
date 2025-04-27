@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
    version="1.1"
-   width="105.45"
-   height="93.599998"
-   viewBox="0 0 105.45 93.599998"
+   width="123.45"
+   height="92.599998"
+   viewBox="0 0 123.45 92.599998"
    xml:space="preserve"
    id="svg321"
    sodipodi:docname="end.svg"
    inkscape:export-filename="bitmap.svg"
    inkscape:export-xdpi="96"
    inkscape:export-ydpi="96"
-   inkscape:version="1.2.2 (732a01da63, 2022-12-09)"
+   inkscape:version="1.4 (86a8ad7, 2024-10-11)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -26,8 +26,8 @@
    inkscape:deskcolor="#d1d1d1"
    showgrid="false"
    inkscape:zoom="2.7337867"
-   inkscape:cx="65.111152"
-   inkscape:cy="47.553089"
+   inkscape:cx="64.928255"
+   inkscape:cy="47.735985"
    inkscape:window-width="1920"
    inkscape:window-height="1017"
    inkscape:window-x="-8"
@@ -52,7 +52,7 @@
    id="image317" />
 </g>
 <path
-   style="fill:#dada0a;fill-rule:nonzero;stroke:#e2acac;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.02;fill-opacity:0.02464789"
+   style="fill:#dada0a;fill-opacity:0.0246479;fill-rule:nonzero;stroke:#e2acac;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.02"
    vector-effect="non-scaling-stroke"
    d="M 5.4080755,31.646768 C 15.946056,32.698 23.855906,39.495828 23.855906,47.553089 c 0,8.056443 -7.9104,14.854681 -18.4483705,15.906321 V 31.646768 Z"
    stroke-linecap="round"
