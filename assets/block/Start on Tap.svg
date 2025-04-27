@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
    version="1.1"
-   width="114.39"
-   height="91.160004"
-   viewBox="0 0 114.39 91.160004"
+   width="123.39"
+   height="92.160004"
+   viewBox="0 0 123.39 92.160004"
    xml:space="preserve"
    id="svg4623"
    sodipodi:docname="Start on Tap.svg"
-   inkscape:version="1.2.2 (732a01da63, 2022-12-09)"
+   inkscape:version="1.4 (86a8ad7, 2024-10-11)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -23,8 +23,8 @@
    inkscape:deskcolor="#d1d1d1"
    showgrid="false"
    inkscape:zoom="2.5376344"
-   inkscape:cx="63.050847"
-   inkscape:cy="45.711864"
+   inkscape:cx="63.247882"
+   inkscape:cy="45.908898"
    inkscape:window-width="1920"
    inkscape:window-height="1017"
    inkscape:window-x="-8"
@@ -37,7 +37,7 @@
    id="defs4617">
 </defs>
 <g
-   transform="matrix(0.93,0,0,0.86,57.195,45.58)"
+   transform="matrix(0.93,0,0,0.86,67.195,45.58)"
    id="g4621">
 	<image
    style="opacity:1;fill:#000000;fill-rule:nonzero;stroke:none;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0"
@@ -49,8 +49,8 @@
    id="image4619" />
 </g>
 <path
-   style="fill:#dada0a;fill-rule:nonzero;stroke:#e2acac;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.02;fill-opacity:0.01056338"
+   style="fill:#dada0a;fill-opacity:0.0105634;fill-rule:nonzero;stroke:#e2acac;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.02"
    vector-effect="non-scaling-stroke"
-   d="m 93.233982,30.199611 c 10.537978,1.051232 18.447828,7.84906 18.447828,15.906321 0,8.056443 -7.9104,14.854681 -18.448368,15.906321 V 30.199611 Z"
+   d="m 103.23398,30.199611 c 10.53798,1.051232 18.44783,7.84906 18.44783,15.906321 0,8.056443 -7.9104,14.854681 -18.44837,15.906321 V 30.199611 Z"
    stroke-linecap="round"
    id="path28982" /></svg>
