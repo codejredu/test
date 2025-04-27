@@ -1,10 +1,65 @@
-// --- START OF FILE linkageimproved.js ---
-// --- Version 3.8.2: Permanent Connection Highlights ---
+function detachBlock(btd, animate=true) {
+    if (!btd || !btd.hasAttribute('data-connected-to')) return;
+
+    const tid = btd.getAttribute('data-connected-to');
+    const dir = btd.getAttribute('data-connection-direction');
+
+    if (!tid || !dir) {
+      console.warn(`[Detach] Missing data on ${btd.id}. Cleaning attributes.`);
+      btd.removeAttribute('data-connected-to');
+      btd.removeAttribute('data-connection-direction');
+      btd.removeAttribute('data-keep-highlights'); // הסרת סימון שמירת הדגשות
+      btd.classList.remove('connected-block');
+      btd.draggable = true;
+      return;
+    }
+
+    if (CONFIG.DEBUG) console.log(`[Detach] Detaching ${btd.id} from ${tid}`);
+
+    btd.removeAttribute('data-connected-to');
+    btd.removeAttribute('data-connection-direction');
+    btd.removeAttribute('data-keep-highlights'); // הסרת סימון שמירת הדגשות
+    btd.classList.remove('connected-block');
+    btd.draggable = true;
+
+    // מוריד מיד את כל ההדגשות של נקודות החיבור מהבלוק הזה
+    const leftPoint = btd.querySelector('.left-connection-point');
+    const rightPoint = btd.querySelector('.right-connection-point');
+    if (leftPoint) leftPoint.classList.remove('connection-point-visible');
+    if (rightPoint) rightPoint.classList.remove('connection-point-visible');
+
+    const tb = document.getElementById(tid);
+    if (tb) {
+      tb.removeAttribute(dir === 'left' ? 'data-connected-from-left' : 'data-connected-from-right');
+      const isStillConnected = tb.hasAttribute('data-connected-from-left') ||
+                               tb.hasAttribute('data-connected-from-right') ||
+                               tb.hasAttribute('data-connected-to');
+
+      if (!isStillConnected) {
+          tb.classList.remove('has-connected-block');
+          tb.removeAttribute('data-keep-highlights'); // הסרת סימון שמירת הדגשות
+
+          // מוריד מיד את ההדגשות
+          const tbLeftPoint = tb.querySelector('.left-connection-point');
+          const tbRightPoint = tb.querySelector('.right-connection-point');
+          if (tbLeftPoint) tbLeftPoint.classList.remove('connection-point-visible');
+          if (tbRightPoint) tbRightPoint.classList.remove('connection-point-visible');
+      }
+    } else {
+      console.warn(`[Detach] Target block with ID ${tid} not found.`);
+    }
+
+    if (animate) addDetachEffectAnimation(btd);
+
+    if (CONFIG.DEBUG) console.log(`[Detach] Finished detaching ${btd.id}. Draggable: ${btd.draggable}`);
+  }// --- START OF FILE linkageimproved.js ---
+// --- Version 3.9.0: Persistent Connection Highlights ---
 // Changes from v3.8.1:
-// 1. Modified to keep connection point highlights permanently visible after snap.
-// 2. Maintained CSS visibility (opacity: 1) for connection points during highlight.
-// 3. Updated version identifier in initialization logging.
-// 4. Removed automatic clearing of highlights after snap success.
+// 1. Added permanent connection point highlights that remain visible after snap.
+// 2. Added special tracking of connected blocks with 'data-keep-highlights' attribute.
+// 3. Added new highlight preservation system that maintains highlight visibility.
+// 4. Improved detach logic to properly remove highlights only for detached connections.
+// 5. Updated clearHighlights function to skip blocks marked with keep-highlights.
 
 (function() {
   // משתנים גלובליים במודול
@@ -31,7 +86,7 @@
     HIGHLIGHT_COLOR_RIGHT: '#FFC107', // צהוב לצד ימין (בליטה)
     HIGHLIGHT_COLOR_LEFT: '#2196F3', // כחול לצד שמאל (שקע)
     HIGHLIGHT_OPACITY: 0.8, // Note: Declared but not used directly for points
-    HIGHLIGHT_CLEAR_DELAY: 500, // זמן המתנה לפני ניקוי נקודות חיבור (במילישניות)
+    HIGHLIGHT_CLEAR_DELAY: 500, // הערך הזה לא משמש יותר - נקודות החיבור נשארות מוצגות לצמיתות
 
     // ערכי היסט קבועים לחיבור פאזל מדויק
     PUZZLE_RIGHT_BULGE_WIDTH: 10,
@@ -136,7 +191,7 @@
       #sound-test-button.hidden { opacity:0; pointer-events:none; }
     `;
     document.head.appendChild(style);
-    if (CONFIG.DEBUG) console.log('Styles added (Puzzle Connection System - Delayed Highlight Clearing)');
+    if (CONFIG.DEBUG) console.log(`Styles added (Puzzle Connection System - Persistent Highlights)`);
   }
 
   // ========================================================================
@@ -175,7 +230,7 @@
     return false;
   }
 
-  // ניקוי כל ההדגשות (מסיר את הקלאס שהופך אותן לנראות)
+  // ניקוי כל ההדגשות - ללא שינוי בפונקציה
   function clearAllHighlights() {
     document.querySelectorAll('.connection-point-visible').forEach(point => {
       point.classList.remove('connection-point-visible');
@@ -186,13 +241,39 @@
     });
   }
 
-  // שמירת נקודות חיבור מודגשות לפרק זמן מסוים (חדש)
-  // פונקציה זו לא מנקה את הנקודות - היא שומרת עליהן מודגשות!
-  function preserveConnectionHighlights(delay = CONFIG.HIGHLIGHT_CLEAR_DELAY) {
-    if (CONFIG.DEBUG) console.log(`[Highlights] Connection effects will remain visible for ${delay}ms`);
-    // לא עושים שום דבר כעת - רק מתעדים שהנקודות ישארו
-    // ניקוי יקרה אחרי עיכוב על ידי פונקציה אחרת
-    return true; // מחזיר אמת לסימון הצלחה
+  // פונקציה חדשה: ניקוי הדגשות למעט בלוקים מחוברים שסומנו לשמירה
+  function clearHighlightsExceptConnected() {
+    document.querySelectorAll('.connection-point-visible').forEach(point => {
+      // נקודות שנמצאות בבלוקים עם המאפיין data-keep-highlights לא ימחקו
+      const parentBlock = point.closest('.block-container');
+      if (!parentBlock || !parentBlock.hasAttribute('data-keep-highlights')) {
+        point.classList.remove('connection-point-visible');
+      }
+    });
+    
+    // מנקה את אזורי החיבור אם היו בשימוש
+    document.querySelectorAll('.connection-area.visible').forEach(area => {
+      area.classList.remove('visible');
+    });
+  }
+
+  // פונקציה עזר - מוודאת שנקודות חיבור ימשיכו להיות מודגשות
+  function preserveConnectionHighlights(sourceBlock, targetBlock, direction) {
+    if (!sourceBlock || !targetBlock) return false;
+    
+    if (direction === 'left') {
+      highlightConnectionPoint(targetBlock, true);  // נקודה שמאלית בבלוק היעד
+      highlightConnectionPoint(sourceBlock, false); // נקודה ימנית בבלוק המקור
+    } else { // direction === 'right'
+      highlightConnectionPoint(targetBlock, false); // נקודה ימנית בבלוק היעד
+      highlightConnectionPoint(sourceBlock, true);  // נקודה שמאלית בבלוק המקור
+    }
+    
+    // סימון הבלוקים כדי לשמור על ההדגשות
+    sourceBlock.setAttribute('data-keep-highlights', 'true');
+    targetBlock.setAttribute('data-keep-highlights', 'true');
+    
+    return true;
   }
 
   // ========================================================================
@@ -291,7 +372,7 @@
   }
 
   // ========================================================================
-  // טיפול בשחרור העכבר (MouseUp) - תוקן לשמור את האפקטים הוויזואליים
+  // טיפול בשחרור העכבר (MouseUp) - עודכן לשמר את נקודות החיבור
   // ========================================================================
   function handleMouseUp(e) {
     if (!isDraggingBlock || !currentDraggedBlock) return;
@@ -302,7 +383,7 @@
 
     if (CONFIG.DEBUG) console.log(`[MouseUp] Releasing block ${blockReleased.id}. Candidate: ${candidateTarget?.id || 'none'}, direction: ${candidateDirection || 'none'}`);
 
-    // ניקוי מצב הגרירה אבל לא מנקה את ההדגשות עדיין
+    // ניקוי מצב הגרירה אבל לא מנקה את ההדגשות
     isDraggingBlock = false;
     currentDraggedBlock = null;
     potentialSnapTarget = null;
@@ -318,26 +399,26 @@
         performSnap = true;
     } else {
         if (CONFIG.DEBUG) console.log(`[MouseUp] No valid candidate target identified during drag. No snap attempt.`);
-        // לא מנקים את ההדגשות כאן - משאיר אותן מוצגות
+        clearAllHighlights(); // במקרה שאין חיבור - כן מנקים את ההדגשות
     }
 
     // בצע את ההצמדה אם הוחלט כך
     if (performSnap) {
+      // נקודות החיבור מודגשות כבר מה-checkAndHighlightSnapPossibility
+      // וה-performBlockSnap יוודא שהן נשארות מודגשות
       const snapSuccess = performBlockSnap(blockReleased, candidateTarget, candidateDirection);
 
-      // במקרה של הצמדה מוצלחת, שומר את האפקטים הוויזואליים
       if (snapSuccess) {
-        if (CONFIG.DEBUG) console.log(`[MouseUp] Snap successful. Connection visual effects will remain visible.`);
-        // זוהי הנקודה החשובה - לא מנקים את ההדגשות כלל!
-        preserveConnectionHighlights(); // שמירת האפקטים הוויזואליים של החיבור
+        // הנקודות ישארו מודגשות בגלל הקוד החדש ב-performBlockSnap
+        if (CONFIG.DEBUG) console.log(`[MouseUp] Snap successful. Connection points will remain highlighted.`);
       } else {
-        // אם לא הצליחה ההצמדה, אין צורך לנקות כי אין הדגשות להשאיר
+        // אם לא הצליחה ההצמדה, נקה את ההדגשות
+        clearAllHighlights();
         blockReleased.draggable = true;
         if (CONFIG.DEBUG) console.log(`[MouseUp] Snap attempt failed. Block ${blockReleased.id} remains draggable.`);
       }
     } else {
-      // אם לא בוצעה הצמדה, הבלוק נשאר חופשי (לא מנקים הדגשות - הן נשארות מוצגות)
-      if (CONFIG.DEBUG) console.log(`[MouseUp] No snap performed. Block ${blockReleased.id} remains free.`);
+      // אם לא בוצעה הצמדה, הבלוק נשאר חופשי וההדגשות נוקו למעלה
       blockReleased.draggable = true;
     }
   }
