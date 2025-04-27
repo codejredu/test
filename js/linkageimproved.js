@@ -191,333 +191,313 @@
   function observeNewBlocks() { const a=document.getElementById('program-blocks');if(!a)return;const o=new MutationObserver((m)=>{m.forEach((mu)=>{if(mu.type==='childList'){mu.addedNodes.forEach((n)=>{if(n.nodeType===1){let b=n.classList?.contains('block-container')?n:n.querySelector?.('.block-container');if(b?.closest('#program-blocks')){if(!b.id)generateUniqueId(b);addBlockDragListeners(b);addConnectionPoints(b);}}});}});});o.observe(a,{childList:true,subtree:true});if(CONFIG.DEBUG)console.log("MutationObserver watching."); }
   function initExistingBlocks() { document.querySelectorAll('#program-blocks .block-container').forEach(b=>{if(!b.id)generateUniqueId(b);addBlockDragListeners(b);addConnectionPoints(b);});if(CONFIG.DEBUG)console.log("Listeners added to existing blocks."); }
   function addBlockDragListeners(b) { b.removeEventListener('mousedown',handleMouseDown);b.addEventListener('mousedown',handleMouseDown);b.removeEventListener('contextmenu',handleContextMenu);b.addEventListener('contextmenu',handleContextMenu); }
-  function handleContextMenu(e) { e.preventDefault();const b=e.target.closest('.block-container');if(b?.hasAttribute('data-connected-to'))showDetachMenu(e.clientX,e.clientY,b); }
-  function handleMouseDown(e) { if(e.button!==0||!e.target.closest||e.target.matches('input,button,select,textarea,a[href]'))return;const b=e.target.closest('.block-container');if(!b||!b.parentElement||b.parentElement.id!=='program-blocks')return;if(!b.id)generateUniqueId(b);e.preventDefault();b.draggable=false;if(CONFIG.DEBUG)console.log(`[MouseDown] Start drag: ${b.id}`);if(b.hasAttribute('data-connected-to'))detachBlock(b,false);const lId=b.getAttribute('data-connected-from-left');if(lId)detachBlock(document.getElementById(lId),false);const rId=b.getAttribute('data-connected-from-right');if(rId)detachBlock(document.getElementById(rId),false);currentDraggedBlock=b;isDraggingBlock=true;const r=b.getBoundingClientRect();dragOffset.x=e.clientX-r.left;dragOffset.y=e.clientY-r.top;const pE=document.getElementById('program-blocks');const pR=pE.getBoundingClientRect();if(window.getComputedStyle(b).position!=='absolute'){b.style.position='absolute';b.style.left=(r.left-pR.left+pE.scrollLeft)+'px';b.style.top=(r.top-pR.top+pE.scrollTop)+'px';}b.style.margin='0';b.style.zIndex='1001';b.classList.add('snap-source');document.body.classList.add('user-select-none'); }
+  function handleContextMenu(e) { e.preventDefault(); const block = e.target.closest('.block-container'); if (!block) return; showDetachMenu(e.clientX, e.clientY, block); }
+  function handleMouseDown(e) {
+    if (e.button !== 0) return;
+    const block = e.target.closest('.block-container');
+    if (!block) return;
 
-  // ========================================================================
-  // מאזינים גלובליים, MouseLeave, MouseMove - ללא שינוי
-  // ========================================================================
-  function initGlobalMouseListeners() { document.removeEventListener('mousemove',handleMouseMove);document.removeEventListener('mouseup',handleMouseUp);document.removeEventListener('mouseleave',handleMouseLeave);document.addEventListener('mousemove',handleMouseMove);document.addEventListener('mouseup',handleMouseUp);document.addEventListener('mouseleave',handleMouseLeave); }
-  function handleMouseLeave(e) { if(isDraggingBlock&&e.target===document.documentElement&&!e.relatedTarget){if(CONFIG.DEBUG)console.warn("Mouse left doc during drag, mouseup.");handleMouseUp(e);} }
-  function handleMouseMove(e) { if(!isDraggingBlock||!currentDraggedBlock)return;e.preventDefault();const pE=document.getElementById('program-blocks');if(!pE){handleMouseUp(e);return;}const pR=pE.getBoundingClientRect();let nL=e.clientX-pR.left-dragOffset.x+pE.scrollLeft;let nT=e.clientY-pR.top-dragOffset.y+pE.scrollTop;const bW=currentDraggedBlock.offsetWidth;const bH=currentDraggedBlock.offsetHeight;const sW=pE.scrollWidth;const sH=pE.scrollHeight;nL=Math.max(0,Math.min(nL,sW-bW));nT=Math.max(0,Math.min(nT,sH-bH));currentDraggedBlock.style.left=Math.round(nL)+'px';currentDraggedBlock.style.top=Math.round(nT)+'px';checkAndHighlightSnapPossibility(); }
-
-  // ========================================================================
-  // בדיקת הצמדה והדגשה (נראית) - ללא שינוי פונקציונלי בלוגיקה
-  // ========================================================================
-  function checkAndHighlightSnapPossibility() {
-    if (!currentDraggedBlock) return;
-    const programmingArea = document.getElementById('program-blocks');
-    if (!programmingArea) return;
-
-    const sourceRect = currentDraggedBlock.getBoundingClientRect();
-    const allVisibleBlocks = Array.from(programmingArea.querySelectorAll('.block-container:not(.snap-source)'))
-                              .filter(block => block.offsetParent !== null);
-
-    let bestTarget = null;
-    let bestDirection = null;
-    let minDistance = CONFIG.CONNECT_THRESHOLD + 1;
-
-    // ניקוי כל ההדגשות הקודמות (מסיר קלאס .connection-point-visible)
-    clearAllHighlights();
-    potentialSnapTarget = null;
-    snapDirection = null;
-
-    for (const targetBlock of allVisibleBlocks) {
-      if (!targetBlock.id) generateUniqueId(targetBlock);
-
-      const targetRect = targetBlock.getBoundingClientRect();
-      const targetConnectedLeft = targetBlock.hasAttribute('data-connected-from-left');
-      const targetConnectedRight = targetBlock.hasAttribute('data-connected-from-right');
-
-      // בדיקת חפיפה אנכית
-      const topOverlap = Math.max(sourceRect.top, targetRect.top);
-      const bottomOverlap = Math.min(sourceRect.bottom, targetRect.bottom);
-      const verticalOverlap = Math.max(0, bottomOverlap - topOverlap);
-      const minHeightReq = Math.min(sourceRect.height, targetRect.height) * CONFIG.VERTICAL_OVERLAP_REQ;
-
-      if (verticalOverlap < minHeightReq || verticalOverlap <= 0) continue;
-
-      // בדיקת צד ימין של מקור לשמאל יעד
-      if (!targetConnectedLeft) {
-        const distance = Math.abs(sourceRect.right - targetRect.left);
-        if (distance < minDistance) {
-          minDistance = distance;
-          bestTarget = targetBlock;
-          bestDirection = 'left';
-        }
-      }
-
-      // בדיקת צד שמאל של מקור לימין יעד
-      if (!targetConnectedRight) {
-        const distance = Math.abs(sourceRect.left - targetRect.right);
-        if (distance < minDistance) {
-          minDistance = distance;
-          bestTarget = targetBlock;
-          bestDirection = 'right';
-        }
-      }
+    if (block.classList.contains('block-being-detached')) {
+      if (CONFIG.DEBUG) console.log("Block is being detached, ignoring mousedown.");
+      return;
     }
 
-    // אם נמצא יעד מתאים, הדגש (הפוך לנראה)
-    if (bestTarget && minDistance <= CONFIG.CONNECT_THRESHOLD) {
-      if (CONFIG.DEBUG > 1) console.log(`[Highlight] Threshold met: ${currentDraggedBlock.id} -> ${bestTarget.id} (${bestDirection}). Dist=${minDistance.toFixed(1)}px. Highlighting points.`);
-      potentialSnapTarget = bestTarget;
-      snapDirection = bestDirection;
+    isDraggingBlock = true;
+    currentDraggedBlock = block;
+    currentDraggedBlock.classList.add('snap-source');
+    const rect = block.getBoundingClientRect();
+    dragOffset = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    block.style.zIndex = '1000';
 
-      try {
-        if (bestDirection === 'left') {
-          highlightConnectionPoint(bestTarget, true); // Highlight (visible) left point on target
-          highlightConnectionPoint(currentDraggedBlock, false); // Highlight (visible) right point on source
-        } else if (bestDirection === 'right') {
-          highlightConnectionPoint(bestTarget, false); // Highlight (visible) right point on target
-          highlightConnectionPoint(currentDraggedBlock, true); // Highlight (visible) left point on source
-        }
-      } catch (err) {
-        console.error("Error calling highlightConnectionPoint:", err);
-      }
-    }
-    // No else needed, clearAllHighlights at the start handles removal
+    document.body.classList.add('user-select-none'); // prevent text selection
+    if (CONFIG.DEBUG) console.log(`Drag started on block ${block.id}`);
   }
 
   // ========================================================================
-  // טיפול בשחרור העכבר (MouseUp) - נוספה קריאה ל-clearAllHighlights
+  // חישוב מרחקים, בדיקת התאמה, סנאפ - ללא שינוי
   // ========================================================================
+  function calculateDistance(block1, block2) {
+    const rect1 = block1.getBoundingClientRect();
+    const rect2 = block2.getBoundingClientRect();
+    const dx = (rect1.left + rect1.width / 2) - (rect2.left + rect2.width / 2);
+    const dy = (rect1.top + rect1.height / 2) - (rect2.top + rect2.height / 2);
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+
+  function checkOverlap(rect1, rect2, requiredOverlap) {
+    const overlapHeight = Math.max(0, Math.min(rect1.bottom, rect2.bottom) - Math.max(rect1.top, rect2.top));
+    const overlapPercentage = overlapHeight / Math.min(rect1.height, rect2.height);
+    return overlapPercentage >= requiredOverlap;
+  }
+
+  function canSnap(block1, block2, direction) {
+    if (!block1 || !block2 || direction === null) return false;
+
+    const rect1 = block1.getBoundingClientRect();
+    const rect2 = block2.getBoundingClientRect();
+
+    // Check for sufficient horizontal overlap
+    const horizontalOverlap = Math.max(0, Math.min(rect1.right, rect2.right) - Math.max(rect1.left, rect2.left));
+    const minWidth = Math.min(rect1.width, rect2.width);
+    const overlapPercentage = horizontalOverlap / minWidth;
+
+    if (overlapPercentage < CONFIG.VERTICAL_OVERLAP_REQ) {
+      return false;
+    }
+
+    if (direction === 'right') {
+      const horizontalGap = Math.abs(rect1.right - rect2.left - CONFIG.HORIZONTAL_FINE_TUNING);
+      const verticalAlignment = Math.abs((rect1.top + rect1.height / 2) - (rect2.top + rect2.height / 2 + CONFIG.VERTICAL_CENTER_OFFSET));
+      return horizontalGap <= CONFIG.CONNECT_THRESHOLD && verticalAlignment <= CONFIG.CONNECT_THRESHOLD;
+    } else if (direction === 'left') {
+      const horizontalGap = Math.abs(rect2.right - rect1.left - CONFIG.HORIZONTAL_FINE_TUNING);
+      const verticalAlignment = Math.abs((rect1.top + rect1.height / 2) - (rect2.top + rect2.height / 2 + CONFIG.VERTICAL_CENTER_OFFSET));
+      return horizontalGap <= CONFIG.CONNECT_THRESHOLD && verticalAlignment <= CONFIG.CONNECT_THRESHOLD;
+    }
+    return false;
+  }
+
+  function snapBlocks(block1, block2, direction) {
+    if (!block1 || !block2 || direction === null) return;
+
+    let targetX, targetY;
+    const rect1 = block1.getBoundingClientRect();
+    const rect2 = block2.getBoundingClientRect();
+
+    if (direction === 'right') {
+      targetX = rect2.left - (rect1.right - CONFIG.HORIZONTAL_FINE_TUNING);
+      targetY = rect2.top - rect1.top;
+    } else if (direction === 'left') {
+      targetX = rect2.right - rect1.left + CONFIG.HORIZONTAL_FINE_TUNING;
+      targetY = rect2.top - rect1.top;
+    } else {
+      return;
+    }
+
+    block1.style.left = `${targetX}px`;
+    block1.style.top = `${targetY}px`;
+    block1.classList.remove('snap-source');
+    block1.classList.add('snap-animation');
+    block2.classList.add('has-connected-block'); // Add class to target
+    currentDraggedBlock = null;
+    potentialSnapTarget = null;
+    snapDirection = null;
+    isDraggingBlock = false;
+    if (CONFIG.DEBUG) console.log(`Blocks ${block1.id} and ${block2.id} snapped.`);
+    playSnapSound();
+    setTimeout(() => {
+      block1.classList.remove('snap-animation');
+    }, 300);
+  }
+
+  // ========================================================================
+  // טיפול באירועי עכבר גלובליים - MouseMove, MouseUp
+  // ========================================================================
+  function initGlobalMouseListeners() {
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }
+
+  function handleMouseMove(e) {
+    if (!isDraggingBlock || !currentDraggedBlock) return;
+
+    const newX = e.clientX - dragOffset.x;
+    const newY = e.clientY - dragOffset.y;
+    currentDraggedBlock.style.left = `${newX}px`;
+    currentDraggedBlock.style.top = `${newY}px`;
+
+    let closestSnapTarget = null;
+    let closestDistance = Infinity;
+    let bestSnapDirection = null;
+
+    document.querySelectorAll('.block-container').forEach(block => {
+      if (block === currentDraggedBlock) return;
+
+      const distance = calculateDistance(currentDraggedBlock, block);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestSnapTarget = block;
+      }
+    });
+
+    if (closestSnapTarget && closestDistance <= 100) { // עוד יותר קרוב
+      let dir = null;
+      if (canSnap(currentDraggedBlock, closestSnapTarget, 'right')) {
+        dir = 'right';
+      } else if (canSnap(currentDraggedBlock, closestSnapTarget, 'left')) {
+        dir = 'left';
+      }
+
+      if (dir) {
+        if (potentialSnapTarget !== closestSnapTarget || snapDirection !== dir) {
+          clearAllHighlights(); // Clear previous highlights
+          potentialSnapTarget = closestSnapTarget;
+          snapDirection = dir;
+          highlightConnectionPoint(currentDraggedBlock, dir === 'left');
+          highlightConnectionPoint(closestSnapTarget, dir === 'right');
+          if (CONFIG.DEBUG > 1) console.log(`Highlighting snap target ${closestSnapTarget.id} (${dir})`);
+        }
+      } else {
+        clearAllHighlights();
+        potentialSnapTarget = null;
+        snapDirection = null;
+      }
+    } else {
+      clearAllHighlights();
+      potentialSnapTarget = null;
+      snapDirection = null;
+    }
+  }
+
   function handleMouseUp(e) {
     if (!isDraggingBlock || !currentDraggedBlock) return;
 
-    const blockReleased = currentDraggedBlock;
-    const candidateTarget = potentialSnapTarget;
-    const candidateDirection = snapDirection;
+    if (potentialSnapTarget && snapDirection) {
+      snapBlocks(currentDraggedBlock, potentialSnapTarget, snapDirection);
+    } else {
+      currentDraggedBlock.style.zIndex = 'initial';
+      currentDraggedBlock.classList.remove('snap-source');
+      currentDraggedBlock.classList.add('detach-animation'); // Apply detach animation
+      setTimeout(() => {
+        currentDraggedBlock.classList.remove('detach-animation');
+      }, 300);
+      if (CONFIG.DEBUG) console.log(`Dragged block ${currentDraggedBlock.id} released.`);
+    }
 
-    if (CONFIG.DEBUG) console.log(`[MouseUp] Releasing block ${blockReleased.id}. Candidate: ${candidateTarget?.id || 'none'}, direction: ${candidateDirection || 'none'}`);
-
-    // ניקוי מצב הגרירה וההדגשות הראשוניות (מהמיקום האחרון של הגרירה)
+    clearAllHighlights(); // Clear highlights after snap or detach
+    document.body.classList.remove('user-select-none');
     isDraggingBlock = false;
     currentDraggedBlock = null;
     potentialSnapTarget = null;
     snapDirection = null;
-    document.body.classList.remove('user-select-none');
-    blockReleased.classList.remove('snap-source');
-    blockReleased.style.zIndex = '';
+  }
 
-    // ניקוי ראשוני של נקודות החיבור שהודגשו ב-MouseMove האחרון
-    clearAllHighlights();
-
-    // החלטה על הצמדה
-    let performSnap = false;
-    if (candidateTarget && candidateDirection && document.body.contains(candidateTarget)) {
-        if (CONFIG.DEBUG) console.log(`[MouseUp] Candidate target ${candidateTarget.id} identified during drag. Attempting snap.`);
-        performSnap = true;
+  // ========================================================================
+  // תפריט ניתוק - ללא שינוי
+  // ========================================================================
+  function showDetachMenu(x, y, block) {
+    const menuId = 'detach-menu';
+    let menu = document.getElementById(menuId);
+    if (!menu) {
+      menu = document.createElement('div');
+      menu.id = menuId;
+      menu.style.position = 'absolute';
+      menu.style.backgroundColor = 'white';
+      menu.style.border = '1px solid #ccc';
+      menu.style.borderRadius = '4px';
+      menu.style.boxShadow = '0 3px 8px rgba(0,0,0,0.2)';
+      menu.style.zIndex = '1100';
+      menu.style.padding = '5px';
+      menu.style.fontSize = '14px';
+      menu.style.minWidth = '100px';
+      document.body.appendChild(menu);
     } else {
-        if (CONFIG.DEBUG) console.log(`[MouseUp] No valid candidate target identified during drag. No snap attempt.`);
+      menu.innerHTML = '';
     }
 
-    // בצע את ההצמדה אם הוחלט כך
-    if (performSnap) {
-      const snapSuccess = performBlockSnap(blockReleased, candidateTarget, candidateDirection);
+    const detachOption = document.createElement('div');
+    detachOption.textContent = 'Disconnect Below'; // ניתוק למטה
+    detachOption.style.padding = '6px 12px';
+    detachOption.style.cursor = 'pointer';
+    detachOption.style.borderRadius = '3px';
+    detachOption.addEventListener('mouseenter', () => {
+      detachOption.style.backgroundColor = '#eee';
+    });
+    detachOption.addEventListener('mouseleave', () => {
+      detachOption.style.backgroundColor = 'transparent';
+    });
+    detachOption.addEventListener('click', () => {
+      detachBelow(block);
+      menu.remove();
+    });
+    menu.appendChild(detachOption);
 
-      // *** התיקון כאן: ודא שההדגשות מנוקות *לאחר* ניסיון ההצמדה ***
-      // זה קורה אחרי שהצליל מתנגן בתוך performBlockSnap (אם הצליח)
-      clearAllHighlights(); // Ensure points are hidden immediately after snap attempt/success
+    const rect = document.body.getBoundingClientRect();
+    const menuWidth = menu.offsetWidth;
+    const menuHeight = menu.offsetHeight;
 
-      if (!snapSuccess) {
-          blockReleased.draggable = true;
-          if (CONFIG.DEBUG) console.log(`[MouseUp] Snap attempt failed. Block ${blockReleased.id} remains draggable.`);
-      } else {
-           if (CONFIG.DEBUG) console.log(`[MouseUp] Snap successful. Block ${blockReleased.id} is connected.`);
-      }
-    } else {
-      // אם לא בוצעה הצמדה, הבלוק נשאר חופשי וההדגשות כבר נוקו למעלה
-      if (CONFIG.DEBUG) console.log(`[MouseUp] No snap performed. Block ${blockReleased.id} remains free.`);
-      blockReleased.draggable = true;
+    // Adjust positioning to stay within bounds
+    let finalX = x;
+    let finalY = y;
+
+    if (x + menuWidth > rect.right) {
+      finalX = rect.right - menuWidth - 5; // 5px margin
     }
+    if (y + menuHeight > rect.bottom) {
+      finalY = rect.bottom - menuHeight - 5; // 5px margin
+    }
+
+    menu.style.left = `${finalX}px`;
+    menu.style.top = `${finalY}px`;
+    menu.style.display = 'block';
   }
 
+  function detachBelow(block) {
+    if (!block) return;
+    if (CONFIG.DEBUG) console.log(`Detach initiated from block ${block.id}`);
+
+    let currentBlock = block;
+    const detachedBlocks = [];
+
+    // Add a class to the initiating block
+    block.classList.add('block-being-detached');
+
+    while (currentBlock) {
+      const nextBlock = findConnectedBlockBelow(currentBlock);
+      if (nextBlock) {
+        detachedBlocks.push(nextBlock);
+        // nextBlock.style.position = 'absolute'; // אם צריך רי positioning
+        nextBlock.classList.remove('has-connected-block');
+      }
+      currentBlock = nextBlock;
+    }
+
+    if (detachedBlocks.length > 0) {
+      let firstDetachedBlock = detachedBlocks[0];
+       const blockRect = firstDetachedBlock.getBoundingClientRect();
+        const dx = 20;
+        const dy = 10;
+        firstDetachedBlock.style.left = `${blockRect.left + dx}px`;
+        firstDetachedBlock.style.top = `${blockRect.top + dy}px`;
+      if (CONFIG.DEBUG) console.log(`Detached ${detachedBlocks.length} blocks.`);
+    }
+
+     block.classList.remove('block-being-detached');
+  }
+
+  function findConnectedBlockBelow(block) {
+    if (!block) return null;
+    let connectedBlock = null;
+    const blockRect = block.getBoundingClientRect();
+
+    document.querySelectorAll('.block-container').forEach(otherBlock => {
+      if (otherBlock === block) return;
+      if (otherBlock.classList.contains('has-connected-block')) {
+        const otherRect = otherBlock.getBoundingClientRect();
+        const horizontalOverlap = Math.max(0, Math.min(blockRect.right, otherRect.right) - Math.max(blockRect.left, otherRect.left));
+        const overlapPercentage = horizontalOverlap / Math.min(blockRect.width, otherRect.width);
+
+        if (overlapPercentage >= CONFIG.VERTICAL_OVERLAP_REQ) {
+          if (otherRect.top > blockRect.bottom && Math.abs(otherRect.left - blockRect.left) < CONFIG.CONNECT_THRESHOLD) {
+            connectedBlock = otherBlock;
+            return; // Exit the loop
+          }
+        }
+      }
+    });
+    return connectedBlock;
+  }
 
   // ========================================================================
-  // ביצוע ההצמדה הפיזית - חיבור פאזל מדויק - ללא שינוי
+  // עזרים שונים - ללא שינוי
   // ========================================================================
-  function performBlockSnap(sourceBlock, targetBlock, direction) {
-    if (!sourceBlock || !targetBlock || !document.body.contains(targetBlock) || targetBlock.offsetParent === null) {
-      console.error("[PerformSnap] Invalid block(s). Snap cancelled.");
-      return false;
-    }
-
-    if ((direction === 'left' && targetBlock.hasAttribute('data-connected-from-left')) ||
-        (direction === 'right' && targetBlock.hasAttribute('data-connected-from-right'))) {
-      console.warn(`[PerformSnap] Snap cancelled: Target ${targetBlock.id} conflict on side '${direction}'.`);
-      return false;
-    }
-
-    if (CONFIG.DEBUG) console.log(`[PerformSnap] Snapping ${sourceBlock.id} to ${targetBlock.id} (${direction})`);
-
-    try {
-      const sourceRect = sourceBlock.getBoundingClientRect();
-      const targetRect = targetBlock.getBoundingClientRect();
-      const pE = document.getElementById('program-blocks');
-      const pR = pE.getBoundingClientRect();
-
-      let finalLeft, finalTop;
-
-      if (direction === 'left') {
-        finalLeft = targetRect.left - sourceRect.width + CONFIG.PUZZLE_LEFT_SOCKET_WIDTH;
-        finalTop = targetRect.top + CONFIG.VERTICAL_CENTER_OFFSET;
-      } else { // direction === 'right'
-        finalLeft = targetRect.right - CONFIG.PUZZLE_RIGHT_BULGE_WIDTH;
-        finalTop = targetRect.top + CONFIG.VERTICAL_CENTER_OFFSET;
-      }
-
-      finalLeft += CONFIG.HORIZONTAL_FINE_TUNING;
-
-      let styleLeft = finalLeft - pR.left + pE.scrollLeft;
-      let styleTop = finalTop - pR.top + pE.scrollTop;
-
-      sourceBlock.style.position = 'absolute';
-      sourceBlock.style.left = `${Math.round(styleLeft)}px`;
-      sourceBlock.style.top = `${Math.round(styleTop)}px`;
-      sourceBlock.style.margin = '0';
-
-      sourceBlock.setAttribute('data-connected-to', targetBlock.id);
-      sourceBlock.setAttribute('data-connection-direction', direction);
-      targetBlock.setAttribute(
-        direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right',
-        sourceBlock.id
-      );
-      sourceBlock.classList.add('connected-block');
-      targetBlock.classList.add('has-connected-block');
-
-      playSnapSound(); // Play sound on successful snap logic start
-      addSnapEffectAnimation(sourceBlock);
-      sourceBlock.draggable = false;
-
-      if (CONFIG.DEBUG) console.log(`[PerformSnap] Success. ${sourceBlock.id} pos: L=${styleLeft.toFixed(0)}, T=${styleTop.toFixed(0)}.`);
-      return true;
-    } catch (err) {
-      console.error(`[PerformSnap] Error:`, err);
-      try {
-        detachBlock(sourceBlock, false);
-      } catch (derr) {
-        console.error(`[PerformSnap] Cleanup detach error:`, derr);
-      }
-      sourceBlock.draggable = true;
-      return false;
-    }
-  }
-
-  // ========================================================================
-  // פונקציות ניתוק, תפריט, אנימציה, יצירת מזהה - ללא שינוי
-  // ========================================================================
-  function showDetachMenu(x, y, b) {
-    removeDetachMenu();
-    const m = document.createElement('div');
-    m.id = 'detach-menu';
-    m.style.left = `${x}px`;
-    m.style.top = `${y}px`;
-    const o = document.createElement('div');
-    o.textContent = 'נתק בלוק';
-    o.onclick = (e) => {
-      e.stopPropagation();
-      detachBlock(b, true);
-      removeDetachMenu();
-    };
-    m.appendChild(o);
-    document.body.appendChild(m);
-    setTimeout(() => {
-      document.addEventListener('click', closeMenuOutside, {capture: true, once: true});
-      window.addEventListener('scroll', removeDetachMenu, {capture: true, once: true});
-    }, 0);
-  }
-
-  function closeMenuOutside(e) {
-    const m = document.getElementById('detach-menu');
-    if (m && !m.contains(e.target)) {
-      removeDetachMenu();
-    } else if (m) {
-      setTimeout(() => document.addEventListener('click', closeMenuOutside, {capture: true, once: true}), 0);
-    }
-    if (m) window.removeEventListener('scroll', removeDetachMenu, {capture: true});
-  }
-
-  function removeDetachMenu() {
-    const m = document.getElementById('detach-menu');
-    if (m) {
-      document.removeEventListener('click', closeMenuOutside, {capture: true});
-      window.removeEventListener('scroll', removeDetachMenu, {capture: true});
-      m.remove();
-    }
-  }
-
-  function detachBlock(btd, animate=true) {
-    if (!btd || !btd.hasAttribute('data-connected-to')) return;
-
-    const tid = btd.getAttribute('data-connected-to');
-    const dir = btd.getAttribute('data-connection-direction');
-
-    if (!tid || !dir) {
-      console.warn(`[Detach] Missing data on ${btd.id}. Cleaning attributes.`);
-      btd.removeAttribute('data-connected-to');
-      btd.removeAttribute('data-connection-direction');
-      btd.classList.remove('connected-block');
-      btd.draggable = true;
-      return;
-    }
-
-    if (CONFIG.DEBUG) console.log(`[Detach] Detaching ${btd.id} from ${tid}`);
-
-    btd.removeAttribute('data-connected-to');
-    btd.removeAttribute('data-connection-direction');
-    btd.classList.remove('connected-block');
-    btd.draggable = true;
-
-    // Clear potential lingering highlights on detach
-    clearAllHighlights(); // Ensures points are hidden after detach
-
-    const tb = document.getElementById(tid);
-    if (tb) {
-      tb.removeAttribute(dir === 'left' ? 'data-connected-from-left' : 'data-connected-from-right');
-      const isStillConnected = tb.hasAttribute('data-connected-from-left') ||
-                               tb.hasAttribute('data-connected-from-right') ||
-                               tb.hasAttribute('data-connected-to');
-      if (!isStillConnected) {
-          tb.classList.remove('has-connected-block');
-      }
-    } else {
-      console.warn(`[Detach] Target block with ID ${tid} not found.`);
-    }
-
-    if (animate) addDetachEffectAnimation(btd);
-
-    if (CONFIG.DEBUG) console.log(`[Detach] Finished detaching ${btd.id}. Draggable: ${btd.draggable}`);
-  }
-
-  function addSnapEffectAnimation(b) {
-    b.classList.remove('snap-animation');
-    void b.offsetWidth;
-    b.classList.add('snap-animation');
-    b.addEventListener('animationend', () => b.classList.remove('snap-animation'), {once: true});
-  }
-
-  function addDetachEffectAnimation(b) {
-    b.classList.remove('detach-animation');
-    void b.offsetWidth;
-    b.classList.add('detach-animation');
-    b.addEventListener('animationend', () => b.classList.remove('detach-animation'), {once: true});
-  }
-
-  function generateUniqueId(b) {
-    if (b.id) return b.id;
-    const p = b.dataset.type || 'block';
-    let s = Math.random().toString(36).substring(2, 8);
-    let id = `${p}-${s}`;
-    let i = 0;
-    while (document.getElementById(id) && i < 10) {
-      s = Math.random().toString(36).substring(2, 8);
-      id = `${p}-${s}-${i++}`;
-    }
+  function generateUniqueId(block) {
+    const p = 'block-id';
+    let id = `${p}-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
     if (document.getElementById(id)) {
-         id = `${p}-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
+      id = `${p}-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
     }
-    b.id = id;
+    block.id = id;
     if (CONFIG.DEBUG) console.log(`Generated ID: ${id} for block.`);
     return id;
   }
@@ -552,9 +532,7 @@
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeSystem);
   } else {
-    initializeSystem(); // DOM already loaded
+    initializeSystem();
   }
-
-})(); // סוף IIFE
-
+})();
 // --- END OF FILE linkageimproved.js ---
