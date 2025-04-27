@@ -1,9 +1,10 @@
 // --- START OF FILE linkageimproved.js ---
-// --- Version 3.8.1: Visible Highlight Fix ---
-// Changes from v3.8:
-// 1. Reverted CSS to make connection points visible during highlight (opacity: 1).
-// 2. Added call to clearAllHighlights() after snap attempt in handleMouseUp
-//    to ensure points disappear immediately after connection sound.
+// --- Version 3.8.2: Direction-Specific Horizontal Tuning ---
+// Changes from v3.8.1:
+// 1. Split HORIZONTAL_FINE_TUNING into two separate configurations:
+//    - HORIZONTAL_FINE_TUNING_RIGHT: For right-to-left connections
+//    - HORIZONTAL_FINE_TUNING_LEFT: For left-to-right connections
+// 2. Updated performBlockSnap to use the appropriate tuning value based on connection direction
 
 (function() {
   // משתנים גלובליים במודול
@@ -35,7 +36,10 @@
     PUZZLE_RIGHT_BULGE_WIDTH: 10,
     PUZZLE_LEFT_SOCKET_WIDTH: 10,
     VERTICAL_CENTER_OFFSET: 0,
-    HORIZONTAL_FINE_TUNING: -9
+    
+    // היסט אופקי נפרד לפי כיוון החיבור
+    HORIZONTAL_FINE_TUNING_RIGHT: -9, // לחיבור מימין לשמאל (כש-direction הוא 'right')
+    HORIZONTAL_FINE_TUNING_LEFT: -9    // לחיבור משמאל לימין (כש-direction הוא 'left')
   };
 
   // ========================================================================
@@ -134,7 +138,7 @@
       #sound-test-button.hidden { opacity:0; pointer-events:none; }
     `;
     document.head.appendChild(style);
-    if (CONFIG.DEBUG) console.log('Styles added (Puzzle Connection System - Visible Highlights)');
+    if (CONFIG.DEBUG) console.log('Styles added (Puzzle Connection System - Direction-Specific Horizontal Tuning)');
   }
 
   // ========================================================================
@@ -280,7 +284,7 @@
   }
 
   // ========================================================================
-  // טיפול בשחרור העכבר (MouseUp) - נוספה קריאה ל-clearAllHighlights
+  // טיפול בשחרור העכבר (MouseUp) - ללא שינוי
   // ========================================================================
   function handleMouseUp(e) {
     if (!isDraggingBlock || !currentDraggedBlock) return;
@@ -316,8 +320,7 @@
     if (performSnap) {
       const snapSuccess = performBlockSnap(blockReleased, candidateTarget, candidateDirection);
 
-      // *** התיקון כאן: ודא שההדגשות מנוקות *לאחר* ניסיון ההצמדה ***
-      // זה קורה אחרי שהצליל מתנגן בתוך performBlockSnap (אם הצליח)
+      // ודא שההדגשות מנוקות *לאחר* ניסיון ההצמדה
       clearAllHighlights(); // Ensure points are hidden immediately after snap attempt/success
 
       if (!snapSuccess) {
@@ -335,7 +338,7 @@
 
 
   // ========================================================================
-  // ביצוע ההצמדה הפיזית - חיבור פאזל מדויק - ללא שינוי
+  // ביצוע ההצמדה הפיזית - חיבור פאזל מדויק - עודכן להשתמש בערכי היסט שונים לפי כיוון
   // ========================================================================
   function performBlockSnap(sourceBlock, targetBlock, direction) {
     if (!sourceBlock || !targetBlock || !document.body.contains(targetBlock) || targetBlock.offsetParent === null) {
@@ -359,6 +362,11 @@
 
       let finalLeft, finalTop;
 
+      // בחר את היסט האופקי המתאים לפי כיוון החיבור
+      const horizontalTuning = direction === 'left' 
+                             ? CONFIG.HORIZONTAL_FINE_TUNING_LEFT 
+                             : CONFIG.HORIZONTAL_FINE_TUNING_RIGHT;
+
       if (direction === 'left') {
         finalLeft = targetRect.left - sourceRect.width + CONFIG.PUZZLE_LEFT_SOCKET_WIDTH;
         finalTop = targetRect.top + CONFIG.VERTICAL_CENTER_OFFSET;
@@ -367,7 +375,8 @@
         finalTop = targetRect.top + CONFIG.VERTICAL_CENTER_OFFSET;
       }
 
-      finalLeft += CONFIG.HORIZONTAL_FINE_TUNING;
+      // השתמש בהיסט האופקי הספציפי לכיוון
+      finalLeft += horizontalTuning;
 
       let styleLeft = finalLeft - pR.left + pE.scrollLeft;
       let styleTop = finalTop - pR.top + pE.scrollTop;
@@ -390,7 +399,7 @@
       addSnapEffectAnimation(sourceBlock);
       sourceBlock.draggable = false;
 
-      if (CONFIG.DEBUG) console.log(`[PerformSnap] Success. ${sourceBlock.id} pos: L=${styleLeft.toFixed(0)}, T=${styleTop.toFixed(0)}.`);
+      if (CONFIG.DEBUG) console.log(`[PerformSnap] Success. ${sourceBlock.id} pos: L=${styleLeft.toFixed(0)}, T=${styleTop.toFixed(0)}. Using ${direction} tuning: ${horizontalTuning}px`);
       return true;
     } catch (err) {
       console.error(`[PerformSnap] Error:`, err);
@@ -402,159 +411,3 @@
       sourceBlock.draggable = true;
       return false;
     }
-  }
-
-  // ========================================================================
-  // פונקציות ניתוק, תפריט, אנימציה, יצירת מזהה - ללא שינוי
-  // ========================================================================
-  function showDetachMenu(x, y, b) {
-    removeDetachMenu();
-    const m = document.createElement('div');
-    m.id = 'detach-menu';
-    m.style.left = `${x}px`;
-    m.style.top = `${y}px`;
-    const o = document.createElement('div');
-    o.textContent = 'נתק בלוק';
-    o.onclick = (e) => {
-      e.stopPropagation();
-      detachBlock(b, true);
-      removeDetachMenu();
-    };
-    m.appendChild(o);
-    document.body.appendChild(m);
-    setTimeout(() => {
-      document.addEventListener('click', closeMenuOutside, {capture: true, once: true});
-      window.addEventListener('scroll', removeDetachMenu, {capture: true, once: true});
-    }, 0);
-  }
-
-  function closeMenuOutside(e) {
-    const m = document.getElementById('detach-menu');
-    if (m && !m.contains(e.target)) {
-      removeDetachMenu();
-    } else if (m) {
-      setTimeout(() => document.addEventListener('click', closeMenuOutside, {capture: true, once: true}), 0);
-    }
-    if (m) window.removeEventListener('scroll', removeDetachMenu, {capture: true});
-  }
-
-  function removeDetachMenu() {
-    const m = document.getElementById('detach-menu');
-    if (m) {
-      document.removeEventListener('click', closeMenuOutside, {capture: true});
-      window.removeEventListener('scroll', removeDetachMenu, {capture: true});
-      m.remove();
-    }
-  }
-
-  function detachBlock(btd, animate=true) {
-    if (!btd || !btd.hasAttribute('data-connected-to')) return;
-
-    const tid = btd.getAttribute('data-connected-to');
-    const dir = btd.getAttribute('data-connection-direction');
-
-    if (!tid || !dir) {
-      console.warn(`[Detach] Missing data on ${btd.id}. Cleaning attributes.`);
-      btd.removeAttribute('data-connected-to');
-      btd.removeAttribute('data-connection-direction');
-      btd.classList.remove('connected-block');
-      btd.draggable = true;
-      return;
-    }
-
-    if (CONFIG.DEBUG) console.log(`[Detach] Detaching ${btd.id} from ${tid}`);
-
-    btd.removeAttribute('data-connected-to');
-    btd.removeAttribute('data-connection-direction');
-    btd.classList.remove('connected-block');
-    btd.draggable = true;
-
-    // Clear potential lingering highlights on detach
-    clearAllHighlights(); // Ensures points are hidden after detach
-
-    const tb = document.getElementById(tid);
-    if (tb) {
-      tb.removeAttribute(dir === 'left' ? 'data-connected-from-left' : 'data-connected-from-right');
-      const isStillConnected = tb.hasAttribute('data-connected-from-left') ||
-                               tb.hasAttribute('data-connected-from-right') ||
-                               tb.hasAttribute('data-connected-to');
-      if (!isStillConnected) {
-          tb.classList.remove('has-connected-block');
-      }
-    } else {
-      console.warn(`[Detach] Target block with ID ${tid} not found.`);
-    }
-
-    if (animate) addDetachEffectAnimation(btd);
-
-    if (CONFIG.DEBUG) console.log(`[Detach] Finished detaching ${btd.id}. Draggable: ${btd.draggable}`);
-  }
-
-  function addSnapEffectAnimation(b) {
-    b.classList.remove('snap-animation');
-    void b.offsetWidth;
-    b.classList.add('snap-animation');
-    b.addEventListener('animationend', () => b.classList.remove('snap-animation'), {once: true});
-  }
-
-  function addDetachEffectAnimation(b) {
-    b.classList.remove('detach-animation');
-    void b.offsetWidth;
-    b.classList.add('detach-animation');
-    b.addEventListener('animationend', () => b.classList.remove('detach-animation'), {once: true});
-  }
-
-  function generateUniqueId(b) {
-    if (b.id) return b.id;
-    const p = b.dataset.type || 'block';
-    let s = Math.random().toString(36).substring(2, 8);
-    let id = `${p}-${s}`;
-    let i = 0;
-    while (document.getElementById(id) && i < 10) {
-      s = Math.random().toString(36).substring(2, 8);
-      id = `${p}-${s}-${i++}`;
-    }
-    if (document.getElementById(id)) {
-         id = `${p}-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
-    }
-    b.id = id;
-    if (CONFIG.DEBUG) console.log(`Generated ID: ${id} for block.`);
-    return id;
-  }
-
-  // ========================================================================
-  // אתחול המערכת כולה
-  // ========================================================================
-  function initializeSystem() {
-    const initFlag = 'blockLinkageInitialized_v3_8_1_VisFix'; // Updated flag
-    if (window[initFlag]) {
-        if (CONFIG.DEBUG) console.log("Block linkage system v3.8.1 (Visible Highlight Fix) already initialized. Skipping.");
-        return;
-    }
-
-    addHighlightStyles(); // Adds styles with opacity: 1 for .connection-point-visible
-    initAudio();
-    initProgrammingAreaListeners();
-    observeNewBlocks();
-    initExistingBlocks();
-    initGlobalMouseListeners();
-
-    if (CONFIG.PLAY_SOUND) {
-      addSoundTestButton();
-    }
-
-    window[initFlag] = true;
-    console.log(`Block linkage system initialized (Version 3.8.1 - Visible Highlight Fix)`);
-    console.log(`Configuration: Right Bulge Width=${CONFIG.PUZZLE_RIGHT_BULGE_WIDTH}px, Left Socket Width=${CONFIG.PUZZLE_LEFT_SOCKET_WIDTH}px`);
-  }
-
-  // הפעל את האתחול
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeSystem);
-  } else {
-    initializeSystem(); // DOM already loaded
-  }
-
-})(); // סוף IIFE
-
-// --- END OF FILE linkageimproved.js ---
