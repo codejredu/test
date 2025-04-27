@@ -1,10 +1,9 @@
 // --- START OF FILE linkageimproved.js ---
-// --- Version 3.7: SVG Anchor Points with Puzzle Connection ---
-// Changes from v3.6:
-// 1. Uses the invisible anchor points in SVG directly (by ID)
-// 2. Highlights them with bright colors when blocks are close enough
-// 3. Improved snap connection to create a real puzzle-like fit
-// 4. Added debugging visualization options for anchor points
+// --- Version 3.8: True Puzzle Connection ---
+// Changes from previous versions:
+// 1. Creates real puzzle-piece connections
+// 2. Uses hardcoded offset values for puzzle piece alignment
+// 3. Visualizes connection points based on actual SVG structure
 
 (function() {
   // משתנים גלובליים במודול
@@ -20,8 +19,7 @@
 
   // קונפיגורציה - פרמטרים שניתן להתאים
   const CONFIG = {
-    PIN_WIDTH: 5,
-    CONNECT_THRESHOLD: 8, // סף להפעלת הדגשה וזיהוי יעד פוטנציאלי
+    CONNECT_THRESHOLD: 25, // סף רחב יותר להפעלת זיהוי חיבור
     VERTICAL_ALIGN_THRESHOLD: 20,
     VERTICAL_OVERLAP_REQ: 0.4, // דרישה ל-40% חפיפה אנכית לפחות
     BLOCK_GAP: 0, // אין רווח - חיבור שקע-תקע
@@ -32,14 +30,16 @@
     HIGHLIGHT_COLOR_RIGHT: '#FFC107', // צהוב לצד ימין (בליטה)
     HIGHLIGHT_COLOR_LEFT: '#2196F3', // כחול לצד שמאל (שקע)
     HIGHLIGHT_OPACITY: 0.8, // אטימות ההדגשה
-    LEFT_ANCHOR_ID: 'rect8467', // מזהה נקודת העיגון השמאלית (שקע)
-    RIGHT_ANCHOR_ID: 'rect8465', // מזהה נקודת העיגון הימנית (בליטה)
-    DEBUG_SHOW_ANCHORS: true, // האם להציג את נקודות העיגון בדיבוג
-    EXACT_PUZZLE_FIT: true // האם ליצור חיבור פאזל מדויק
+    
+    // ערכי היסט קבועים לחיבור פאזל מדויק - ערכים אלה יכולים להשתנות בהתאם לעיצוב ה-SVG
+    PUZZLE_RIGHT_BULGE_WIDTH: 10, // רוחב הבליטה בצד ימין (בפיקסלים)
+    PUZZLE_LEFT_SOCKET_WIDTH: 10, // רוחב השקע בצד שמאל (בפיקסלים)
+    VERTICAL_CENTER_OFFSET: 0, // היסט אנכי למרכוז (בפיקסלים)
+    HORIZONTAL_FINE_TUNING: 0 // כוונון עדין אופקי (בפיקסלים)
   };
 
   // ========================================================================
-  // הוספת סגנונות CSS - עבור הדגשת נקודות עיגון SVG
+  // הוספת סגנונות CSS - עבור הדגשת נקודות עיגון והדגשות
   // ========================================================================
   function addHighlightStyles() {
     if (document.getElementById('block-connection-styles')) return;
@@ -52,68 +52,64 @@
         z-index: 1001 !important; 
       }
       
-      /* סגנון הדגשה לנקודות עיגון SVG */
-      .svg-anchor-highlighted-right {
-        fill: ${CONFIG.HIGHLIGHT_COLOR_RIGHT} !important;
-        fill-opacity: ${CONFIG.HIGHLIGHT_OPACITY} !important;
-        stroke: ${CONFIG.HIGHLIGHT_COLOR_RIGHT} !important;
-        stroke-width: 2px !important;
-        stroke-opacity: 1 !important;
-        filter: drop-shadow(0 0 4px ${CONFIG.HIGHLIGHT_COLOR_RIGHT}) !important;
-        animation: pulseSVGAnchor 0.8s infinite !important;
-        transform-origin: center !important;
-        transform-box: fill-box !important;
-      }
-      
-      .svg-anchor-highlighted-left {
-        fill: ${CONFIG.HIGHLIGHT_COLOR_LEFT} !important;
-        fill-opacity: ${CONFIG.HIGHLIGHT_OPACITY} !important;
-        stroke: ${CONFIG.HIGHLIGHT_COLOR_LEFT} !important;
-        stroke-width: 2px !important;
-        stroke-opacity: 1 !important;
-        filter: drop-shadow(0 0 4px ${CONFIG.HIGHLIGHT_COLOR_LEFT}) !important;
-        animation: pulseSVGAnchor 0.8s infinite !important;
-        transform-origin: center !important;
-        transform-box: fill-box !important;
-      }
-      
-      /* אנימציית פעימה לנקודות עיגון */
-      @keyframes pulseSVGAnchor {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.1); }
-        100% { transform: scale(1); }
-      }
-      
-      /* סמן חיצוני למקרה שאין נקודות עיגון SVG */
-      .external-anchor-marker {
+      /* נקודות חיבור - צד ימין (בליטה) */
+      .right-connection-point {
         position: absolute;
         width: 14px;
         height: 14px;
+        top: 50%;
+        right: -7px;
+        transform: translateY(-50%);
+        background-color: ${CONFIG.HIGHLIGHT_COLOR_RIGHT};
         border-radius: 50%;
-        pointer-events: none;
-        z-index: 1005;
         opacity: 0;
         transition: opacity 0.2s ease-out;
+        pointer-events: none;
+        z-index: 1005;
+        box-shadow: 0 0 6px 2px rgba(255,193,7,0.8);
       }
       
-      .marker-left {
-        left: 0px;
+      /* נקודות חיבור - צד שמאל (שקע) */
+      .left-connection-point {
+        position: absolute;
+        width: 14px;
+        height: 14px;
         top: 50%;
-        transform: translate(-50%, -50%);
+        left: -7px;
+        transform: translateY(-50%);
         background-color: ${CONFIG.HIGHLIGHT_COLOR_LEFT};
-        box-shadow: 0 0 6px 2px ${CONFIG.HIGHLIGHT_COLOR_LEFT}88;
+        border-radius: 50%;
+        opacity: 0;
+        transition: opacity 0.2s ease-out;
+        pointer-events: none;
+        z-index: 1005;
+        box-shadow: 0 0 6px 2px rgba(33,150,243,0.8);
       }
       
-      .marker-right {
-        right: 0px;
-        top: 50%;
-        transform: translate(50%, -50%);
-        background-color: ${CONFIG.HIGHLIGHT_COLOR_RIGHT};
-        box-shadow: 0 0 6px 2px ${CONFIG.HIGHLIGHT_COLOR_RIGHT}88;
-      }
-      
-      .marker-visible {
+      /* הדגשה נראית */
+      .connection-point-visible {
         opacity: 1;
+        animation: pulseConnectionPoint 0.8s infinite;
+      }
+      
+      /* אנימציית פעימה לנקודות חיבור */
+      @keyframes pulseConnectionPoint {
+        0% { transform: translateY(-50%) scale(1); }
+        50% { transform: translateY(-50%) scale(1.2); }
+        100% { transform: translateY(-50%) scale(1); }
+      }
+      
+      /* תצוגת עזר לאיזור חיבור */
+      .connection-area {
+        position: absolute;
+        background-color: rgba(255,0,0,0.2);
+        pointer-events: none;
+        z-index: 900;
+        display: none;
+      }
+      
+      .connection-area.visible {
+        display: block;
       }
       
       /* אנימציות חיבור וניתוק */
@@ -136,15 +132,9 @@
       #sound-test-button.error { background-color:#f44336; } 
       #sound-test-button.loading { background-color:#ff9800; cursor:wait; } 
       #sound-test-button.hidden { opacity:0; pointer-events:none; }
-      
-      /* סגנון לדיבוג נקודות עיגון */
-      .debug-anchor-outline {
-        outline: 1px dashed #FF0000;
-        outline-offset: 2px;
-      }
     `;
     document.head.appendChild(style);
-    if (CONFIG.DEBUG) console.log('Styles added (SVG Anchor Points with Puzzle Connection)');
+    if (CONFIG.DEBUG) console.log('Styles added (Puzzle Connection System)');
   }
 
   // ========================================================================
@@ -155,184 +145,65 @@
   function playSnapSound() { if(!CONFIG.PLAY_SOUND||!snapSound||!soundInitialized)return;if(!audioContextAllowed&&CONFIG.DEBUG)console.warn('Playing sound before user interaction.');try{if(snapSound.readyState<3){if(CONFIG.DEBUG)console.log('Snap sound skip: audio not ready.');return;}snapSound.pause();snapSound.currentTime=0;const pp=snapSound.play();if(pp!==undefined){pp.then(()=>{audioContextAllowed=true;if(CONFIG.DEBUG>1)console.log('Snap sound played.');}).catch(err=>{if(err.name==='NotAllowedError'){console.warn('Snap sound blocked.');audioContextAllowed=false;if(!document.getElementById('sound-test-button'))addSoundTestButton();}else if(err.name!=='AbortError'){console.error('Err play snap sound:',err);}});}}catch(err){console.error('Unexpected play sound err:',err);}}
 
   // ========================================================================
-  // איתור והדגשת נקודות עיגון SVG - גרסה משופרת
+  // ניהול נקודות חיבור - טיפול בנקודות החיבור הויזואליות
   // ========================================================================
   
-  // מציאת נקודות עיגון SVG לפי המזהים הידועים
-  function findSVGAnchorPoint(block, isLeft) {
-    if (!block) return null;
-    
-    try {
-      const svg = block.querySelector('svg');
-      if (!svg) {
-        if (CONFIG.DEBUG > 1) console.log(`No SVG found in block ${block.id}`);
-        return null;
-      }
-      
-      // המזהים של נקודות העיגון
-      const anchorId = isLeft ? CONFIG.LEFT_ANCHOR_ID : CONFIG.RIGHT_ANCHOR_ID;
-      
-      // חיפוש לפי המזהה
-      const anchorElement = svg.querySelector('#' + anchorId);
-      
-      if (anchorElement) {
-        if (CONFIG.DEBUG > 1) console.log(`Found SVG anchor point #${anchorId} in block ${block.id}`);
-        
-        // הוספת מסגרת אדומה במצב דיבוג
-        if (CONFIG.DEBUG_SHOW_ANCHORS) {
-          anchorElement.classList.add('debug-anchor-outline');
-        }
-        
-        return anchorElement;
-      } else {
-        if (CONFIG.DEBUG > 1) console.log(`Anchor point #${anchorId} not found in block ${block.id}`);
-        // חיפוש אלטרנטיבי לפי מיקום
-        const allPaths = svg.querySelectorAll('path');
-        if (allPaths.length > 0) {
-          if (CONFIG.DEBUG) console.log(`Trying alternative anchor detection for ${block.id}`);
-          for (const path of allPaths) {
-            // מיקום יחסי בתוך ה-SVG
-            const bbox = path.getBBox();
-            const svgWidth = svg.viewBox.baseVal.width || svg.width.baseVal.value;
-            const relX = bbox.x / svgWidth;
-            
-            if ((isLeft && relX < 0.2) || (!isLeft && relX > 0.8)) {
-              if (CONFIG.DEBUG) console.log(`Found alternative anchor for ${isLeft ? 'left' : 'right'} side`);
-              return path;
-            }
-          }
-        }
-        return null;
-      }
-    } catch (err) {
-      console.error(`Error finding SVG anchor in block ${block ? block.id : 'unknown'}:`, err);
-      return null;
-    }
-  }
-  
-  // קבלת מיקום וגודל של נקודת עיגון
-  function getAnchorPointRect(block, isLeft) {
-    const anchorElement = findSVGAnchorPoint(block, isLeft);
-    if (!anchorElement) return null;
-    
-    try {
-      // קבלת המידות והמיקום
-      const bbox = anchorElement.getBBox();
-      const svg = block.querySelector('svg');
-      if (!svg) return null;
-      
-      const svgRect = svg.getBoundingClientRect();
-      const blockRect = block.getBoundingClientRect();
-      
-      // חישוב המרחק מקצה הבלוק לקצה ה-SVG
-      const leftOffset = svgRect.left - blockRect.left;
-      const topOffset = svgRect.top - blockRect.top;
-      
-      // חישוב יחס גודל מקורדינטות SVG לפיקסלים
-      const svgWidth = svg.viewBox.baseVal.width || svg.width.baseVal.value;
-      const svgHeight = svg.viewBox.baseVal.height || svg.height.baseVal.value;
-      const scaleX = svgRect.width / svgWidth;
-      const scaleY = svgRect.height / svgHeight;
-      
-      // המרה למיקום בפיקסלים יחסית לבלוק
-      return {
-        left: leftOffset + bbox.x * scaleX,
-        top: topOffset + bbox.y * scaleY,
-        width: bbox.width * scaleX,
-        height: bbox.height * scaleY,
-        right: leftOffset + (bbox.x + bbox.width) * scaleX,
-        bottom: topOffset + (bbox.y + bbox.height) * scaleY,
-        centerX: leftOffset + (bbox.x + bbox.width/2) * scaleX,
-        centerY: topOffset + (bbox.y + bbox.height/2) * scaleY
-      };
-    } catch (err) {
-      console.error(`Error getting anchor dimensions for ${block.id}:`, err);
-      return null;
-    }
-  }
-  
-  // הדגשת נקודת עיגון SVG
-  function highlightSVGAnchorPoint(block, isLeft) {
-    if (!block) return false;
-    
-    // מציאת נקודת העיגון
-    const anchorPoint = findSVGAnchorPoint(block, isLeft);
-    
-    if (!anchorPoint) {
-      // אם לא נמצאה נקודת עיגון, השתמש בסמן חיצוני
-      addExternalAnchorMarker(block, isLeft);
-      return false;
-    }
-    
-    // שמירת המצב המקורי
-    if (!anchorPoint.hasAttribute('data-original-fill')) {
-      anchorPoint.setAttribute('data-original-fill', anchorPoint.getAttribute('fill') || 'none');
-    }
-    if (!anchorPoint.hasAttribute('data-original-fill-opacity')) {
-      anchorPoint.setAttribute('data-original-fill-opacity', anchorPoint.getAttribute('fill-opacity') || '0');
-    }
-    
-    // הדגשת נקודת העיגון
-    anchorPoint.setAttribute('fill', isLeft ? CONFIG.HIGHLIGHT_COLOR_LEFT : CONFIG.HIGHLIGHT_COLOR_RIGHT);
-    anchorPoint.setAttribute('fill-opacity', CONFIG.HIGHLIGHT_OPACITY.toString());
-    
-    // הוספת מחלקת ההדגשה המתאימה
-    const highlightClass = isLeft ? 'svg-anchor-highlighted-left' : 'svg-anchor-highlighted-right';
-    anchorPoint.classList.add(highlightClass);
-    
-    if (CONFIG.DEBUG > 1) console.log(`Highlighted SVG anchor in block ${block.id}, side: ${isLeft ? 'left' : 'right'}`);
-    
-    return true;
-  }
-  
-  // ניקוי הדגשות מכל נקודות העיגון
-  function clearAllAnchorHighlights() {
-    // ניקוי הדגשות SVG
-    document.querySelectorAll('.svg-anchor-highlighted-left, .svg-anchor-highlighted-right').forEach(element => {
-      // שחזור מצב מקורי
-      if (element.hasAttribute('data-original-fill')) {
-        const origFill = element.getAttribute('data-original-fill');
-        element.setAttribute('fill', origFill);
-      }
-      if (element.hasAttribute('data-original-fill-opacity')) {
-        const origOpacity = element.getAttribute('data-original-fill-opacity');
-        element.setAttribute('fill-opacity', origOpacity);
-      }
-      element.classList.remove('svg-anchor-highlighted-left', 'svg-anchor-highlighted-right');
-    });
-    
-    // ניקוי סמנים חיצוניים
-    document.querySelectorAll('.marker-visible').forEach(marker => {
-      marker.classList.remove('marker-visible');
-    });
-  }
-  
-  // הוספת סמן חיצוני למקרה שאין נקודות עיגון SVG
-  function addExternalAnchorMarker(block, isLeft) {
+  // הוספת נקודות חיבור לבלוק
+  function addConnectionPoints(block) {
     if (!block) return;
     
-    // בדוק אם כבר יש סמן
-    let marker = block.querySelector(`.external-anchor-marker.marker-${isLeft ? 'left' : 'right'}`);
+    // בדוק אם כבר יש נקודות חיבור
+    if (block.querySelector('.right-connection-point')) return;
     
-    // אם לא, צור אחד חדש
-    if (!marker) {
-      marker = document.createElement('div');
-      marker.className = `external-anchor-marker marker-${isLeft ? 'left' : 'right'}`;
-      block.appendChild(marker);
+    // צור נקודת חיבור ימנית (בליטה)
+    const rightPoint = document.createElement('div');
+    rightPoint.className = 'right-connection-point';
+    block.appendChild(rightPoint);
+    
+    // צור נקודת חיבור שמאלית (שקע)
+    const leftPoint = document.createElement('div');
+    leftPoint.className = 'left-connection-point';
+    block.appendChild(leftPoint);
+    
+    if (CONFIG.DEBUG > 1) console.log(`Added connection points to block ${block.id}`);
+  }
+  
+  // הדגשת נקודת חיבור
+  function highlightConnectionPoint(block, isLeft) {
+    if (!block) return false;
+    
+    // ודא שיש נקודות חיבור
+    addConnectionPoints(block);
+    
+    // בחר את נקודת החיבור המתאימה והדגש אותה
+    const connectionPoint = block.querySelector(isLeft ? '.left-connection-point' : '.right-connection-point');
+    if (connectionPoint) {
+      connectionPoint.classList.add('connection-point-visible');
+      return true;
     }
     
-    // הצג את הסמן
-    marker.classList.add('marker-visible');
+    return false;
+  }
+  
+  // ניקוי כל ההדגשות
+  function clearAllHighlights() {
+    // הסר הדגשות מכל נקודות החיבור
+    document.querySelectorAll('.connection-point-visible').forEach(point => {
+      point.classList.remove('connection-point-visible');
+    });
     
-    if (CONFIG.DEBUG > 1) console.log(`Added external marker to block ${block.id}, side: ${isLeft ? 'left' : 'right'}`);
+    // הסר תצוגות אזורי חיבור
+    document.querySelectorAll('.connection-area.visible').forEach(area => {
+      area.classList.remove('visible');
+    });
   }
 
   // ========================================================================
   // מאזינים, זיהוי בלוקים, קליק ימני, MouseDown - בסיסי
   // ========================================================================
   function initProgrammingAreaListeners() { const a=document.getElementById('program-blocks');if(!a)return;a.addEventListener('dragover',(e)=>e.preventDefault());a.addEventListener('dragstart',(e)=>{if(e.target?.closest?.('#program-blocks .block-container'))e.preventDefault();}); }
-  function observeNewBlocks() { const a=document.getElementById('program-blocks');if(!a)return;const o=new MutationObserver((m)=>{m.forEach((mu)=>{if(mu.type==='childList'){mu.addedNodes.forEach((n)=>{if(n.nodeType===1){let b=n.classList?.contains('block-container')?n:n.querySelector?.('.block-container');if(b?.closest('#program-blocks')){if(!b.id)generateUniqueId(b);addBlockDragListeners(b);}}});}});});o.observe(a,{childList:true,subtree:true});if(CONFIG.DEBUG)console.log("MutationObserver watching."); }
-  function initExistingBlocks() { document.querySelectorAll('#program-blocks .block-container').forEach(b=>{if(!b.id)generateUniqueId(b);addBlockDragListeners(b);});if(CONFIG.DEBUG)console.log("Listeners added to existing blocks."); }
+  function observeNewBlocks() { const a=document.getElementById('program-blocks');if(!a)return;const o=new MutationObserver((m)=>{m.forEach((mu)=>{if(mu.type==='childList'){mu.addedNodes.forEach((n)=>{if(n.nodeType===1){let b=n.classList?.contains('block-container')?n:n.querySelector?.('.block-container');if(b?.closest('#program-blocks')){if(!b.id)generateUniqueId(b);addBlockDragListeners(b);addConnectionPoints(b);}}});}});});o.observe(a,{childList:true,subtree:true});if(CONFIG.DEBUG)console.log("MutationObserver watching."); }
+  function initExistingBlocks() { document.querySelectorAll('#program-blocks .block-container').forEach(b=>{if(!b.id)generateUniqueId(b);addBlockDragListeners(b);addConnectionPoints(b);});if(CONFIG.DEBUG)console.log("Listeners added to existing blocks."); }
   function addBlockDragListeners(b) { b.removeEventListener('mousedown',handleMouseDown);b.addEventListener('mousedown',handleMouseDown);b.removeEventListener('contextmenu',handleContextMenu);b.addEventListener('contextmenu',handleContextMenu); }
   function handleContextMenu(e) { e.preventDefault();const b=e.target.closest('.block-container');if(b?.hasAttribute('data-connected-to'))showDetachMenu(e.clientX,e.clientY,b); }
   function handleMouseDown(e) { if(e.button!==0||!e.target.closest||e.target.matches('input,button,select,textarea,a[href]'))return;const b=e.target.closest('.block-container');if(!b||!b.parentElement||b.parentElement.id!=='program-blocks')return;if(!b.id)generateUniqueId(b);e.preventDefault();b.draggable=false;if(CONFIG.DEBUG)console.log(`[MouseDown] Start drag: ${b.id}`);if(b.hasAttribute('data-connected-to'))detachBlock(b,false);const lId=b.getAttribute('data-connected-from-left');if(lId)detachBlock(document.getElementById(lId),false);const rId=b.getAttribute('data-connected-from-right');if(rId)detachBlock(document.getElementById(rId),false);currentDraggedBlock=b;isDraggingBlock=true;const r=b.getBoundingClientRect();dragOffset.x=e.clientX-r.left;dragOffset.y=e.clientY-r.top;const pE=document.getElementById('program-blocks');const pR=pE.getBoundingClientRect();if(window.getComputedStyle(b).position!=='absolute'){b.style.position='absolute';b.style.left=(r.left-pR.left+pE.scrollLeft)+'px';b.style.top=(r.top-pR.top+pE.scrollTop)+'px';}b.style.margin='0';b.style.zIndex='1001';b.classList.add('snap-source');document.body.classList.add('user-select-none'); }
@@ -345,7 +216,7 @@
   function handleMouseMove(e) { if(!isDraggingBlock||!currentDraggedBlock)return;e.preventDefault();const pE=document.getElementById('program-blocks');if(!pE){handleMouseUp(e);return;}const pR=pE.getBoundingClientRect();let nL=e.clientX-pR.left-dragOffset.x+pE.scrollLeft;let nT=e.clientY-pR.top-dragOffset.y+pE.scrollTop;const bW=currentDraggedBlock.offsetWidth;const bH=currentDraggedBlock.offsetHeight;const sW=pE.scrollWidth;const sH=pE.scrollHeight;nL=Math.max(0,Math.min(nL,sW-bW));nT=Math.max(0,Math.min(nT,sH-bH));currentDraggedBlock.style.left=Math.round(nL)+'px';currentDraggedBlock.style.top=Math.round(nT)+'px';checkAndHighlightSnapPossibility(); }
 
   // ========================================================================
-  // בדיקת הצמדה והדגשה של נקודות עיגון SVG - משופר
+  // בדיקת הצמדה והדגשה - חיבור פאזל
   // ========================================================================
   function checkAndHighlightSnapPossibility() {
     if (!currentDraggedBlock) return;
@@ -358,11 +229,10 @@
     
     let bestTarget = null; 
     let bestDirection = null;
-    let minDistance = CONFIG.CONNECT_THRESHOLD * 2; // מרחב חיפוש גדול יותר
-    let minAnchorDistance = Infinity;
+    let minDistance = CONFIG.CONNECT_THRESHOLD + 1;
 
     // ניקוי כל ההדגשות הקודמות
-    clearAllAnchorHighlights();
+    clearAllHighlights();
     potentialSnapTarget = null; 
     snapDirection = null;
 
@@ -374,7 +244,6 @@
       const targetConnectedRight = targetBlock.hasAttribute('data-connected-from-right');
 
       // בדיקת חפיפה אנכית בסיסית
-      // בדיקת חפיפה אנכית בסיסית
       const topOverlap = Math.max(sourceRect.top, targetRect.top);
       const bottomOverlap = Math.min(sourceRect.bottom, targetRect.bottom);
       const verticalOverlap = Math.max(0, bottomOverlap - topOverlap);
@@ -383,83 +252,46 @@
       // אם אין מספיק חפיפה אנכית, המשך לבלוק הבא
       if (verticalOverlap < minHeightReq || verticalOverlap <= 0) continue;
       
-      // בדיקה של מרחק בין נקודות העיגון ספציפית
       // 1. בדיקת צד ימין של מקור לצד שמאל של יעד
       if (!targetConnectedLeft) {
-        const sourceRightAnchor = getAnchorPointRect(currentDraggedBlock, false); // false = right
-        const targetLeftAnchor = getAnchorPointRect(targetBlock, true); // true = left
-        
-        if (sourceRightAnchor && targetLeftAnchor) {
-          // חישוב המרחק בין המרכזים של נקודות העיגון
-          const dx = targetLeftAnchor.centerX + targetRect.left - (sourceRightAnchor.centerX + sourceRect.left);
-          const dy = targetLeftAnchor.centerY + targetRect.top - (sourceRightAnchor.centerY + sourceRect.top);
-          const distance = Math.sqrt(dx*dx + dy*dy);
-          
-          if (distance < minAnchorDistance) {
-            minAnchorDistance = distance;
-            minDistance = Math.abs(sourceRect.right - targetRect.left);
-            bestTarget = targetBlock;
-            bestDirection = 'left';
-          }
-        } else {
-          // גיבוי - השתמש בחישוב מרחק רגיל אם אין נקודות עיגון
-          const distance = Math.abs(sourceRect.right - targetRect.left);
-          if (distance < minDistance) {
-            minDistance = distance;
-            bestTarget = targetBlock;
-            bestDirection = 'left';
-          }
+        const distance = Math.abs(sourceRect.right - targetRect.left);
+        if (distance < minDistance) {
+          minDistance = distance;
+          bestTarget = targetBlock;
+          bestDirection = 'left';
         }
       }
       
       // 2. בדיקת צד שמאל של מקור לצד ימין של יעד
       if (!targetConnectedRight) {
-        const sourceLeftAnchor = getAnchorPointRect(currentDraggedBlock, true); // true = left
-        const targetRightAnchor = getAnchorPointRect(targetBlock, false); // false = right
-        
-        if (sourceLeftAnchor && targetRightAnchor) {
-          // חישוב המרחק בין המרכזים של נקודות העיגון
-          const dx = targetRightAnchor.centerX + targetRect.left - (sourceLeftAnchor.centerX + sourceRect.left);
-          const dy = targetRightAnchor.centerY + targetRect.top - (sourceLeftAnchor.centerY + sourceRect.top);
-          const distance = Math.sqrt(dx*dx + dy*dy);
-          
-          if (distance < minAnchorDistance) {
-            minAnchorDistance = distance;
-            minDistance = Math.abs(sourceRect.left - targetRect.right);
-            bestTarget = targetBlock;
-            bestDirection = 'right';
-          }
-        } else {
-          // גיבוי - השתמש בחישוב מרחק רגיל אם אין נקודות עיגון
-          const distance = Math.abs(sourceRect.left - targetRect.right);
-          if (distance < minDistance) {
-            minDistance = distance;
-            bestTarget = targetBlock;
-            bestDirection = 'right';
-          }
+        const distance = Math.abs(sourceRect.left - targetRect.right);
+        if (distance < minDistance) {
+          minDistance = distance;
+          bestTarget = targetBlock;
+          bestDirection = 'right';
         }
       }
     }
 
     // אם נמצא יעד מתאים בתחום הסף
-    if (bestTarget && minDistance <= CONFIG.CONNECT_THRESHOLD * 2) {
-      if (CONFIG.DEBUG > 1) console.log(`[Highlight] Threshold met: ${currentDraggedBlock.id} -> ${bestTarget.id} (${bestDirection}). Dist=${minDistance.toFixed(1)}px, AnchorDist=${minAnchorDistance.toFixed(1)}px`);
+    if (bestTarget && minDistance <= CONFIG.CONNECT_THRESHOLD) {
+      if (CONFIG.DEBUG > 1) console.log(`[Highlight] Threshold met: ${currentDraggedBlock.id} -> ${bestTarget.id} (${bestDirection}). Dist=${minDistance.toFixed(1)}px`);
       potentialSnapTarget = bestTarget;
       snapDirection = bestDirection;
       
-      // הדגש נקודות עיגון SVG
+      // הדגש נקודות חיבור
       try {
         if (bestDirection === 'left') {
           // יעד שמאלי (הבלוק המטרה בצד שמאל של המקור)
-          highlightSVGAnchorPoint(bestTarget, true); // נקודת עיגון שמאלית ביעד (כחול)
-          highlightSVGAnchorPoint(currentDraggedBlock, false); // נקודת עיגון ימנית במקור (צהוב)
+          highlightConnectionPoint(bestTarget, true); // נקודת חיבור שמאלית ביעד
+          highlightConnectionPoint(currentDraggedBlock, false); // נקודת חיבור ימנית במקור
         } else if (bestDirection === 'right') {
           // יעד ימני (הבלוק המטרה בצד ימין של המקור)
-          highlightSVGAnchorPoint(bestTarget, false); // נקודת עיגון ימנית ביעד (צהוב)
-          highlightSVGAnchorPoint(currentDraggedBlock, true); // נקודת עיגון שמאלית במקור (כחול)
+          highlightConnectionPoint(bestTarget, false); // נקודת חיבור ימנית ביעד
+          highlightConnectionPoint(currentDraggedBlock, true); // נקודת חיבור שמאלית במקור
         }
       } catch (err) {
-        console.error("Error highlighting SVG anchor points:", err);
+        console.error("Error highlighting connection points:", err);
       }
     }
   }
@@ -485,8 +317,8 @@
     blockReleased.classList.remove('snap-source');
     blockReleased.style.zIndex = '';
     
-    // ניקוי נקודות העיגון
-    clearAllAnchorHighlights();
+    // ניקוי נקודות חיבור
+    clearAllHighlights();
 
     // החלטה על הצמדה - מבוססת רק על אם היה מועמד במהלך הגרירה
     let performSnap = false;
@@ -513,7 +345,7 @@
   }
 
   // ========================================================================
-  // ביצוע ההצמדה הפיזית (כולל חיבור פאזל מדויק) - משופר
+  // ביצוע ההצמדה הפיזית - חיבור פאזל מדויק!!!
   // ========================================================================
   function performBlockSnap(sourceBlock, targetBlock, direction) {
     if (!sourceBlock || !targetBlock || !document.body.contains(targetBlock) || targetBlock.offsetParent === null) { 
@@ -538,58 +370,31 @@
       
       let finalLeft, finalTop;
       
-      if (CONFIG.EXACT_PUZZLE_FIT) {
-        // חיבור פאזל מדויק - יישור לפי נקודות העיגון
-        if (direction === 'left') {
-          // הבלוק המקור מתחבר משמאל לבלוק היעד
-          const sourceRightAnchor = getAnchorPointRect(sourceBlock, false); // false = right
-          const targetLeftAnchor = getAnchorPointRect(targetBlock, true); // true = left
-          
-          if (sourceRightAnchor && targetLeftAnchor) {
-            // חישוב ההיסט האנכי להתאמה מדויקת
-            const verticalOffset = targetLeftAnchor.centerY - sourceRightAnchor.centerY;
-            
-            // חישוב המיקום האופקי - שקע מכסה בליטה
-            finalLeft = targetRect.left - sourceRect.width;
-            // חישוב המיקום האנכי עם התאמה
-            finalTop = targetRect.top + verticalOffset;
-          } else {
-            // גיבוי - אם לא נמצאו נקודות עיגון
-            finalLeft = targetRect.left - sourceRect.width - CONFIG.BLOCK_GAP;
-            finalTop = targetRect.top;
-          }
-        } else { // direction === 'right'
-          // הבלוק המקור מתחבר מימין לבלוק היעד
-          const sourceLeftAnchor = getAnchorPointRect(sourceBlock, true); // true = left
-          const targetRightAnchor = getAnchorPointRect(targetBlock, false); // false = right
-          
-          if (sourceLeftAnchor && targetRightAnchor) {
-            // חישוב ההיסט האנכי להתאמה מדויקת
-            const verticalOffset = targetRightAnchor.centerY - sourceLeftAnchor.centerY;
-            
-            // חישוב המיקום האופקי - שקע מכסה בליטה
-            finalLeft = targetRect.right;
-            // חישוב המיקום האנכי עם התאמה
-            finalTop = targetRect.top + verticalOffset;
-          } else {
-            // גיבוי - אם לא נמצאו נקודות עיגון
-            finalLeft = targetRect.right + CONFIG.BLOCK_GAP;
-            finalTop = targetRect.top;
-          }
-        }
-      } else {
-        // חיבור בסיסי - אותו דבר כמו קודם
-        finalLeft = (direction === 'left') ? 
-            (targetRect.left - sourceRect.width - CONFIG.BLOCK_GAP) : 
-            (targetRect.right + CONFIG.BLOCK_GAP);
-        finalTop = targetRect.top; // יישור למעלה
+      // חיבור פאזל מדויק - החישוב השתנה לחלוטין!
+      if (direction === 'left') {
+        // המקור מימין ליעד - השקע במקור חייב לכסות את הבליטה ביעד
+        
+        // המיקום האופקי מחושב כך שימין המקור יכסה את שמאל היעד + רוחב הבליטה
+        finalLeft = targetRect.left - sourceRect.width + CONFIG.PUZZLE_LEFT_SOCKET_WIDTH;
+        // המיקום האנכי הוא יישור למרכז עם כיוונון עדין
+        finalTop = targetRect.top + CONFIG.VERTICAL_CENTER_OFFSET;
+      } else { // direction === 'right'
+        // המקור משמאל ליעד - השקע ביעד חייב לכסות את הבליטה במקור
+        
+        // המיקום האופקי מחושב כך ששמאל המקור יהיה צמוד לימין היעד פחות רוחב השקע
+        finalLeft = targetRect.right - CONFIG.PUZZLE_RIGHT_BULGE_WIDTH;
+        // המיקום האנכי הוא יישור למרכז עם כיוונון עדין
+        finalTop = targetRect.top + CONFIG.VERTICAL_CENTER_OFFSET;
       }
+      
+      // התאמה עדינה אופקית נוספת
+      finalLeft += CONFIG.HORIZONTAL_FINE_TUNING;
       
       // המרה למיקום יחסי לאיזור התכנות
       let styleLeft = finalLeft - pR.left + pE.scrollLeft;
       let styleTop = finalTop - pR.top + pE.scrollTop;
       
-      // *** הזזת הבלוק הנגרר למיקום הסופי - זו ה"קפיצה" ***
+      // *** הזזת הבלוק הנגרר למיקום הסופי - זו ה"קפיצה" לחיבור פאזל ***
       sourceBlock.style.position = 'absolute';
       sourceBlock.style.left = `${Math.round(styleLeft)}px`;
       sourceBlock.style.top = `${Math.round(styleTop)}px`;
@@ -688,8 +493,8 @@
     btd.classList.remove('connected-block');
     btd.draggable = true;
     
-    // נקה הדגשות נקודות עיגון
-    clearAllAnchorHighlights();
+    // נקה הדגשות נקודות חיבור
+    clearAllHighlights();
     
     const tb = document.getElementById(tid);
     if (tb) {
@@ -740,13 +545,13 @@
   // אתחול המערכת כולה
   // ========================================================================
   function initializeSystem() {
-    const initFlag = 'blockLinkageInitialized_v3_7';
+    const initFlag = 'blockLinkageInitialized_v3_8';
     if (window[initFlag]) {
-        if (CONFIG.DEBUG) console.log("Block linkage system v3.7 already initialized. Skipping.");
+        if (CONFIG.DEBUG) console.log("Block linkage system v3.8 already initialized. Skipping.");
         return;
     }
 
-    // גרסה 3.7 - שימוש בנקודות עיגון SVG וחיבור פאזל
+    // גרסה 3.8 - חיבור פאזל מדויק
     addHighlightStyles();
     initAudio();
     initProgrammingAreaListeners();
@@ -759,8 +564,8 @@
     }
 
     window[initFlag] = true;
-    console.log(`Block linkage system initialized (Version 3.7 - SVG Anchors with Puzzle Connection, Threshold=${CONFIG.CONNECT_THRESHOLD}px)`);
-    console.log(`Configuration: Exact Puzzle Fit=${CONFIG.EXACT_PUZZLE_FIT}, Debug Anchors=${CONFIG.DEBUG_SHOW_ANCHORS}`);
+    console.log(`Block linkage system initialized (Version 3.8 - True Puzzle Connection)`);
+    console.log(`Configuration: Right Bulge Width=${CONFIG.PUZZLE_RIGHT_BULGE_WIDTH}px, Left Socket Width=${CONFIG.PUZZLE_LEFT_SOCKET_WIDTH}px`);
   }
 
   // הפעל את האתחול
