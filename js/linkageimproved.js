@@ -35,7 +35,7 @@
     PUZZLE_RIGHT_BULGE_WIDTH: 10, // רוחב הבליטה בצד ימין (בפיקסלים)
     PUZZLE_LEFT_SOCKET_WIDTH: 10, // רוחב השקע בצד שמאל (בפיקסלים)
     VERTICAL_CENTER_OFFSET: 0, // היסט אנכי למרכוז (בפיקסלים)
-    HORIZONTAL_FINE_TUNING: -9 // כוונון עדין אופקי (בפיקסלים)
+    HORIZONTAL_FINE_TUNING: 0 // כוונון עדין אופקי (בפיקסלים)
   };
 
   // ========================================================================
@@ -379,9 +379,4 @@
         // המיקום האנכי הוא יישור למרכז עם כיוונון עדין
         finalTop = targetRect.top + CONFIG.VERTICAL_CENTER_OFFSET;
       } else { // direction === 'right'
-        // המקור משמאל ליעד - השקע ביעד חייב לכסות את הבליטה במקור
-        
-        // המיקום האופקי מחושב כך ששמאל המקור יהיה צמוד לימין היעד פחות רוחב השקע
-        finalLeft = targetRect.right - CONFIG.PUZZLE_RIGHT_BULGE_WIDTH;
-        // המיקום האנכי הוא יישור למרכז עם כיוונון עדין
-        finalTop = targetRect.top + CONFIG.VERTICAL_CENTER_OFFSET;
+        // המקור משמאל ליע
