@@ -1,65 +1,9 @@
-function detachBlock(btd, animate=true) {
-    if (!btd || !btd.hasAttribute('data-connected-to')) return;
-
-    const tid = btd.getAttribute('data-connected-to');
-    const dir = btd.getAttribute('data-connection-direction');
-
-    if (!tid || !dir) {
-      console.warn(`[Detach] Missing data on ${btd.id}. Cleaning attributes.`);
-      btd.removeAttribute('data-connected-to');
-      btd.removeAttribute('data-connection-direction');
-      btd.removeAttribute('data-keep-highlights'); // הסרת סימון שמירת הדגשות
-      btd.classList.remove('connected-block');
-      btd.draggable = true;
-      return;
-    }
-
-    if (CONFIG.DEBUG) console.log(`[Detach] Detaching ${btd.id} from ${tid}`);
-
-    btd.removeAttribute('data-connected-to');
-    btd.removeAttribute('data-connection-direction');
-    btd.removeAttribute('data-keep-highlights'); // הסרת סימון שמירת הדגשות
-    btd.classList.remove('connected-block');
-    btd.draggable = true;
-
-    // מוריד מיד את כל ההדגשות של נקודות החיבור מהבלוק הזה
-    const leftPoint = btd.querySelector('.left-connection-point');
-    const rightPoint = btd.querySelector('.right-connection-point');
-    if (leftPoint) leftPoint.classList.remove('connection-point-visible');
-    if (rightPoint) rightPoint.classList.remove('connection-point-visible');
-
-    const tb = document.getElementById(tid);
-    if (tb) {
-      tb.removeAttribute(dir === 'left' ? 'data-connected-from-left' : 'data-connected-from-right');
-      const isStillConnected = tb.hasAttribute('data-connected-from-left') ||
-                               tb.hasAttribute('data-connected-from-right') ||
-                               tb.hasAttribute('data-connected-to');
-
-      if (!isStillConnected) {
-          tb.classList.remove('has-connected-block');
-          tb.removeAttribute('data-keep-highlights'); // הסרת סימון שמירת הדגשות
-
-          // מוריד מיד את ההדגשות
-          const tbLeftPoint = tb.querySelector('.left-connection-point');
-          const tbRightPoint = tb.querySelector('.right-connection-point');
-          if (tbLeftPoint) tbLeftPoint.classList.remove('connection-point-visible');
-          if (tbRightPoint) tbRightPoint.classList.remove('connection-point-visible');
-      }
-    } else {
-      console.warn(`[Detach] Target block with ID ${tid} not found.`);
-    }
-
-    if (animate) addDetachEffectAnimation(btd);
-
-    if (CONFIG.DEBUG) console.log(`[Detach] Finished detaching ${btd.id}. Draggable: ${btd.draggable}`);
-  }// --- START OF FILE linkageimproved.js ---
-// --- Version 3.9.0: Persistent Connection Highlights ---
-// Changes from v3.8.1:
-// 1. Added permanent connection point highlights that remain visible after snap.
-// 2. Added special tracking of connected blocks with 'data-keep-highlights' attribute.
-// 3. Added new highlight preservation system that maintains highlight visibility.
-// 4. Improved detach logic to properly remove highlights only for detached connections.
-// 5. Updated clearHighlights function to skip blocks marked with keep-highlights.
+// --- START OF FILE linkageimproved.js ---
+// --- Version 3.8.1: Visible Highlight Fix ---
+// Changes from v3.8:
+// 1. Reverted CSS to make connection points visible during highlight (opacity: 1).
+// 2. Added call to clearAllHighlights() after snap attempt in handleMouseUp
+//    to ensure points disappear immediately after connection sound.
 
 (function() {
   // משתנים גלובליים במודול
@@ -86,7 +30,6 @@ function detachBlock(btd, animate=true) {
     HIGHLIGHT_COLOR_RIGHT: '#FFC107', // צהוב לצד ימין (בליטה)
     HIGHLIGHT_COLOR_LEFT: '#2196F3', // כחול לצד שמאל (שקע)
     HIGHLIGHT_OPACITY: 0.8, // Note: Declared but not used directly for points
-    HIGHLIGHT_CLEAR_DELAY: 500, // הערך הזה לא משמש יותר - נקודות החיבור נשארות מוצגות לצמיתות
 
     // ערכי היסט קבועים לחיבור פאזל מדויק
     PUZZLE_RIGHT_BULGE_WIDTH: 10,
@@ -191,7 +134,7 @@ function detachBlock(btd, animate=true) {
       #sound-test-button.hidden { opacity:0; pointer-events:none; }
     `;
     document.head.appendChild(style);
-    if (CONFIG.DEBUG) console.log(`Styles added (Puzzle Connection System - Persistent Highlights)`);
+    if (CONFIG.DEBUG) console.log('Styles added (Puzzle Connection System - Visible Highlights)');
   }
 
   // ========================================================================
@@ -224,13 +167,13 @@ function detachBlock(btd, animate=true) {
     addConnectionPoints(block); // Ensure elements exist
     const connectionPoint = block.querySelector(isLeft ? '.left-connection-point' : '.right-connection-point');
     if (connectionPoint) {
-      connectionPoint.classList.add('connection-point-visible'); // CSS makes this visible (opacity: 1)
+      connectionPoint.classList.add('connection-point-visible'); // CSS makes this visible
       return true;
     }
     return false;
   }
 
-  // ניקוי כל ההדגשות - ללא שינוי בפונקציה
+  // ניקוי כל ההדגשות (מסיר את הקלאס שהופך אותן לנראות)
   function clearAllHighlights() {
     document.querySelectorAll('.connection-point-visible').forEach(point => {
       point.classList.remove('connection-point-visible');
@@ -239,41 +182,6 @@ function detachBlock(btd, animate=true) {
     document.querySelectorAll('.connection-area.visible').forEach(area => {
       area.classList.remove('visible');
     });
-  }
-
-  // פונקציה חדשה: ניקוי הדגשות למעט בלוקים מחוברים שסומנו לשמירה
-  function clearHighlightsExceptConnected() {
-    document.querySelectorAll('.connection-point-visible').forEach(point => {
-      // נקודות שנמצאות בבלוקים עם המאפיין data-keep-highlights לא ימחקו
-      const parentBlock = point.closest('.block-container');
-      if (!parentBlock || !parentBlock.hasAttribute('data-keep-highlights')) {
-        point.classList.remove('connection-point-visible');
-      }
-    });
-    
-    // מנקה את אזורי החיבור אם היו בשימוש
-    document.querySelectorAll('.connection-area.visible').forEach(area => {
-      area.classList.remove('visible');
-    });
-  }
-
-  // פונקציה עזר - מוודאת שנקודות חיבור ימשיכו להיות מודגשות
-  function preserveConnectionHighlights(sourceBlock, targetBlock, direction) {
-    if (!sourceBlock || !targetBlock) return false;
-    
-    if (direction === 'left') {
-      highlightConnectionPoint(targetBlock, true);  // נקודה שמאלית בבלוק היעד
-      highlightConnectionPoint(sourceBlock, false); // נקודה ימנית בבלוק המקור
-    } else { // direction === 'right'
-      highlightConnectionPoint(targetBlock, false); // נקודה ימנית בבלוק היעד
-      highlightConnectionPoint(sourceBlock, true);  // נקודה שמאלית בבלוק המקור
-    }
-    
-    // סימון הבלוקים כדי לשמור על ההדגשות
-    sourceBlock.setAttribute('data-keep-highlights', 'true');
-    targetBlock.setAttribute('data-keep-highlights', 'true');
-    
-    return true;
   }
 
   // ========================================================================
@@ -372,7 +280,7 @@ function detachBlock(btd, animate=true) {
   }
 
   // ========================================================================
-  // טיפול בשחרור העכבר (MouseUp) - עודכן לשמר את נקודות החיבור
+  // טיפול בשחרור העכבר (MouseUp) - נוספה קריאה ל-clearAllHighlights
   // ========================================================================
   function handleMouseUp(e) {
     if (!isDraggingBlock || !currentDraggedBlock) return;
@@ -383,7 +291,7 @@ function detachBlock(btd, animate=true) {
 
     if (CONFIG.DEBUG) console.log(`[MouseUp] Releasing block ${blockReleased.id}. Candidate: ${candidateTarget?.id || 'none'}, direction: ${candidateDirection || 'none'}`);
 
-    // ניקוי מצב הגרירה אבל לא מנקה את ההדגשות
+    // ניקוי מצב הגרירה וההדגשות הראשוניות (מהמיקום האחרון של הגרירה)
     isDraggingBlock = false;
     currentDraggedBlock = null;
     potentialSnapTarget = null;
@@ -392,6 +300,9 @@ function detachBlock(btd, animate=true) {
     blockReleased.classList.remove('snap-source');
     blockReleased.style.zIndex = '';
 
+    // ניקוי ראשוני של נקודות החיבור שהודגשו ב-MouseMove האחרון
+    clearAllHighlights();
+
     // החלטה על הצמדה
     let performSnap = false;
     if (candidateTarget && candidateDirection && document.body.contains(candidateTarget)) {
@@ -399,26 +310,25 @@ function detachBlock(btd, animate=true) {
         performSnap = true;
     } else {
         if (CONFIG.DEBUG) console.log(`[MouseUp] No valid candidate target identified during drag. No snap attempt.`);
-        clearAllHighlights(); // במקרה שאין חיבור - כן מנקים את ההדגשות
     }
 
     // בצע את ההצמדה אם הוחלט כך
     if (performSnap) {
-      // נקודות החיבור מודגשות כבר מה-checkAndHighlightSnapPossibility
-      // וה-performBlockSnap יוודא שהן נשארות מודגשות
       const snapSuccess = performBlockSnap(blockReleased, candidateTarget, candidateDirection);
 
-      if (snapSuccess) {
-        // הנקודות ישארו מודגשות בגלל הקוד החדש ב-performBlockSnap
-        if (CONFIG.DEBUG) console.log(`[MouseUp] Snap successful. Connection points will remain highlighted.`);
+      // *** התיקון כאן: ודא שההדגשות מנוקות *לאחר* ניסיון ההצמדה ***
+      // זה קורה אחרי שהצליל מתנגן בתוך performBlockSnap (אם הצליח)
+      clearAllHighlights(); // Ensure points are hidden immediately after snap attempt/success
+
+      if (!snapSuccess) {
+          blockReleased.draggable = true;
+          if (CONFIG.DEBUG) console.log(`[MouseUp] Snap attempt failed. Block ${blockReleased.id} remains draggable.`);
       } else {
-        // אם לא הצליחה ההצמדה, נקה את ההדגשות
-        clearAllHighlights();
-        blockReleased.draggable = true;
-        if (CONFIG.DEBUG) console.log(`[MouseUp] Snap attempt failed. Block ${blockReleased.id} remains draggable.`);
+           if (CONFIG.DEBUG) console.log(`[MouseUp] Snap successful. Block ${blockReleased.id} is connected.`);
       }
     } else {
-      // אם לא בוצעה הצמדה, הבלוק נשאר חופשי וההדגשות נוקו למעלה
+      // אם לא בוצעה הצמדה, הבלוק נשאר חופשי וההדגשות כבר נוקו למעלה
+      if (CONFIG.DEBUG) console.log(`[MouseUp] No snap performed. Block ${blockReleased.id} remains free.`);
       blockReleased.draggable = true;
     }
   }
@@ -492,3 +402,159 @@ function detachBlock(btd, animate=true) {
       sourceBlock.draggable = true;
       return false;
     }
+  }
+
+  // ========================================================================
+  // פונקציות ניתוק, תפריט, אנימציה, יצירת מזהה - ללא שינוי
+  // ========================================================================
+  function showDetachMenu(x, y, b) {
+    removeDetachMenu();
+    const m = document.createElement('div');
+    m.id = 'detach-menu';
+    m.style.left = `${x}px`;
+    m.style.top = `${y}px`;
+    const o = document.createElement('div');
+    o.textContent = 'נתק בלוק';
+    o.onclick = (e) => {
+      e.stopPropagation();
+      detachBlock(b, true);
+      removeDetachMenu();
+    };
+    m.appendChild(o);
+    document.body.appendChild(m);
+    setTimeout(() => {
+      document.addEventListener('click', closeMenuOutside, {capture: true, once: true});
+      window.addEventListener('scroll', removeDetachMenu, {capture: true, once: true});
+    }, 0);
+  }
+
+  function closeMenuOutside(e) {
+    const m = document.getElementById('detach-menu');
+    if (m && !m.contains(e.target)) {
+      removeDetachMenu();
+    } else if (m) {
+      setTimeout(() => document.addEventListener('click', closeMenuOutside, {capture: true, once: true}), 0);
+    }
+    if (m) window.removeEventListener('scroll', removeDetachMenu, {capture: true});
+  }
+
+  function removeDetachMenu() {
+    const m = document.getElementById('detach-menu');
+    if (m) {
+      document.removeEventListener('click', closeMenuOutside, {capture: true});
+      window.removeEventListener('scroll', removeDetachMenu, {capture: true});
+      m.remove();
+    }
+  }
+
+  function detachBlock(btd, animate=true) {
+    if (!btd || !btd.hasAttribute('data-connected-to')) return;
+
+    const tid = btd.getAttribute('data-connected-to');
+    const dir = btd.getAttribute('data-connection-direction');
+
+    if (!tid || !dir) {
+      console.warn(`[Detach] Missing data on ${btd.id}. Cleaning attributes.`);
+      btd.removeAttribute('data-connected-to');
+      btd.removeAttribute('data-connection-direction');
+      btd.classList.remove('connected-block');
+      btd.draggable = true;
+      return;
+    }
+
+    if (CONFIG.DEBUG) console.log(`[Detach] Detaching ${btd.id} from ${tid}`);
+
+    btd.removeAttribute('data-connected-to');
+    btd.removeAttribute('data-connection-direction');
+    btd.classList.remove('connected-block');
+    btd.draggable = true;
+
+    // Clear potential lingering highlights on detach
+    clearAllHighlights(); // Ensures points are hidden after detach
+
+    const tb = document.getElementById(tid);
+    if (tb) {
+      tb.removeAttribute(dir === 'left' ? 'data-connected-from-left' : 'data-connected-from-right');
+      const isStillConnected = tb.hasAttribute('data-connected-from-left') ||
+                               tb.hasAttribute('data-connected-from-right') ||
+                               tb.hasAttribute('data-connected-to');
+      if (!isStillConnected) {
+          tb.classList.remove('has-connected-block');
+      }
+    } else {
+      console.warn(`[Detach] Target block with ID ${tid} not found.`);
+    }
+
+    if (animate) addDetachEffectAnimation(btd);
+
+    if (CONFIG.DEBUG) console.log(`[Detach] Finished detaching ${btd.id}. Draggable: ${btd.draggable}`);
+  }
+
+  function addSnapEffectAnimation(b) {
+    b.classList.remove('snap-animation');
+    void b.offsetWidth;
+    b.classList.add('snap-animation');
+    b.addEventListener('animationend', () => b.classList.remove('snap-animation'), {once: true});
+  }
+
+  function addDetachEffectAnimation(b) {
+    b.classList.remove('detach-animation');
+    void b.offsetWidth;
+    b.classList.add('detach-animation');
+    b.addEventListener('animationend', () => b.classList.remove('detach-animation'), {once: true});
+  }
+
+  function generateUniqueId(b) {
+    if (b.id) return b.id;
+    const p = b.dataset.type || 'block';
+    let s = Math.random().toString(36).substring(2, 8);
+    let id = `${p}-${s}`;
+    let i = 0;
+    while (document.getElementById(id) && i < 10) {
+      s = Math.random().toString(36).substring(2, 8);
+      id = `${p}-${s}-${i++}`;
+    }
+    if (document.getElementById(id)) {
+         id = `${p}-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
+    }
+    b.id = id;
+    if (CONFIG.DEBUG) console.log(`Generated ID: ${id} for block.`);
+    return id;
+  }
+
+  // ========================================================================
+  // אתחול המערכת כולה
+  // ========================================================================
+  function initializeSystem() {
+    const initFlag = 'blockLinkageInitialized_v3_8_1_VisFix'; // Updated flag
+    if (window[initFlag]) {
+        if (CONFIG.DEBUG) console.log("Block linkage system v3.8.1 (Visible Highlight Fix) already initialized. Skipping.");
+        return;
+    }
+
+    addHighlightStyles(); // Adds styles with opacity: 1 for .connection-point-visible
+    initAudio();
+    initProgrammingAreaListeners();
+    observeNewBlocks();
+    initExistingBlocks();
+    initGlobalMouseListeners();
+
+    if (CONFIG.PLAY_SOUND) {
+      addSoundTestButton();
+    }
+
+    window[initFlag] = true;
+    console.log(`Block linkage system initialized (Version 3.8.1 - Visible Highlight Fix)`);
+    console.log(`Configuration: Right Bulge Width=${CONFIG.PUZZLE_RIGHT_BULGE_WIDTH}px, Left Socket Width=${CONFIG.PUZZLE_LEFT_SOCKET_WIDTH}px`);
+  }
+
+  // הפעל את האתחול
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeSystem);
+  } else {
+    initializeSystem(); // DOM already loaded
+  }
+
+})(); // סוף IIFE
+
+// --- END OF FILE linkageimproved.js ---
