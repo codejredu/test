@@ -1,8 +1,9 @@
-// --- LINKAGE-IMPROVED.JS v3.9.3: AUTO-CLEAR OUTLINES & VISIBILITY FIX ---
-// גרסה 3.9.3 עם:
-// 1. הסרה אוטומטית של מסגרות צבעוניות אחרי 500 מילישניות
-// 2. עיגולי חיבור גדולים ובולטים יותר (20px)
-// 3. תיקון בעיית הרווח בחיבור
+// --- LINKAGE-IMPROVED.JS v3.9.4: AGGRESSIVE OUTLINE REMOVAL ---
+// גרסה 3.9.4 עם:
+// 1. הסרה אגרסיבית של מסגרות צבעוניות אחרי חיבור
+// 2. מערכת ניטור שמונעת ממסגרות חדשות להופיע
+// 3. עיגולי חיבור גדולים ובולטים (20px)
+// 4. תיקון בעיית הרווח בחיבור
 
 (function() {
   // משתנים גלובליים במודול
@@ -15,6 +16,7 @@
   let snapSound = null;
   let audioContextAllowed = false;
   let soundInitialized = false;
+  let outlineObserver = null;
 
   // קונפיגורציה - פרמטרים עם תמיכה בכוונון עדין נפרד
   const CONFIG = {
@@ -51,7 +53,7 @@
     
     // צור סגנון חדש
     const style = document.createElement('style');
-    style.id = 'block-connection-styles-enhanced-v3-9-3';
+    style.id = 'block-connection-styles-enhanced-v3-9-4';
     style.textContent = `
       .snap-source {
         box-shadow: 0 5px 15px rgba(0,0,0,0.4) !important;
@@ -141,10 +143,17 @@
       #sound-test-button.error { background-color:#f44336; }
       #sound-test-button.loading { background-color:#ff9800; cursor:wait; }
       #sound-test-button.hidden { opacity:0; pointer-events:none; }
+      
+      /* מונע מסגרות כחולות/ירוקות בבלוקים מחוברים */
+      .connected-block, .has-connected-block, 
+      .connected-block *, .has-connected-block * {
+        outline: none !important;
+        box-shadow: none !important;
+      }
     `;
     
     document.head.appendChild(style);
-    if (CONFIG.DEBUG) console.log('Enhanced styles added (v3.9.3)');
+    if (CONFIG.DEBUG) console.log('Enhanced styles added (v3.9.4)');
   }
 
   // ========================================================================
@@ -205,20 +214,107 @@
   }
 
   // ========================================================================
-  // פונקציה חדשה - ניקוי מסגרות ויזואליות מכל הבלוקים
+  // פונקציה אגרסיבית להסרת מסגרות מכל הבלוקים
   // ========================================================================
   function clearAllOutlines() {
-    document.querySelectorAll('#program-blocks .block-container').forEach(block => {
-      // נקה מסגרות עם סגנון ישיר
-      block.style.outline = 'none';
-      block.style.border = '';
+    // נקה מסגרות מכל הבלוקים ומהאלמנטים שבתוכם
+    document.querySelectorAll('#program-blocks .block-container, .block-container *, .outline-focus, [style*="outline"], [style*="border"]').forEach(element => {
+      // הסרת כל המסגרות האפשריות בצורה אגרסיבית
+      element.style.setProperty('outline', 'none', 'important');
+      element.style.setProperty('border-color', 'transparent', 'important');
+      element.style.setProperty('box-shadow', 'none', 'important');
       
-      // הסר קלאסים שעשויים להוסיף מסגרות
-      block.classList.remove('highlight-outline', 'selected-block', 'outline-focus');
+      // ניקוי קלאסים שעשויים לגרום למסגרות
+      element.classList.remove('highlight-outline', 'selected-block', 'outline-focus', 'focus', 'selected');
       
-      // אפשר גם לנקות סגנונות ספציפיים אחרים שגורמים למסגרות
-      block.style.boxShadow = '';
+      // הסר אטריבוטים מותאמים אישית שעשויים לשלוט במסגרת
+      element.removeAttribute('data-highlighted');
+      element.removeAttribute('data-selected');
+      element.removeAttribute('data-focused');
     });
+    
+    // הגדר סגנון גלובלי זמני שמסיר את כל המסגרות
+    const tempStyle = document.createElement('style');
+    tempStyle.id = 'temp-outline-removal';
+    tempStyle.textContent = `
+      #program-blocks .block-container, 
+      #program-blocks .block-container * {
+        outline: none !important;
+        border-color: transparent !important;
+        box-shadow: none !important;
+      }
+    `;
+    
+    // הסר סגנון זמני קודם אם קיים
+    const oldTempStyle = document.getElementById('temp-outline-removal');
+    if (oldTempStyle) oldTempStyle.remove();
+    
+    document.head.appendChild(tempStyle);
+    
+    // הסר את הסגנון הזמני לאחר 100ms
+    setTimeout(() => {
+      if (tempStyle && document.contains(tempStyle)) {
+        tempStyle.remove();
+      }
+    }, 100);
+  }
+
+  // ========================================================================
+  // מקים מערכת ניטור שמונעת הופעת מסגרות לאחר חיבור
+  // ========================================================================
+  function setupOutlineObserver() {
+    // בטל אובזרבר קיים אם יש
+    if (outlineObserver) {
+      outlineObserver.disconnect();
+      outlineObserver = null;
+    }
+    
+    // מוצא את אזור התכנות
+    const programArea = document.getElementById('program-blocks');
+    if (!programArea) return null;
+    
+    // יוצר מוטאציה אובזרבר שעוקב אחרי שינויים לאטריבוטים של סגנון
+    const observer = new MutationObserver((mutations) => {
+      let needClearOutlines = false;
+      
+      for (const mutation of mutations) {
+        // בדוק אם זה שינוי של אטריבוט סגנון או קלאס
+        if (mutation.type === 'attributes' && 
+            (mutation.attributeName === 'style' || 
+             mutation.attributeName === 'class')) {
+          
+          // בדוק אם האלמנט ששונה קשור לבלוק מחובר
+          const element = mutation.target;
+          const connectedParent = element.closest('.connected-block, [data-connected-to], [data-connected-from-left], [data-connected-from-right]');
+          
+          if (connectedParent || 
+              element.classList.contains('connected-block') || 
+              element.hasAttribute('data-connected-to') ||
+              element.hasAttribute('data-connected-from-left') ||
+              element.hasAttribute('data-connected-from-right')) {
+            
+            // מצאנו אלמנט קשור לבלוק מחובר שהשתנה - נסמן שצריך לנקות מסגרות
+            needClearOutlines = true;
+            break;
+          }
+        }
+      }
+      
+      // אם מצאנו שינויים רלוונטיים, נקה מסגרות
+      if (needClearOutlines) {
+        clearAllOutlines();
+      }
+    });
+    
+    // מתחיל להאזין לשינויים
+    observer.observe(programArea, {
+      attributes: true,
+      attributeFilter: ['style', 'class'],
+      subtree: true
+    });
+    
+    if (CONFIG.DEBUG) console.log("Outline observer activated");
+    return observer;
   }
 
   // ========================================================================
@@ -226,431 +322,3 @@
   // ========================================================================
   function initProgrammingAreaListeners() { const a=document.getElementById('program-blocks');if(!a)return;a.addEventListener('dragover',(e)=>e.preventDefault());a.addEventListener('dragstart',(e)=>{if(e.target?.closest?.('#program-blocks .block-container'))e.preventDefault();}); }
   function observeNewBlocks() { const a=document.getElementById('program-blocks');if(!a)return;const o=new MutationObserver((m)=>{m.forEach((mu)=>{if(mu.type==='childList'){mu.addedNodes.forEach((n)=>{if(n.nodeType===1){let b=n.classList?.contains('block-container')?n:n.querySelector?.('.block-container');if(b?.closest('#program-blocks')){if(!b.id)generateUniqueId(b);addBlockDragListeners(b);addConnectionPoints(b);}}});}});});o.observe(a,{childList:true,subtree:true});if(CONFIG.DEBUG)console.log("MutationObserver watching."); }
-  function initExistingBlocks() { document.querySelectorAll('#program-blocks .block-container').forEach(b=>{if(!b.id)generateUniqueId(b);addBlockDragListeners(b);addConnectionPoints(b);});if(CONFIG.DEBUG)console.log("Listeners added to existing blocks."); }
-  function addBlockDragListeners(b) { b.removeEventListener('mousedown',handleMouseDown);b.addEventListener('mousedown',handleMouseDown);b.removeEventListener('contextmenu',handleContextMenu);b.addEventListener('contextmenu',handleContextMenu); }
-  function handleContextMenu(e) { e.preventDefault();const b=e.target.closest('.block-container');if(b?.hasAttribute('data-connected-to'))showDetachMenu(e.clientX,e.clientY,b); }
-  function handleMouseDown(e) { if(e.button!==0||!e.target.closest||e.target.matches('input,button,select,textarea,a[href]'))return;const b=e.target.closest('.block-container');if(!b||!b.parentElement||b.parentElement.id!=='program-blocks')return;if(!b.id)generateUniqueId(b);e.preventDefault();b.draggable=false;if(CONFIG.DEBUG)console.log(`[MouseDown] Start drag: ${b.id}`);if(b.hasAttribute('data-connected-to'))detachBlock(b,false);const lId=b.getAttribute('data-connected-from-left');if(lId)detachBlock(document.getElementById(lId),false);const rId=b.getAttribute('data-connected-from-right');if(rId)detachBlock(document.getElementById(rId),false);currentDraggedBlock=b;isDraggingBlock=true;const r=b.getBoundingClientRect();dragOffset.x=e.clientX-r.left;dragOffset.y=e.clientY-r.top;const pE=document.getElementById('program-blocks');const pR=pE.getBoundingClientRect();if(window.getComputedStyle(b).position!=='absolute'){b.style.position='absolute';b.style.left=(r.left-pR.left+pE.scrollLeft)+'px';b.style.top=(r.top-pR.top+pE.scrollTop)+'px';}b.style.margin='0';b.style.zIndex='1001';b.classList.add('snap-source');document.body.classList.add('user-select-none'); }
-
-  // ========================================================================
-  // מאזינים גלובליים, MouseLeave, MouseMove
-  // ========================================================================
-  function initGlobalMouseListeners() { document.removeEventListener('mousemove',handleMouseMove);document.removeEventListener('mouseup',handleMouseUp);document.removeEventListener('mouseleave',handleMouseLeave);document.addEventListener('mousemove',handleMouseMove);document.addEventListener('mouseup',handleMouseUp);document.addEventListener('mouseleave',handleMouseLeave); }
-  function handleMouseLeave(e) { if(isDraggingBlock&&e.target===document.documentElement&&!e.relatedTarget){if(CONFIG.DEBUG)console.warn("Mouse left doc during drag, mouseup.");handleMouseUp(e);} }
-  function handleMouseMove(e) { if(!isDraggingBlock||!currentDraggedBlock)return;e.preventDefault();const pE=document.getElementById('program-blocks');if(!pE){handleMouseUp(e);return;}const pR=pE.getBoundingClientRect();let nL=e.clientX-pR.left-dragOffset.x+pE.scrollLeft;let nT=e.clientY-pR.top-dragOffset.y+pE.scrollTop;const bW=currentDraggedBlock.offsetWidth;const bH=currentDraggedBlock.offsetHeight;const sW=pE.scrollWidth;const sH=pE.scrollHeight;nL=Math.max(0,Math.min(nL,sW-bW));nT=Math.max(0,Math.min(nT,sH-bH));currentDraggedBlock.style.left=Math.round(nL)+'px';currentDraggedBlock.style.top=Math.round(nT)+'px';checkAndHighlightSnapPossibility(); }
-
-  // ========================================================================
-  // בדיקת הצמדה והדגשה
-  // ========================================================================
-  function checkAndHighlightSnapPossibility() {
-    if (!currentDraggedBlock) return;
-    const programmingArea = document.getElementById('program-blocks');
-    if (!programmingArea) return;
-
-    const sourceRect = currentDraggedBlock.getBoundingClientRect();
-    const allVisibleBlocks = Array.from(programmingArea.querySelectorAll('.block-container:not(.snap-source)'))
-                              .filter(block => block.offsetParent !== null);
-
-    let bestTarget = null;
-    let bestDirection = null;
-    let minDistance = CONFIG.CONNECT_THRESHOLD + 1;
-
-    clearAllHighlights();
-    potentialSnapTarget = null;
-    snapDirection = null;
-
-    for (const targetBlock of allVisibleBlocks) {
-      if (!targetBlock.id) generateUniqueId(targetBlock);
-
-      const targetRect = targetBlock.getBoundingClientRect();
-      const targetConnectedLeft = targetBlock.hasAttribute('data-connected-from-left');
-      const targetConnectedRight = targetBlock.hasAttribute('data-connected-from-right');
-
-      // בדיקת חפיפה אנכית
-      const topOverlap = Math.max(sourceRect.top, targetRect.top);
-      const bottomOverlap = Math.min(sourceRect.bottom, targetRect.bottom);
-      const verticalOverlap = Math.max(0, bottomOverlap - topOverlap);
-      const minHeightReq = Math.min(sourceRect.height, targetRect.height) * CONFIG.VERTICAL_OVERLAP_REQ;
-
-      if (verticalOverlap < minHeightReq || verticalOverlap <= 0) continue;
-
-      // בדיקת צד ימין של מקור לשמאל יעד
-      if (!targetConnectedLeft) {
-        const distance = Math.abs(sourceRect.right - targetRect.left);
-        if (distance < minDistance) {
-          minDistance = distance;
-          bestTarget = targetBlock;
-          bestDirection = 'left';
-        }
-      }
-
-      // בדיקת צד שמאל של מקור לימין יעד
-      if (!targetConnectedRight) {
-        const distance = Math.abs(sourceRect.left - targetRect.right);
-        if (distance < minDistance) {
-          minDistance = distance;
-          bestTarget = targetBlock;
-          bestDirection = 'right';
-        }
-      }
-    }
-
-    // אם נמצא יעד מתאים, הדגש
-    if (bestTarget && minDistance <= CONFIG.CONNECT_THRESHOLD) {
-      if (CONFIG.DEBUG) console.log(`[Highlight] Threshold met: ${currentDraggedBlock.id} -> ${bestTarget.id} (${bestDirection}). Dist=${minDistance.toFixed(1)}px`);
-      potentialSnapTarget = bestTarget;
-      snapDirection = bestDirection;
-
-      try {
-        if (bestDirection === 'left') {
-          highlightConnectionPoint(bestTarget, true); // נקודה שמאלית ביעד
-          highlightConnectionPoint(currentDraggedBlock, false); // נקודה ימנית במקור
-        } else if (bestDirection === 'right') {
-          highlightConnectionPoint(bestTarget, false); // נקודה ימנית ביעד
-          highlightConnectionPoint(currentDraggedBlock, true); // נקודה שמאלית במקור
-        }
-      } catch (err) {
-        console.error("Error highlighting:", err);
-      }
-    }
-  }
-
-  // ========================================================================
-  // ביצוע הצמדה עם כוונון עדין נפרד + תיקון מסגרות
-  // ========================================================================
-  function performBlockSnap(sourceBlock, targetBlock, direction) {
-    if (!sourceBlock || !targetBlock || !document.body.contains(targetBlock) || targetBlock.offsetParent === null) {
-      console.error("[PerformSnap] Invalid block(s). Snap cancelled.");
-      return false;
-    }
-
-    if ((direction === 'left' && targetBlock.hasAttribute('data-connected-from-left')) ||
-        (direction === 'right' && targetBlock.hasAttribute('data-connected-from-right'))) {
-      console.warn(`[PerformSnap] Snap cancelled: Target ${targetBlock.id} conflict on side '${direction}'.`);
-      return false;
-    }
-
-    if (CONFIG.DEBUG) console.log(`[PerformSnap] Snapping ${sourceBlock.id} to ${targetBlock.id} (${direction})`);
-
-    try {
-      const sourceRect = sourceBlock.getBoundingClientRect();
-      const targetRect = targetBlock.getBoundingClientRect();
-      const pE = document.getElementById('program-blocks');
-      const pR = pE.getBoundingClientRect();
-
-      let finalLeft, finalTop;
-
-      if (direction === 'left') {
-        finalLeft = targetRect.left - sourceRect.width + CONFIG.PUZZLE_LEFT_SOCKET_WIDTH;
-        finalTop = targetRect.top + CONFIG.VERTICAL_CENTER_OFFSET;
-        // שימוש בכוונון עדין שמאלי
-        finalLeft += CONFIG.HORIZONTAL_FINE_TUNING_LEFT;
-      } else { // direction === 'right'
-        finalLeft = targetRect.right - CONFIG.PUZZLE_RIGHT_BULGE_WIDTH;
-        finalTop = targetRect.top + CONFIG.VERTICAL_CENTER_OFFSET;
-        // שימוש בכוונון עדין ימני
-        finalLeft += CONFIG.HORIZONTAL_FINE_TUNING_RIGHT;
-      }
-
-      let styleLeft = finalLeft - pR.left + pE.scrollLeft;
-      let styleTop = finalTop - pR.top + pE.scrollTop;
-
-      sourceBlock.style.position = 'absolute';
-      sourceBlock.style.left = `${Math.round(styleLeft)}px`;
-      sourceBlock.style.top = `${Math.round(styleTop)}px`;
-      sourceBlock.style.margin = '0';
-
-      sourceBlock.setAttribute('data-connected-to', targetBlock.id);
-      sourceBlock.setAttribute('data-connection-direction', direction);
-      targetBlock.setAttribute(
-        direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right',
-        sourceBlock.id
-      );
-      sourceBlock.classList.add('connected-block');
-      targetBlock.classList.add('has-connected-block');
-
-      playSnapSound();
-      addSnapEffectAnimation(sourceBlock);
-      sourceBlock.draggable = false;
-
-      // הוספת טיימר להסרת מסגרות אחרי זמן מוגדר
-      setTimeout(() => {
-        // הסר כל מסגרת או הדגשה שנותרה
-        if (sourceBlock.classList.contains('connected-block')) {
-          // הסר מסגרות ויזואליות
-          sourceBlock.style.outline = 'none';
-          targetBlock.style.outline = 'none';
-          
-          // הסר קלאסים של מסגרות
-          sourceBlock.classList.remove('highlight-outline', 'selected-block', 'outline-focus');
-          targetBlock.classList.remove('highlight-outline', 'selected-block', 'outline-focus');
-          
-          // ניקוי כללי של כל המסגרות
-          clearAllOutlines();
-          
-          // ניקוי הדגשות נוספות
-          clearAllHighlights();
-        }
-      }, CONFIG.CLEAR_OUTLINES_DELAY);
-
-      if (CONFIG.DEBUG) console.log(`[PerformSnap] Success. ${sourceBlock.id} pos: L=${styleLeft.toFixed(0)}, T=${styleTop.toFixed(0)}. Will clear outlines in ${CONFIG.CLEAR_OUTLINES_DELAY}ms.`);
-      return true;
-    } catch (err) {
-      console.error(`[PerformSnap] Error:`, err);
-      try {
-        detachBlock(sourceBlock, false);
-      } catch (derr) {
-        console.error(`[PerformSnap] Cleanup detach error:`, derr);
-      }
-      sourceBlock.draggable = true;
-      return false;
-    }
-  }
-
-  // ========================================================================
-  // טיפול בשחרור העכבר (MouseUp)
-  // ========================================================================
-  function handleMouseUp(e) {
-    if (!isDraggingBlock || !currentDraggedBlock) return;
-
-    const blockReleased = currentDraggedBlock;
-    const candidateTarget = potentialSnapTarget;
-    const candidateDirection = snapDirection;
-
-    if (CONFIG.DEBUG) console.log(`[MouseUp] Releasing block ${blockReleased.id}. Candidate: ${candidateTarget?.id || 'none'}, direction: ${candidateDirection || 'none'}`);
-
-    // ניקוי מצב הגרירה
-    isDraggingBlock = false;
-    currentDraggedBlock = null;
-    potentialSnapTarget = null;
-    snapDirection = null;
-    document.body.classList.remove('user-select-none');
-    blockReleased.classList.remove('snap-source');
-    blockReleased.style.zIndex = '';
-
-    // ניקוי ראשוני של נקודות החיבור
-    clearAllHighlights();
-
-    // החלטה על הצמדה
-    let performSnap = false;
-    if (candidateTarget && candidateDirection && document.body.contains(candidateTarget)) {
-        if (CONFIG.DEBUG) console.log(`[MouseUp] Candidate target ${candidateTarget.id} identified during drag. Attempting snap.`);
-        performSnap = true;
-    }
-
-    // בצע הצמדה
-    if (performSnap) {
-      const snapSuccess = performBlockSnap(blockReleased, candidateTarget, candidateDirection);
-      clearAllHighlights();
-
-      if (!snapSuccess) {
-          blockReleased.draggable = true;
-      }
-    } else {
-      blockReleased.draggable = true;
-    }
-  }
-  
-  // ========================================================================
-  // פונקציות ניתוק, תפריט, אנימציה
-  // ========================================================================
-  function showDetachMenu(x, y, b) {
-    removeDetachMenu();
-    const m = document.createElement('div');
-    m.id = 'detach-menu';
-    m.style.left = `${x}px`;
-    m.style.top = `${y}px`;
-    const o = document.createElement('div');
-    o.textContent = 'נתק בלוק';
-    o.onclick = (e) => {
-      e.stopPropagation();
-      detachBlock(b, true);
-      removeDetachMenu();
-    };
-    m.appendChild(o);
-    document.body.appendChild(m);
-    setTimeout(() => {
-      document.addEventListener('click', closeMenuOutside, {capture: true, once: true});
-      window.addEventListener('scroll', removeDetachMenu, {capture: true, once: true});
-    }, 0);
-  }
-
-  function closeMenuOutside(e) {
-    const m = document.getElementById('detach-menu');
-    if (m && !m.contains(e.target)) {
-      removeDetachMenu();
-    } else if (m) {
-      setTimeout(() => document.addEventListener('click', closeMenuOutside, {capture: true, once: true}), 0);
-    }
-    if (m) window.removeEventListener('scroll', removeDetachMenu, {capture: true});
-  }
-
-  function removeDetachMenu() {
-    const m = document.getElementById('detach-menu');
-    if (m) {
-      document.removeEventListener('click', closeMenuOutside, {capture: true});
-      window.removeEventListener('scroll', removeDetachMenu, {capture: true});
-      m.remove();
-    }
-  }
-
-  function detachBlock(btd, animate=true) {
-    if (!btd || !btd.hasAttribute('data-connected-to')) return;
-
-    const tid = btd.getAttribute('data-connected-to');
-    const dir = btd.getAttribute('data-connection-direction');
-
-    if (!tid || !dir) {
-      console.warn(`[Detach] Missing data on ${btd.id}. Cleaning attributes.`);
-      btd.removeAttribute('data-connected-to');
-      btd.removeAttribute('data-connection-direction');
-      btd.classList.remove('connected-block');
-      btd.draggable = true;
-      return;
-    }
-
-    if (CONFIG.DEBUG) console.log(`[Detach] Detaching ${btd.id} from ${tid}`);
-
-    btd.removeAttribute('data-connected-to');
-    btd.removeAttribute('data-connection-direction');
-    btd.classList.remove('connected-block');
-    btd.draggable = true;
-
-    // ניקוי חיווי
-    clearAllHighlights();
-    clearAllOutlines();
-
-    const tb = document.getElementById(tid);
-    if (tb) {
-      tb.removeAttribute(dir === 'left' ? 'data-connected-from-left' : 'data-connected-from-right');
-      const isStillConnected = tb.hasAttribute('data-connected-from-left') ||
-                               tb.hasAttribute('data-connected-from-right') ||
-                               tb.hasAttribute('data-connected-to');
-      if (!isStillConnected) {
-          tb.classList.remove('has-connected-block');
-      }
-    } else {
-      console.warn(`[Detach] Target block with ID ${tid} not found.`);
-    }
-
-    if (animate) addDetachEffectAnimation(btd);
-  }
-
-  function addSnapEffectAnimation(b) {
-    b.classList.remove('snap-animation');
-    void b.offsetWidth;
-    b.classList.add('snap-animation');
-    b.addEventListener('animationend', () => b.classList.remove('snap-animation'), {once: true});
-  }
-
-  function addDetachEffectAnimation(b) {
-    b.classList.remove('detach-animation');
-    void b.offsetWidth;
-    b.classList.add('detach-animation');
-    b.addEventListener('animationend', () => b.classList.remove('detach-animation'), {once: true});
-  }
-
-  function generateUniqueId(b) {
-    if (b.id) return b.id;
-    const p = b.dataset.type || 'block';
-    let s = Math.random().toString(36).substring(2, 8);
-    let id = `${p}-${s}`;
-    let i = 0;
-    while (document.getElementById(id) && i < 10) {
-      s = Math.random().toString(36).substring(2, 8);
-      id = `${p}-${s}-${i++}`;
-    }
-    if (document.getElementById(id)) {
-         id = `${p}-${Date.now()}-${Math.random().toString(36).substring(2, 5)}`;
-    }
-    b.id = id;
-    if (CONFIG.DEBUG > 1) console.log(`Generated ID: ${id} for block.`);
-    return id;
-  }
-
-  // ========================================================================
-  // פונקציית בדיקה
-  // ========================================================================
-  function testConnectionPoints() {
-    setTimeout(() => {
-      const blocks = document.querySelectorAll('#program-blocks .block-container');
-      if (blocks.length === 0) return;
-      
-      const testBlock = blocks[0];
-      console.log("=== TESTING CONNECTION POINTS ===");
-      
-      // ודא שיש נקודות חיבור
-      addConnectionPoints(testBlock);
-      
-      // בדוק שהנקודות קיימות
-      const rightPoint = testBlock.querySelector('.right-connection-point');
-      const leftPoint = testBlock.querySelector('.left-connection-point');
-      
-      if (rightPoint && leftPoint) {
-        console.log("Connection points created successfully");
-        
-        // בדוק הדגשה
-        rightPoint.classList.add('connection-point-visible');
-        rightPoint.style.opacity = '1';
-        
-        setTimeout(() => {
-          rightPoint.classList.remove('connection-point-visible');
-          rightPoint.style.opacity = '';
-        }, 2000);
-      }
-    }, 1000);
-  }
-
-  // ========================================================================
-  // אתחול המערכת
-  // ========================================================================
-  function initializeSystem() {
-    const initFlag = 'blockLinkageInitialized_v3_9_3';
-    if (window[initFlag]) {
-        if (CONFIG.DEBUG) console.log("Block linkage system v3.9.3 already initialized. Skipping.");
-        return;
-    }
-
-    // אתחול כל הרכיבים
-    addHighlightStyles();
-    initAudio();
-    initProgrammingAreaListeners();
-    observeNewBlocks();
-    initExistingBlocks();
-    initGlobalMouseListeners();
-
-    if (CONFIG.PLAY_SOUND) {
-      addSoundTestButton();
-    }
-
-    // הוספת נקודות חיבור לכל הבלוקים הקיימים
-    document.querySelectorAll('#program-blocks .block-container').forEach(block => {
-      addConnectionPoints(block);
-    });
-
-    // וידוא שהסגנונות הוטענו
-    if (!document.getElementById('block-connection-styles-enhanced-v3-9-3')) {
-      console.warn("Enhanced connection styles were not loaded properly. Re-adding...");
-      addHighlightStyles();
-    }
-    
-    // בדיקה של נקודות החיבור
-    if (CONFIG.DEBUG) {
-      testConnectionPoints();
-    }
-
-    window[initFlag] = true;
-    console.log(`Block linkage system initialized (Version 3.9.3 - Auto-Clear Outlines)`);
-    console.log(`Configuration: Enhanced connection points with dual fine-tuning`);
-    console.log(`Outlines will be auto-cleared after ${CONFIG.CLEAR_OUTLINES_DELAY}ms`);
-  }
-
-  // הפעל אתחול
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeSystem);
-  } else {
-    initializeSystem(); // DOM already loaded
-  }
-
-})();
-
-// --- END OF FILE linkageimproved.js v3.9.3 ---
