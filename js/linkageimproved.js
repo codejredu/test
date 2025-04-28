@@ -1,10 +1,11 @@
-// --- LINKAGE-IMPROVED.JS v3.9.1: ENHANCED VISIBILITY & DUAL FINE-TUNING ---
-// שינויים מגרסה 3.8.1:
-// 1. תמיכה בכוונון עדין נפרד לחיבור שמאלי וימני (HORIZONTAL_FINE_TUNING_LEFT ו-HORIZONTAL_FINE_TUNING_RIGHT)
-// 2. תיקון בעיית רווח בחיבור ימני (פין אל שקע) עם ערך חיובי לפרמטר החדש
-// 3. נראות משופרת של נקודות החיבור - גודל עיגולים גדול יותר, z-index גבוה יותר והילה בולטת
-// 4. אנימציה דרמטית יותר לעיגולי החיבור לבולטות מרבית
-// 5. שיפור יציבות החיווי הויזואלי בזמן גרירה
+ // --- LINKAGE-IMPROVED.JS v3.9.2: CRITICAL VISIBILITY FIX & DUAL FINE-TUNING ---
+// שינויים בגרסה זו:
+// 1. תיקון קריטי לבעיית נראות עיגולי החיבור - שימוש ב-!important לכל תכונות הסגנון
+// 2. הגדלה משמעותית של גודל העיגולים והבלטתם עם גבול לבן והילה חזקה
+// 3. שימוש הן בקלאס והן בסגנון ישיר להבטחת נראות העיגולים
+// 4. תמיכה בכוונון עדין נפרד לחיבור שמאלי וימני לתיקון בעיית הרווח
+// 5. פונקציית בדיקה מתקדמת לאיתור בעיות נראות
+// 6. עדכון ושיפור הלוגים לדיבאג
 
 (function() {
   // משתנים גלובליים במודול
@@ -20,7 +21,7 @@
 
   // קונפיגורציה - פרמטרים עם תמיכה בכוונון עדין נפרד
   const CONFIG = {
-    CONNECT_THRESHOLD: 35, // הוגדל ל-35 כדי להקל על זיהוי החיבור
+    CONNECT_THRESHOLD: 40, // הוגדל ל-40 כדי להקל עוד יותר על זיהוי החיבור
     VERTICAL_ALIGN_THRESHOLD: 20, // Note: Declared but not used
     VERTICAL_OVERLAP_REQ: 0.4, // דרישה ל-40% חפיפה אנכית לפחות
     BLOCK_GAP: 0, // Note: Declared but not used
@@ -28,7 +29,7 @@
     SOUND_VOLUME: 0.8,
     SOUND_PATH: 'assets/sound/link.mp3',
     DEBUG: true, // Set to false for production
-    HIGHLIGHT_COLOR_RIGHT: '#FFC107', // צהוב לצד ימין (בליטה)
+    HIGHLIGHT_COLOR_RIGHT: '#FF9800', // כתום לצד ימין (בליטה) - צבע בולט יותר
     HIGHLIGHT_COLOR_LEFT: '#2196F3', // כחול לצד שמאל (שקע)
     HIGHLIGHT_OPACITY: 0.8, // Note: Declared but not used directly for points
 
@@ -45,44 +46,79 @@
   // ========================================================================
   // פונקציה חדשה - בדיקת נראות נקודות החיבור
   // ========================================================================
-  function verifyConnectionPointsVisibility() {
-    setTimeout(() => {
-      // בדוק דוגמה של נקודת חיבור
-      const testBlock = document.querySelector('#program-blocks .block-container');
-      if (testBlock) {
-        addConnectionPoints(testBlock);
-        const rightPoint = testBlock.querySelector('.right-connection-point');
-        const leftPoint = testBlock.querySelector('.left-connection-point');
-        
-        if (rightPoint && leftPoint) {
-          // בדוק מצב החיבור
-          console.log("### CONNECTION POINTS VERIFICATION ###");
-          console.log("Points exist:", !!rightPoint, !!leftPoint);
-          console.log("Right point CSS:", window.getComputedStyle(rightPoint).opacity);
-          console.log("Left point CSS:", window.getComputedStyle(leftPoint).opacity);
-          
-          // בדוק הדגשה
-          rightPoint.classList.add('connection-point-visible');
-          console.log("After highlight:", window.getComputedStyle(rightPoint).opacity);
-          rightPoint.classList.remove('connection-point-visible');
-        } else {
-          console.warn("Connection points not found on test block");
-        }
+  function testConnectionPointsVisibility() {
+    // מצא את הבלוק הראשון במתחם התכנות
+    const blocks = document.querySelectorAll('#program-blocks .block-container');
+    if (blocks.length === 0) {
+      console.warn("No blocks found to test connection points");
+      return;
+    }
+    
+    const testBlock = blocks[0];
+    if (!testBlock.id) generateUniqueId(testBlock);
+    
+    console.log("=== TESTING CONNECTION POINTS VISIBILITY ===");
+    console.log("Test block ID:", testBlock.id);
+    
+    // ודא שיש נקודות חיבור
+    addConnectionPoints(testBlock);
+    
+    // מצא את הנקודות
+    const rightPoint = testBlock.querySelector('.right-connection-point');
+    const leftPoint = testBlock.querySelector('.left-connection-point');
+    
+    if (!rightPoint || !leftPoint) {
+      console.error("Failed to create connection points!");
+      return;
+    }
+    
+    console.log("Connection points created successfully");
+    console.log("Right point styles:", {
+      width: rightPoint.style.width || "not set",
+      height: rightPoint.style.height || "not set",
+      opacity: rightPoint.style.opacity || "not set",
+      zIndex: rightPoint.style.zIndex || "not set",
+      computed: {
+        opacity: window.getComputedStyle(rightPoint).opacity,
+        width: window.getComputedStyle(rightPoint).width,
+        zIndex: window.getComputedStyle(rightPoint).zIndex
       }
-    }, 1000);
+    });
+    
+    // בדוק הדגשה בצורה ישירה
+    console.log("Testing highlight...");
+    rightPoint.classList.add('connection-point-visible');
+    rightPoint.style.opacity = '1';
+    
+    setTimeout(() => {
+      console.log("Right point after highlight:", {
+        hasClass: rightPoint.classList.contains('connection-point-visible'),
+        opacity: rightPoint.style.opacity,
+        computed: {
+          opacity: window.getComputedStyle(rightPoint).opacity,
+          width: window.getComputedStyle(rightPoint).width
+        }
+      });
+      
+      // נקה אחרי הבדיקה
+      setTimeout(() => {
+        rightPoint.classList.remove('connection-point-visible');
+        rightPoint.style.opacity = '';
+      }, 2000);
+    }, 100);
   }
 
   // ========================================================================
   // אתחול המערכת כולה - משופר עם וידוא תקינות חיווי
   // ========================================================================
   function initializeSystem() {
-    const initFlag = 'blockLinkageInitialized_v3_9_1_EnhancedVisibility'; // Updated version flag
+    const initFlag = 'blockLinkageInitialized_v3_9_2_CriticalVisibilityFix'; // Updated version flag
     if (window[initFlag]) {
-        if (CONFIG.DEBUG) console.log("Block linkage system v3.9.1 (Enhanced Visibility) already initialized. Skipping.");
+        if (CONFIG.DEBUG) console.log("Block linkage system v3.9.2 (Critical Visibility Fix) already initialized. Skipping.");
         return;
     }
 
-    addHighlightStyles(); // Adds styles with opacity: 1 for .connection-point-visible
+    addHighlightStyles(); // Adds styles with !important for all properties
     initAudio();
     initProgrammingAreaListeners();
     observeNewBlocks();
@@ -99,19 +135,20 @@
     });
 
     // בדיקה שהסגנונות אכן הוטענו
-    if (!document.getElementById('block-connection-styles')) {
-      console.warn("Connection styles were not loaded properly. Re-adding...");
+    if (!document.getElementById('block-connection-styles-enhanced-v3-9-2')) {
+      console.warn("Enhanced connection styles were not loaded properly. Re-adding...");
       addHighlightStyles();
     }
     
     // בדיקת נראות נקודות החיבור
     if (CONFIG.DEBUG) {
-      verifyConnectionPointsVisibility();
+      setTimeout(testConnectionPointsVisibility, 1000);
     }
 
     window[initFlag] = true;
-    console.log(`Block linkage system initialized (Version 3.9.1 - Enhanced Visibility)`);
+    console.log(`Block linkage system initialized (Version 3.9.2 - Critical Visibility Fix)`);
     console.log(`Configuration: CONNECT_THRESHOLD=${CONFIG.CONNECT_THRESHOLD}px, Right Fine-tuning=${CONFIG.HORIZONTAL_FINE_TUNING_RIGHT}px, Left Fine-tuning=${CONFIG.HORIZONTAL_FINE_TUNING_LEFT}px`);
+    console.log('Enhanced connection points: larger size (20px), higher z-index (9999), white border and stronger glow');
   }
 
   // הפעל את האתחול
@@ -123,7 +160,7 @@
 
 })(); // סוף IIFE
 
-// --- END OF FILE linkageimproved.js v3.9.1 ---
+// --- END OF FILE linkageimproved.js v3.9.2 ---
   
   // ========================================================================
   // פונקציות ניתוק, תפריט, אנימציה, יצירת מזהה
@@ -298,12 +335,16 @@
   };
 
   // ========================================================================
-  // הוספת סגנונות CSS - עבור הדגשת נקודות עיגון והדגשות - שופר לנראות מירבית
+  // הוספת סגנונות CSS - תיקון קריטי עם !important לכל הפרמטרים
   // ========================================================================
   function addHighlightStyles() {
-    if (document.getElementById('block-connection-styles')) return;
+    // הסר כל סגנון קודם אם קיים
+    const oldStyle = document.getElementById('block-connection-styles');
+    if (oldStyle) oldStyle.remove();
+    
+    // צור סגנון חדש עם ID אחר למניעת התנגשויות
     const style = document.createElement('style');
-    style.id = 'block-connection-styles';
+    style.id = 'block-connection-styles-enhanced-v3-9-2';
     style.textContent = `
       .snap-source {
         box-shadow: 0 5px 15px rgba(0,0,0,0.4) !important;
@@ -311,51 +352,53 @@
         z-index: 1001 !important;
       }
 
-      /* נקודות חיבור - צד ימין (בליטה) - משופר לנראות טובה יותר */
+      /* נקודות חיבור - צד ימין (בליטה) - משופר עם !important לכל תכונה */
       .right-connection-point {
-        position: absolute;
-        width: 16px;       /* הגדלת גודל הנקודה */
-        height: 16px;      /* הגדלת גודל הנקודה */
-        top: 50%;
-        right: -8px;       /* מותאם לגודל החדש */
-        transform: translateY(-50%);
-        background-color: ${CONFIG.HIGHLIGHT_COLOR_RIGHT};
-        border-radius: 50%;
-        opacity: 0; /* Start hidden */
-        transition: opacity 0.1s ease-out;  /* מעבר מהיר יותר */
-        pointer-events: none;
-        z-index: 1100;     /* z-index גבוה יותר מבלוקים */
-        box-shadow: 0 0 8px 3px rgba(255,193,7,0.9);  /* הילה חזקה יותר */
+        position: absolute !important;
+        width: 20px !important;      /* הגדלה משמעותית */
+        height: 20px !important;     /* הגדלה משמעותית */
+        top: 50% !important;
+        right: -10px !important;     /* מותאם לגודל החדש */
+        transform: translateY(-50%) !important;
+        background-color: ${CONFIG.HIGHLIGHT_COLOR_RIGHT} !important;
+        border-radius: 50% !important;
+        opacity: 0;
+        transition: opacity 0.1s ease-out !important;
+        pointer-events: none !important;
+        z-index: 9999 !important;    /* z-index גבוה מאוד */
+        box-shadow: 0 0 10px 4px rgba(255,152,0,0.95) !important; /* הילה חזקה מאוד */
+        border: 2px solid #FFF !important; /* גבול לבן להבלטה */
       }
 
-      /* נקודות חיבור - צד שמאל (שקע) - משופר לנראות טובה יותר */
+      /* נקודות חיבור - צד שמאל (שקע) - משופר עם !important לכל תכונה */
       .left-connection-point {
-        position: absolute;
-        width: 16px;       /* הגדלת גודל הנקודה */
-        height: 16px;      /* הגדלת גודל הנקודה */ 
-        top: 50%;
-        left: -8px;        /* מותאם לגודל החדש */
-        transform: translateY(-50%);
-        background-color: ${CONFIG.HIGHLIGHT_COLOR_LEFT};
-        border-radius: 50%;
-        opacity: 0; /* Start hidden */
-        transition: opacity 0.1s ease-out;  /* מעבר מהיר יותר */
-        pointer-events: none;
-        z-index: 1100;     /* z-index גבוה יותר מבלוקים */
-        box-shadow: 0 0 8px 3px rgba(33,150,243,0.9);  /* הילה חזקה יותר */
+        position: absolute !important;
+        width: 20px !important;      /* הגדלה משמעותית */
+        height: 20px !important;     /* הגדלה משמעותית */
+        top: 50% !important;
+        left: -10px !important;      /* מותאם לגודל החדש */
+        transform: translateY(-50%) !important;
+        background-color: ${CONFIG.HIGHLIGHT_COLOR_LEFT} !important;
+        border-radius: 50% !important;
+        opacity: 0;
+        transition: opacity 0.1s ease-out !important;
+        pointer-events: none !important;
+        z-index: 9999 !important;    /* z-index גבוה מאוד */
+        box-shadow: 0 0 10px 4px rgba(33,150,243,0.95) !important; /* הילה חזקה מאוד */
+        border: 2px solid #FFF !important; /* גבול לבן להבלטה */
       }
 
-      /* הדגשה נראית - שופר כדי להבטיח נראות */
+      /* הדגשה נראית - שופר עם !important והגדלת האופקיות */
       .connection-point-visible {
-        opacity: 1 !important; /* !important להבטיח שזה יחול */
-        animation: pulseConnectionPoint 0.6s infinite;  /* אנימציה מהירה יותר */
+        opacity: 1 !important;
+        animation: pulseConnectionPoint 0.5s infinite !important;
       }
 
-      /* אנימציית פעימה לנקודות חיבור - שופרה להיות בולטת יותר */
+      /* אנימציית פעימה משופרת - גדולה יותר ומהירה יותר */
       @keyframes pulseConnectionPoint {
-        0% { transform: translateY(-50%) scale(1); }
-        50% { transform: translateY(-50%) scale(1.3); }  /* הגדלת השינוי בגודל */
-        100% { transform: translateY(-50%) scale(1); }
+        0% { transform: translateY(-50%) scale(1) !important; }
+        50% { transform: translateY(-50%) scale(1.5) !important; } /* גדילה משמעותית */
+        100% { transform: translateY(-50%) scale(1) !important; }
       }
 
       /* תצוגת עזר לאיזור חיבור (לא בשימוש כרגע) */
@@ -392,8 +435,12 @@
       #sound-test-button.loading { background-color:#ff9800; cursor:wait; }
       #sound-test-button.hidden { opacity:0; pointer-events:none; }
     `;
+    
     document.head.appendChild(style);
-    if (CONFIG.DEBUG) console.log('Styles added (Puzzle Connection System - Enhanced Visibility)');
+    if (CONFIG.DEBUG) console.log('Enhanced styles added with !important directives (v3.9.2)');
+
+    // Force immediate reflow
+    document.body.offsetHeight;
   }
 
   // ========================================================================
@@ -407,7 +454,7 @@
   // ניהול נקודות חיבור - טיפול משופר בנקודות החיבור הויזואליות
   // ========================================================================
 
-  // הוספת נקודות חיבור לבלוק - ללא שינוי בלוגיקה
+  // הוספת נקודות חיבור לבלוק 
   function addConnectionPoints(block) {
     if (!block) return;
     if (block.querySelector('.right-connection-point')) return;
@@ -437,17 +484,23 @@
       // הסר קודם את הקלאס אם קיים ואז הוסף שוב כדי להפעיל מחדש אנימציה
       connectionPoint.classList.remove('connection-point-visible');
       
-      // פסק זמן קצר לפני הוספת הקלאס שוב כדי לאפשר לדפדפן לעבד את השינוי
+      // אפס את האופקיות קודם
+      connectionPoint.style.opacity = '0';
+      
+      // חכה קצת לפני הוספת הקלאס מחדש
       setTimeout(() => {
+        // הוסף גם קלאס וגם סגנון ישיר - חגורה ושני מכנסיים
         connectionPoint.classList.add('connection-point-visible');
+        connectionPoint.style.opacity = '1';
         
-        // בדיקת דיבאג לוודא שהנקודה קיבלה את הקלאס
-        if (CONFIG.DEBUG > 1) {
-          console.log(`Point visibility for ${block.id} (${isLeft ? 'left' : 'right'}): `,
+        // לוג דיבאג מורחב
+        if (CONFIG.DEBUG) {
+          console.log(`[HIGHLIGHT] Point for ${block.id} (${isLeft ? 'left' : 'right'}):`, 
             connectionPoint.classList.contains('connection-point-visible'),
-            ', Computed opacity:', window.getComputedStyle(connectionPoint).opacity);
+            'Style opacity:', connectionPoint.style.opacity,
+            'Computed opacity:', window.getComputedStyle(connectionPoint).opacity);
         }
-      }, 5);
+      }, 10);
       
       return true;
     }
@@ -455,10 +508,11 @@
     return false;
   }
 
-  // ניקוי כל ההדגשות - ללא שינוי בלוגיקה
+  // ניקוי כל ההדגשות - עכשיו מנקה גם את ה-inline style
   function clearAllHighlights() {
     document.querySelectorAll('.connection-point-visible').forEach(point => {
       point.classList.remove('connection-point-visible');
+      point.style.opacity = '0'; // גם מאפס את האופקיות בסגנון ישיר
     });
     // גם מנקה את אזורי החיבור אם היו בשימוש
     document.querySelectorAll('.connection-area.visible').forEach(area => {
