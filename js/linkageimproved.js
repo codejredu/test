@@ -1,8 +1,8 @@
-// --- LINKAGE-IMPROVED.JS v3.9.2: VISIBILITY FIX & DUAL FINE-TUNING ---
-// גרסה פשוטה וקלה להטמעה עם:
-// 1. עיגולי חיבור גדולים ובולטים יותר (20px במקום 14px)
-// 2. תיקון בעיית הרווח בחיבור
-// 3. קוד מאורגן ומפושט
+// --- LINKAGE-IMPROVED.JS v3.9.3: AUTO-CLEAR OUTLINES & VISIBILITY FIX ---
+// גרסה 3.9.3 עם:
+// 1. הסרה אוטומטית של מסגרות צבעוניות אחרי 500 מילישניות
+// 2. עיגולי חיבור גדולים ובולטים יותר (20px)
+// 3. תיקון בעיית הרווח בחיבור
 
 (function() {
   // משתנים גלובליים במודול
@@ -29,6 +29,7 @@
     HIGHLIGHT_COLOR_RIGHT: '#FF9800', // כתום
     HIGHLIGHT_COLOR_LEFT: '#2196F3', // כחול
     HIGHLIGHT_OPACITY: 0.8,
+    CLEAR_OUTLINES_DELAY: 500, // זמן בmilliseconds להסרה אוטומטית של מסגרות
 
     // ערכי היסט קבועים לחיבור פאזל מדויק
     PUZZLE_RIGHT_BULGE_WIDTH: 10, 
@@ -36,8 +37,8 @@
     VERTICAL_CENTER_OFFSET: 0,
     
     // כוונון עדין לפי כיוון החיבור
-    HORIZONTAL_FINE_TUNING_LEFT: 9,  // כוונון עדין כשמחברים לצד שמאל
-    HORIZONTAL_FINE_TUNING_RIGHT:-9   // כוונון עדין כשמחברים לצד ימין (סוגר רווח)
+    HORIZONTAL_FINE_TUNING_LEFT: -9,  // כוונון עדין כשמחברים לצד שמאל
+    HORIZONTAL_FINE_TUNING_RIGHT: 5   // כוונון עדין כשמחברים לצד ימין (סוגר רווח)
   };
 
   // ========================================================================
@@ -50,7 +51,7 @@
     
     // צור סגנון חדש
     const style = document.createElement('style');
-    style.id = 'block-connection-styles-enhanced-v3-9-2';
+    style.id = 'block-connection-styles-enhanced-v3-9-3';
     style.textContent = `
       .snap-source {
         box-shadow: 0 5px 15px rgba(0,0,0,0.4) !important;
@@ -143,7 +144,7 @@
     `;
     
     document.head.appendChild(style);
-    if (CONFIG.DEBUG) console.log('Enhanced styles added (v3.9.2)');
+    if (CONFIG.DEBUG) console.log('Enhanced styles added (v3.9.3)');
   }
 
   // ========================================================================
@@ -200,6 +201,23 @@
     });
     document.querySelectorAll('.connection-area.visible').forEach(area => {
       area.classList.remove('visible');
+    });
+  }
+
+  // ========================================================================
+  // פונקציה חדשה - ניקוי מסגרות ויזואליות מכל הבלוקים
+  // ========================================================================
+  function clearAllOutlines() {
+    document.querySelectorAll('#program-blocks .block-container').forEach(block => {
+      // נקה מסגרות עם סגנון ישיר
+      block.style.outline = 'none';
+      block.style.border = '';
+      
+      // הסר קלאסים שעשויים להוסיף מסגרות
+      block.classList.remove('highlight-outline', 'selected-block', 'outline-focus');
+      
+      // אפשר גם לנקות סגנונות ספציפיים אחרים שגורמים למסגרות
+      block.style.boxShadow = '';
     });
   }
 
@@ -297,7 +315,7 @@
   }
 
   // ========================================================================
-  // ביצוע הצמדה עם כוונון עדין נפרד
+  // ביצוע הצמדה עם כוונון עדין נפרד + תיקון מסגרות
   // ========================================================================
   function performBlockSnap(sourceBlock, targetBlock, direction) {
     if (!sourceBlock || !targetBlock || !document.body.contains(targetBlock) || targetBlock.offsetParent === null) {
@@ -354,7 +372,27 @@
       addSnapEffectAnimation(sourceBlock);
       sourceBlock.draggable = false;
 
-      if (CONFIG.DEBUG) console.log(`[PerformSnap] Success. ${sourceBlock.id} pos: L=${styleLeft.toFixed(0)}, T=${styleTop.toFixed(0)}.`);
+      // הוספת טיימר להסרת מסגרות אחרי זמן מוגדר
+      setTimeout(() => {
+        // הסר כל מסגרת או הדגשה שנותרה
+        if (sourceBlock.classList.contains('connected-block')) {
+          // הסר מסגרות ויזואליות
+          sourceBlock.style.outline = 'none';
+          targetBlock.style.outline = 'none';
+          
+          // הסר קלאסים של מסגרות
+          sourceBlock.classList.remove('highlight-outline', 'selected-block', 'outline-focus');
+          targetBlock.classList.remove('highlight-outline', 'selected-block', 'outline-focus');
+          
+          // ניקוי כללי של כל המסגרות
+          clearAllOutlines();
+          
+          // ניקוי הדגשות נוספות
+          clearAllHighlights();
+        }
+      }, CONFIG.CLEAR_OUTLINES_DELAY);
+
+      if (CONFIG.DEBUG) console.log(`[PerformSnap] Success. ${sourceBlock.id} pos: L=${styleLeft.toFixed(0)}, T=${styleTop.toFixed(0)}. Will clear outlines in ${CONFIG.CLEAR_OUTLINES_DELAY}ms.`);
       return true;
     } catch (err) {
       console.error(`[PerformSnap] Error:`, err);
@@ -479,6 +517,7 @@
 
     // ניקוי חיווי
     clearAllHighlights();
+    clearAllOutlines();
 
     const tb = document.getElementById(tid);
     if (tb) {
@@ -565,9 +604,9 @@
   // אתחול המערכת
   // ========================================================================
   function initializeSystem() {
-    const initFlag = 'blockLinkageInitialized_v3_9_2';
+    const initFlag = 'blockLinkageInitialized_v3_9_3';
     if (window[initFlag]) {
-        if (CONFIG.DEBUG) console.log("Block linkage system v3.9.2 already initialized. Skipping.");
+        if (CONFIG.DEBUG) console.log("Block linkage system v3.9.3 already initialized. Skipping.");
         return;
     }
 
@@ -589,7 +628,7 @@
     });
 
     // וידוא שהסגנונות הוטענו
-    if (!document.getElementById('block-connection-styles-enhanced-v3-9-2')) {
+    if (!document.getElementById('block-connection-styles-enhanced-v3-9-3')) {
       console.warn("Enhanced connection styles were not loaded properly. Re-adding...");
       addHighlightStyles();
     }
@@ -600,8 +639,9 @@
     }
 
     window[initFlag] = true;
-    console.log(`Block linkage system initialized (Version 3.9.2 - Visibility Fix)`);
+    console.log(`Block linkage system initialized (Version 3.9.3 - Auto-Clear Outlines)`);
     console.log(`Configuration: Enhanced connection points with dual fine-tuning`);
+    console.log(`Outlines will be auto-cleared after ${CONFIG.CLEAR_OUTLINES_DELAY}ms`);
   }
 
   // הפעל אתחול
@@ -613,4 +653,4 @@
 
 })();
 
-// --- END OF FILE linkageimproved.js v3.9.2 ---
+// --- END OF FILE linkageimproved.js v3.9.3 ---
