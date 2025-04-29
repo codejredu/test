@@ -1,9 +1,9 @@
 /**
- * blockGroupDragging.js - גרסת דיבוג משופרת עם דגש על בדיקת מצב חיבורים
+ * blockGroupDragging.js - גרסת דיבוג משופרת עם ניסיון לגרירת שרשרת בלוקים
  */
 
 (function() {
-  console.log("DEBUG VERSION - Loading block group dragging (improved again)...");
+  console.log("DEBUG VERSION - Loading block group dragging (attempting chain drag)...");
 
   document.addEventListener('DOMContentLoaded', function() {
     if (window.blockGroupDraggingDebug) return;
@@ -22,29 +22,18 @@
       const draggedBlock = programBlocks.querySelector('.block-container.snap-source');
 
       if (draggedBlock) {
-        const draggedBlockId = draggedBlock.id;
-        console.log("DEBUG - Found dragged block:", draggedBlockId, "Classes:", draggedBlock.className);
-
-        if (draggedBlock.hasAttribute('data-connected-from-right')) {
-          const rightBlockId = draggedBlock.getAttribute('data-connected-from-right');
-          console.log("DEBUG - Block", draggedBlockId, "has 'data-connected-from-right':", rightBlockId);
-
+        let currentBlock = draggedBlock;
+        while (currentBlock && currentBlock.hasAttribute('data-connected-from-right')) {
+          const rightBlockId = currentBlock.getAttribute('data-connected-from-right');
           const rightBlock = document.getElementById(rightBlockId);
           if (rightBlock) {
-            console.log("DEBUG - Right block found, ID:", rightBlock.id);
             ensureAbsolutePosition(rightBlock);
-            updateRightBlockPosition(draggedBlock, rightBlock);
+            updateRightBlockPosition(currentBlock, rightBlock);
+            currentBlock = rightBlock; // עבור לבלוק הבא בשרשרת
           } else {
-            console.log("DEBUG - Right block with ID", rightBlockId, "not found in DOM");
+            console.log("DEBUG - Right block with ID", rightBlockId, "not found in DOM (in chain)");
+            break;
           }
-        } else {
-          console.log("DEBUG - Dragged block", draggedBlockId, "has no 'data-connected-from-right' attribute.");
-          // --- בדיקה נוספת ---
-          // ייתכן שהחיבור קיים בדרך אחרת במערכת שלך.
-          // כאן אתה יכול להוסיף לוגיקה נוספת כדי לבדוק מבני נתונים אחרים
-          // שאולי מכילים מידע על חיבורים.
-          // לדוגמה, אם יש לך מערך או אובייקט שמנהל חיבורים:
-          // console.log("DEBUG - Checking internal connection data for block", draggedBlockId, ":", yourConnectionDataStructure ? yourConnectionDataStructure.get(draggedBlockId) : "No connection data structure found");
         }
       }
     }
