@@ -623,3 +623,224 @@
 })();
 
 // --- END OF FILE linkageimproved.js v3.9.5 ---
+// --- ULTRA SIMPLE GROUP DRAGGING v1.0 ---
+// קוד מינימליסטי לגרירת קבוצות בלוקים
+
+(function() {
+  // מחכה שהדף ייטען לגמרי ושהסקריפט המקורי יסיים את האתחול
+  function init() {
+    // בדוק אם הדף מוכן
+    if (!document.getElementById('program-blocks') || typeof window.blockLinkageInitialized_v3_9_5 === 'undefined') {
+      console.log("Waiting for page and original script to load...");
+      setTimeout(init, 500);
+      return;
+    }
+    
+    console.log("Simple Group Drag: Starting initialization");
+    
+    // התקן מעקב אחר אירועי mousemove ו-mouseup
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    
+    // מצא את כל הבלוקים הקיימים והוסף להם מאזין
+    addListenersToAllBlocks();
+    
+    // הוסף התבוננות על בלוקים חדשים
+    startObservingNewBlocks();
+    
+    console.log("Simple Group Drag: Initialized");
+  }
+  
+  // משתנים גלובליים לתיעוד מצב הגרירה
+  let isDraggingGroup = false;
+  let mainDraggedBlock = null;
+  let connectedBlocks = [];
+  let relativePositions = [];
+  let initialMouseX = 0;
+  let initialMouseY = 0;
+  
+  // פונקציה שמוסיפה מאזינים לכל הבלוקים הקיימים
+  function addListenersToAllBlocks() {
+    const blocks = document.querySelectorAll('#program-blocks .block-container');
+    blocks.forEach(block => {
+      // וודא שלא הוספנו כבר מאזין
+      if (!block.hasAttribute('data-group-drag-initialized')) {
+        block.setAttribute('data-group-drag-initialized', 'true');
+        block.addEventListener('mousedown', onBlockMouseDown, true);
+      }
+    });
+  }
+  
+  // התבוננות על בלוקים חדשים
+  function startObservingNewBlocks() {
+    const programArea = document.getElementById('program-blocks');
+    if (!programArea) return;
+    
+    const observer = new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        if (mutation.type === 'childList' && mutation.addedNodes.length) {
+          mutation.addedNodes.forEach(node => {
+            // בדוק אם זה אלמנט HTML
+            if (node.nodeType === 1) {
+              // אם זה בלוק, הוסף לו מאזין
+              if (node.classList && node.classList.contains('block-container')) {
+                if (!node.hasAttribute('data-group-drag-initialized')) {
+                  node.setAttribute('data-group-drag-initialized', 'true');
+                  node.addEventListener('mousedown', onBlockMouseDown, true);
+                }
+              }
+              
+              // חפש בלוקים בתוך האלמנט שהתווסף
+              const childBlocks = node.querySelectorAll('.block-container');
+              childBlocks.forEach(block => {
+                if (!block.hasAttribute('data-group-drag-initialized')) {
+                  block.setAttribute('data-group-drag-initialized', 'true');
+                  block.addEventListener('mousedown', onBlockMouseDown, true);
+                }
+              });
+            }
+          });
+        }
+      });
+    });
+    
+    observer.observe(programArea, { childList: true, subtree: true });
+  }
+  
+  // מאזין לאירוע mousedown על בלוק
+  function onBlockMouseDown(event) {
+    // אם לא לחיצה שמאלית, צא
+    if (event.button !== 0) return;
+    
+    // מצא את הבלוק שנלחץ
+    const block = event.currentTarget;
+    
+    // בדוק אם הבלוק חלק מקבוצה (יש בלוקים מחוברים מימין)
+    const blocksToRight = findConnectedBlocksToRight(block);
+    
+    // אם יש בלוקים מחוברים, התחל מעקב אחר גרירת קבוצה
+    if (blocksToRight.length > 1) {
+      // שמור מידע על אירוע הlחיצה
+      initialMouseX = event.clientX;
+      initialMouseY = event.clientY;
+      
+      // שמור מידע על הבלוקים בקבוצה
+      mainDraggedBlock = block;
+      connectedBlocks = blocksToRight;
+      
+      // שמור את המיקומים היחסיים
+      relativePositions = saveRelativePositions(blocksToRight);
+      
+      // סמן שהתחלנו לגרור קבוצה
+      isDraggingGroup = true;
+      
+      console.log(`Group drag started with ${blocksToRight.length} blocks`);
+    }
+  }
+  
+  // מאזין לאירוע mousemove
+  function onMouseMove(event) {
+    if (!isDraggingGroup || !mainDraggedBlock) return;
+    
+    // חשב את ההפרש מהמיקום ההתחלתי
+    const deltaX = event.clientX - initialMouseX;
+    const deltaY = event.clientY - initialMouseY;
+    
+    // אם לא התחלנו עדיין לזוז מספיק, אל תעשה כלום
+    if (Math.abs(deltaX) < 5 && Math.abs(deltaY) < 5) return;
+    
+    // עדכן את מיקום הבלוקים המחוברים על סמך המיקום היחסי
+    updateBlockPositions(deltaX, deltaY);
+  }
+  
+  // מאזין לאירוע mouseup
+  function onMouseUp() {
+    // נקה את הנתונים
+    isDraggingGroup = false;
+    mainDraggedBlock = null;
+    connectedBlocks = [];
+    relativePositions = [];
+  }
+  
+  // מצא את כל הבלוקים המחוברים ימינה מבלוק נתון
+  function findConnectedBlocksToRight(startBlock) {
+    if (!startBlock) return [];
+    
+    const blocks = [startBlock];
+    let currentBlock = startBlock;
+    
+    // עקוב אחר החיבורים ימינה
+    while (currentBlock.hasAttribute('data-connected-from-right')) {
+      const nextBlockId = currentBlock.getAttribute('data-connected-from-right');
+      const nextBlock = document.getElementById(nextBlockId);
+      
+      if (!nextBlock) break;
+      
+      blocks.push(nextBlock);
+      currentBlock = nextBlock;
+    }
+    
+    return blocks;
+  }
+  
+  // שמור את המיקומים היחסיים בין הבלוקים בקבוצה
+  function saveRelativePositions(blocks) {
+    if (!blocks || blocks.length <= 1) return [];
+    
+    const mainBlock = blocks[0];
+    const mainRect = mainBlock.getBoundingClientRect();
+    const mainLeft = parseFloat(mainBlock.style.left) || 0;
+    const mainTop = parseFloat(mainBlock.style.top) || 0;
+    
+    return blocks.map(block => {
+      const rect = block.getBoundingClientRect();
+      const blockLeft = parseFloat(block.style.left) || 0;
+      const blockTop = parseFloat(block.style.top) || 0;
+      
+      return {
+        block: block,
+        offsetX: blockLeft - mainLeft,
+        offsetY: blockTop - mainTop
+      };
+    });
+  }
+  
+  // עדכן את מיקומי הבלוקים בהתאם לתנועת העכבר
+  function updateBlockPositions(deltaX, deltaY) {
+    if (!mainDraggedBlock) return;
+    
+    // קבל את איזור התכנות
+    const programmingArea = document.getElementById('program-blocks');
+    if (!programmingArea) return;
+    
+    // בדוק אם הבלוק הראשי כבר במצב גרירה (הקוד המקורי הגדיר position: absolute)
+    if (window.getComputedStyle(mainDraggedBlock).position !== 'absolute') return;
+    
+    // קבל את המיקום הנוכחי של הבלוק הראשי
+    const mainLeft = parseFloat(mainDraggedBlock.style.left) || 0;
+    const mainTop = parseFloat(mainDraggedBlock.style.top) || 0;
+    
+    // הקוד המקורי מטפל בבלוק הראשי, אז אנחנו לא נגעים בו
+    // אנחנו רק מעדכנים את הבלוקים הנוספים בקבוצה
+    relativePositions.forEach((posData, index) => {
+      if (index === 0) return; // דלג על הבלוק הראשי
+      
+      const block = posData.block;
+      if (!block) return;
+      
+      // עדכן את המיקום על סמך הבלוק הראשי
+      block.style.position = 'absolute';
+      block.style.left = Math.round(mainLeft + posData.offsetX) + 'px';
+      block.style.top = Math.round(mainTop + posData.offsetY) + 'px';
+    });
+  }
+  
+  // התחל כשהדף נטען
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(init, 500));
+  } else {
+    setTimeout(init, 500);
+  }
+})();
+
+// --- END ULTRA SIMPLE GROUP DRAGGING v1.0 ---
