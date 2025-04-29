@@ -623,153 +623,102 @@
 })();
 
 // --- END OF FILE linkageimproved.js v3.9.5 ---
-// --- FINAL GROUP DRAGGING v3.0 ---
-// פתרון משופר לגרירת שרשרת בלוקים עם תמיכה במספר בלוקים ומניעת הבהובים
+// --- RELIABLE GROUP DRAGGING v4.0 ---
+// פתרון מהימן לגרירת קבוצות בלוקים עם תמיכה בגרירה חוזרת
 
 (function() {
-  // ----- קונפיגורציה -----
+  // --- קונפיגורציה ---
   const CONFIG = {
-    DEBUG: true,                   // הצג הודעות דיבוג בקונסול
-    UPDATE_INTERVAL_MS: 16,        // קצב עדכון בדיקת מיקום (כ-60 פעמים בשנייה)
-    MIN_MOVEMENT_THRESHOLD: 1,     // סף מינימלי לזיהוי תנועה (פיקסלים)
-    HIDE_CONNECTION_INDICATORS: true, // הסתר עיגולי קישור בזמן גרירה
-    DRAG_ANIMATION_DURATION_MS: 1000,  // זמן אנימציית סיום גרירה (מילישניות)
-    SHOW_STATUS_OVERLAY: true,     // הצג חלונית סטטוס במצב דיבוג
-    WAIT_BEFORE_INIT_MS: 1000,     // כמה זמן להמתין לפני אתחול (מילישניות)
-    CHAIN_BLOCKS_MAX: 20           // מקסימום בלוקים בשרשרת
+    DEBUG: true,                    // הצג הודעות דיבוג בקונסול
+    CHECK_INTERVAL_MS: 16,          // תדירות בדיקת מיקום (כ-60 פעמים בשנייה)
+    MIN_DRAG_THRESHOLD_PX: 3,       // מרחק מינימלי לזיהוי גרירה בפיקסלים
+    CONNECTION_POINTS_HIDE: true,   // האם להסתיר נקודות חיבור בזמן גרירה
+    RESET_DELAY_MS: 500,            // זמן המתנה לאיפוס מלא אחרי גרירה
+    MAX_CHAIN_LENGTH: 30,           // מקסימום בלוקים בשרשרת
+    FORCE_POSITION_UPDATE: true,    // עדכון מאולץ של מיקום בסוף גרירה
+    STATUS_OVERLAY: true,           // הצג חלונית סטטוס
+    WAIT_BEFORE_INIT_MS: 1000       // זמן המתנה לפני אתחול
   };
   
-  // ----- משתנים גלובליים -----
-  let isRunning = false;             // האם המודול רץ כרגע
-  let isGroupDragging = false;       // האם גרירה קבוצתית פעילה כרגע
-  let blockChain = [];               // שרשרת הבלוקים הנוכחית
-  let blockPositionData = [];        // נתוני מיקום הבלוקים
-  let mainDragBlock = null;          // הבלוק הראשי שנגרר
-  let trackingInterval = null;       // מזהה האינטרוול לבדיקת תנועה
-  let programmingAreaElem = null;    // אלמנט אזור התכנות
-  let lastPosition = { x: 0, y: 0 }; // המיקום האחרון של הבלוק הראשי
-  let lastUpdateTime = 0;            // זמן העדכון האחרון
-  let suppressConnectionPoints = false; // האם להסתיר עיגולי חיבור
+  // --- משתנים גלובליים ---
+  let active = false;                // האם הרכיב פעיל
+  let dragging = false;              // האם גרירה פעילה
+  let mainBlock = null;              // הבלוק המוביל בגרירה
+  let blockChain = [];               // כל הבלוקים בשרשרת
+  let blockData = [];                // נתוני מיקום הבלוקים
+  let mainBlockStartPos = null;      // מיקום התחלתי של הבלוק הראשי
+  let mainBlockLastPos = null;       // מיקום אחרון של הבלוק הראשי
+  let trackingTimer = null;          // טיימר מעקב אחר תנועת הבלוק
+  let resetTimer = null;             // טיימר איפוס אחרי גרירה
+  let droppedByUser = false;         // האם הגרירה הסתיימה ביוזמת המשתמש
+  let originalClasses = new Map();   // מפה לשמירת המחלקות המקוריות
+  let startTime = 0;                 // זמן התחלת הגרירה
   
-  // ----- פונקציות לוג -----
+  // --- פונקציות לוג ---
   function log(...args) {
-    if (CONFIG.DEBUG) console.log("[GroupDrag]", ...args);
+    if (CONFIG.DEBUG) console.log("[ReliableDrag]", ...args);
   }
   
-  function error(...args) {
-    console.error("[GroupDrag]", ...args);
+  function warn(...args) {
+    console.warn("[ReliableDrag]", ...args);
   }
   
-  // ----- פונקציות עזר -----
-  function $(selector) {
-    return document.querySelector(selector);
-  }
-  
-  function $$(selector) {
-    return document.querySelectorAll(selector);
-  }
-  
-  // ----- פונקציית אתחול ראשית -----
-  function initGroupDragging() {
-    // וודא שהמודול עוד לא אותחל
-    if (window.groupDraggingFinalInitialized) {
+  // --- אתחול המערכת ---
+  function init() {
+    // בדוק אם כבר אותחל
+    if (window.reliableGroupDragInitialized) {
       log("Already initialized");
       return;
     }
     
-    // חפש את אזור התכנות
-    programmingAreaElem = $('#program-blocks');
-    if (!programmingAreaElem) {
-      error("Programming area not found! Waiting...");
-      setTimeout(initGroupDragging, 500);
-      return;
-    }
-    
-    log("Initializing group dragging system v3.0");
+    log("Initializing reliable group dragging v4.0");
     
     // הוסף סגנונות CSS
     addStyles();
     
-    // התקן מאזינים גלובליים
-    installGlobalListeners();
+    // התקן מאזינים גלובליים לאירועי עכבר
+    document.addEventListener('mousedown', onMouseDown, true);
+    document.addEventListener('mouseup', onMouseUp, true);
     
-    // סמן שהמודול אותחל
-    window.groupDraggingFinalInitialized = true;
-    isRunning = true;
+    // סמן כפעיל
+    active = true;
+    window.reliableGroupDragInitialized = true;
     
     log("Initialization complete");
-    showStatusOverlay("Group Dragging Ready");
+    showMessage("Group Dragging Ready");
   }
   
-  // ----- התקנת מאזינים גלובליים -----
-  function installGlobalListeners() {
-    // מאזינים לאירועי עכבר
-    document.addEventListener('mousedown', handleMouseDown, true);
-    document.addEventListener('mouseup', handleMouseUp, true);
-    
-    // מאזינים ללקיחה והפלה של גרירה רגילה (לא נעשה בהם שימוש, רק למקרה שנעשית גרירה רגילה)
-    document.addEventListener('dragstart', handleDragStart, true);
-    document.addEventListener('dragend', handleDragEnd, true);
-    
-    // התקן MutationObserver לבדיקת שינויים באזור התכנות
-    setupMutationObserver();
-  }
-  
-  // ----- התקנת MutationObserver לניטור שינויים בDOM -----
-  function setupMutationObserver() {
-    if (!programmingAreaElem) return;
-    
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        if (mutation.type === 'childList' && mutation.addedNodes.length) {
-          // נוספו אלמנטים חדשים, ייתכן שאלו בלוקים חדשים
-          if (isGroupDragging) {
-            // אם יש גרירה פעילה, ייתכן שכדאי לחשב מחדש את שרשרת הבלוקים
-            // אבל לרוב זה לא צריך לקרות באמצע גרירה
-            log("DOM changed during active drag");
-          }
-        }
-      }
-    });
-    
-    observer.observe(programmingAreaElem, { 
-      childList: true,
-      subtree: true
-    });
-    
-    log("MutationObserver installed");
-  }
-  
-  // ----- הוספת סגנונות CSS -----
+  // --- הוספת סגנונות CSS ---
   function addStyles() {
-    // אם הסגנונות כבר קיימים, אל תוסיף שוב
-    if ($('#group-dragging-final-styles')) return;
+    // בדוק אם הסגנונות כבר הוספו
+    if (document.getElementById('reliable-group-drag-styles')) return;
     
-    const style = document.createElement('style');
-    style.id = 'group-dragging-final-styles';
-    style.textContent = `
-      /* סגנונות עבור בלוקים בגרירה קבוצתית */
-      .chain-dragging {
+    const styleEl = document.createElement('style');
+    styleEl.id = 'reliable-group-drag-styles';
+    styleEl.textContent = `
+      /* סגנונות בלוקים בגרירה */
+      .rgd-chain-block {
         transition: none !important;
-        box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.5) !important;
+        box-shadow: 0 0 0 1px rgba(76, 175, 80, 0.5) !important;
       }
       
-      .chain-main-block {
-        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.8) !important;
+      .rgd-main-block {
+        box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.8) !important;
       }
       
-      /* הסתרת עיגולי חיבור בזמן גרירה */
-      .disable-connection-points .right-connection-point,
-      .disable-connection-points .left-connection-point {
+      /* הסתרת נקודות חיבור */
+      .rgd-hide-connections .right-connection-point,
+      .rgd-hide-connections .left-connection-point {
         display: none !important;
         opacity: 0 !important;
+        pointer-events: none !important;
         animation: none !important;
       }
       
       /* חלונית סטטוס */
-      #group-drag-status-overlay {
+      #rgd-status-message {
         position: fixed;
-        bottom: 15px;
+        bottom: 60px;
         left: 15px;
         background-color: rgba(33, 150, 243, 0.9);
         color: white;
@@ -780,310 +729,340 @@
         z-index: 10000;
         pointer-events: none;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        transition: opacity 0.3s ease;
         opacity: 0;
+        transition: opacity 0.3s ease;
       }
       
-      #group-drag-status-overlay.visible {
+      #rgd-status-message.visible {
         opacity: 1;
-      }
-      
-      /* אנימציה בסיום גרירה קבוצתית */
-      @keyframes chainComplete {
-        0% { box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.8); }
-        100% { box-shadow: none; }
-      }
-      
-      .chain-drag-complete {
-        animation: chainComplete ${CONFIG.DRAG_ANIMATION_DURATION_MS}ms ease forwards;
       }
     `;
     
-    document.head.appendChild(style);
-    log("Styles added");
+    document.head.appendChild(styleEl);
     
-    // הוסף חלונית סטטוס אם דרוש
-    if (CONFIG.SHOW_STATUS_OVERLAY) {
-      const statusOverlay = document.createElement('div');
-      statusOverlay.id = 'group-drag-status-overlay';
-      document.body.appendChild(statusOverlay);
+    // הוסף אלמנט חלונית סטטוס
+    if (CONFIG.STATUS_OVERLAY) {
+      const statusEl = document.createElement('div');
+      statusEl.id = 'rgd-status-message';
+      document.body.appendChild(statusEl);
     }
   }
   
-  // ----- הצגת הודעת סטטוס -----
-  function showStatusOverlay(message, duration = 2000) {
-    if (!CONFIG.SHOW_STATUS_OVERLAY) return;
+  // --- הצגת הודעת סטטוס ---
+  function showMessage(message, duration = 2000) {
+    if (!CONFIG.STATUS_OVERLAY) return;
     
-    const overlay = $('#group-drag-status-overlay');
-    if (!overlay) return;
+    const statusEl = document.getElementById('rgd-status-message');
+    if (!statusEl) return;
     
-    // עדכן את הודעת הסטטוס
-    overlay.textContent = message;
-    overlay.classList.add('visible');
+    statusEl.textContent = message;
+    statusEl.classList.add('visible');
     
-    // הסתר את ההודעה אחרי הזמן שהוגדר
-    clearTimeout(window.statusOverlayTimeout);
-    window.statusOverlayTimeout = setTimeout(() => {
-      overlay.classList.remove('visible');
+    clearTimeout(window.statusMessageTimer);
+    window.statusMessageTimer = setTimeout(() => {
+      statusEl.classList.remove('visible');
     }, duration);
   }
   
-  // ----- פונקציית מאזין ללחיצת עכבר -----
-  function handleMouseDown(e) {
-    // אם המודול אינו רץ או שמדובר בלחיצה שאינה שמאלית, צא
-    if (!isRunning || e.button !== 0) return;
+  // --- טיפול באירוע לחיצת עכבר ---
+  function onMouseDown(e) {
+    // אם לא פעיל או לא לחיצה שמאלית, צא
+    if (!active || e.button !== 0) return;
     
-    // נסה למצוא בלוק תכנות
-    const clickedBlock = findBlockElement(e.target);
-    if (!clickedBlock) return;
+    // בדוק אם יש גרירה פעילה אחרת וסיים אותה
+    if (dragging) {
+      log("Ending previous drag session first");
+      endDrag(false);
+    }
     
-    log("Block clicked:", clickedBlock.id);
+    // מצא את הבלוק שנלחץ
+    const block = findProgrammingBlock(e.target);
+    if (!block) return;
     
-    // מצא את שרשרת הבלוקים המלאה
-    const fullChain = findCompleteBlockChain(clickedBlock);
+    log("Block clicked:", block.id || "unknown");
     
-    // אם רק בלוק אחד או שניים, תן לקוד המקורי לטפל
-    if (fullChain.length <= 1) {
+    // מצא את כל הבלוקים בשרשרת
+    const chain = findCompleteBlockChain(block);
+    
+    // אם אין מספיק בלוקים, אל תפעיל גרירה קבוצתית
+    if (chain.length <= 1) {
       log("Single block - regular drag");
       return;
     }
     
-    log(`Found block chain with ${fullChain.length} blocks`);
+    log(`Found chain with ${chain.length} blocks`);
     
     // התחל גרירה קבוצתית
-    startGroupDrag(clickedBlock, fullChain);
+    startDrag(block, chain);
   }
   
-  // ----- התחלת גרירה קבוצתית -----
-  function startGroupDrag(mainBlock, chainBlocks) {
-    // שמור מידע על הגרירה הנוכחית
-    mainDragBlock = mainBlock;
-    blockChain = chainBlocks;
-    isGroupDragging = true;
-    
-    // שמור את המיקום הנוכחי של הבלוק הראשי
-    updateMainBlockPosition();
-    
-    // הקפא את המיקום היחסי של כל הבלוקים בשרשרת
-    saveBlockPositions();
-    
-    // הוסף קלאסים ויזואליים לבלוקים
-    blockChain.forEach(block => {
-      block.classList.add('chain-dragging');
-    });
-    mainDragBlock.classList.add('chain-main-block');
-    
-    // הסתר עיגולי חיבור אם נדרש
-    if (CONFIG.HIDE_CONNECTION_INDICATORS) {
-      suppressConnectionPoints = true;
-      document.body.classList.add('disable-connection-points');
+  // --- התחלת גרירה קבוצתית ---
+  function startDrag(block, chain) {
+    try {
+      // שמור את הבלוק הראשי ואת השרשרת
+      mainBlock = block;
+      blockChain = chain;
+      dragging = true;
+      droppedByUser = false;
+      startTime = Date.now();
+      
+      // שמור את המיקום ההתחלתי של הבלוק הראשי
+      saveMainBlockPosition();
+      
+      // שמור את היחסים בין הבלוקים
+      calculateRelativePositions();
+      
+      // סמן את הבלוקים ויזואלית
+      markBlocks();
+      
+      // הסתר נקודות חיבור אם צריך
+      if (CONFIG.CONNECTION_POINTS_HIDE) {
+        document.body.classList.add('rgd-hide-connections');
+      }
+      
+      // התחל לעקוב אחר תנועת הבלוק הראשי
+      startTracking();
+      
+      showMessage(`Dragging ${chain.length} blocks`);
+      log("Drag started successfully");
+    } catch (err) {
+      // במקרה של שגיאה, נקה הכל
+      warn("Error starting drag:", err);
+      cleanupDrag();
     }
-    
-    // התחל מעקב אחר תנועת הבלוק הראשי
-    startPositionTracking();
-    
-    showStatusOverlay(`Dragging ${blockChain.length} blocks`);
-    log("Group drag started");
   }
   
-  // ----- פונקציית שמירת מיקום הבלוקים -----
-  function saveBlockPositions() {
-    if (!mainDragBlock || !blockChain.length) return;
+  // --- שמירת מיקום הבלוק הראשי ---
+  function saveMainBlockPosition() {
+    if (!mainBlock) return;
     
-    blockPositionData = [];
+    // שמור את המיקום הנוכחי
+    const rect = mainBlock.getBoundingClientRect();
+    mainBlockStartPos = { x: rect.left, y: rect.top };
+    mainBlockLastPos = { ...mainBlockStartPos };
     
-    // קבל את המיקום של הבלוק הראשי
-    const mainRect = mainDragBlock.getBoundingClientRect();
-    const mainStyleLeft = parseFloat(mainDragBlock.style.left) || 0;
-    const mainStyleTop = parseFloat(mainDragBlock.style.top) || 0;
+    log("Saved main block position:", mainBlockStartPos);
+  }
+  
+  // --- חישוב מיקומים יחסיים ---
+  function calculateRelativePositions() {
+    if (!mainBlock || !blockChain.length) return;
+    
+    blockData = [];
+    
+    // קבל מיקום ונתונים של הבלוק הראשי
+    const mainRect = mainBlock.getBoundingClientRect();
+    const mainLeft = parseFloat(mainBlock.style.left) || 0;
+    const mainTop = parseFloat(mainBlock.style.top) || 0;
     
     // שמור מידע על כל בלוק
     blockChain.forEach(block => {
-      // קבל את המיקום הנוכחי של הבלוק
-      const rect = block.getBoundingClientRect();
-      const styleLeft = parseFloat(block.style.left) || 0;
-      const styleTop = parseFloat(block.style.top) || 0;
+      // לסיכוך, השתמש במיקום CSS הישיר ולא ב-getBoundingClientRect
+      const left = parseFloat(block.style.left) || 0;
+      const top = parseFloat(block.style.top) || 0;
       
-      // שמור מידע יחסי
-      blockPositionData.push({
+      // שמור מיקום יחסי וגם מיקום מקורי
+      blockData.push({
         block: block,
-        // היסט סגנון - ההפרש בין המיקום בסגנון של הבלוק לבין הבלוק הראשי
-        styleOffsetX: styleLeft - mainStyleLeft,
-        styleOffsetY: styleTop - mainStyleTop,
-        // היסט מיקום - ההפרש בין המיקום בפועל של הבלוק לבין הבלוק הראשי
-        rectOffsetX: rect.left - mainRect.left,
-        rectOffsetY: rect.top - mainRect.top,
-        // מידות
-        width: rect.width,
-        height: rect.height
+        originalLeft: left,
+        originalTop: top,
+        relativeLeft: left - mainLeft,
+        relativeTop: top - mainTop
       });
     });
     
-    log("Saved positions for", blockChain.length, "blocks");
+    log("Calculated positions for", blockChain.length, "blocks");
   }
   
-  // ----- עדכון מיקום הבלוק הראשי -----
-  function updateMainBlockPosition() {
-    if (!mainDragBlock) return false;
+  // --- סימון הבלוקים ויזואלית ---
+  function markBlocks() {
+    if (!blockChain.length) return;
     
-    const rect = mainDragBlock.getBoundingClientRect();
-    const newPos = { x: rect.left, y: rect.top };
+    // שמור את המחלקות המקוריות ואז הוסף מחלקות חדשות
+    blockChain.forEach(block => {
+      // שמור את המחלקות המקוריות
+      originalClasses.set(block, block.className);
+      
+      // הוסף מחלקות לסימון
+      block.classList.add('rgd-chain-block');
+    });
     
-    // בדוק אם המיקום השתנה
-    const moved = (
-      Math.abs(newPos.x - lastPosition.x) > CONFIG.MIN_MOVEMENT_THRESHOLD ||
-      Math.abs(newPos.y - lastPosition.y) > CONFIG.MIN_MOVEMENT_THRESHOLD
-    );
-    
-    // עדכן את המיקום האחרון
-    lastPosition = newPos;
-    
-    return moved;
+    // סמן את הבלוק הראשי במיוחד
+    if (mainBlock) {
+      mainBlock.classList.add('rgd-main-block');
+    }
   }
   
-  // ----- התחלת מעקב אחר מיקום הבלוק הראשי -----
-  function startPositionTracking() {
-    // נקה אינטרוול קודם אם קיים
-    stopPositionTracking();
+  // --- התחלת מעקב אחר תנועת הבלוק הראשי ---
+  function startTracking() {
+    // נקה טיימר קודם אם קיים
+    stopTracking();
     
-    // הפעל אינטרוול חדש
-    trackingInterval = setInterval(() => {
-      if (!isGroupDragging || !mainDragBlock) {
-        stopPositionTracking();
+    // הפעל טיימר חדש
+    trackingTimer = setInterval(() => {
+      if (!dragging || !mainBlock) {
+        stopTracking();
         return;
       }
       
-      // הבלוק אמור להיות בגרירה, בדוק אם יש לו את הקלאס המתאים
-      if (!mainDragBlock.classList.contains('snap-source')) {
-        log("Main block is no longer in drag state");
+      // בדוק אם הבלוק עדיין בתוך ה-DOM
+      if (!document.body.contains(mainBlock)) {
+        warn("Main block removed from DOM");
+        endDrag(false);
+        return;
+      }
+      
+      // בדוק אם הבלוק אינו בגרירה עוד
+      if (!mainBlock.classList.contains('snap-source')) {
+        // אם לא עבר מספיק זמן, ייתכן שזה רק אתחול של הגרירה
+        const timeElapsed = Date.now() - startTime;
         
-        // בדוק אם זו גרירה שהסתיימה או שזה עדיין בהתחלה
-        const timeSinceStart = Date.now() - lastUpdateTime;
-        if (timeSinceStart > 500) {
-          // כנראה שהגרירה הסתיימה
-          handleGroupDragEnd();
+        if (timeElapsed < 100) {
+          // כנראה עדיין בתהליך אתחול
+          return;
         }
+        
+        // כנראה שהגרירה הסתיימה
+        log("Main block is no longer being dragged");
+        endDrag(false);
         return;
       }
       
-      // בדוק אם הבלוק הראשי זז
-      const moved = updateMainBlockPosition();
+      // בדוק אם הבלוק זז ועדכן את הבלוקים האחרים
+      checkAndUpdatePositions();
       
-      // אם הבלוק זז, עדכן את כל שאר הבלוקים
-      if (moved) {
-        updateChainPositions();
-        lastUpdateTime = Date.now();
-      }
-    }, CONFIG.UPDATE_INTERVAL_MS);
+    }, CONFIG.CHECK_INTERVAL_MS);
     
     log("Position tracking started");
   }
   
-  // ----- עצירת מעקב אחר מיקום -----
-  function stopPositionTracking() {
-    if (trackingInterval) {
-      clearInterval(trackingInterval);
-      trackingInterval = null;
-    }
-  }
-  
-  // ----- עדכון מיקום כל הבלוקים בשרשרת -----
-  function updateChainPositions() {
-    if (!isGroupDragging || !mainDragBlock || !blockChain.length || !blockPositionData.length) return;
+  // --- בדיקה ועדכון של מיקום הבלוקים ---
+  function checkAndUpdatePositions() {
+    if (!mainBlock || !blockData.length) return;
     
     // קבל את המיקום הנוכחי של הבלוק הראשי
-    const currentMainLeft = parseFloat(mainDragBlock.style.left) || 0;
-    const currentMainTop = parseFloat(mainDragBlock.style.top) || 0;
+    const mainLeft = parseFloat(mainBlock.style.left) || 0;
+    const mainTop = parseFloat(mainBlock.style.top) || 0;
     
-    // עדכן את מיקום כל הבלוקים בשרשרת חוץ מהבלוק הראשי
-    blockPositionData.forEach((data, index) => {
-      // דלג על הבלוק הראשי
-      if (data.block === mainDragBlock) return;
+    // חשב את השינוי מהמיקום האחרון
+    const rect = mainBlock.getBoundingClientRect();
+    const deltaRectX = rect.left - mainBlockLastPos.x;
+    const deltaRectY = rect.top - mainBlockLastPos.y;
+    
+    // עדכן את המיקום האחרון
+    mainBlockLastPos = { x: rect.left, y: rect.top };
+    
+    // אם התזוזה קטנה מדי, אל תעדכן
+    if (Math.abs(deltaRectX) < CONFIG.MIN_DRAG_THRESHOLD_PX && 
+        Math.abs(deltaRectY) < CONFIG.MIN_DRAG_THRESHOLD_PX) {
+      return;
+    }
+    
+    // עדכן את מיקום כל הבלוקים חוץ מהראשי
+    blockData.forEach(data => {
+      if (data.block === mainBlock) return;
+      
+      // וודא שהבלוק עדיין בDOM
+      if (!document.body.contains(data.block)) return;
       
       // עדכן את המיקום
       data.block.style.position = 'absolute';
-      data.block.style.left = Math.round(currentMainLeft + data.styleOffsetX) + 'px';
-      data.block.style.top = Math.round(currentMainTop + data.styleOffsetY) + 'px';
+      data.block.style.left = Math.round(mainLeft + data.relativeLeft) + 'px';
+      data.block.style.top = Math.round(mainTop + data.relativeTop) + 'px';
     });
   }
   
-  // ----- סיום גרירה קבוצתית -----
-  function handleGroupDragEnd() {
-    if (!isGroupDragging) return;
+  // --- עצירת מעקב ---
+  function stopTracking() {
+    if (trackingTimer) {
+      clearInterval(trackingTimer);
+      trackingTimer = null;
+    }
+  }
+  
+  // --- סיום גרירה ---
+  function endDrag(byUser = false) {
+    if (!dragging) return;
     
-    log("Group drag ended");
+    log("Ending drag, triggered by", byUser ? "user" : "system");
+    droppedByUser = byUser;
     
-    // הסר קלאסים ויזואליים
+    // עצור מעקב
+    stopTracking();
+    
+    // אם יש עדכון אחרון נדרש
+    if (CONFIG.FORCE_POSITION_UPDATE) {
+      // וודא שכל הבלוקים במקום הנכון
+      checkAndUpdatePositions();
+    }
+    
+    // החזר את נקודות החיבור אם הוסתרו
+    if (CONFIG.CONNECTION_POINTS_HIDE) {
+      document.body.classList.remove('rgd-hide-connections');
+    }
+    
+    // הסר את הסימון הויזואלי
+    restoreBlocks();
+    
+    // הגדר טיימר לניקוי סופי
+    clearTimeout(resetTimer);
+    resetTimer = setTimeout(() => {
+      cleanupDrag();
+    }, CONFIG.RESET_DELAY_MS);
+    
+    // סמן שהגרירה הסתיימה
+    dragging = false;
+    
+    // הצג הודעה
+    showMessage("Drag complete", 1000);
+  }
+  
+  // --- שחזור הבלוקים למצבם המקורי ---
+  function restoreBlocks() {
+    // החזר את המחלקות המקוריות לכל הבלוקים
     blockChain.forEach(block => {
-      block.classList.remove('chain-dragging');
-      block.classList.remove('chain-main-block');
-      block.classList.add('chain-drag-complete');
-      
-      // הסר את קלאס הסיום אחרי זמן מסוים
-      setTimeout(() => {
-        block.classList.remove('chain-drag-complete');
-      }, CONFIG.DRAG_ANIMATION_DURATION_MS);
+      if (document.body.contains(block)) {
+        block.classList.remove('rgd-chain-block', 'rgd-main-block');
+        
+        // החזר את המחלקות המקוריות אם נשמרו
+        const originalClass = originalClasses.get(block);
+        if (originalClass) {
+          // אל תעשה החלפה מלאה כי ייתכן שנוספו מחלקות חדשות בינתיים
+          // במקום זאת, הסר רק את המחלקות שהוספנו
+        }
+      }
     });
     
-    // החזר את עיגולי החיבור
-    if (suppressConnectionPoints) {
-      suppressConnectionPoints = false;
-      document.body.classList.remove('disable-connection-points');
-    }
-    
-    // נקה את המשתנים
-    isGroupDragging = false;
-    mainDragBlock = null;
+    // נקה את המפה
+    originalClasses.clear();
+  }
+  
+  // --- ניקוי מלא של הגרירה ---
+  function cleanupDrag() {
+    mainBlock = null;
     blockChain = [];
-    blockPositionData = [];
+    blockData = [];
+    mainBlockStartPos = null;
+    mainBlockLastPos = null;
+    originalClasses.clear();
     
-    // עצור את המעקב
-    stopPositionTracking();
-    
-    showStatusOverlay("Group drag completed", 1500);
+    log("Drag cleanup complete");
   }
   
-  // ----- מאזין לשחרור לחצן עכבר -----
-  function handleMouseUp(e) {
-    // אם אין גרירה קבוצתית פעילה, אין מה לעשות
-    if (!isGroupDragging) return;
+  // --- טיפול בשחרור לחצן עכבר ---
+  function onMouseUp(e) {
+    // אם אין גרירה פעילה, אין מה לעשות
+    if (!dragging) return;
     
-    // הסתכל לראות אם הלחיצה שוחררה על הבלוק הראשי או אחד מהבלוקים בשרשרת
-    const releasedBlock = findBlockElement(e.target);
-    
-    if (releasedBlock && blockChain.includes(releasedBlock)) {
-      log("Mouse up on chain block:", releasedBlock.id);
-    } else {
-      log("Mouse up outside chain");
-    }
-    
-    // במקרה כזה, סיים את הגרירה הקבוצתית
-    handleGroupDragEnd();
+    log("Mouse up detected");
+    endDrag(true);
   }
   
-  // ----- מאזינים לאירועי גרירה רגילים -----
-  function handleDragStart(e) {
-    // לא צריך לעשות כלום, רק לוג
-    if (isGroupDragging) {
-      log("Native dragstart during group drag");
-    }
-  }
-  
-  function handleDragEnd(e) {
-    // לא צריך לעשות כלום, רק לוג
-    if (isGroupDragging) {
-      log("Native dragend during group drag");
-      handleGroupDragEnd();
-    }
-  }
-  
-  // ----- מציאת אלמנט בלוק תכנות -----
-  function findBlockElement(element) {
-    // עלה בעץ ה-DOM עד שתמצא בלוק או תגיע לשורש
+  // --- מציאת בלוק תכנות ---
+  function findProgrammingBlock(element) {
     let current = element;
     
     while (current && current !== document.body) {
-      // בדוק אם זה בלוק תכנות באזור התכנות
       if (current.classList && 
           current.classList.contains('block-container') && 
           current.closest('#program-blocks')) {
@@ -1095,27 +1074,28 @@
     return null;
   }
   
-  // ----- מציאת שרשרת בלוקים מלאה -----
+  // --- מציאת שרשרת בלוקים מלאה ---
   function findCompleteBlockChain(startBlock) {
     if (!startBlock) return [];
     
+    // מערך לשמירת כל הבלוקים בשרשרת
     const chain = [startBlock];
     let currentBlock = startBlock;
     let chainLength = 1;
     
-    // מצא בלוקים לשמאל (בלוקים שהבלוק הנוכחי מחובר אליהם)
+    // מצא בלוקים לשמאל
     while (currentBlock.hasAttribute('data-connected-to') && 
-           chainLength < CONFIG.CHAIN_BLOCKS_MAX) {
+           chainLength < CONFIG.MAX_CHAIN_LENGTH) {
       
-      const connDirection = currentBlock.getAttribute('data-connection-direction');
+      const direction = currentBlock.getAttribute('data-connection-direction');
       const connectedId = currentBlock.getAttribute('data-connected-to');
       
-      // רק אם החיבור הוא לצד שמאל
-      if (connDirection === 'left' && connectedId) {
+      // רק אם החיבור הוא לשמאל
+      if (direction === 'left' && connectedId) {
         const leftBlock = document.getElementById(connectedId);
         
         if (leftBlock) {
-          // הוסף בהתחלה כדי לשמור על סדר נכון
+          // הוסף את הבלוק בתחילת המערך
           chain.unshift(leftBlock);
           chainLength++;
           currentBlock = leftBlock;
@@ -1126,12 +1106,12 @@
       break;
     }
     
-    // אפס את הבלוק הנוכחי בחזרה לבלוק ההתחלתי
+    // אפס לבלוק ההתחלתי
     currentBlock = startBlock;
     
-    // מצא בלוקים לימין (בלוקים שמחוברים אל הבלוק הנוכחי)
-    while (currentBlock.hasAttribute('data-connected-from-right') &&
-           chainLength < CONFIG.CHAIN_BLOCKS_MAX) {
+    // מצא בלוקים לימין
+    while (currentBlock.hasAttribute('data-connected-from-right') && 
+           chainLength < CONFIG.MAX_CHAIN_LENGTH) {
       
       const rightBlockId = currentBlock.getAttribute('data-connected-from-right');
       
@@ -1139,7 +1119,7 @@
         const rightBlock = document.getElementById(rightBlockId);
         
         if (rightBlock) {
-          // הוסף בסוף
+          // הוסף את הבלוק בסוף המערך
           chain.push(rightBlock);
           chainLength++;
           currentBlock = rightBlock;
@@ -1153,103 +1133,94 @@
     return chain;
   }
   
-  // ----- הוספת כפתור בדיקה (רק במצב דיבוג) -----
+  // --- הוספת כפתור בדיקה (במצב דיבוג) ---
   function addDebugButton() {
     if (!CONFIG.DEBUG) return;
     
-    const button = document.createElement('button');
-    button.textContent = 'Test Chains';
-    button.style.cssText = 'position:fixed;bottom:10px;right:10px;z-index:9999;padding:8px 12px;background:#2196F3;color:white;border:none;border-radius:4px;font-family:Arial,sans-serif;cursor:pointer;';
+    const btn = document.createElement('button');
+    btn.textContent = 'בדוק שרשראות';
+    btn.style.cssText = 'position:fixed;bottom:15px;right:15px;z-index:9999;padding:8px 12px;background:#2196F3;color:white;border:none;border-radius:4px;font-family:Arial,sans-serif;font-size:14px;cursor:pointer;';
     
-    button.addEventListener('click', () => {
-      const blocks = $$('#program-blocks .block-container');
+    btn.addEventListener('click', () => {
+      const blocks = document.querySelectorAll('#program-blocks .block-container');
       let foundChains = 0;
       
       blocks.forEach(block => {
         const chain = findCompleteBlockChain(block);
         if (chain.length > 1) {
-          console.log(`%cBlock ${block.id || 'unknown'} has chain of ${chain.length} blocks:`, 'color:#4CAF50;font-weight:bold');
+          console.log(`Block ${block.id || 'unknown'} has chain of ${chain.length} blocks`);
           console.log(chain.map(b => b.id || 'unknown').join(' -> '));
           foundChains++;
         }
       });
       
       if (foundChains === 0) {
-        console.log("%cNo block chains found", "color:#F44336;font-weight:bold");
+        console.log("No chains found");
       } else {
-        console.log(`%cFound ${foundChains} unique block chains`, "color:#2196F3;font-weight:bold");
+        console.log(`Found ${foundChains} chains`);
       }
       
-      showStatusOverlay(`Found ${foundChains} chains`, 3000);
+      showMessage(`Found ${foundChains} chains`);
     });
     
-    document.body.appendChild(button);
+    document.body.appendChild(btn);
   }
   
-  // ----- התחל את האתחול -----
-  function startInit() {
-    // המתן זמן מסוים לפני האתחול הראשוני
-    setTimeout(() => {
-      initGroupDragging();
+  // --- חשיפת API חיצוני ---
+  window.reliableGroupDrag = {
+    // הפעלה מחדש של המודול
+    restart: function() {
+      // נקה את המצב הקודם
+      endDrag(false);
+      cleanupDrag();
       
-      // הוסף כפתור בדיקה במצב דיבוג
-      if (CONFIG.DEBUG) {
-        setTimeout(addDebugButton, 500);
-      }
-    }, CONFIG.WAIT_BEFORE_INIT_MS);
-  }
-  
-  // ----- רישום פונקציות גלובליות -----
-  window.groupDragFinal = {
-    // אפשר להפעיל מחדש את המודול
-    reinit: function() {
-      window.groupDraggingFinalInitialized = false;
-      initGroupDragging();
-      return "Reinitialized";
+      // אפס ואתחל מחדש
+      window.reliableGroupDragInitialized = false;
+      setTimeout(init, 100);
+      
+      return "Restarting...";
     },
     
-    // לבדוק מצב נוכחי
+    // בדיקת סטטוס
     status: function() {
       return {
-        initialized: !!window.groupDraggingFinalInitialized,
-        running: isRunning,
-        dragging: isGroupDragging,
-        chainLength: blockChain.length
+        active: active,
+        dragging: dragging,
+        chainLength: blockChain.length,
+        initialized: window.reliableGroupDragInitialized || false
       };
     },
     
-    // להפעיל או לכבות
+    // הפעלה/כיבוי של המודול
     toggle: function() {
-      isRunning = !isRunning;
-      showStatusOverlay(`Group dragging ${isRunning ? 'enabled' : 'disabled'}`);
-      return isRunning;
+      active = !active;
+      showMessage(`Group dragging ${active ? 'enabled' : 'disabled'}`);
+      return active;
     },
     
-    // לבטל גרירה קבוצתית באופן יזום
+    // ביטול גרירה
     cancelDrag: function() {
-      if (isGroupDragging) {
-        handleGroupDragEnd();
+      if (dragging) {
+        endDrag(false);
         return "Drag cancelled";
       }
       return "No active drag";
-    },
-    
-    // לשנות קונפיגורציה
-    setConfig: function(key, value) {
-      if (key in CONFIG) {
-        CONFIG[key] = value;
-        return `Config ${key} set to ${value}`;
-      }
-      return `Unknown config key: ${key}`;
     }
   };
   
-  // התחל אתחול כשהמסמך מוכן
+  // --- התחלת אתחול ---
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startInit);
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(init, CONFIG.WAIT_BEFORE_INIT_MS);
+    });
   } else {
-    startInit();
+    setTimeout(init, CONFIG.WAIT_BEFORE_INIT_MS);
+  }
+  
+  // הוסף כפתור בדיקה אם במצב דיבוג
+  if (CONFIG.DEBUG) {
+    setTimeout(addDebugButton, CONFIG.WAIT_BEFORE_INIT_MS + 500);
   }
 })();
 
-// --- END FINAL GROUP DRAGGING v3.0 ---
+// --- END RELIABLE GROUP DRAGGING v4.0 ---
