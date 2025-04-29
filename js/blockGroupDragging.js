@@ -1,296 +1,92 @@
 /**
- * blockGroupDragging.js v1.0
- * קובץ המאפשר גרירה קבוצתית של בלוקי תכנות
- * הלבנה הראשונה משמשת כ"קטר" שדוחף/מושך את שאר הבלוקים
+ * blockGroupDragging.js - פתרון פשוט לגרירה קבוצתית של בלוקים
+ * יוצר גרירה קבוצתית כך שהלבנה הראשונה תהיה הגוררת
  */
 
+// פתרון מינימליסטי ופשוט - נוודא שהוא עובד
 (function() {
-  // --- בדיקה שלא יריצו פעמיים ---
-  if (window.blockGroupDraggingInitialized) {
-    console.log("Block Group Dragging already initialized.");
-    return;
-  }
+  console.log("Loading ultra-simple block group dragging...");
   
-  // --- קונפיגורציה ---
-  const CONFIG = {
-    DEBUG: true,                    // הצגת הודעות דיבוג בקונסול
-    UPDATE_INTERVAL_MS: 10,         // תדירות בדיקות (מילישניות)
-    ACTIVATION_DELAY_MS: 500,       // המתנה לאתחול מערכת קישור בלוקים
-    HORIZONTAL_OFFSET: -9,          // היסט אופקי בין בלוקים מחוברים
-    VERTICAL_OFFSET: 0,             // היסט אנכי בין בלוקים מחוברים
-    MAX_BLOCKS_IN_CHAIN: 50,        // הגבלת אורך שרשרת לביצועים
-    FAIL_SAFE_CHECK: true           // בדיקת מנגנון התאוששות
-  };
-  
-  // --- משתנים גלובליים ---
-  let isActive = false;              // האם המודול פעיל כרגע
-  let timerInterval = null;          // מזהה אינטרוול הבדיקה
-  let lastDraggedBlock = null;       // הבלוק האחרון שהיה בגרירה
-  let blockMovementCount = 0;        // מונה תנועות בלוקים (דיבוג)
-  
-  // --- פונקציית לוג עם דיבוג ---
-  function log(...args) {
-    if (CONFIG.DEBUG) {
-      console.log("[BlockGroupDrag]", ...args);
-    }
-  }
-  
-  // --- הפעלת המודול ---
-  function initialize() {
-    log("Initializing BlockGroupDragging v1.0...");
+  // הקובץ עשוי להיטען לפני שה-DOM מוכן, אז נמתין מעט
+  setTimeout(function() {
+    // נטען רק פעם אחת
+    if (window.blockGroupDraggingActive) return;
+    window.blockGroupDraggingActive = true;
     
-    // מנע התחברות כפולה
-    if (isActive) {
-      log("Already active, skipping initialization");
-      return;
-    }
-    
-    // בדוק שהמערכת בבסיס הוטענה
-    if (!document.querySelector('#program-blocks')) {
-      log("Programming area not found, waiting...");
-      setTimeout(initialize, 300);
-      return;
-    }
-
-    // הפעל טיימר שיבדוק גרירת בלוקים
-    timerInterval = setInterval(checkForDraggedBlocks, CONFIG.UPDATE_INTERVAL_MS);
-    
-    // סמן שהמודול אותחל ופעיל
-    isActive = true;
-    window.blockGroupDraggingInitialized = true;
-    
-    log("Initialization complete");
-    log("Monitoring for block dragging events...");
-  }
-  
-  // --- בדיקת בלוקים בגרירה ---
-  function checkForDraggedBlocks() {
-    try {
-      // מצא בלוק שנגרר כרגע (מסומן עם המחלקה snap-source)
-      const draggedBlock = document.querySelector('#program-blocks .block-container.snap-source');
-      
-      // אם אין בלוק בגרירה, נקה את המצב הקודם
-      if (!draggedBlock) {
-        if (lastDraggedBlock) {
-          log("Drag ended");
-          lastDraggedBlock = null;
+    // הגדר פונקציה פשוטה שבודקת אם יש בלוק בגרירה
+    function checkDraggedBlocks() {
+      try {
+        // מצא בלוק בגרירה (בלוק עם המחלקה snap-source)
+        const draggedBlock = document.querySelector('#program-blocks .block-container.snap-source');
+        
+        // אם אין בלוק בגרירה, אין מה לעשות
+        if (!draggedBlock) return;
+        
+        // קבל את המיקום הנוכחי של הבלוק הנגרר
+        const mainLeft = parseFloat(draggedBlock.style.left) || 0;
+        const mainTop = parseFloat(draggedBlock.style.top) || 0;
+        
+        // בדוק אם יש בלוק מחובר מימין
+        if (draggedBlock.hasAttribute('data-connected-from-right')) {
+          // קבל את מזהה הבלוק הימני
+          const rightBlockId = draggedBlock.getAttribute('data-connected-from-right');
+          const rightBlock = document.getElementById(rightBlockId);
+          
+          if (rightBlock) {
+            // חשב רוחב בלוק
+            const blockWidth = draggedBlock.offsetWidth;
+            
+            // עדכן את מיקום הבלוק הימני
+            rightBlock.style.position = 'absolute';
+            rightBlock.style.left = (mainLeft + blockWidth - 9) + 'px';
+            rightBlock.style.top = mainTop + 'px';
+            
+            // בדוק אם יש בלוק מחובר לבלוק הימני (רקורסיבי)
+            if (rightBlock.hasAttribute('data-connected-from-right')) {
+              const nextBlockId = rightBlock.getAttribute('data-connected-from-right');
+              const nextBlock = document.getElementById(nextBlockId);
+              
+              if (nextBlock) {
+                const nextBlockLeft = (mainLeft + blockWidth - 9 + rightBlock.offsetWidth - 9);
+                nextBlock.style.position = 'absolute';
+                nextBlock.style.left = nextBlockLeft + 'px';
+                nextBlock.style.top = mainTop + 'px';
+                
+                // בדיקה רקורסיבית לבלוק שלישי
+                if (nextBlock.hasAttribute('data-connected-from-right')) {
+                  const thirdBlockId = nextBlock.getAttribute('data-connected-from-right');
+                  const thirdBlock = document.getElementById(thirdBlockId);
+                  
+                  if (thirdBlock) {
+                    thirdBlock.style.position = 'absolute';
+                    thirdBlock.style.left = (nextBlockLeft + nextBlock.offsetWidth - 9) + 'px';
+                    thirdBlock.style.top = mainTop + 'px';
+                    
+                    // בדיקה רקורסיבית לבלוק רביעי
+                    if (thirdBlock.hasAttribute('data-connected-from-right')) {
+                      const fourthBlockId = thirdBlock.getAttribute('data-connected-from-right');
+                      const fourthBlock = document.getElementById(fourthBlockId);
+                      
+                      if (fourthBlock) {
+                        fourthBlock.style.position = 'absolute';
+                        fourthBlock.style.left = (nextBlockLeft + nextBlock.offsetWidth - 9 + thirdBlock.offsetWidth - 9) + 'px';
+                        fourthBlock.style.top = mainTop + 'px';
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
-        return;
-      }
-      
-      // אם זה בלוק חדש שנגרר
-      if (draggedBlock !== lastDraggedBlock) {
-        log("New drag started:", draggedBlock.id);
-        lastDraggedBlock = draggedBlock;
-        blockMovementCount = 0;
-      }
-      
-      // קבל את המיקום הנוכחי של הבלוק הנגרר
-      const mainLeft = parseFloat(draggedBlock.style.left) || 0;
-      const mainTop = parseFloat(draggedBlock.style.top) || 0;
-      
-      // עדכן את מיקום כל הבלוקים המחוברים לבלוק הנגרר
-      const updatedCount = updateConnectedBlocks(draggedBlock, mainLeft, mainTop);
-      
-      // ספור את סך התנועות (למטרות דיבוג)
-      if (updatedCount > 0) {
-        blockMovementCount++;
-      }
-    } catch (err) {
-      log("Error in check:", err);
-      if (CONFIG.FAIL_SAFE_CHECK) {
-        // אתחל מחדש אם יש שגיאה
-        try {
-          stop();
-          setTimeout(initialize, 1000);
-        } catch (e) {
-          console.error("Failed to recover:", e);
-        }
+      } catch (err) {
+        console.error("Error in group dragging:", err);
       }
     }
-  }
-  
-  // --- עדכון בלוקים מחוברים ---
-  function updateConnectedBlocks(sourceBlock, baseLeft, baseTop) {
-    let updatedCount = 0;
     
-    // --- מיקום בלוקים מחוברים מימין ---
-    updatedCount += updateRightConnections(sourceBlock, baseLeft, baseTop);
+    // הפעל את הבדיקה בתדירות גבוהה
+    setInterval(checkDraggedBlocks, 10);
     
-    // --- מיקום בלוקים מחוברים משמאל ---
-    updatedCount += updateLeftConnections(sourceBlock, baseLeft, baseTop);
-    
-    return updatedCount;
-  }
-  
-  // --- עדכון בלוקים מחוברים מימין (רקורסיבי) ---
-  function updateRightConnections(block, baseLeft, baseTop, depth = 0) {
-    // בדיקת עומק למניעת לולאה אינסופית
-    if (depth >= CONFIG.MAX_BLOCKS_IN_CHAIN) {
-      return 0;
-    }
-    
-    // בדוק אם יש בלוק מחובר מימין
-    if (!block.hasAttribute('data-connected-from-right')) {
-      return 0;
-    }
-    
-    // קבל את מזהה הבלוק הימני
-    const rightBlockId = block.getAttribute('data-connected-from-right');
-    const rightBlock = document.getElementById(rightBlockId);
-    
-    // אם הבלוק לא קיים, צא
-    if (!rightBlock) {
-      return 0;
-    }
-    
-    // עדכן את מיקום הבלוק הימני
-    // חשב מרחק בהתבסס על הרוחב של הבלוק הנוכחי
-    const blockWidth = block.offsetWidth || 80; // ברירת מחדל אם לא ניתן לקבל רוחב
-    
-    // קבע מיקום חדש לבלוק הימני
-    rightBlock.style.position = 'absolute';
-    rightBlock.style.left = (baseLeft + blockWidth + CONFIG.HORIZONTAL_OFFSET) + 'px';
-    rightBlock.style.top = (baseTop + CONFIG.VERTICAL_OFFSET) + 'px';
-    
-    // המשך רקורסיבית לבלוקים נוספים מימין
-    const rightUpdated = updateRightConnections(
-      rightBlock, 
-      baseLeft + blockWidth + CONFIG.HORIZONTAL_OFFSET, 
-      baseTop + CONFIG.VERTICAL_OFFSET,
-      depth + 1
-    );
-    
-    // החזר מספר הבלוקים שעודכנו (כולל זה)
-    return 1 + rightUpdated;
-  }
-  
-  // --- עדכון בלוקים מחוברים משמאל (רקורסיבי) ---
-  function updateLeftConnections(block, baseLeft, baseTop, depth = 0) {
-    // בדיקת עומק למניעת לולאה אינסופית
-    if (depth >= CONFIG.MAX_BLOCKS_IN_CHAIN) {
-      return 0;
-    }
-    
-    // בדוק אם הבלוק מחובר לבלוק אחר משמאל
-    if (!block.hasAttribute('data-connected-to') || 
-        block.getAttribute('data-connection-direction') !== 'left') {
-      return 0;
-    }
-    
-    // קבל את מזהה הבלוק השמאלי
-    const leftBlockId = block.getAttribute('data-connected-to');
-    const leftBlock = document.getElementById(leftBlockId);
-    
-    // אם הבלוק לא קיים, צא
-    if (!leftBlock) {
-      return 0;
-    }
-    
-    // עדכן את מיקום הבלוק השמאלי
-    // הבלוק השמאלי צריך להיות ממוקם כך שהקצה הימני שלו יתחבר לקצה השמאלי של הבלוק הנוכחי
-    const leftBlockWidth = leftBlock.offsetWidth || 80; // ברירת מחדל אם לא ניתן לקבל רוחב
-    
-    // קבע מיקום חדש לבלוק השמאלי
-    leftBlock.style.position = 'absolute';
-    leftBlock.style.left = (baseLeft - leftBlockWidth - CONFIG.HORIZONTAL_OFFSET) + 'px';
-    leftBlock.style.top = (baseTop + CONFIG.VERTICAL_OFFSET) + 'px';
-    
-    // המשך רקורסיבית לבלוקים נוספים משמאל
-    const leftUpdated = updateLeftConnections(
-      leftBlock, 
-      baseLeft - leftBlockWidth - CONFIG.HORIZONTAL_OFFSET, 
-      baseTop + CONFIG.VERTICAL_OFFSET,
-      depth + 1
-    );
-    
-    // החזר מספר הבלוקים שעודכנו (כולל זה)
-    return 1 + leftUpdated;
-  }
-  
-  // --- עצירת המודול ---
-  function stop() {
-    if (timerInterval) {
-      clearInterval(timerInterval);
-      timerInterval = null;
-    }
-    
-    isActive = false;
-    lastDraggedBlock = null;
-    
-    log("Stopped monitoring for block dragging");
-  }
-  
-  // --- אתחול מחדש ---
-  function restart() {
-    stop();
-    
-    // אתחל מחדש אחרי השהייה קצרה
-    setTimeout(() => {
-      log("Restarting...");
-      initialize();
-    }, 100);
-    
-    return "Restarting BlockGroupDragging...";
-  }
-  
-  // --- בדיקת פעילות המודול ---
-  function getStatus() {
-    return {
-      active: isActive,
-      initialized: window.blockGroupDraggingInitialized || false,
-      lastDraggedBlock: lastDraggedBlock ? lastDraggedBlock.id : null,
-      movements: blockMovementCount
-    };
-  }
-  
-  // --- חשיפת API ציבורי ---
-  window.BlockGroupDrag = {
-    start: initialize,
-    stop: stop,
-    restart: restart,
-    status: getStatus,
-    
-    // שינוי הגדרות בזמן ריצה
-    setDebug: function(value) {
-      CONFIG.DEBUG = !!value;
-      return `Debug mode ${CONFIG.DEBUG ? 'enabled' : 'disabled'}`;
-    },
-    
-    // שינוי תדירות בדיקות
-    setUpdateInterval: function(ms) {
-      if (typeof ms !== 'number' || ms < 5 || ms > 500) {
-        return "Invalid interval. Must be between 5 and 500 ms.";
-      }
-      
-      CONFIG.UPDATE_INTERVAL_MS = ms;
-      
-      // יישם מיד אם פעיל
-      if (isActive && timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = setInterval(checkForDraggedBlocks, CONFIG.UPDATE_INTERVAL_MS);
-      }
-      
-      return `Update interval set to ${ms} ms`;
-    },
-    
-    // שינוי הסטים
-    setOffsets: function(horizontal, vertical) {
-      if (typeof horizontal === 'number') {
-        CONFIG.HORIZONTAL_OFFSET = horizontal;
-      }
-      
-      if (typeof vertical === 'number') {
-        CONFIG.VERTICAL_OFFSET = vertical;
-      }
-      
-      return `Offsets set to: H=${CONFIG.HORIZONTAL_OFFSET}, V=${CONFIG.VERTICAL_OFFSET}`;
-    }
-  };
-  
-  // --- אתחול ראשוני אוטומטי ---
-  // המתן זמן מה כדי לאפשר לשאר הסקריפטים להטען
-  setTimeout(initialize, CONFIG.ACTIVATION_DELAY_MS);
-  
-  log("BlockGroupDragging module loaded");
+    console.log("Block group dragging active - simplest solution");
+  }, 1000); // המתן שנייה אחת לפני האתחול
 })();
