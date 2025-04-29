@@ -1,93 +1,89 @@
 /**
- * blockGroupDragging.js v1.0
- * מודול גרירה קבוצתית של בלוקים תכנות
+ * blockGroupDragging.js v1.1
+ * מודול גרירה קבוצתית של בלוקים תכנות עם יציבות משופרת ללבנה הראשית
  * 
- * מאפשר גרירה של שרשרת בלוקים מחוברים כיחידה אחת.
- * אין תלות בקוד המקורי ועובד עם כל כמות בלוקים בשרשרת.
- * 
- * שימוש:
- * - העתק את הקובץ לפרויקט 
- * - הוסף תג script לאחר הקוד המקורי של linkageimproved.js
- * <script src="blockGroupDragging.js"></script>
+ * יש להכליל קוד זה ישירות בסוף linkageimproved.js
+ * (או להוסיף כסקריפט נפרד)
  */
 
 (function() {
   /**
    * --- הגדרות קונפיגורציה ---
-   * ניתן לשנות כדי להתאים להתנהגות הרצויה
    */
-  const CONFIG = {
-    DEBUG: false,                    // הדפסת הודעות בקונסול
-    CHECK_INTERVAL_MS: 16,           // זמן בדיקת מיקום (מילישניות) - 60 פעמים בשנייה
-    MIN_MOVEMENT_PX: 2,              // מרחק מינימלי לזיהוי תזוזה (פיקסלים)
-    HIDE_CONNECTION_POINTS: true,    // הסתרת נקודות חיבור בזמן גרירה
-    CLEANUP_DELAY_MS: 300,           // זמן המתנה לניקוי אחרי גרירה
-    WAIT_BEFORE_INIT_MS: 1000,       // זמן המתנה לפני אתחול ראשוני
-    MAX_CHAIN_BLOCKS: 50,            // כמות מקסימלית של בלוקים בשרשרת
-    AUTO_REINIT_ON_ERROR: true,      // אתחול אוטומטי במקרה של שגיאה
-    HIGHLIGHT_BLOCKS: true,          // הדגשה חזותית של בלוקים בגרירה
-    STATUS_DISPLAY: true             // הצגת הודעות סטטוס למשתמש
+  const BGD_CONFIG = {
+    DEBUG: false,                    // הדפסת הודעות לקונסול
+    UPDATE_INTERVAL_MS: 10,          // תדירות עדכון חריגה (מילישניות)
+    MIN_MOVEMENT_PX: 1,              // סף תזוזה מינימלי (פיקסלים)
+    HIDE_CONNECTION_POINTS: true,    // הסתרת נקודות חיבור בגרירה
+    CLEANUP_DELAY_MS: 300,           // זמן איפוס אחרי גרירה
+    WAIT_BEFORE_INIT_MS: 1000,       // זמן המתנה לאתחול
+    MAX_CHAIN_BLOCKS: 50,            // מקסימום בלוקים בשרשרת
+    AUTO_REINIT_ON_ERROR: true,      // אתחול אוטומטי בשגיאה
+    HIGHLIGHT_BLOCKS: false,         // הדגשה חזותית של בלוקים
+    STATUS_DISPLAY: false,           // הצגת הודעות סטטוס
+    LEAVE_MAIN_BLOCK_ALONE: true,    // אל תשנה את הבלוק הראשי
+    PREVENT_JITTER: true             // מניעת רעידות בבלוק הראשי
   };
 
   /**
    * --- משתנים גלובליים ---
-   * מצב המערכת ונתונים נוכחיים
    */
-  let moduleActive = false;           // האם המודול פעיל
-  let isDragging = false;             // האם מתבצעת גרירה כרגע
-  let mainBlock = null;               // הבלוק הראשי שנגרר
-  let chainBlocks = [];               // כל הבלוקים בשרשרת
-  let blocksData = [];                // נתוני מיקום הבלוקים
-  let lastMainPosition = {x:0, y:0};  // המיקום האחרון של הבלוק הראשי
-  let checkTimer = null;              // טיימר בדיקת מיקום
-  let cleanupTimer = null;            // טיימר ניקוי
-  let startTimestamp = 0;             // זמן התחלת הגרירה
+  let moduleActive = false;          // האם המודול פעיל
+  let isDragging = false;            // האם יש גרירה כרגע
+  let mainBlock = null;              // הבלוק הראשי שנגרר
+  let chainBlocks = [];              // כל הבלוקים בשרשרת
+  let blocksData = [];               // נתוני מיקום הבלוקים
+  let lastMainPosition = null;       // המיקום האחרון של הבלוק הראשי
+  let checkTimer = null;             // טיימר בדיקה
+  let cleanupTimer = null;           // טיימר ניקוי
+  let startTimestamp = 0;            // זמן התחלת הגרירה
+  let dragOffsets = { x: 0, y: 0 };  // היסטי הגרירה
+  let mainBlockOrigPos = null;       // מיקום מקורי של הבלוק הראשי
+  let lastDelta = { x: 0, y: 0 };    // ההיסט האחרון שחושב
+  let updateCount = 0;               // מונה עדכונים
 
   /**
    * --- פונקציות לוג ---
-   * הדפסת הודעות בקונסול
    */
-  function log(...args) {
-    if (CONFIG.DEBUG) console.log("[GroupDrag]", ...args);
+  function bgdLog(...args) {
+    if (BGD_CONFIG.DEBUG) console.log("[BGD]", ...args);
   }
 
-  function warn(...args) {
-    if (CONFIG.DEBUG) console.warn("[GroupDrag]", ...args);
+  function bgdWarn(...args) {
+    if (BGD_CONFIG.DEBUG) console.warn("[BGD]", ...args);
   }
 
   /**
    * --- אתחול המערכת ---
-   * מגדיר את המודול ומכין אותו לשימוש
    */
-  function initialize() {
+  function bgdInitialize() {
     // בדוק אם כבר אותחל
     if (window.blockGroupDraggingInitialized) {
-      log("Module already initialized");
+      bgdLog("Already initialized");
       return;
     }
 
-    log("Initializing Block Group Dragging v1.0");
+    bgdLog("Initializing Block Group Dragging v1.1");
 
     // הוסף סגנונות CSS
-    addStyles();
+    bgdAddStyles();
 
     // התקן מאזינים
-    setupListeners();
+    bgdSetupListeners();
 
     // הפעל את המודול
     moduleActive = true;
     window.blockGroupDraggingInitialized = true;
 
     // הצג סטטוס
-    showStatus("Block Group Dragging Ready");
-    log("Initialization complete");
+    bgdShowStatus("Block Group Dragging Ready");
+    bgdLog("Initialization complete");
   }
 
   /**
    * --- הוספת סגנונות CSS ---
-   * מוסיף סגנונות לתצוגה ותגובה
    */
-  function addStyles() {
+  function bgdAddStyles() {
     // אם הסגנונות כבר קיימים, לא להוסיף שוב
     if (document.getElementById('block-group-dragging-styles')) return;
 
@@ -139,10 +135,10 @@
     `;
 
     document.head.appendChild(styleEl);
-    log("Styles added");
+    bgdLog("Styles added");
 
     // הוסף אלמנט סטטוס
-    if (CONFIG.STATUS_DISPLAY) {
+    if (BGD_CONFIG.STATUS_DISPLAY) {
       const statusEl = document.createElement('div');
       statusEl.id = 'bgd-status';
       document.body.appendChild(statusEl);
@@ -151,24 +147,25 @@
 
   /**
    * --- התקנת מאזינים ---
-   * מוסיף מאזינים לאירועי עכבר
    */
-  function setupListeners() {
-    // לחיצת עכבר - לזיהוי התחלת גרירה
-    document.addEventListener('mousedown', handleMouseDown, true);
+  function bgdSetupListeners() {
+    // מאזין התחלת גרירה - כשליש מהתהליך
+    document.addEventListener('mousedown', bgdHandleMouseDown, true);
     
-    // שחרור לחצן עכבר - לזיהוי סיום גרירה
-    document.addEventListener('mouseup', handleMouseUp, true);
+    // מאזין תזוזת עכבר - שליש נוסף מהתהליך
+    document.addEventListener('mousemove', bgdHandleMouseMove, true);
     
-    log("Event listeners installed");
+    // מאזין סיום גרירה
+    document.addEventListener('mouseup', bgdHandleMouseUp, true);
+    
+    bgdLog("Event listeners installed");
   }
 
   /**
    * --- הצגת הודעת סטטוס ---
-   * מציג הודעה למשתמש
    */
-  function showStatus(message, duration = 2000) {
-    if (!CONFIG.STATUS_DISPLAY) return;
+  function bgdShowStatus(message, duration = 2000) {
+    if (!BGD_CONFIG.STATUS_DISPLAY) return;
     
     const statusEl = document.getElementById('bgd-status');
     if (!statusEl) return;
@@ -184,52 +181,77 @@
 
   /**
    * --- טיפול בלחיצת עכבר ---
-   * מזהה לחיצה על בלוק ומתחיל גרירה
    */
-  function handleMouseDown(e) {
+  function bgdHandleMouseDown(e) {
     // אם המודול לא פעיל או לא לחיצה שמאלית, צא
     if (!moduleActive || e.button !== 0) return;
     
     // סיים גרירה קודמת אם קיימת
     if (isDragging) {
-      log("Ending previous drag first");
-      endDragging(false);
+      bgdLog("Ending previous drag first");
+      bgdEndDragging(false);
     }
     
     // מצא בלוק תכנות
-    const block = findProgrammingBlock(e.target);
+    const block = bgdFindProgrammingBlock(e.target);
     if (!block) return;
     
-    log("Block clicked:", block.id || "unknown");
+    bgdLog("Block clicked:", block.id || "unknown");
+
+    // שמור את היסט העכבר מהבלוק
+    const rect = block.getBoundingClientRect();
+    dragOffsets = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
     
     // מצא את כל הבלוקים בשרשרת
-    const chain = findCompleteBlockChain(block);
+    const chain = bgdFindCompleteBlockChain(block);
     
     // אם יש רק בלוק אחד או אין בלוקים, אל תפעיל גרירה קבוצתית
     if (chain.length <= 1) {
-      log("Single block - regular drag");
+      bgdLog("Single block - regular drag");
       return;
     }
     
-    log(`Found chain with ${chain.length} blocks`);
+    bgdLog(`Found chain with ${chain.length} blocks`);
     
     // התחל גרירה קבוצתית
-    startDragging(block, chain);
+    bgdStartDragging(block, chain, e);
+  }
+
+  /**
+   * --- טיפול בתנועת עכבר ---
+   * חלק מהתהליך - עובד מול הטיימר לשיפור ביצועים
+   */
+  function bgdHandleMouseMove(e) {
+    if (!isDragging || !mainBlock) return;
+    
+    // במקום לעדכן באופן ישיר, שמור את מיקום העכבר הנוכחי
+    window.bgdCurrentMouseX = e.clientX;
+    window.bgdCurrentMouseY = e.clientY;
   }
 
   /**
    * --- התחלת גרירה קבוצתית ---
-   * שומר את המצב ומתחיל לעקוב אחר תנועה
    */
-  function startDragging(block, chain) {
+  function bgdStartDragging(block, chain, e) {
     try {
       // שמור את הבלוק הראשי והשרשרת
       mainBlock = block;
       chainBlocks = chain;
       isDragging = true;
       startTimestamp = Date.now();
+      mainBlockOrigPos = {
+        left: parseFloat(mainBlock.style.left) || 0,
+        top: parseFloat(mainBlock.style.top) || 0
+      };
       
-      // שמור את המיקום ההתחלתי של הבלוק הראשי
+      // שמור את מיקום העכבר הנוכחי
+      window.bgdCurrentMouseX = e.clientX;
+      window.bgdCurrentMouseY = e.clientY;
+      
+      // קבל את המיקום הנוכחי של הבלוק הראשי
       updateMainBlockPosition();
       
       // חשב את המיקומים היחסיים
@@ -239,42 +261,54 @@
       markChainBlocks();
       
       // הסתר נקודות חיבור אם צריך
-      if (CONFIG.HIDE_CONNECTION_POINTS) {
+      if (BGD_CONFIG.HIDE_CONNECTION_POINTS) {
         document.body.classList.add('bgd-hide-connections');
       }
       
       // התחל לעקוב אחר תנועת הבלוק הראשי
       startBlockTracking();
       
-      showStatus(`Dragging ${chain.length} blocks`);
-      log("Drag started successfully");
+      bgdShowStatus(`Dragging ${chain.length} blocks`);
+      bgdLog("Drag started successfully");
     } catch (err) {
-      warn("Error starting drag:", err);
+      bgdWarn("Error starting drag:", err);
       
       // נקה את המצב במקרה של שגיאה
       cleanupDragging();
       
-      if (CONFIG.AUTO_REINIT_ON_ERROR) {
-        log("Auto-reinitializing due to error");
-        reinitialize();
+      if (BGD_CONFIG.AUTO_REINIT_ON_ERROR) {
+        bgdLog("Auto-reinitializing due to error");
+        bgdReinitialize();
       }
     }
   }
 
   /**
    * --- עדכון מיקום הבלוק הראשי ---
-   * שומר את המיקום הנוכחי של הבלוק הראשי
    */
   function updateMainBlockPosition() {
     if (!mainBlock) return false;
     
     const rect = mainBlock.getBoundingClientRect();
-    const newPos = { x: rect.left, y: rect.top };
+    const newPos = { 
+      x: rect.left, 
+      y: rect.top,
+      left: parseFloat(mainBlock.style.left) || 0,
+      top: parseFloat(mainBlock.style.top) || 0
+    };
+    
+    // אתחל את המיקום האחרון אם צריך
+    if (!lastMainPosition) {
+      lastMainPosition = newPos;
+      return false;
+    }
     
     // בדוק אם זז מספיק
     const moved = (
-      Math.abs(newPos.x - lastMainPosition.x) > CONFIG.MIN_MOVEMENT_PX ||
-      Math.abs(newPos.y - lastMainPosition.y) > CONFIG.MIN_MOVEMENT_PX
+      Math.abs(newPos.x - lastMainPosition.x) > BGD_CONFIG.MIN_MOVEMENT_PX ||
+      Math.abs(newPos.y - lastMainPosition.y) > BGD_CONFIG.MIN_MOVEMENT_PX ||
+      Math.abs(newPos.left - lastMainPosition.left) > BGD_CONFIG.MIN_MOVEMENT_PX ||
+      Math.abs(newPos.top - lastMainPosition.top) > BGD_CONFIG.MIN_MOVEMENT_PX
     );
     
     // שמור את המיקום החדש
@@ -285,7 +319,6 @@
 
   /**
    * --- חישוב מיקומים יחסיים ---
-   * מחשב את ההיסטים בין הבלוקים
    */
   function calculateRelativePositions() {
     if (!mainBlock || !chainBlocks.length) return;
@@ -306,44 +339,46 @@
       blocksData.push({
         block: block,
         relativeLeft: left - mainLeft,
-        relativeTop: top - mainTop
+        relativeTop: top - mainTop,
+        originalLeft: left,
+        originalTop: top
       });
     });
     
-    log("Calculated positions for", chainBlocks.length, "blocks");
+    bgdLog("Calculated positions for", chainBlocks.length, "blocks");
   }
 
   /**
    * --- סימון בלוקים בשרשרת ---
-   * מוסיף סימון ויזואלי לבלוקים
    */
   function markChainBlocks() {
     if (!chainBlocks.length) return;
     
     // הוסף מחלקות לכל בלוק
     chainBlocks.forEach(block => {
-      block.classList.add('bgd-chain-block');
-      
-      if (CONFIG.HIGHLIGHT_BLOCKS) {
-        block.classList.add('bgd-highlight');
+      if (block !== mainBlock || !BGD_CONFIG.LEAVE_MAIN_BLOCK_ALONE) {
+        block.classList.add('bgd-chain-block');
+        
+        if (BGD_CONFIG.HIGHLIGHT_BLOCKS) {
+          block.classList.add('bgd-highlight');
+        }
       }
     });
     
     // סמן במיוחד את הבלוק הראשי
-    if (mainBlock) {
+    if (mainBlock && BGD_CONFIG.HIGHLIGHT_BLOCKS && !BGD_CONFIG.LEAVE_MAIN_BLOCK_ALONE) {
       mainBlock.classList.add('bgd-main-block');
     }
   }
 
   /**
    * --- התחלת מעקב אחר תנועה ---
-   * מפעיל טיימר שבודק את מיקום הבלוק הראשי
    */
   function startBlockTracking() {
     // בטל טיימר קודם אם קיים
     stopBlockTracking();
     
-    // הפעל טיימר חדש
+    // הפעל טיימר חדש עם אינטרוול קצר יותר (משמעותית)
     checkTimer = setInterval(() => {
       if (!isDragging || !mainBlock) {
         stopBlockTracking();
@@ -352,8 +387,8 @@
       
       // בדוק אם הבלוק עדיין בDOM
       if (!document.body.contains(mainBlock)) {
-        warn("Main block removed from DOM");
-        endDragging(false);
+        bgdWarn("Main block removed from DOM");
+        bgdEndDragging(false);
         return;
       }
       
@@ -368,25 +403,24 @@
         }
         
         // הגרירה הסתיימה
-        log("Main block is no longer being dragged");
-        endDragging(false);
+        bgdLog("Main block is no longer being dragged");
+        bgdEndDragging(false);
         return;
       }
       
-      // בדוק אם הבלוק זז ועדכן את הבלוקים האחרים
-      const moved = updateMainBlockPosition();
-      if (moved) {
-        updateChainPositions();
+      // **חידוש חשוב**: במקום להסתמך על תזוזת הבלוק הראשי,
+      // אנו משתמשים ישירות במיקום העכבר
+      if (window.bgdCurrentMouseX !== undefined && window.bgdCurrentMouseY !== undefined) {
+        updatePositionsFromMouse();
       }
       
-    }, CONFIG.CHECK_INTERVAL_MS);
+    }, BGD_CONFIG.UPDATE_INTERVAL_MS); // אינטרוול קצר יותר
     
-    log("Position tracking started");
+    bgdLog("Position tracking started");
   }
 
   /**
    * --- עצירת מעקב ---
-   * מבטל את טיימר המעקב
    */
   function stopBlockTracking() {
     if (checkTimer) {
@@ -396,47 +430,91 @@
   }
 
   /**
-   * --- עדכון מיקום הבלוקים בשרשרת ---
-   * מזיז את כל הבלוקים בהתאם לתנועת הבלוק הראשי
+   * --- עדכון מיקומים ישירות ממיקום העכבר ---
+   * גישה חדשה - שימוש ישיר בעכבר במקום להסתמך על תזוזת הבלוק הראשי
    */
-  function updateChainPositions() {
-    if (!isDragging || !mainBlock || !chainBlocks.length || !blocksData.length) return;
+  function updatePositionsFromMouse() {
+    if (!isDragging || !mainBlock || !blocksData.length) return;
     
-    // קבל את המיקום הנוכחי של הבלוק הראשי
+    // קבל את אזור התכנות
+    const programArea = document.getElementById('program-blocks');
+    if (!programArea) return;
+    
+    const programRect = programArea.getBoundingClientRect();
+    
+    // **חידוש**: חשב את המיקום החדש ישירות ממיקום העכבר
+    const mouseX = window.bgdCurrentMouseX;
+    const mouseY = window.bgdCurrentMouseY;
+    
+    // יצירת מיקום חדש - עדכון הבלוק הראשי
+    if (!BGD_CONFIG.LEAVE_MAIN_BLOCK_ALONE) {
+      const newLeft = mouseX - programRect.left - dragOffsets.x + programArea.scrollLeft;
+      const newTop = mouseY - programRect.top - dragOffsets.y + programArea.scrollTop;
+      
+      // שים מגבלות כדי להישאר באזור הנראה
+      const adjustedLeft = Math.max(0, newLeft);
+      const adjustedTop = Math.max(0, newTop);
+      
+      // מיקום החדש
+      //mainBlock.style.left = `${Math.round(adjustedLeft)}px`;
+      //mainBlock.style.top = `${Math.round(adjustedTop)}px`;
+    }
+    
+    // קבל את המיקום העדכני של הבלוק הראשי (כפי שנקבע על ידי המערכת המקורית)
     const currentMainLeft = parseFloat(mainBlock.style.left) || 0;
     const currentMainTop = parseFloat(mainBlock.style.top) || 0;
     
-    // עדכן את כל הבלוקים בשרשרת חוץ מהבלוק הראשי
+    // חשב את השינוי מהמיקום המקורי
+    const deltaX = currentMainLeft - mainBlockOrigPos.left;
+    const deltaY = currentMainTop - mainBlockOrigPos.top;
+    
+    // **חידוש** - מונע רעידות על ידי אימוץ השינוי רק אם הוא גדול מספיק
+    if (BGD_CONFIG.PREVENT_JITTER) {
+      if (Math.abs(deltaX - lastDelta.x) < 1 && Math.abs(deltaY - lastDelta.y) < 1) {
+        // דילוג על עדכון קטן מדי למניעת רעידות
+        return;
+      }
+      
+      // שמור את ההיסט הנוכחי
+      lastDelta = { x: deltaX, y: deltaY };
+    }
+    
+    updateCount++;
+    
+    // עדכן את כל הבלוקים המחוברים (לא כולל הבלוק הראשי)
     blocksData.forEach(data => {
+      // דלג על הבלוק הראשי
       if (data.block === mainBlock) return;
       
       // וודא שהבלוק עדיין בDOM
       if (!document.body.contains(data.block)) return;
       
-      // עדכן את המיקום
+      // עדכן את המיקום - שימוש בהיסט מוחלט מהמיקום המקורי
       data.block.style.position = 'absolute';
-      data.block.style.left = Math.round(currentMainLeft + data.relativeLeft) + 'px';
-      data.block.style.top = Math.round(currentMainTop + data.relativeTop) + 'px';
+      data.block.style.left = `${Math.round(data.originalLeft + deltaX)}px`;
+      data.block.style.top = `${Math.round(data.originalTop + deltaY)}px`;
     });
   }
 
   /**
    * --- סיום גרירה ---
-   * מסיים את תהליך הגרירה ומנקה
    */
-  function endDragging(byUser = false) {
+  function bgdEndDragging(byUser = false) {
     if (!isDragging) return;
     
-    log("Ending drag, triggered by", byUser ? "user" : "system");
+    bgdLog("Ending drag, triggered by", byUser ? "user" : "system");
+    bgdLog(`Total updates during drag: ${updateCount}`);
     
     // הפסק מעקב
     stopBlockTracking();
     
     // וודא עדכון אחרון של המיקומים
-    updateChainPositions();
+    if (window.bgdCurrentMouseX !== undefined && window.bgdCurrentMouseY !== undefined) {
+      updatePositionsFromMouse();
+    }
     
     // החזר את נקודות החיבור
-    if (CONFIG.HIDE_CONNECTION_POINTS) {
+    if (BGD_CONFIG.HIDE_CONNECTION_POINTS) {
       document.body.classList.remove('bgd-hide-connections');
     }
     
@@ -445,19 +523,23 @@
     
     // סמן שהגרירה הסתיימה
     isDragging = false;
+    updateCount = 0;
+    
+    // נקה משתני עכבר
+    window.bgdCurrentMouseX = undefined;
+    window.bgdCurrentMouseY = undefined;
     
     // הפעל טיימר לניקוי סופי
     clearTimeout(cleanupTimer);
     cleanupTimer = setTimeout(() => {
       cleanupDragging();
-    }, CONFIG.CLEANUP_DELAY_MS);
+    }, BGD_CONFIG.CLEANUP_DELAY_MS);
     
-    showStatus("Drag complete", 1000);
+    bgdShowStatus("Drag complete", 1000);
   }
 
   /**
    * --- הסרת סימון מהבלוקים ---
-   * מסיר את המחלקות שהוספו לבלוקים
    */
   function unmarkChainBlocks() {
     chainBlocks.forEach(block => {
@@ -469,32 +551,32 @@
 
   /**
    * --- ניקוי סופי של נתוני הגרירה ---
-   * מנקה את כל המשתנים
    */
   function cleanupDragging() {
     mainBlock = null;
     chainBlocks = [];
     blocksData = [];
+    lastMainPosition = null;
+    mainBlockOrigPos = null;
+    lastDelta = { x: 0, y: 0 };
     
-    log("Drag cleanup complete");
+    bgdLog("Drag cleanup complete");
   }
 
   /**
    * --- טיפול בשחרור לחצן עכבר ---
-   * מזהה סיום גרירה
    */
-  function handleMouseUp(e) {
+  function bgdHandleMouseUp(e) {
     if (!isDragging) return;
     
-    log("Mouse up detected");
-    endDragging(true);
+    bgdLog("Mouse up detected");
+    bgdEndDragging(true);
   }
 
   /**
    * --- מציאת בלוק תכנות ---
-   * מוצא בלוק תכנות בהתחלה מאלמנט נתון
    */
-  function findProgrammingBlock(element) {
+  function bgdFindProgrammingBlock(element) {
     let current = element;
     
     while (current && current !== document.body) {
@@ -511,9 +593,8 @@
 
   /**
    * --- מציאת שרשרת בלוקים מלאה ---
-   * מוצא את כל הבלוקים המחוברים לבלוק נתון
    */
-  function findCompleteBlockChain(startBlock) {
+  function bgdFindCompleteBlockChain(startBlock) {
     if (!startBlock) return [];
     
     const chain = [startBlock];
@@ -522,7 +603,7 @@
     
     // מצא בלוקים לשמאל
     while (currentBlock.hasAttribute('data-connected-to') && 
-           chainLength < CONFIG.MAX_CHAIN_BLOCKS) {
+           chainLength < BGD_CONFIG.MAX_CHAIN_BLOCKS) {
       
       const direction = currentBlock.getAttribute('data-connection-direction');
       const connectedId = currentBlock.getAttribute('data-connected-to');
@@ -547,7 +628,7 @@
     
     // מצא בלוקים לימין
     while (currentBlock.hasAttribute('data-connected-from-right') && 
-           chainLength < CONFIG.MAX_CHAIN_BLOCKS) {
+           chainLength < BGD_CONFIG.MAX_CHAIN_BLOCKS) {
       
       const rightBlockId = currentBlock.getAttribute('data-connected-from-right');
       
@@ -570,15 +651,14 @@
 
   /**
    * --- אתחול מחדש ---
-   * מאפס את המודול ומאתחל מחדש
    */
-  function reinitialize() {
+  function bgdReinitialize() {
     // נקה את כל המצב הנוכחי
     stopBlockTracking();
     clearTimeout(cleanupTimer);
     
     if (isDragging) {
-      endDragging(false);
+      bgdEndDragging(false);
     }
     
     cleanupDragging();
@@ -588,15 +668,14 @@
     moduleActive = false;
     
     // הפעל מחדש אחרי זמן קצר
-    setTimeout(initialize, 200);
+    setTimeout(bgdInitialize, 200);
   }
 
   /**
    * --- הוספת כפתור בדיקה (למצב דיבוג) ---
-   * מוסיף כפתור שמציג את השרשראות הקיימות
    */
-  function addDebugButton() {
-    if (!CONFIG.DEBUG) return;
+  function bgdAddDebugButton() {
+    if (!BGD_CONFIG.DEBUG) return;
     
     const btn = document.createElement('button');
     btn.textContent = 'בדוק שרשראות';
@@ -607,7 +686,7 @@
       let foundChains = 0;
       
       blocks.forEach(block => {
-        const chain = findCompleteBlockChain(block);
+        const chain = bgdFindCompleteBlockChain(block);
         if (chain.length > 1) {
           console.log(`Block ${block.id || 'unknown'} has chain of ${chain.length} blocks`);
           console.log(chain.map(b => b.id || 'unknown').join(' -> '));
@@ -621,7 +700,7 @@
         console.log(`Found ${foundChains} chains`);
       }
       
-      showStatus(`Found ${foundChains} chains`);
+      bgdShowStatus(`Found ${foundChains} chains`);
     });
     
     document.body.appendChild(btn);
@@ -629,12 +708,11 @@
 
   /**
    * --- חשיפת API ציבורי ---
-   * מספק גישה חיצונית לפונקציות הרכיב
    */
   window.BlockGroupDrag = {
     // הפעלה מחדש של המודול
     restart: function() {
-      reinitialize();
+      bgdReinitialize();
       return "Restarting module...";
     },
     
@@ -651,39 +729,17 @@
     // הפעלה/כיבוי של המודול
     toggle: function() {
       moduleActive = !moduleActive;
-      showStatus(`Group dragging ${moduleActive ? 'enabled' : 'disabled'}`);
+      bgdShowStatus(`Group dragging ${moduleActive ? 'enabled' : 'disabled'}`);
       return moduleActive;
     },
     
     // שינוי הגדרות
     setConfig: function(key, value) {
-      if (key in CONFIG) {
-        CONFIG[key] = value;
+      if (key in BGD_CONFIG) {
+        BGD_CONFIG[key] = value;
         return `Config ${key} set to ${value}`;
       }
       return `Unknown config key: ${key}`;
     },
     
     // הצגת הגדרות נוכחיות
-    getConfig: function() {
-      return { ...CONFIG };
-    }
-  };
-
-  /**
-   * --- התחלת אתחול ---
-   * מתחיל את האתחול כשהדף מוכן
-   */
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(initialize, CONFIG.WAIT_BEFORE_INIT_MS);
-    });
-  } else {
-    setTimeout(initialize, CONFIG.WAIT_BEFORE_INIT_MS);
-  }
-  
-  // הוסף כפתור בדיקה אם במצב דיבוג
-  if (CONFIG.DEBUG) {
-    setTimeout(addDebugButton, CONFIG.WAIT_BEFORE_INIT_MS + 500);
-  }
-})();
