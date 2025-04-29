@@ -1,92 +1,76 @@
 /**
- * blockGroupDragging.js - פתרון פשוט לגרירה קבוצתית של בלוקים
- * יוצר גרירה קבוצתית כך שהלבנה הראשונה תהיה הגוררת
+ * blockGroupDragging.js - גרסת דיבוג עם לוג
+ * פתרון בסיסי עם הדפסות לוג מפורטות
  */
 
-// פתרון מינימליסטי ופשוט - נוודא שהוא עובד
+// פתרון עם לוג מפורט לבדיקת הבעיה
 (function() {
-  console.log("Loading ultra-simple block group dragging...");
+  console.log("DEBUG VERSION - Loading block group dragging...");
   
-  // הקובץ עשוי להיטען לפני שה-DOM מוכן, אז נמתין מעט
+  // המתן לטעינת ה-DOM
   setTimeout(function() {
-    // נטען רק פעם אחת
-    if (window.blockGroupDraggingActive) return;
-    window.blockGroupDraggingActive = true;
+    // וודא שרץ רק פעם אחת
+    if (window.blockGroupDraggingDebug) return;
+    window.blockGroupDraggingDebug = true;
     
-    // הגדר פונקציה פשוטה שבודקת אם יש בלוק בגרירה
-    function checkDraggedBlocks() {
-      try {
-        // מצא בלוק בגרירה (בלוק עם המחלקה snap-source)
-        const draggedBlock = document.querySelector('#program-blocks .block-container.snap-source');
-        
-        // אם אין בלוק בגרירה, אין מה לעשות
-        if (!draggedBlock) return;
-        
-        // קבל את המיקום הנוכחי של הבלוק הנגרר
-        const mainLeft = parseFloat(draggedBlock.style.left) || 0;
-        const mainTop = parseFloat(draggedBlock.style.top) || 0;
+    console.log("DEBUG - Group dragging activated");
+    console.log("DEBUG - Checking for programming area:", document.getElementById('program-blocks') ? "Found" : "Not Found");
+    
+    // פונקציית בדיקת בלוקים בגרירה
+    function checkForDraggedBlocks() {
+      // בדוק אם יש בלוק בגרירה
+      const draggedBlock = document.querySelector('#program-blocks .block-container.snap-source');
+      
+      // אם יש בלוק בגרירה
+      if (draggedBlock) {
+        console.log("DEBUG - Found dragged block:", draggedBlock.id);
         
         // בדוק אם יש בלוק מחובר מימין
         if (draggedBlock.hasAttribute('data-connected-from-right')) {
-          // קבל את מזהה הבלוק הימני
           const rightBlockId = draggedBlock.getAttribute('data-connected-from-right');
-          const rightBlock = document.getElementById(rightBlockId);
+          console.log("DEBUG - Block has connection to the right:", rightBlockId);
           
+          const rightBlock = document.getElementById(rightBlockId);
           if (rightBlock) {
-            // חשב רוחב בלוק
-            const blockWidth = draggedBlock.offsetWidth;
+            console.log("DEBUG - Right block found");
             
-            // עדכן את מיקום הבלוק הימני
-            rightBlock.style.position = 'absolute';
-            rightBlock.style.left = (mainLeft + blockWidth - 9) + 'px';
-            rightBlock.style.top = mainTop + 'px';
+            // חשב מיקום חדש לבלוק הימני
+            const mainLeft = parseFloat(draggedBlock.style.left) || 0;
+            const mainTop = parseFloat(draggedBlock.style.top) || 0;
+            const blockWidth = draggedBlock.offsetWidth || 80;
             
-            // בדוק אם יש בלוק מחובר לבלוק הימני (רקורסיבי)
-            if (rightBlock.hasAttribute('data-connected-from-right')) {
-              const nextBlockId = rightBlock.getAttribute('data-connected-from-right');
-              const nextBlock = document.getElementById(nextBlockId);
+            console.log("DEBUG - Main block position:", mainLeft, mainTop);
+            console.log("DEBUG - Main block width:", blockWidth);
+            
+            // נסה לעדכן את הבלוק הימני
+            try {
+              // עדכן את המיקום של הבלוק הימני
+              const newLeft = (mainLeft + blockWidth - 9);
+              console.log("DEBUG - Setting right block to:", newLeft, mainTop);
               
-              if (nextBlock) {
-                const nextBlockLeft = (mainLeft + blockWidth - 9 + rightBlock.offsetWidth - 9);
-                nextBlock.style.position = 'absolute';
-                nextBlock.style.left = nextBlockLeft + 'px';
-                nextBlock.style.top = mainTop + 'px';
-                
-                // בדיקה רקורסיבית לבלוק שלישי
-                if (nextBlock.hasAttribute('data-connected-from-right')) {
-                  const thirdBlockId = nextBlock.getAttribute('data-connected-from-right');
-                  const thirdBlock = document.getElementById(thirdBlockId);
-                  
-                  if (thirdBlock) {
-                    thirdBlock.style.position = 'absolute';
-                    thirdBlock.style.left = (nextBlockLeft + nextBlock.offsetWidth - 9) + 'px';
-                    thirdBlock.style.top = mainTop + 'px';
-                    
-                    // בדיקה רקורסיבית לבלוק רביעי
-                    if (thirdBlock.hasAttribute('data-connected-from-right')) {
-                      const fourthBlockId = thirdBlock.getAttribute('data-connected-from-right');
-                      const fourthBlock = document.getElementById(fourthBlockId);
-                      
-                      if (fourthBlock) {
-                        fourthBlock.style.position = 'absolute';
-                        fourthBlock.style.left = (nextBlockLeft + nextBlock.offsetWidth - 9 + thirdBlock.offsetWidth - 9) + 'px';
-                        fourthBlock.style.top = mainTop + 'px';
-                      }
-                    }
-                  }
-                }
-              }
+              rightBlock.style.position = 'absolute';
+              rightBlock.style.left = newLeft + 'px';
+              rightBlock.style.top = mainTop + 'px';
+              
+              console.log("DEBUG - Right block updated");
+            } catch (err) {
+              console.error("DEBUG - Error updating right block:", err);
             }
+          } else {
+            console.log("DEBUG - Right block not found in DOM");
           }
+        } else {
+          console.log("DEBUG - Block has no right connections");
         }
-      } catch (err) {
-        console.error("Error in group dragging:", err);
       }
     }
     
-    // הפעל את הבדיקה בתדירות גבוהה
-    setInterval(checkDraggedBlocks, 10);
+    // הפעל בדיקה כל 50 מילישניות
+    const intervalId = setInterval(checkForDraggedBlocks, 50);
     
-    console.log("Block group dragging active - simplest solution");
-  }, 1000); // המתן שנייה אחת לפני האתחול
+    console.log("DEBUG - Checking interval started with ID:", intervalId);
+    
+    // גם נבצע בדיקה מיידית אחת
+    checkForDraggedBlocks();
+  }, 2000); // המתן שתי שניות לוודא שהכל נטען
 })();
