@@ -21,7 +21,11 @@
     verticalOverlapRequired: 0.3,      // החפיפה האנכית הנדרשת כאחוז מגובה הבלוק
     checkInterval: 100,                // משך זמן מינימלי בין בדיקות חיבור במילישניות
     animationDuration: 300,            // משך האנימציה במילישניות
-    connectGap: 0                      // רווח בין בלוקים בעת חיבור
+    connectGap: 0,                     // רווח בין בלוקים בעת חיבור
+    
+    // ערכי היסט מדויקים לחיבור אופקי
+    LEFT_CONNECTION_OFFSET: -9,        // היסט שמאלי (מחבר מימין לשמאל)
+    RIGHT_CONNECTION_OFFSET: 9         // היסט ימני (מחבר משמאל לימין)
   };
   
   // === פונקציות עזר ===
@@ -429,6 +433,12 @@
       // נסה להשתמש בפונקציית החיבור של המודול המקורי
       if (typeof window.performBlockSnap === 'function') {
         const blockConnectionDirection = connectDirection === 'right' ? 'left' : 'right';
+        
+        // בדוק אם המודול המקורי משתמש בהיסט מותאם אישית
+        if (typeof window.CONFIG !== 'undefined' && window.CONFIG.HORIZONTAL_FINE_TUNING_LEFT !== undefined) {
+          log(`משתמש בערכי היסט מהמודול המקורי: L=${window.CONFIG.HORIZONTAL_FINE_TUNING_LEFT}, R=${window.CONFIG.HORIZONTAL_FINE_TUNING_RIGHT}`);
+        }
+        
         window.performBlockSnap(sourceBlock, targetBlock, blockConnectionDirection);
         log("חיבור בוצע באמצעות API קיים");
       } else {
@@ -487,12 +497,12 @@
     let newLeft, newTop;
     
     if (direction === 'right') {
-      // המקור מימין ליעד משמאל
-      newLeft = targetRect.left - sourceRect.width + 9 + config.connectGap;
+      // המקור מימין ליעד משמאל - השתמש בהיסט שמאלי מדויק
+      newLeft = targetRect.left - sourceRect.width + config.LEFT_CONNECTION_OFFSET;
       newTop = targetRect.top;
     } else {
-      // המקור משמאל ליעד מימין
-      newLeft = targetRect.right - 9 - config.connectGap;
+      // המקור משמאל ליעד מימין - השתמש בהיסט ימני מדויק
+      newLeft = targetRect.right + config.RIGHT_CONNECTION_OFFSET;
       newTop = targetRect.top;
     }
     
@@ -509,6 +519,8 @@
     // טיפול במסגרות
     sourceBlock.classList.add('no-outlines');
     targetBlock.classList.add('no-outlines');
+    
+    log(`חיבור ידני בוצע בהצלחה עם היסט ${direction === 'right' ? config.LEFT_CONNECTION_OFFSET : config.RIGHT_CONNECTION_OFFSET}`);
   }
   
   // === מאזיני אירועים ===
