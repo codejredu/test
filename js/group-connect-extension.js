@@ -1,5 +1,5 @@
-// --- GROUP-CONNECT.JS v1.0.0 ---
-// מודול המאפשר חיבור בין קבוצות בלוקים מחוברים
+// --- GROUP-CONNECT-FIXED.JS v1.0.1 ---
+// מודול משופר המאפשר חיבור בין קבוצות בלוקים מחוברים עם מיקום מדויק
 
 (function() {
   'use strict';
@@ -14,18 +14,22 @@
   
   // === הגדרות ===
   const config = {
-    debug: true,                       // האם להדפיס הודעות דיבאג בקונסול
-    groupMinSize: 2,                   // גודל מינימלי לקבוצה (מספר בלוקים)
-    connectThreshold: 50,              // מרחק מקסימלי בפיקסלים לזיהוי אפשרות חיבור
-    connectHighlightColor: '#FF9800',  // צבע הדגשה לנקודות חיבור
-    verticalOverlapRequired: 0.3,      // החפיפה האנכית הנדרשת כאחוז מגובה הבלוק
-    checkInterval: 100,                // משך זמן מינימלי בין בדיקות חיבור במילישניות
-    animationDuration: 300,            // משך האנימציה במילישניות
-    connectGap: 0,                     // רווח בין בלוקים בעת חיבור
+    debug: true,                        // האם להדפיס הודעות דיבאג בקונסול
+    groupMinSize: 2,                    // גודל מינימלי לקבוצה (מספר בלוקים)
+    connectThreshold: 50,               // מרחק מקסימלי בפיקסלים לזיהוי אפשרות חיבור
+    connectHighlightColor: '#FF9800',   // צבע הדגשה לנקודות חיבור
+    verticalOverlapRequired: 0.3,       // החפיפה האנכית הנדרשת כאחוז מגובה הבלוק
+    checkInterval: 100,                 // משך זמן מינימלי בין בדיקות חיבור במילישניות
+    animationDuration: 300,             // משך האנימציה במילישניות
     
-    // ערכי היסט מדויקים לחיבור אופקי
-    LEFT_CONNECTION_OFFSET: -9,        // היסט שמאלי (מחבר מימין לשמאל)
-    RIGHT_CONNECTION_OFFSET: 9         // היסט ימני (מחבר משמאל לימין)
+    // ערכי היסט מדויקים (התאמה להגדרות המדויקות ממודול החיבור המקורי)
+    PUZZLE_RIGHT_BULGE_WIDTH: 10,       // רוחב הבליטה בצד ימין
+    PUZZLE_LEFT_SOCKET_WIDTH: 10,       // רוחב השקע בצד שמאל
+    VERTICAL_CENTER_OFFSET: 0,          // היסט אנכי
+    
+    // היסטים מיוחדים לתיקון מיקומים
+    RIGHT_TO_LEFT_OFFSET: -9,           // חיבור ימין-שמאל (כשהמקור מימין והיעד משמאל)
+    LEFT_TO_RIGHT_OFFSET: -9            // חיבור שמאל-ימין (כשהמקור משמאל והיעד מימין)
   };
   
   // === פונקציות עזר ===
@@ -303,27 +307,34 @@
     
     if (activeGroups.length < 2) return; // צריך לפחות שתי קבוצות לחיבור
     
-    // עבור על כל הזוגות של קבוצות
-    for (let i = 0; i < activeGroups.length; i++) {
-      for (let j = 0; j < activeGroups.length; j++) {
-        // דלג על בדיקת קבוצה עם עצמה
-        if (i === j) continue;
-        
-        const group1 = activeGroups[i];
-        const group2 = activeGroups[j];
-        
-        // בדיקת חיבור: הימני של קבוצה 1 לשמאלי של קבוצה 2
-        checkRightToLeftConnection(group1, group2);
-        
-        // אם נמצאה אפשרות חיבור, סיים את הבדיקה
-        if (potentialSource && potentialTarget) return;
-        
-        // בדיקת חיבור: השמאלי של קבוצה 1 לימני של קבוצה 2
-        checkLeftToRightConnection(group1, group2);
-        
-        // אם נמצאה אפשרות חיבור, סיים את הבדיקה
-        if (potentialSource && potentialTarget) return;
+    // זיהוי קבוצה פעילה (נגררת)
+    let draggingGroup = null;
+    for (const group of activeGroups) {
+      const isDragging = group.blocks.some(block => block.classList.contains('group-dragging'));
+      if (isDragging) {
+        draggingGroup = group;
+        break;
       }
+    }
+    
+    if (!draggingGroup) return; // אין קבוצה נגררת
+    
+    // עבור על כל הקבוצות האחרות ובדוק אפשרות חיבור
+    for (const targetGroup of activeGroups) {
+      // דלג על הקבוצה הנגררת
+      if (targetGroup === draggingGroup) continue;
+      
+      // בדיקת חיבור: הימני של הקבוצה הנגררת לשמאלי של הקבוצה היעד
+      checkRightToLeftConnection(draggingGroup, targetGroup);
+      
+      // אם נמצאה אפשרות חיבור, סיים את הבדיקה
+      if (potentialSource && potentialTarget) return;
+      
+      // בדיקת חיבור: השמאלי של הקבוצה הנגררת לימני של הקבוצה היעד
+      checkLeftToRightConnection(draggingGroup, targetGroup);
+      
+      // אם נמצאה אפשרות חיבור, סיים את הבדיקה
+      if (potentialSource && potentialTarget) return;
     }
   }
   
@@ -424,30 +435,20 @@
         return false;
       }
       
-      // הוסף אנימציה לכל הבלוקים בקבוצה
+      // הוספת אנימציה לקבוצות
       const allBlocks = [...potentialSource.blocks, ...potentialTarget.blocks];
       allBlocks.forEach(block => {
         block.classList.add('group-connection-animation');
       });
       
-      // נסה להשתמש בפונקציית החיבור של המודול המקורי
-      if (typeof window.performBlockSnap === 'function') {
-        const blockConnectionDirection = connectDirection === 'right' ? 'left' : 'right';
-        
-        // בדוק אם המודול המקורי משתמש בהיסט מותאם אישית
-        if (typeof window.CONFIG !== 'undefined' && window.CONFIG.HORIZONTAL_FINE_TUNING_LEFT !== undefined) {
-          log(`משתמש בערכי היסט מהמודול המקורי: L=${window.CONFIG.HORIZONTAL_FINE_TUNING_LEFT}, R=${window.CONFIG.HORIZONTAL_FINE_TUNING_RIGHT}`);
-        }
-        
-        window.performBlockSnap(sourceBlock, targetBlock, blockConnectionDirection);
-        log("חיבור בוצע באמצעות API קיים");
-      } else {
-        // ביצוע חיבור ידני
-        connectBlocksManually(sourceBlock, targetBlock, connectDirection);
-        log("חיבור בוצע ידנית");
-      }
+      // נתק את הבלוקים מהקבוצות שלהם (אם הם כבר מחוברים לבלוקים אחרים)
+      detachConnections(sourceBlock, connectDirection);
+      detachConnections(targetBlock, connectDirection === 'right' ? 'left' : 'right');
       
-      // נקה סגנונות אנימציה לאחר סיום האנימציה
+      // חבר את הבלוקים
+      performOptimizedConnection(sourceBlock, targetBlock, connectDirection);
+      
+      // נקה אנימציות לאחר הסיום
       setTimeout(() => {
         allBlocks.forEach(block => {
           block.classList.remove('group-connection-animation');
@@ -459,7 +460,7 @@
         window.playSnapSound();
       }
       
-      // נקה את ההדגשות
+      // נקה הדגשות
       clearConnectionHighlights();
       
       // איפוס משתני החיבור
@@ -474,53 +475,114 @@
     }
   }
   
-  // חיבור ידני בין בלוקים
-  function connectBlocksManually(sourceBlock, targetBlock, direction) {
-    if (direction === 'right') {
-      // חיבור הצד הימני של המקור לצד שמאלי של היעד
-      sourceBlock.setAttribute('data-connected-to', targetBlock.id);
-      sourceBlock.setAttribute('data-connection-direction', 'left');
-      targetBlock.setAttribute('data-connected-from-left', sourceBlock.id);
-    } else {
-      // חיבור הצד השמאלי של המקור לצד ימני של היעד
-      sourceBlock.setAttribute('data-connected-to', targetBlock.id);
-      sourceBlock.setAttribute('data-connection-direction', 'right');
-      targetBlock.setAttribute('data-connected-from-right', sourceBlock.id);
-    }
+  // ניתוק חיבורים קיימים לפני חיבור חדש
+  function detachConnections(block, direction) {
+    if (!block) return;
     
-    // התאם את המיקום
+    if (direction === 'right') {
+      // נתק חיבור מצד ימין
+      if (block.hasAttribute('data-connected-to') && 
+          block.getAttribute('data-connection-direction') === 'left') {
+        const rightBlockId = block.getAttribute('data-connected-to');
+        const rightBlock = document.getElementById(rightBlockId);
+        
+        if (rightBlock) {
+          rightBlock.removeAttribute('data-connected-from-left');
+        }
+        
+        block.removeAttribute('data-connected-to');
+        block.removeAttribute('data-connection-direction');
+      }
+    } else if (direction === 'left') {
+      // נתק חיבור מצד שמאל
+      if (block.hasAttribute('data-connected-from-left')) {
+        const leftBlockId = block.getAttribute('data-connected-from-left');
+        const leftBlock = document.getElementById(leftBlockId);
+        
+        if (leftBlock) {
+          leftBlock.removeAttribute('data-connected-to');
+          leftBlock.removeAttribute('data-connection-direction');
+        }
+        
+        block.removeAttribute('data-connected-from-left');
+      }
+    }
+  }
+  
+  // ביצוע חיבור בין בלוקים עם התאמות מיקום מדויקות
+  function performOptimizedConnection(sourceBlock, targetBlock, direction) {
+    log(`ביצוע חיבור מדויק: ${direction}`);
+    
+    // חישוב המיקומים המקוריים
     const sourceRect = sourceBlock.getBoundingClientRect();
     const targetRect = targetBlock.getBoundingClientRect();
     const programArea = document.getElementById('program-blocks');
     const areaRect = programArea.getBoundingClientRect();
     
-    let newLeft, newTop;
-    
+    // קביעת סוג החיבור ויצירת היחסים בין הבלוקים
     if (direction === 'right') {
-      // המקור מימין ליעד משמאל - השתמש בהיסט שמאלי מדויק
-      newLeft = targetRect.left - sourceRect.width + config.LEFT_CONNECTION_OFFSET;
-      newTop = targetRect.top;
-    } else {
-      // המקור משמאל ליעד מימין - השתמש בהיסט ימני מדויק
-      newLeft = targetRect.right + config.RIGHT_CONNECTION_OFFSET;
-      newTop = targetRect.top;
+      // חיבור ימין-שמאל (הימני של המקור לשמאלי של היעד)
+      sourceBlock.setAttribute('data-connected-to', targetBlock.id);
+      sourceBlock.setAttribute('data-connection-direction', 'left');
+      targetBlock.setAttribute('data-connected-from-left', sourceBlock.id);
+      
+      // חישוב מיקום מדויק עם היסט
+      const newLeft = targetRect.left - sourceRect.width + config.RIGHT_TO_LEFT_OFFSET;
+      const newTop = targetRect.top + config.VERTICAL_CENTER_OFFSET;
+      
+      // סרטוט המיקום היחסי לאזור התכנות
+      const relativeLeft = newLeft - areaRect.left + programArea.scrollLeft;
+      const relativeTop = newTop - areaRect.top + programArea.scrollTop;
+      
+      log(`מיקום חדש (ימין-שמאל): L=${relativeLeft.toFixed(1)}, T=${relativeTop.toFixed(1)}, offset=${config.RIGHT_TO_LEFT_OFFSET}`);
+      
+      // הצבת הבלוק במיקומו החדש
+      sourceBlock.style.position = 'absolute';
+      sourceBlock.style.left = `${Math.round(relativeLeft)}px`;
+      sourceBlock.style.top = `${Math.round(relativeTop)}px`;
+      sourceBlock.style.margin = '0';
+      
+    } else if (direction === 'left') {
+      // חיבור שמאל-ימין (השמאלי של המקור לימני של היעד)
+      sourceBlock.setAttribute('data-connected-to', targetBlock.id);
+      sourceBlock.setAttribute('data-connection-direction', 'right');
+      targetBlock.setAttribute('data-connected-from-right', sourceBlock.id);
+      
+      // חישוב מיקום מדויק עם היסט
+      const newLeft = targetRect.right + config.LEFT_TO_RIGHT_OFFSET;
+      const newTop = targetRect.top + config.VERTICAL_CENTER_OFFSET;
+      
+      // סרטוט המיקום היחסי לאזור התכנות
+      const relativeLeft = newLeft - areaRect.left + programArea.scrollLeft;
+      const relativeTop = newTop - areaRect.top + programArea.scrollTop;
+      
+      log(`מיקום חדש (שמאל-ימין): L=${relativeLeft.toFixed(1)}, T=${relativeTop.toFixed(1)}, offset=${config.LEFT_TO_RIGHT_OFFSET}`);
+      
+      // הצבת הבלוק במיקומו החדש
+      sourceBlock.style.position = 'absolute';
+      sourceBlock.style.left = `${Math.round(relativeLeft)}px`;
+      sourceBlock.style.top = `${Math.round(relativeTop)}px`;
+      sourceBlock.style.margin = '0';
     }
     
-    // התאם למיקום יחסי לאזור התכנות
-    sourceBlock.style.position = 'absolute';
-    sourceBlock.style.left = `${newLeft - areaRect.left + programArea.scrollLeft}px`;
-    sourceBlock.style.top = `${newTop - areaRect.top + programArea.scrollTop}px`;
-    sourceBlock.style.margin = '0';
-    
-    // סמן את הבלוקים כמחוברים
+    // סימון הבלוקים כמחוברים
     sourceBlock.classList.add('connected-block');
     targetBlock.classList.add('has-connected-block');
     
-    // טיפול במסגרות
+    // הוספת מחלקות "ללא מסגרת" לשמירה על מראה אחיד
     sourceBlock.classList.add('no-outlines');
     targetBlock.classList.add('no-outlines');
     
-    log(`חיבור ידני בוצע בהצלחה עם היסט ${direction === 'right' ? config.LEFT_CONNECTION_OFFSET : config.RIGHT_CONNECTION_OFFSET}`);
+    log(`חיבור בוצע בהצלחה: ${sourceBlock.id} -> ${targetBlock.id}`);
+    
+    // עדכון גם את כל הבלוקים בקבוצות
+    if (potentialSource && potentialTarget) {
+      [...potentialSource.blocks, ...potentialTarget.blocks].forEach(block => {
+        if (block !== sourceBlock && block !== targetBlock) {
+          block.classList.add('no-outlines');
+        }
+      });
+    }
   }
   
   // === מאזיני אירועים ===
@@ -585,85 +647,3 @@
     
     log("משקיף לשינויים באזור התכנות הופעל");
   }
-  
-  // הוספת מאזינים לאירועים
-  function addEventListeners() {
-    // מאזין לתנועת העכבר
-    document.addEventListener('mousemove', handleDocumentMouseMove);
-    
-    // מאזין לשחרור העכבר
-    document.addEventListener('mouseup', handleDocumentMouseUp);
-    
-    log("מאזיני אירועים נוספו");
-  }
-  
-  // הסרת מאזינים לאירועים
-  function removeEventListeners() {
-    document.removeEventListener('mousemove', handleDocumentMouseMove);
-    document.removeEventListener('mouseup', handleDocumentMouseUp);
-    
-    log("מאזיני אירועים הוסרו");
-  }
-  
-  // התאמה עם מודול גרירת הקבוצות
-  function integrateWithGroupDrag() {
-    // בדוק אם מודול גרירת הקבוצות קיים
-    const isGroupDragAvailable = typeof window.groupDragInitialized !== 'undefined';
-    
-    if (isGroupDragAvailable) {
-      log("זוהה מודול גרירת קבוצות, מבצע התאמה");
-    } else {
-      log("לא זוהה מודול גרירת קבוצות");
-    }
-  }
-  
-  // === אתחול המודול ===
-  function initModule() {
-    log("אתחול מודול חיבור קבוצות");
-    
-    // בדוק אם המודול כבר אותחל
-    if (window.groupConnectInitialized) {
-      log("מודול חיבור קבוצות כבר אותחל");
-      return;
-    }
-    
-    try {
-      // ודא שיש סגנונות CSS
-      ensureConnectionStyles();
-      
-      // הפעל משקיף לשינויים באזור התכנות
-      observeProgrammingArea();
-      
-      // הוסף מאזיני אירועים
-      addEventListeners();
-      
-      // התאמה עם מודול גרירת הקבוצות אם הוא קיים
-      integrateWithGroupDrag();
-      
-      // סמן שהמודול אותחל
-      window.groupConnectInitialized = true;
-      isTrackingGroups = true;
-      
-      // סרוק קבוצות קיימות
-      activeGroups = scanGroups();
-      
-      log("מודול חיבור קבוצות אותחל בהצלחה");
-      
-      // מנע שחרור משאבים בעת טעינה מחדש של הדף
-      window.addEventListener('beforeunload', () => {
-        removeEventListeners();
-      });
-    } catch (err) {
-      console.error('[GroupConnect] שגיאה באתחול מודול חיבור קבוצות:', err);
-    }
-  }
-  
-  // הפעל אתחול
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => setTimeout(initModule, 1000));
-  } else {
-    // הדף כבר נטען, אתחל אחרי השהייה קצרה
-    setTimeout(initModule, 1000);
-  }
-  
-})();
