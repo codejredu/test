@@ -651,4 +651,7 @@
     document.addEventListener('DOMContentLoaded', () => setTimeout(initModule, 1000));
   } else {
     // הדף כבר נטען, אתחל אחרי השהייה קצרה
-    setTimeout
+    setTimeout(initModule, 1000);
+  }
+  
+})();
