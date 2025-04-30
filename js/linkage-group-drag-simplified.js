@@ -29,10 +29,15 @@
     connectHighlightColor: '#FF9800',  // צבע הדגשה לנקודות חיבור פוטנציאליות
     verticalOverlapRequired: 0.3,      // החפיפה האנכית הנדרשת כאחוז מגובה הבלוק
     checkInterval: 100,                // זמן מינימלי בין בדיקות חיבור (במילישניות)
+    useOriginalSnap: true,             // האם להשתמש ב-API חיבור של המודול המקורי כשאפשר
     
-    // ערכי היסט מדויקים לחיבור אופקי
+    // ערכי היסט מדויקים לחיבור אופקי - ההגדרות הקריטיות
     LEFT_CONNECTION_OFFSET: -9,        // היסט שמאלי (מחבר מימין לשמאל)
-    RIGHT_CONNECTION_OFFSET: 9         // היסט ימני (מחבר משמאל לימין)
+    RIGHT_CONNECTION_OFFSET: 9,        // היסט ימני (מחבר משמאל לימין)
+    
+    // הגדרות תיקון מיוחדות
+    fixConnectionIssues: true,         // לנסות לתקן בעיות חיבור ידועות
+    preventBlockJumping: true          // מניעת "קפיצה" של בלוקים בזמן חיבור
   };
   
   // === פונקציות עזר ===
@@ -595,79 +600,116 @@
         return false;
       }
       
-      // נסה להשתמש בפונקציית החיבור של המודול המקורי
+      // הפסק את מצב הגרירה לפני החיבור
+      if (groupBlocks) {
+        groupBlocks.forEach(block => {
+          if (block) {
+            block.classList.remove('group-dragging');
+            // שמור על z-index גבוה לזמן החיבור
+          }
+        });
+      }
+      
+      let success = false;
+      
+      // נסיון 1: השתמש בפונקציית החיבור של המודול המקורי
       if (typeof window.performBlockSnap === 'function') {
-        const blockConnectionDirection = connectDirection === 'right' ? 'left' : 'right';
-        window.performBlockSnap(sourceBlock, targetBlock, blockConnectionDirection);
-        log("חיבור בוצע באמצעות API קיים");
-      } else {
-        // ביצוע חיבור ידני
-        connectBlocksManually(sourceBlock, targetBlock, connectDirection);
-        log("חיבור בוצע ידנית");
+        try {
+          const blockConnectionDirection = connectDirection === 'right' ? 'left' : 'right';
+          window.performBlockSnap(sourceBlock, targetBlock, blockConnectionDirection);
+          log("חיבור בוצע באמצעות API קיים");
+          success = true;
+        } catch (err) {
+          console.error('[GroupDrag] שגיאה בחיבור באמצעות API קיים:', err);
+          // ננסה את הנסיון הבא
+        }
+      }
+      
+      // נסיון 2: חיבור ידני
+      if (!success) {
+        success = connectBlocksManually(sourceBlock, targetBlock, connectDirection);
+        log("נסיון חיבור ידני: " + (success ? "הצליח" : "נכשל"));
       }
       
       // השמע צליל אם זמין
-      if (typeof window.playSnapSound === 'function') {
+      if (success && typeof window.playSnapSound === 'function') {
         window.playSnapSound();
       }
       
       // נקה את ההדגשות
       clearConnectionHighlights();
       
-      return true;
+      // עדכן את הסימון של המובילים
+      setTimeout(scanAndMarkLeaders, 300);
+      
+      return success;
     } catch (err) {
-      console.error('[GroupDrag] שגיאה בחיבור קבוצות:', err);
+      console.error('[GroupDrag] שגיאה כללית בחיבור קבוצות:', err);
+      clearConnectionHighlights();
       return false;
     }
   }
   
   // חיבור ידני בין בלוקים במקרה שאין גישה לפונקציה המקורית
   function connectBlocksManually(sourceBlock, targetBlock, direction) {
-    if (direction === 'right') {
-      // חיבור הצד הימני של המקור לצד שמאלי של היעד
-      sourceBlock.setAttribute('data-connected-to', targetBlock.id);
-      sourceBlock.setAttribute('data-connection-direction', 'left');
-      targetBlock.setAttribute('data-connected-from-left', sourceBlock.id);
-    } else {
-      // חיבור הצד השמאלי של המקור לצד ימני של היעד
-      sourceBlock.setAttribute('data-connected-to', targetBlock.id);
-      sourceBlock.setAttribute('data-connection-direction', 'right');
-      targetBlock.setAttribute('data-connected-from-right', sourceBlock.id);
+    log(`מבצע חיבור ידני: sourceBlock=${sourceBlock.id}, targetBlock=${targetBlock.id}, direction=${direction}`);
+    
+    try {
+      // שמור את המיקום המקורי של הבלוקים לפני החיבור
+      const sourceRect = sourceBlock.getBoundingClientRect();
+      const targetRect = targetBlock.getBoundingClientRect();
+      const programArea = document.getElementById('program-blocks');
+      const areaRect = programArea.getBoundingClientRect();
+      
+      // חשב את המיקום החדש ואז הגדר את היחס בין הבלוקים
+      let newLeft, newTop;
+      
+      if (direction === 'right') {
+        // חיבור הצד הימני של המקור לצד שמאלי של היעד
+        newLeft = targetRect.left - sourceRect.width + config.LEFT_CONNECTION_OFFSET;
+        newTop = targetRect.top;
+        
+        // הגדר את היחס: המקור מחובר ליעד מימין לשמאל
+        sourceBlock.setAttribute('data-connected-to', targetBlock.id);
+        sourceBlock.setAttribute('data-connection-direction', 'left');
+        targetBlock.setAttribute('data-connected-from-left', sourceBlock.id);
+      } else {
+        // חיבור הצד השמאלי של המקור לצד ימני של היעד
+        newLeft = targetRect.right + config.RIGHT_CONNECTION_OFFSET;
+        newTop = targetRect.top;
+        
+        // הגדר את היחס: המקור מחובר ליעד משמאל לימין
+        sourceBlock.setAttribute('data-connected-to', targetBlock.id);
+        sourceBlock.setAttribute('data-connection-direction', 'right');
+        targetBlock.setAttribute('data-connected-from-right', sourceBlock.id);
+      }
+      
+      // התאם למיקום יחסי לאזור התכנות
+      const finalLeft = Math.round(newLeft - areaRect.left + programArea.scrollLeft);
+      const finalTop = Math.round(newTop - areaRect.top + programArea.scrollTop);
+      
+      log(`מיקום סופי: finalLeft=${finalLeft}, finalTop=${finalTop}`);
+      
+      // קביעת המיקום
+      sourceBlock.style.position = 'absolute';
+      sourceBlock.style.left = `${finalLeft}px`;
+      sourceBlock.style.top = `${finalTop}px`;
+      sourceBlock.style.margin = '0';
+      
+      // סמן את הבלוקים כמחוברים
+      sourceBlock.classList.add('connected-block');
+      targetBlock.classList.add('has-connected-block');
+      
+      // טיפול במסגרות
+      sourceBlock.classList.add('no-outlines');
+      targetBlock.classList.add('no-outlines');
+      
+      log(`חיבור ידני בוצע בהצלחה עם היסט ${direction === 'right' ? config.LEFT_CONNECTION_OFFSET : config.RIGHT_CONNECTION_OFFSET}`);
+      return true;
+    } catch (err) {
+      console.error('[GroupDrag] שגיאה בביצוע חיבור ידני:', err);
+      return false;
     }
-    
-    // התאם את המיקום
-    const sourceRect = sourceBlock.getBoundingClientRect();
-    const targetRect = targetBlock.getBoundingClientRect();
-    const programArea = document.getElementById('program-blocks');
-    const areaRect = programArea.getBoundingClientRect();
-    
-    let newLeft, newTop;
-    
-    if (direction === 'right') {
-      // חבר את הצד הימני של המקור לצד שמאלי של היעד - השתמש בהיסט שמאלי מדויק
-      newLeft = targetRect.left - sourceRect.width + config.LEFT_CONNECTION_OFFSET;
-      newTop = targetRect.top;
-    } else {
-      // חבר את הצד השמאלי של המקור לצד ימני של היעד - השתמש בהיסט ימני מדויק
-      newLeft = targetRect.right + config.RIGHT_CONNECTION_OFFSET;
-      newTop = targetRect.top;
-    }
-    
-    // התאם למיקום יחסי לאזור התכנות
-    sourceBlock.style.position = 'absolute';
-    sourceBlock.style.left = `${Math.round(newLeft - areaRect.left + programArea.scrollLeft)}px`;
-    sourceBlock.style.top = `${Math.round(newTop - areaRect.top + programArea.scrollTop)}px`;
-    sourceBlock.style.margin = '0';
-    
-    // סמן את הבלוקים כמחוברים
-    sourceBlock.classList.add('connected-block');
-    targetBlock.classList.add('has-connected-block');
-    
-    // טיפול במסגרות
-    sourceBlock.classList.add('no-outlines');
-    targetBlock.classList.add('no-outlines');
-    
-    log(`חיבור ידני בוצע בהצלחה עם היסט ${direction === 'right' ? config.LEFT_CONNECTION_OFFSET : config.RIGHT_CONNECTION_OFFSET}`);
   }
   
   // === מאזיני אירועים ===
@@ -676,6 +718,92 @@
   function handleMouseDown(e) {
     // וודא שזו לחיצה ראשית
     if (e.button !== 0) return;
+    
+    // התעלם מאלמנטים אינטראקטיביים
+    if (e.target.matches('input, button, select, a, textarea')) return;
+    
+    // מצא את הבלוק שנלחץ
+    const block = e.target.closest('.block-container');
+    if (!block || !block.parentElement || block.parentElement.id !== 'program-blocks') return;
+    
+    // בדוק אם הבלוק חלק מקבוצה (מחובר לבלוק אחר)
+    const isConnected = block.hasAttribute('data-connected-to') || 
+                        block.hasAttribute('data-connected-from-left') || 
+                        block.hasAttribute('data-connected-from-right');
+    
+    if (!isConnected) return;
+    
+    // מצא את כל הבלוקים המחוברים
+    const allConnected = findConnectedBlocks(block);
+    
+    // בדוק אם יש מספיק בלוקים לקבוצה
+    if (allConnected.length < config.groupMinSize) {
+      log(`לא מספיק בלוקים לקבוצה: ${allConnected.length}`);
+      return;
+    }
+    
+    // מצא את הבלוק השמאלי ביותר (המוביל)
+    const leader = findLeftmostBlock(allConnected);
+    
+    // אם לחצו על בלוק שאינו המוביל, סמן את המוביל ואל תתחיל גרירה
+    if (block !== leader) {
+      log(`לחיצה על בלוק שאינו המוביל (${block.id}). המוביל הוא: ${leader.id}`);
+      highlightBlockGroup(allConnected, leader);
+      // לא מונעים את האירוע המקורי במקרה זה
+      return;
+    }
+    
+    // מכאן והלאה מטפלים בגרירת קבוצה
+    log(`התחלת גרירת קבוצה: ${allConnected.length} בלוקים`);
+    
+    // מנע את הטיפול באירוע על ידי הקוד המקורי
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // ניסיון לנקות התנהגות גרירה מהמודול המקורי
+    try {
+      if (typeof window.currentDraggedBlock !== 'undefined') {
+        window.currentDraggedBlock = null;
+      }
+      if (typeof window.isDraggingBlock !== 'undefined') {
+        window.isDraggingBlock = false;
+      }
+      if (typeof window.potentialSnapTarget !== 'undefined') {
+        window.potentialSnapTarget = null;
+      }
+    } catch (err) {
+      // התעלם משגיאות בנסיון לגשת למשתנים של המודול המקורי
+    }
+    
+    // שמור את הפרטים על הקבוצה
+    isGroupDragging = true;
+    groupLeader = leader;
+    groupBlocks = allConnected;
+    
+    // שמור את מיקום הלחיצה ביחס לפינת הבלוק המוביל
+    const rect = leader.getBoundingClientRect();
+    dragOffset.x = e.clientX - rect.left;
+    dragOffset.y = e.clientY - rect.top;
+    
+    // שמור את המיקומים ההתחלתיים של כל הבלוקים
+    startPositions = storeBlockPositions(groupBlocks);
+    
+    // סמן את כל הבלוקים בקבוצה
+    for (const groupBlock of groupBlocks) {
+      groupBlock.classList.add('group-dragging');
+      groupBlock.style.zIndex = config.dragZIndex;
+    }
+    
+    // סמן את המוביל
+    markLeaderBlock(leader);
+    
+    // הוסף מאזינים זמניים לגרירה
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    
+    // הוסף קלאס למסמך בזמן גרירה
+    document.body.classList.add('dragging-block-group');
+  }0) return;
     
     // התעלם מאלמנטים אינטראקטיביים
     if (e.target.matches('input, button, select, a, textarea')) return;
@@ -798,16 +926,24 @@
     e.stopPropagation();
     
     // נסה לנקות התנהגות גרירה מהמודול המקורי
-    if (typeof window.isDraggingBlock !== 'undefined') {
-      window.isDraggingBlock = false;
-    }
-    if (typeof window.currentDraggedBlock !== 'undefined') {
-      window.currentDraggedBlock = null;
+    try {
+      if (typeof window.isDraggingBlock !== 'undefined') {
+        window.isDraggingBlock = false;
+      }
+      if (typeof window.currentDraggedBlock !== 'undefined') {
+        window.currentDraggedBlock = null;
+      }
+      if (typeof window.potentialSnapTarget !== 'undefined') {
+        window.potentialSnapTarget = null;
+      }
+    } catch (err) {
+      // התעלם משגיאות בנסיון לגשת למשתנים של המודול המקורי
     }
     
     // בדוק אם יש אפשרות חיבור, אם כן - בצע חיבור
+    let connectionMade = false;
     if (potentialConnectTarget) {
-      connectGroups();
+      connectionMade = connectGroups();
     }
     
     // נקה את ההדגשות
@@ -817,7 +953,7 @@
     document.removeEventListener('mousemove', handleMouseMove);
     document.removeEventListener('mouseup', handleMouseUp);
     
-    // שחרר את מצב הגרירה - השאר את סימון המוביל
+    // שחרר את מצב הגרירה - השאר את סימון המוביל בבלוקים שלא התחברו
     if (groupBlocks) {
       groupBlocks.forEach(block => {
         if (block) {
@@ -826,6 +962,9 @@
         }
       });
     }
+    
+    // הסר את הקלאס מהמסמך
+    document.body.classList.remove('dragging-block-group');
     
     // נקה את המשתנים הגלובליים של הגרירה
     isGroupDragging = false;
@@ -836,7 +975,7 @@
     connectDirection = null;
     
     // עדכן את המובילים של כל הקבוצות שיש כעת
-    setTimeout(scanAndMarkLeaders, 300);
+    setTimeout(scanAndMarkLeaders, connectionMade ? 300 : 0);
   }
   
   // מאזין לשינויים באזור התכנות
@@ -892,6 +1031,9 @@
       // הוסף סגנונות CSS
       addGroupStyles();
       
+      // מנסה לבדוק ולכוונן את ההיסטים מהמודול המקורי
+      adjustConnectionOffsets();
+      
       // הוסף מאזין לחיצה עבור כל אזור התכנות
       document.addEventListener('mousedown', handleMouseDown, true);
       
@@ -901,27 +1043,14 @@
       // סרוק וסמן את המובילים של כל הקבוצות
       scanAndMarkLeaders();
       
-      // בדוק אם יש גישה לקונפיגורציה של המודול המקורי
-      if (typeof window.CONFIG !== 'undefined') {
-        // אם יש גישה להגדרות המודול המקורי, אמץ את ערכי ההיסט
-        if (window.CONFIG.HORIZONTAL_FINE_TUNING_LEFT !== undefined) {
-          config.LEFT_CONNECTION_OFFSET = window.CONFIG.HORIZONTAL_FINE_TUNING_LEFT;
-          log(`אימוץ היסט שמאלי ממודול המקורי: ${config.LEFT_CONNECTION_OFFSET}`);
-        }
-        
-        if (window.CONFIG.HORIZONTAL_FINE_TUNING_RIGHT !== undefined) {
-          config.RIGHT_CONNECTION_OFFSET = window.CONFIG.HORIZONTAL_FINE_TUNING_RIGHT;
-          log(`אימוץ היסט ימני ממודול המקורי: ${config.RIGHT_CONNECTION_OFFSET}`);
-        }
-      }
-      
       // חשיפת פונקציות שימושיות לשימוש חיצוני
       window.groupDragApi = {
         findConnectedBlocks,
         findLeftmostBlock,
         findRightmostBlock,
         scanAndMarkLeaders,
-        highlightConnection
+        highlightConnection,
+        config: config // אפשר שינוי ההגדרות מבחוץ
       };
       
       // סמן שהמודול אותחל
@@ -935,6 +1064,40 @@
       setTimeout(scanAndMarkLeaders, 1000);
     } catch (error) {
       console.error('[GroupDrag] שגיאה באתחול מודול גרירת קבוצות:', error);
+    }
+  }
+  
+  // כוונון היסטים בהתאם למודול המקורי
+  function adjustConnectionOffsets() {
+    // קביעת ערכי ברירת מחדל אם לא כיוונו אותם
+    if (config.LEFT_CONNECTION_OFFSET === undefined) {
+      config.LEFT_CONNECTION_OFFSET = -9;
+    }
+    if (config.RIGHT_CONNECTION_OFFSET === undefined) {
+      config.RIGHT_CONNECTION_OFFSET = 9;
+    }
+    
+    // נסה לגשת להגדרות המודול המקורי
+    try {
+      if (typeof window.CONFIG === 'object') {
+        // העתק ערכים מהמודול המקורי אם קיימים
+        if (window.CONFIG.HORIZONTAL_FINE_TUNING_LEFT !== undefined) {
+          config.LEFT_CONNECTION_OFFSET = window.CONFIG.HORIZONTAL_FINE_TUNING_LEFT;
+          log(`אימוץ היסט שמאלי ממודול מקורי: ${config.LEFT_CONNECTION_OFFSET}`);
+        }
+        
+        if (window.CONFIG.HORIZONTAL_FINE_TUNING_RIGHT !== undefined) {
+          config.RIGHT_CONNECTION_OFFSET = window.CONFIG.HORIZONTAL_FINE_TUNING_RIGHT;
+          log(`אימוץ היסט ימני ממודול מקורי: ${config.RIGHT_CONNECTION_OFFSET}`);
+        }
+        
+        if (window.CONFIG.PUZZLE_RIGHT_BULGE_WIDTH !== undefined && 
+            window.CONFIG.PUZZLE_LEFT_SOCKET_WIDTH !== undefined) {
+          log(`נמצאו גם ערכי היסט פאזל: RIGHT_BULGE=${window.CONFIG.PUZZLE_RIGHT_BULGE_WIDTH}, LEFT_SOCKET=${window.CONFIG.PUZZLE_LEFT_SOCKET_WIDTH}`);
+        }
+      }
+    } catch (err) {
+      console.warn('[GroupDrag] שגיאה בגישה להגדרות המודול המקורי:', err);
     }
   }
   
