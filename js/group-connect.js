@@ -1,10 +1,10 @@
 // ===================================================
-// GROUP-CONNECT-COMPLETE.JS v4.0.0 (FINAL SOLUTION)
+// GROUP-CONNECT-FIXED.JS v5.0.0 (FINAL POSITION & SOUND FIX)
 // ===================================================
-// פתרון מלא לחיבור קבוצות, כולל סימון עיגולי חיבור ממשק משתמש משופר
+// פתרון סופי עם תיקון למיקום העיגולים וצליל החיבור
 // ===================================================
 
-console.log("[GroupComplete] טוען מודול פתרון מלא לחיבור קבוצות");
+console.log("[GroupFix] טוען מודול פתרון סופי עם תיקוני מיקום ואודיו");
 
 (function() {
   'use strict';
@@ -12,229 +12,210 @@ console.log("[GroupComplete] טוען מודול פתרון מלא לחיבור 
   // === משתנים גלובליים ===
   let activeGroups = [];               // קבוצות פעילות במסמך
   let draggedGroup = null;             // קבוצה נוכחית בגרירה
-  let potentialTarget = null;          // יעד אפשרי לחיבור
-  let originals = {};                  // שמירת פונקציות מקוריות
-  let connectionPoints = [];           // מערך של נקודות חיבור פעילות
+  let potentialTarget = null;          // יעד פוטנציאלי לחיבור
+  let connectionPoints = [];           // נקודות חיבור פעילות
   let lastCheck = 0;                   // זמן הבדיקה האחרון
-  let audioReady = false;              // האם האודיו מוכן
+  let oldSnapSound = null;             // פונקציית צליל מקורית
+  let connectDistance = 0;             // מרחק החיבור הנוכחי
   
   // === הגדרות ===
   const CONFIG = {
-    DEBUG: true,                       // הדפסת הודעות דיבאג
-    POINT_SIZE: 24,                    // גודל נקודות חיבור בפיקסלים
-    HIGHLIGHT_COLOR: '#FF9800',        // צבע נקודות חיבור
-    CONNECTION_THRESHOLD: 150,         // טווח זיהוי בפיקסלים
-    VERTICAL_OVERLAP: 0.05,            // חפיפה אנכית מינימלית
-    CHECK_INTERVAL: 5,                 // זמן בין בדיקות במילישניות
-    Z_INDEX: 10000,                    // שכבת תצוגה של נקודות חיבור
-    CONNECTION_LEFT_OFFSET: -9,        // היסט שמאלי לחיבור
-    CONNECTION_RIGHT_OFFSET: 9         // היסט ימני לחיבור
+    DEBUG: true,                      // הדפסת הודעות דיבאג
+    POINT_SIZE: 20,                   // גודל נקודות החיבור
+    HIGHLIGHT_COLOR: '#FF9800',       // צבע ההדגשה
+    MIN_DISTANCE: 50,                 // מרחק מינימלי להתחלת הצגת עיגולים
+    MAX_DISTANCE: 120,                // מרחק מקסימלי לזיהוי חיבור
+    VERTICAL_OVERLAP: 0.05,           // חפיפה אנכית נדרשת (5%)
+    CHECK_INTERVAL: 10,               // מרווח בין בדיקות במילישניות
+    Z_INDEX: 10000,                   // שכבת תצוגה של העיגולים
+    SOUND_URL: 'assets/sound/link.mp3', // נתיב לקובץ הצליל
+    CONNECTION_DELAY: 0,              // השהיית החיבור
+    CONNECTION_OFFSET_LEFT: -9,       // היסט חיבור שמאלי
+    CONNECTION_OFFSET_RIGHT: 9        // היסט חיבור ימני
   };
 
   // === לוגים ===
   function log(message, data) {
     if (CONFIG.DEBUG) {
-      if (data) {
-        console.log(`[GroupComplete] ${message}`, data);
-      } else {
-        console.log(`[GroupComplete] ${message}`);
-      }
+      console.log(`[GroupFix] ${message}`, data || '');
     }
   }
 
   // === הזרקת סגנונות ===
   function injectStyles() {
     // הסרת סגנונות קודמים אם קיימים
-    const oldStyle = document.getElementById('gc-connection-styles');
+    const oldStyle = document.getElementById('group-connect-fixed-styles');
     if (oldStyle) oldStyle.remove();
     
     // יצירת סגנונות חדשים
     const style = document.createElement('style');
-    style.id = 'gc-connection-styles';
+    style.id = 'group-connect-fixed-styles';
     style.textContent = `
-      /* עיגולי חיבור */
-      .gc-connection-point {
-        position: absolute !important;
+      /* נקודות חיבור */
+      .gfix-connection-point {
+        position: fixed !important;
         width: ${CONFIG.POINT_SIZE}px !important;
         height: ${CONFIG.POINT_SIZE}px !important;
         background-color: ${CONFIG.HIGHLIGHT_COLOR} !important;
         border-radius: 50% !important;
         z-index: ${CONFIG.Z_INDEX} !important;
-        box-shadow: 0 0 15px ${CONFIG.HIGHLIGHT_COLOR} !important;
+        box-shadow: 0 0 12px 2px ${CONFIG.HIGHLIGHT_COLOR} !important;
         pointer-events: none !important;
-        animation: gcPulse 0.6s infinite alternate !important;
-        opacity: 0.9 !important;
+        opacity: 0.95 !important;
+        animation: gfixPulse 0.6s infinite alternate !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        transform: translate(-50%, -50%) !important;
       }
       
-      /* אנימציית פעימה */
-      @keyframes gcPulse {
-        0% { transform: scale(1) translateY(-50%); opacity: 0.8; }
-        100% { transform: scale(1.3) translateY(-50%); opacity: 1; }
-      }
-      
-      /* מיקום נקודות */
-      .gc-point-left {
-        top: 50% !important;
-        left: -${Math.floor(CONFIG.POINT_SIZE/2)}px !important;
-        transform: translateY(-50%) !important;
-      }
-      
-      .gc-point-right {
-        top: 50% !important;
-        right: -${Math.floor(CONFIG.POINT_SIZE/2)}px !important;
-        transform: translateY(-50%) !important;
+      @keyframes gfixPulse {
+        0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+        100% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
       }
       
       /* הדגשת בלוקים */
-      .gc-highlight {
-        box-shadow: 0 0 12px ${CONFIG.HIGHLIGHT_COLOR} !important;
+      .gfix-highlight {
+        box-shadow: 0 0 10px ${CONFIG.HIGHLIGHT_COLOR} !important;
         z-index: 1001 !important;
       }
       
       /* אנימציית הצלחה */
-      .gc-success {
+      .gfix-success {
         box-shadow: 0 0 15px #4CAF50 !important;
-        animation: gcSuccess 0.6s !important;
+        animation: gfixSuccess 0.6s !important;
       }
       
-      @keyframes gcSuccess {
+      @keyframes gfixSuccess {
         0% { box-shadow: 0 0 5px #4CAF50; }
         50% { box-shadow: 0 0 25px #4CAF50; }
         100% { box-shadow: 0 0 5px #4CAF50; }
       }
-      
-      /* שכבת חיבור */
-      #gc-connection-layer {
-        position: absolute !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-        pointer-events: none !important;
-        z-index: ${CONFIG.Z_INDEX - 1} !important;
-      }
     `;
     
     document.head.appendChild(style);
-    log("סגנונות הוזרקו למסמך");
+    log("סגנונות הוזרקו");
   }
   
-  // === יצירת שכבת חיבור ===
-  function createConnectionLayer() {
-    // בדוק אם כבר קיימת שכבה
-    if (document.getElementById('gc-connection-layer')) return;
-    
-    // מצא את אזור התכנות
-    const programArea = document.getElementById('program-blocks');
-    if (!programArea) {
-      log("אזור התכנות לא נמצא!");
-      return null;
-    }
-    
-    // יצירת שכבה חדשה
-    const layer = document.createElement('div');
-    layer.id = 'gc-connection-layer';
-    programArea.appendChild(layer);
-    
-    log("שכבת חיבור נוצרה");
-    return layer;
-  }
-  
-  // === יצירת נקודת חיבור ===
-  function createConnectionPoint(block, position) {
+  // === אודיו ===
+  function setupAudio() {
     try {
-      // מצא או צור שכבת חיבור
-      let layer = document.getElementById('gc-connection-layer');
-      if (!layer) {
-        layer = createConnectionLayer();
+      // שמור את הפונקציה המקורית אם קיימת
+      if (typeof window.playSnapSound === 'function') {
+        oldSnapSound = window.playSnapSound;
       }
       
-      if (!layer || !block) return null;
+      // צור אלמנט אודיו חדש
+      const audio = new Audio(CONFIG.SOUND_URL);
+      audio.preload = 'auto';
       
-      // חשב מיקום
-      const blockRect = block.getBoundingClientRect();
-      const layerRect = layer.getBoundingClientRect();
+      // יישם פונקציית השמעה משלנו
+      window.playFixSound = function() {
+        // נסה את הפונקציה המקורית קודם
+        if (oldSnapSound) {
+          try {
+            oldSnapSound();
+            return;
+          } catch (error) {
+            log("שגיאה בהפעלת צליל מקורי:", error);
+          }
+        }
+        
+        // אם הפונקציה המקורית נכשלה, השתמש באודיו שלנו
+        try {
+          const sound = new Audio(CONFIG.SOUND_URL);
+          sound.volume = 1.0;
+          sound.play().catch(e => log("שגיאה בהשמעת צליל:", e));
+        } catch (e) {
+          log("שגיאה ביצירת אובייקט אודיו:", e);
+        }
+      };
       
-      // יצירת נקודה
-      const point = document.createElement('div');
-      point.className = `gc-connection-point gc-point-${position}`;
-      point.id = `gc-point-${position}-${Date.now()}`;
-      
-      // חישוב מיקום מדויק
-      const topOffset = blockRect.top - layerRect.top + layer.scrollTop + (blockRect.height / 2);
-      
-      if (position === 'right') {
-        const leftOffset = blockRect.right - layerRect.left - Math.floor(CONFIG.POINT_SIZE/2) + layer.scrollLeft;
-        point.style.top = `${topOffset}px`;
-        point.style.left = `${leftOffset}px`;
-      } else {
-        const leftOffset = blockRect.left - layerRect.left - Math.floor(CONFIG.POINT_SIZE/2) + layer.scrollLeft;
-        point.style.top = `${topOffset}px`;
-        point.style.left = `${leftOffset}px`;
-      }
-      
-      // הוספת הנקודה לשכבה
-      layer.appendChild(point);
-      
-      // שמירת הנקודה במערך
-      connectionPoints.push(point);
-      
-      return point;
+      log("מערכת אודיו הוגדרה");
     } catch (error) {
-      console.error("[GroupComplete] שגיאה ביצירת נקודת חיבור:", error);
-      return null;
+      log("שגיאה בהגדרת אודיו:", error);
     }
   }
   
   // === ניקוי נקודות חיבור ===
   function clearConnectionPoints() {
-    // הסרת נקודות קיימות
     connectionPoints.forEach(point => {
       if (point && point.parentNode) {
         point.parentNode.removeChild(point);
       }
     });
     
-    // איפוס המערך
     connectionPoints = [];
     
-    // הסרת הדגשות
-    document.querySelectorAll('.gc-highlight').forEach(block => {
-      block.classList.remove('gc-highlight');
+    document.querySelectorAll('.gfix-highlight').forEach(block => {
+      block.classList.remove('gfix-highlight');
     });
   }
   
+  // === יצירת נקודת חיבור ===
+  function createConnectionPoint(blockPosition, type) {
+    try {
+      // בדיקה שיש מיקום תקין
+      if (!blockPosition || typeof blockPosition.x === 'undefined' || typeof blockPosition.y === 'undefined') {
+        return null;
+      }
+      
+      // יצירת נקודה חדשה
+      const point = document.createElement('div');
+      point.className = `gfix-connection-point gfix-point-${type}`;
+      point.id = `gfix-point-${type}-${Date.now()}`;
+      
+      // מיקום הנקודה ישירות במסך (position: fixed)
+      point.style.left = `${blockPosition.x}px`;
+      point.style.top = `${blockPosition.y}px`;
+      
+      // הוספה למסמך
+      document.body.appendChild(point);
+      connectionPoints.push(point);
+      
+      return point;
+    } catch (error) {
+      log("שגיאה ביצירת נקודת חיבור:", error);
+      return null;
+    }
+  }
+  
   // === הדגשת חיבור פוטנציאלי ===
-  function highlightConnection(sourceBlock, targetBlock) {
-    if (!sourceBlock || !targetBlock) return;
+  function highlightConnection(rightBlock, leftBlock) {
+    if (!rightBlock || !leftBlock) {
+      clearConnectionPoints();
+      return;
+    }
     
     // ניקוי נקודות קודמות
     clearConnectionPoints();
     
-    // הדגשת בלוקים
-    sourceBlock.classList.add('gc-highlight');
-    targetBlock.classList.add('gc-highlight');
+    // הדגשת הבלוקים
+    rightBlock.classList.add('gfix-highlight');
+    leftBlock.classList.add('gfix-highlight');
     
-    // זיהוי כיוון החיבור
-    const sourceRect = sourceBlock.getBoundingClientRect();
-    const targetRect = targetBlock.getBoundingClientRect();
+    // מציאת המיקום המדויק לנקודות החיבור
+    const rightRect = rightBlock.getBoundingClientRect();
+    const leftRect = leftBlock.getBoundingClientRect();
     
-    // בדיקה אם מתחברים מימין לשמאל או להפך
-    const isRightToLeft = sourceRect.right <= targetRect.left;
+    // חישוב מיקום בצד ימין של הבלוק הימני
+    const rightPoint = {
+      x: rightRect.right,
+      y: rightRect.top + (rightRect.height / 2)
+    };
     
-    if (isRightToLeft) {
-      // חיבור מימין של המקור לשמאל של היעד
-      createConnectionPoint(sourceBlock, 'right');
-      createConnectionPoint(targetBlock, 'left');
-    } else {
-      // חיבור משמאל של המקור לימין של היעד
-      createConnectionPoint(sourceBlock, 'left');
-      createConnectionPoint(targetBlock, 'right');
-    }
+    // חישוב מיקום בצד שמאל של הבלוק השמאלי
+    const leftPoint = {
+      x: leftRect.left,
+      y: leftRect.top + (leftRect.height / 2)
+    };
     
-    log(`הדגשת חיבור: ${sourceBlock.id} -> ${targetBlock.id}`);
+    // יצירת נקודות החיבור
+    createConnectionPoint(rightPoint, 'right');
+    createConnectionPoint(leftPoint, 'left');
+    
+    log(`הדגשת חיבור בין: ${rightBlock.id} -> ${leftBlock.id}, מרחק: ${connectDistance.toFixed(1)}px`);
   }
-
+  
   // === בדיקת חפיפה אנכית ===
   function hasVerticalOverlap(rect1, rect2) {
     if (!rect1 || !rect2) return false;
@@ -248,73 +229,62 @@ console.log("[GroupComplete] טוען מודול פתרון מלא לחיבור 
     const minHeight = Math.min(rect1.height, rect2.height);
     return (overlapHeight / minHeight) >= CONFIG.VERTICAL_OVERLAP;
   }
-
+  
   // === מציאת קבוצות ===
   function findAllGroups() {
     const groups = [];
     const visited = new Set();
     const blocks = document.querySelectorAll('.block-container');
     
-    // עבור על כל הבלוקים
     blocks.forEach(block => {
       if (visited.has(block.id)) return;
       
-      // מצא את כל הבלוקים המחוברים
       const connectedBlocks = findConnectedBlocks(block);
       
       if (connectedBlocks.length > 1) {
         // מצא את הבלוק המוביל
         const leadBlock = findLeftmostBlock(connectedBlocks);
         
-        // הוסף קבוצה חדשה
         groups.push({
           blocks: connectedBlocks,
           lead: leadBlock,
           id: leadBlock.id
         });
         
-        // סמן את כל הבלוקים בקבוצה כמבוקרים
         connectedBlocks.forEach(b => visited.add(b.id));
       } else {
-        // בלוק בודד
         visited.add(block.id);
       }
     });
     
     return groups;
   }
-
+  
   // === מציאת בלוקים מחוברים ===
   function findConnectedBlocks(startBlock) {
     if (!startBlock) return [];
     
-    // קבוצת הבלוקים המחוברים
     const result = [startBlock];
     const processed = new Set([startBlock.id]);
-    
-    // תור לסריקה
     const queue = [startBlock];
     
     while (queue.length > 0) {
       const current = queue.shift();
       const connections = new Set();
       
-      // בדוק חיבורים לימין
+      // בדוק חיבורים בכל הכיוונים
       if (current.hasAttribute('data-connected-to')) {
         connections.add(current.getAttribute('data-connected-to'));
       }
       
-      // בדוק חיבורים משמאל
       if (current.hasAttribute('data-connected-from-left')) {
         connections.add(current.getAttribute('data-connected-from-left'));
       }
       
-      // בדוק חיבורים מימין
       if (current.hasAttribute('data-connected-from-right')) {
         connections.add(current.getAttribute('data-connected-from-right'));
       }
       
-      // הוסף בלוקים מחוברים לתור
       for (const id of connections) {
         if (!processed.has(id)) {
           const block = document.getElementById(id);
@@ -330,7 +300,7 @@ console.log("[GroupComplete] טוען מודול פתרון מלא לחיבור 
     return result;
   }
   
-  // === מציאת הבלוק השמאלי ביותר ===
+  // === מציאת בלוקים קיצוניים ===
   function findLeftmostBlock(blocks) {
     if (!blocks || blocks.length === 0) return null;
     
@@ -348,7 +318,6 @@ console.log("[GroupComplete] טוען מודול פתרון מלא לחיבור 
     return leftmost;
   }
   
-  // === מציאת הבלוק הימני ביותר ===
   function findRightmostBlock(blocks) {
     if (!blocks || blocks.length === 0) return null;
     
@@ -366,17 +335,18 @@ console.log("[GroupComplete] טוען מודול פתרון מלא לחיבור 
     return rightmost;
   }
   
-  // === השמעת צליל חיבור ===
+  // === השמעת צליל ===
   function playConnectionSound() {
-    try {
-      if (typeof window.playSnapSound === 'function') {
-        window.playSnapSound();
-        log("הושמע צליל חיבור");
-      } else {
-        log("פונקציית צליל חיבור לא נמצאה");
-      }
-    } catch (error) {
-      console.error("[GroupComplete] שגיאה בהשמעת צליל:", error);
+    // הפעל את הצליל המותאם שלנו
+    if (typeof window.playFixSound === 'function') {
+      window.playFixSound();
+      log("צליל חיבור הושמע");
+    } else if (typeof window.playSnapSound === 'function') {
+      // גיבוי - נסה את הפונקציה המקורית
+      window.playSnapSound();
+      log("צליל חיבור מקורי הושמע");
+    } else {
+      log("לא נמצאה פונקציית צליל תקינה");
     }
   }
   
@@ -385,7 +355,7 @@ console.log("[GroupComplete] טוען מודול פתרון מלא לחיבור 
     if (!sourceGroup || !targetGroup) return false;
     
     try {
-      log(`מחבר קבוצות: ${sourceGroup.id} -> ${targetGroup.id}`);
+      log(`חיבור קבוצות: ${sourceGroup.id} -> ${targetGroup.id}`);
       
       // מצא את הבלוקים הקיצוניים
       const sourceRight = findRightmostBlock(sourceGroup.blocks);
@@ -393,10 +363,7 @@ console.log("[GroupComplete] טוען מודול פתרון מלא לחיבור 
       
       if (!sourceRight || !targetLeft) return false;
       
-      // הדגש את החיבור
-      highlightConnection(sourceRight, targetLeft);
-      
-      // השמע צליל
+      // השמע צליל לפני החיבור
       playConnectionSound();
       
       // עדכן את החיבור
@@ -408,17 +375,16 @@ console.log("[GroupComplete] טוען מודול פתרון מלא לחיבור 
       sourceRight.classList.add('connected-block');
       targetLeft.classList.add('has-connected-block');
       
-      // הוסף אפקט הצלחה
-      sourceRight.classList.add('gc-success');
-      targetLeft.classList.add('gc-success');
+      // אפקט הצלחה
+      sourceRight.classList.add('gfix-success');
+      targetLeft.classList.add('gfix-success');
       
-      // הסר אפקט הצלחה אחרי זמן מה
       setTimeout(() => {
-        sourceRight.classList.remove('gc-success');
-        targetLeft.classList.remove('gc-success');
-      }, 1000);
+        sourceRight.classList.remove('gfix-success');
+        targetLeft.classList.remove('gfix-success');
+      }, 600);
       
-      // הסר מסגרות
+      // הסרת מסגרות
       if (typeof window.removeOutlinesFromConnected === 'function') {
         window.removeOutlinesFromConnected(sourceRight);
         window.removeOutlinesFromConnected(targetLeft);
@@ -427,127 +393,149 @@ console.log("[GroupComplete] טוען מודול פתרון מלא לחיבור 
         targetLeft.classList.add('no-outlines');
       }
       
-      // ניקוי נקודות חיבור אחרי זמן מה
-      setTimeout(clearConnectionPoints, 800);
+      // ניקוי נקודות חיבור
+      setTimeout(clearConnectionPoints, 200);
       
-      log(`חיבור בוצע בהצלחה`);
+      log(`חיבור הושלם בהצלחה`);
       return true;
     } catch (error) {
-      console.error("[GroupComplete] שגיאה בחיבור קבוצות:", error);
+      log("שגיאה בחיבור קבוצות:", error);
+      clearConnectionPoints();
       return false;
     }
   }
-
+  
   // === בדיקת חיבורים אפשריים ===
   function checkPotentialConnections() {
     const now = Date.now();
     if (now - lastCheck < CONFIG.CHECK_INTERVAL) return;
     lastCheck = now;
     
-    // מצא את כל הקבוצות הפעילות
+    // מצא קבוצות פעילות
     activeGroups = findAllGroups();
     
-    // בדוק אם יש לפחות שתי קבוצות
-    if (activeGroups.length >= 2) {
-      // מצא קבוצות שכרגע בגרירה
-      const draggingBlocks = document.querySelectorAll('.group-dragging');
-      
-      if (draggingBlocks.length > 0) {
-        const draggingGroup = activeGroups.find(group => 
-          group.blocks.some(block => block.classList.contains('group-dragging')));
-        
-        if (draggingGroup) {
-          // חפש קבוצה קרובה
-          let closestGroup = null;
-          let minDistance = CONFIG.CONNECTION_THRESHOLD;
-          
-          // עבור על כל הקבוצות האחרות
-          activeGroups.forEach(otherGroup => {
-            if (otherGroup.id !== draggingGroup.id) {
-              // בדוק מרחק בין הקבוצות
-              const draggingRight = findRightmostBlock(draggingGroup.blocks);
-              const otherLeft = findLeftmostBlock(otherGroup.blocks);
-              
-              const rect1 = draggingRight.getBoundingClientRect();
-              const rect2 = otherLeft.getBoundingClientRect();
-              
-              const distance = Math.abs(rect1.right - rect2.left);
-              
-              if (distance < minDistance && hasVerticalOverlap(rect1, rect2)) {
-                closestGroup = otherGroup;
-                minDistance = distance;
-              }
-            }
-          });
-          
-          // אם נמצאה קבוצה קרובה
-          if (closestGroup) {
-            // הדגש את החיבור הפוטנציאלי
-            const draggingRight = findRightmostBlock(draggingGroup.blocks);
-            const closestLeft = findLeftmostBlock(closestGroup.blocks);
-            
-            highlightConnection(draggingRight, closestLeft);
-            
-            // שמור את הקבוצות לחיבור
-            draggedGroup = draggingGroup;
-            potentialTarget = closestGroup;
-            
-            log(`זוהה חיבור פוטנציאלי: ${draggingGroup.id} -> ${closestGroup.id}, מרחק: ${minDistance.toFixed(1)}px`);
-            return;
-          }
-        }
-      }
+    if (activeGroups.length < 2) {
+      clearConnectionPoints();
+      return;
     }
     
-    // אם לא נמצא חיבור פוטנציאלי
-    if (connectionPoints.length > 0) {
+    // מצא קבוצה בגרירה
+    const draggingBlocks = document.querySelectorAll('.group-dragging');
+    if (draggingBlocks.length === 0) {
       clearConnectionPoints();
+      return;
+    }
+    
+    // מצא את הקבוצה הנגררת
+    const draggingGroup = activeGroups.find(group => 
+      group.blocks.some(block => block.classList.contains('group-dragging')));
+    
+    if (!draggingGroup) {
+      clearConnectionPoints();
+      return;
+    }
+    
+    // חפש את הקבוצה הקרובה ביותר
+    let closestGroup = null;
+    let minDistance = CONFIG.MAX_DISTANCE;
+    
+    activeGroups.forEach(otherGroup => {
+      if (otherGroup.id !== draggingGroup.id) {
+        // בדוק מרחק בין הקבוצות
+        const draggingRight = findRightmostBlock(draggingGroup.blocks);
+        const otherLeft = findLeftmostBlock(otherGroup.blocks);
+        
+        if (!draggingRight || !otherLeft) return;
+        
+        const rect1 = draggingRight.getBoundingClientRect();
+        const rect2 = otherLeft.getBoundingClientRect();
+        
+        // חשב מרחק אופקי
+        const distance = Math.abs(rect1.right - rect2.left);
+        
+        // בדוק אם המרחק קטן מסף מקסימלי וגדול מסף מינימלי ויש חפיפה אנכית
+        if (distance < minDistance && distance > 0 && hasVerticalOverlap(rect1, rect2)) {
+          closestGroup = otherGroup;
+          minDistance = distance;
+          connectDistance = distance;
+        }
+      }
+    });
+    
+    // אם נמצאה קבוצה קרובה מספיק
+    if (closestGroup && minDistance < CONFIG.MAX_DISTANCE) {
+      // הצג עיגולים רק אם מספיק קרוב
+      if (minDistance < CONFIG.MIN_DISTANCE) {
+        const draggingRight = findRightmostBlock(draggingGroup.blocks);
+        const closestLeft = findLeftmostBlock(closestGroup.blocks);
+        
+        highlightConnection(draggingRight, closestLeft);
+        
+        draggedGroup = draggingGroup;
+        potentialTarget = closestGroup;
+      }
+    } else {
+      // אם אין קבוצה מספיק קרובה
+      clearConnectionPoints();
+      draggedGroup = null;
+      potentialTarget = null;
     }
   }
-
+  
+  // === טיפול בשחרור עכבר ===
+  function handleMouseUp() {
+    if (draggedGroup && potentialTarget && connectDistance < CONFIG.MIN_DISTANCE) {
+      // בצע חיבור
+      connectGroups(draggedGroup, potentialTarget);
+      
+      // איפוס
+      draggedGroup = null;
+      potentialTarget = null;
+    }
+    
+    // ניקוי בכל מקרה
+    clearConnectionPoints();
+  }
+  
   // === דריסת פונקציות מקוריות ===
   function overrideOriginalFunctions() {
-    // אם מודול הגרירה קיים
     if (window.groupDragApi) {
       log("דורס פונקציות גרירת קבוצות");
       
-      // שמירת פונקציות מקוריות
+      // דריסת פונקציית תזוזת גרירה
       if (typeof window.groupDragApi.moveDragGroup === 'function') {
-        originals.moveDragGroup = window.groupDragApi.moveDragGroup;
+        const originalMoveDragGroup = window.groupDragApi.moveDragGroup;
         
-        // החלפת פונקציית תזוזת גרירה
         window.groupDragApi.moveDragGroup = function(event) {
-          // הפעל את הפונקציה המקורית
-          const result = originals.moveDragGroup.apply(this, arguments);
+          // הפעל פונקציה מקורית
+          const result = originalMoveDragGroup.apply(this, arguments);
           
-          // בדוק חיבורים פוטנציאליים
+          // בדוק חיבורים אפשריים
           checkPotentialConnections();
           
           return result;
         };
       }
       
-      // החלפת פונקציית סיום גרירה
+      // דריסת פונקציית סיום גרירה
       if (typeof window.groupDragApi.endDragGroup === 'function') {
-        originals.endDragGroup = window.groupDragApi.endDragGroup;
+        const originalEndDragGroup = window.groupDragApi.endDragGroup;
         
         window.groupDragApi.endDragGroup = function(event) {
-          // בדוק אם יש חיבור פוטנציאלי
-          const hasConnection = draggedGroup && potentialTarget;
+          // שמור מצב לפני סיום
+          const hasConnection = draggedGroup && potentialTarget && connectDistance < CONFIG.MIN_DISTANCE;
           
-          // הפעל את הפונקציה המקורית
-          const result = originals.endDragGroup.apply(this, arguments);
+          // הפעל פונקציה מקורית
+          const result = originalEndDragGroup.apply(this, arguments);
           
-          // אם יש חיבור פוטנציאלי, בצע אותו
+          // בצע חיבור אם נדרש
           if (hasConnection) {
-            // חבר את הקבוצות
-            connectGroups(draggedGroup, potentialTarget);
-            
-            // איפוס משתנים
-            draggedGroup = null;
-            potentialTarget = null;
+            setTimeout(() => {
+              connectGroups(draggedGroup, potentialTarget);
+              draggedGroup = null;
+              potentialTarget = null;
+            }, CONFIG.CONNECTION_DELAY);
           } else {
-            // נקה נקודות חיבור
             clearConnectionPoints();
           }
           
@@ -555,75 +543,36 @@ console.log("[GroupComplete] טוען מודול פתרון מלא לחיבור 
         };
       }
     }
-    
-    // אם פונקציית החיבור המקורית קיימת
-    if (typeof window.performBlockSnap === 'function') {
-      originals.performBlockSnap = window.performBlockSnap;
-      
-      // החלפת פונקציית חיבור בלוקים
-      window.performBlockSnap = function(sourceBlock, targetBlock, direction) {
-        // הפעל את הפונקציה המקורית
-        const result = originals.performBlockSnap.apply(this, arguments);
-        
-        if (result) {
-          log(`בוצע חיבור בלוקים: ${sourceBlock.id} -> ${targetBlock.id}`);
-          
-          // בדוק אם צריך לעדכן קבוצות
-          setTimeout(() => {
-            activeGroups = findAllGroups();
-          }, 200);
-        }
-        
-        return result;
-      };
-    }
   }
   
   // === אתחול ===
   function initialize() {
-    log("מאתחל מודול חיבור קבוצות משופר");
+    log("מאתחל מודול פתרון סופי");
     
     // הזרקת סגנונות
     injectStyles();
     
-    // יצירת שכבת חיבור
-    createConnectionLayer();
+    // הגדרת מערכת אודיו
+    setupAudio();
     
-    // דריסת פונקציות מקוריות
+    // דריסת פונקציות
     overrideOriginalFunctions();
     
-    // מאזין לאירועי עכבר
+    // הגדרת אירועי עכבר גלובליים
     document.addEventListener('mousemove', function(event) {
-      // בדוק אם לחצן שמאלי לחוץ
-      if (event.buttons === 1) {
-        // בדוק חיבורים אפשריים
+      if (event.buttons === 1) { // לחצן שמאלי
         checkPotentialConnections();
       }
     }, { passive: true });
     
-    // מאזין לשחרור עכבר
-    document.addEventListener('mouseup', function() {
-      // בדוק אם יש חיבור פוטנציאלי
-      if (draggedGroup && potentialTarget) {
-        // חבר את הקבוצות
-        connectGroups(draggedGroup, potentialTarget);
-        
-        // איפוס משתנים
-        draggedGroup = null;
-        potentialTarget = null;
-      } else {
-        // נקה נקודות חיבור
-        clearConnectionPoints();
-      }
-    });
+    document.addEventListener('mouseup', handleMouseUp);
     
     // הגדרת API גלובלי
-    window.groupConnectComplete = {
-      findAllGroups,
-      connectGroups,
-      highlightConnection,
-      clearConnectionPoints,
-      checkPotentialConnections,
+    window.groupConnectFix = {
+      connect: connectGroups,
+      checkConnections: checkPotentialConnections,
+      findGroups: findAllGroups,
+      playSound: playConnectionSound,
       CONFIG
     };
     
@@ -631,7 +580,6 @@ console.log("[GroupComplete] טוען מודול פתרון מלא לחיבור 
   }
   
   // === ריצה ===
-  // הפעל עם טעינת המסמך
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => setTimeout(initialize, 500));
   } else {
