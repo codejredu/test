@@ -1,4 +1,4 @@
-// מודול תיקון חיבור קבוצות בדו-כיווניות - group-connect.js
+// מודול תיקון חיבור פאזל וסגירת רווחים - group-connect.js
 
 (function() {
   console.log("[GroupFix] טוען מודול פתרון סופי עם תיקוני מיקום ואודיו");
@@ -6,18 +6,17 @@
   // קונפיגורציה
   const CONFIG = {
     SNAP_THRESHOLD: 25,           // מרחק סף להצמדה
-    PERFECT_SNAP_DISTANCE: 0,     // מרחק מדויק בהצמדה (0 = מושלם)
+    PERFECT_SNAP_DISTANCE: -1,    // מרחק מדויק בהצמדה (-1 לחיבור מושלם ללא רווח)
     CONNECTION_HIGHLIGHT: true,    // האם להדגיש חיבורים אפשריים
     AUDIO_VOLUME: 0.5,            // עוצמת קול בהשמעת צליל חיבור
     AUDIO_PATH: 'assets/sound/link.mp3',  // נתיב לקובץ צליל
     DEBUG: true,                  // האם להציג הודעות דיבג
-    BIDIRECTIONAL: true           // תמיכה בחיבור דו-כיווני
+    FIX_INTERVAL: 300            // זמן בדיקה לתיקון רווחים (מילישניות)
   };
   
   // משתנים גלובליים
   let audioPlayer = null;
-  let originalDragHandler = null;
-  let originalDropHandler = null;
+  let fixingInterval = null;
   
   // יצירת אובייקט אודיו
   function setupAudio() {
@@ -43,104 +42,76 @@
         outline: 2px solid rgba(0, 255, 0, 0.7) !important;
       }
       
-      /* מונע רווחים מיותרים בין בלוקים */
+      /* מונע רווחים בין בלוקים */
       .block {
         margin: 0 !important;
         box-sizing: border-box !important;
       }
       
+      /* סגנון מיוחד לבלוקים מחוברים עם תצוגת פאזל */
+      .puzzle-connected-right {
+        margin-right: -1px !important;
+        padding-right: 0 !important;
+        position: relative !important;
+        z-index: 10 !important;
+      }
+      
+      .puzzle-connected-left {
+        margin-left: -1px !important;
+        padding-left: 0 !important;
+        position: relative !important;
+        z-index: 9 !important;
+      }
+      
       /* תיקון מיקום עבור בלוקים מחוברים */
-      .connected-block {
+      .perfect-snap {
         transition: none !important;
         transform: none !important;
-      }
-      
-      /* כדי לתקן את חיבורי הפאזל */
-      .block.right-connected {
-        margin-right: 0 !important;
-        padding-right: 0 !important;
-      }
-      
-      .block.left-connected {
-        margin-left: 0 !important;
-        padding-left: 0 !important;
       }
     `;
     document.head.appendChild(styleEl);
     console.log("[GroupFix] סגנונות הוזרקו");
   }
   
-  // פונקציה לחישוב מרחק בין שני אלמנטים
-  function calculateDistance(rect1, rect2, direction) {
-    if (direction === 'right') {
-      // מרחק בין הצד הימני של rect1 לצד השמאלי של rect2
-      return Math.abs(rect1.right - rect2.left);
-    } else if (direction === 'left') {
-      // מרחק בין הצד השמאלי של rect1 לצד הימני של rect2
-      return Math.abs(rect1.left - rect2.right);
-    }
-    
-    // מרחק כללי - מינימום בין שתי האפשרויות
-    const rightToLeftDist = Math.abs(rect1.right - rect2.left);
-    const leftToRightDist = Math.abs(rect1.left - rect2.right);
-    return Math.min(rightToLeftDist, leftToRightDist);
-  }
-  
-  // זיהוי כיוון החיבור האופטימלי בין שני אלמנטים
-  function determineConnectionDirection(rect1, rect2) {
-    const rightToLeftDist = Math.abs(rect1.right - rect2.left);
-    const leftToRightDist = Math.abs(rect1.left - rect2.right);
-    
-    if (rightToLeftDist < leftToRightDist) {
-      return 'right'; // חיבור מימין של rect1 לשמאל של rect2
-    } else {
-      return 'left';  // חיבור משמאל של rect1 לימין של rect2
-    }
-  }
-  
-  // פונקציית הצמדה מדויקת שעובדת לכל הכיוונים
-  function performPerfectSnap(sourceBlock, targetBlock, direction) {
+  // התאמת מיקום מדויק בין שני אלמנטים
+  function snapBlocksWithPerfectFit(sourceBlock, targetBlock, direction) {
     if (!sourceBlock || !targetBlock) return false;
     
     const sourceRect = sourceBlock.getBoundingClientRect();
     const targetRect = targetBlock.getBoundingClientRect();
     
-    // הוסף מחלקת מחובר לשני הבלוקים
-    sourceBlock.classList.add('connected-block');
-    targetBlock.classList.add('connected-block');
+    // הוסף מחלקות לציון שהבלוקים מחוברים בסגנון פאזל
+    sourceBlock.classList.add('perfect-snap');
+    targetBlock.classList.add('perfect-snap');
     
     let newLeft, newTop;
     
     if (direction === 'right') {
-      // חיבור מימין של source לשמאל של target
-      newLeft = targetRect.left - sourceRect.width - CONFIG.PERFECT_SNAP_DISTANCE;
-      
-      // נסה לשמור על יישור אנכי מושלם
+      // חיבור מימין של source לשמאל של target (נפוץ)
+      newLeft = targetRect.left - sourceRect.width + CONFIG.PERFECT_SNAP_DISTANCE;
       newTop = targetRect.top;
       
-      // הוסף מחלקות לציון כיוון החיבור
-      sourceBlock.classList.add('right-connected');
-      targetBlock.classList.add('left-connected');
+      // הוסף מחלקות לחיבור פאזל מדויק
+      sourceBlock.classList.add('puzzle-connected-right');
+      targetBlock.classList.add('puzzle-connected-left');
     } else if (direction === 'left') {
-      // חיבור משמאל של source לימין של target
-      newLeft = targetRect.right + CONFIG.PERFECT_SNAP_DISTANCE;
-      
-      // נסה לשמור על יישור אנכי מושלם
+      // חיבור משמאל של source לימין של target (נדיר)
+      newLeft = targetRect.right - CONFIG.PERFECT_SNAP_DISTANCE;
       newTop = targetRect.top;
       
-      // הוסף מחלקות לציון כיוון החיבור
-      sourceBlock.classList.add('left-connected');
-      targetBlock.classList.add('right-connected');
+      // הוסף מחלקות לחיבור פאזל מדויק
+      sourceBlock.classList.add('puzzle-connected-left');
+      targetBlock.classList.add('puzzle-connected-right');
     }
     
     // עדכן את מיקום בלוק המקור
-    applyExactPosition(sourceBlock, newLeft, newTop);
+    forceExactPosition(sourceBlock, newLeft, newTop);
     
     return true;
   }
   
-  // פונקציה המחילה מיקום מדויק על בלוק (גורמת לרנדור מחדש)
-  function applyExactPosition(block, left, top) {
+  // פונקציה המכריחה מיקום מדויק של בלוק
+  function forceExactPosition(block, left, top) {
     if (!block) return;
     
     // הגדרת סגנונות ישירות עם !important כדי לדרוס הגדרות אחרות
@@ -157,250 +128,243 @@
     void block.offsetWidth;
   }
   
+  // פונקציה לזיהוי בלוקים מחוברים וקבוצות
+  function findConnectedBlocks() {
+    const allBlocks = Array.from(document.querySelectorAll('.block'));
+    const connectedPairs = [];
+    
+    // מצא זוגות של בלוקים מחוברים
+    for (let i = 0; i < allBlocks.length; i++) {
+      const block1 = allBlocks[i];
+      const rect1 = block1.getBoundingClientRect();
+      
+      for (let j = i + 1; j < allBlocks.length; j++) {
+        const block2 = allBlocks[j];
+        const rect2 = block2.getBoundingClientRect();
+        
+        // בדוק אם הבלוקים קרובים מאוד אופקית
+        const horizontalGap = Math.abs(rect1.right - rect2.left);
+        const reverseGap = Math.abs(rect1.left - rect2.right);
+        
+        // בדוק גם יישור אנכי
+        const verticalAlignment = Math.abs(rect1.top - rect2.top) < 5;
+        
+        if (horizontalGap < 5 && verticalAlignment) {
+          // בלוק 1 מימין לבלוק 2
+          connectedPairs.push({
+            left: block1,
+            right: block2,
+            gap: horizontalGap
+          });
+        } else if (reverseGap < 5 && verticalAlignment) {
+          // בלוק 1 משמאל לבלוק 2
+          connectedPairs.push({
+            left: block2,
+            right: block1,
+            gap: reverseGap
+          });
+        }
+      }
+    }
+    
+    return connectedPairs;
+  }
+  
+  // תקן את כל הרווחים בחיבורי בלוקים
+  function fixAllConnections() {
+    const pairs = findConnectedBlocks();
+    let fixed = 0;
+    
+    for (const pair of pairs) {
+      // תקן רק אם יש רווח
+      if (pair.gap > 0) {
+        const leftRect = pair.left.getBoundingClientRect();
+        const rightRect = pair.right.getBoundingClientRect();
+        
+        // תקן את המיקום של הבלוק הימני
+        forceExactPosition(
+          pair.right,
+          leftRect.right + CONFIG.PERFECT_SNAP_DISTANCE,
+          leftRect.top
+        );
+        
+        // הוסף מחלקות פאזל
+        pair.left.classList.add('puzzle-connected-right');
+        pair.right.classList.add('puzzle-connected-left');
+        
+        fixed++;
+      }
+    }
+    
+    if (fixed > 0 && CONFIG.DEBUG) {
+      console.log(`[GroupFix] תוקנו ${fixed} חיבורים עם רווחים`);
+    }
+    
+    return fixed;
+  }
+  
+  // בדוק אם שני בלוקים מחוברים
+  function areBlocksConnected(block1, block2) {
+    if (!block1 || !block2) return false;
+    
+    const rect1 = block1.getBoundingClientRect();
+    const rect2 = block2.getBoundingClientRect();
+    
+    // בדוק אם הבלוקים קרובים מאוד אופקית
+    const horizontalGap = Math.abs(rect1.right - rect2.left);
+    const reverseGap = Math.abs(rect1.left - rect2.right);
+    
+    // בדוק גם יישור אנכי
+    const verticalAlignment = Math.abs(rect1.top - rect2.top) < 5;
+    
+    return (horizontalGap < 5 && verticalAlignment) || (reverseGap < 5 && verticalAlignment);
+  }
+  
+  // תפיסת אירועי גרירת מערכת הבלוקים המקורית
+  function monkeyPatchLinkageSystem() {
+    // תפוס את פונקציית ה-PerformSnap המקורית
+    if (typeof window.performSnap === 'function') {
+      const originalPerformSnap = window.performSnap;
+      window.performSnap = function(sourceBlock, targetBlock, direction) {
+        // קרא לפונקציה המקורית
+        const result = originalPerformSnap.apply(this, arguments);
+        
+        // הוסף את התיקונים שלנו אחרי שהפונקציה המקורית הסתיימה
+        if (result) {
+          setTimeout(() => {
+            snapBlocksWithPerfectFit(sourceBlock, targetBlock, direction);
+          }, 50); // קצת אחרי ההצמדה המקורית
+        }
+        
+        return result;
+      };
+      
+      console.log("[GroupFix] דורס פונקציות גרירת קבוצות");
+    }
+    
+    // תפוס את פונקציית הMouseUp המקורית
+    if (typeof window.handleMouseUp === 'function') {
+      const originalMouseUp = window.handleMouseUp;
+      window.handleMouseUp = function(e) {
+        // קרא לפונקציה המקורית
+        const result = originalMouseUp.apply(this, arguments);
+        
+        // הפעל את התיקון שלנו
+        setTimeout(fixAllConnections, 100);
+        
+        return result;
+      };
+    }
+    
+    // עבור גרירת קבוצות
+    if (typeof window.dragEnd === 'function') {
+      const originalDragEnd = window.dragEnd;
+      window.dragEnd = function(e) {
+        // קרא לפונקציה המקורית
+        const result = originalDragEnd.apply(this, arguments);
+        
+        // הפעל את התיקון שלנו
+        setTimeout(fixAllConnections, 100);
+        
+        return result;
+      };
+    }
+  }
+  
   // השמע צליל חיבור
   function playConnectionSound() {
     try {
       if (audioPlayer) {
         audioPlayer.currentTime = 0;
         audioPlayer.play();
-        if (CONFIG.DEBUG) {
-          console.log("[GroupFix] צליל חיבור הושמע");
-        }
       }
     } catch (err) {
       console.warn("[GroupFix] שגיאה בהשמעת צליל:", err);
     }
   }
   
-  // מצא את הבלוק הנגרר הנוכחי (ותומך גם בקבוצות)
-  function getCurrentDraggedBlock() {
-    // בדוק אם יש משתנה חשוף מהמודול המקורי
-    if (window.blockLinkageState && window.blockLinkageState.currentDraggedBlock) {
-      return window.blockLinkageState.currentDraggedBlock;
-    }
-    
-    // בדוק אם יש בלוק עם מחלקת גרירה
-    const draggedBlocks = document.querySelectorAll('.dragging, .group-dragging');
-    if (draggedBlocks.length > 0) {
-      return draggedBlocks[0];
-    }
-    
-    return null;
-  }
-  
-  // טיפול באירוע של עכבר למטה על בלוק
-  function handleMouseDown(e) {
-    // קרא לפונקציה המקורית אם קיימת
-    if (originalDragHandler) {
-      originalDragHandler(e);
-    }
-    
-    // מרגע זה, הפונקציה שלנו תוסיף תמיכה בכיוון הפוך
-    if (CONFIG.BIDIRECTIONAL) {
-      enableReverseDirectionTracking();
-    }
-  }
-  
-  // הפעל מעקב לחיבורים בכיוון הפוך
-  function enableReverseDirectionTracking() {
-    document.addEventListener('mousemove', monitorReverseConnections);
-    document.addEventListener('mouseup', cleanupReverseMonitoring, { once: true });
-  }
-  
-  // נקה את המעקב לכיוון הפוך
-  function cleanupReverseMonitoring() {
-    document.removeEventListener('mousemove', monitorReverseConnections);
-  }
-  
-  // מעקב אחר חיבורים בכיוון הפוך (מימין לשמאל)
-  function monitorReverseConnections(e) {
-    const draggedBlock = getCurrentDraggedBlock();
-    if (!draggedBlock) return;
-    
-    // בדוק אם יש קבוצת גרירה
-    const isGroupDrag = document.querySelectorAll('.group-dragging').length > 1;
-    
-    // מצא את הבלוק הימני ביותר בקבוצה (רלוונטי לגרירת קבוצה)
-    let rightmostBlock = draggedBlock;
-    
-    if (isGroupDrag) {
-      const groupBlocks = Array.from(document.querySelectorAll('.group-dragging'));
-      rightmostBlock = groupBlocks.reduce((rightmost, block) => {
-        const rightmostRect = rightmost.getBoundingClientRect();
-        const blockRect = block.getBoundingClientRect();
-        return blockRect.right > rightmostRect.right ? block : rightmost;
-      }, groupBlocks[0]);
-    }
-    
-    // מצא בלוקים פוטנציאליים לחיבור מימין לשמאל
-    const allBlocks = Array.from(document.querySelectorAll('.block:not(.group-dragging):not(.in-drawer)'));
-    
-    // מצא את הבלוק הקרוב ביותר בכיוון שמאלה
-    let closestLeftBlock = null;
-    let minLeftDistance = CONFIG.SNAP_THRESHOLD;
-    
-    const rightmostRect = rightmostBlock.getBoundingClientRect();
-    
-    for (const targetBlock of allBlocks) {
-      const targetRect = targetBlock.getBoundingClientRect();
+  // הוסף את האזנה לחיבורים במהלך גרירת קבוצה
+  function addGroupDragListeners() {
+    document.addEventListener('mouseup', function(e) {
+      // בדוק אם יש בלוקים בגרירת קבוצה
+      const groupBlocks = document.querySelectorAll('.group-dragging');
+      if (groupBlocks.length === 0) return;
       
-      // בדוק אם הבלוק נמצא משמאל לימני ביותר בקבוצה
-      if (targetRect.left < rightmostRect.right) {
-        continue; // דלג על בלוקים שאינם משמאל
-      }
+      // מצא את כל הבלוקים האחרים שאינם בקבוצה
+      const otherBlocks = Array.from(document.querySelectorAll('.block:not(.group-dragging)'));
       
-      // חשב את המרחק האופקי בין הבלוקים
-      const horizontalDistance = Math.abs(rightmostRect.right - targetRect.left);
+      // מצא את הבלוק הימני והשמאלי בקבוצת הגרירה
+      let leftmostInGroup = null;
+      let rightmostInGroup = null;
+      let leftmostRect = null;
+      let rightmostRect = null;
       
-      // בדוק גם יישור אנכי (שהבלוקים באותו גובה בערך)
-      const verticalAlignment = Math.abs(rightmostRect.top - targetRect.top) < 10;
-      
-      if (horizontalDistance < minLeftDistance && verticalAlignment) {
-        minLeftDistance = horizontalDistance;
-        closestLeftBlock = targetBlock;
-      }
-    }
-    
-    // אם נמצא בלוק קרוב מספיק, הדגש אותו
-    if (closestLeftBlock) {
-      if (CONFIG.DEBUG) {
-        console.log(`[GroupFix] הדגשת חיבור בין: ${rightmostBlock.id} -> ${closestLeftBlock.id}, מרחק: ${minLeftDistance.toFixed(1)}px `);
-      }
-      
-      if (CONFIG.CONNECTION_HIGHLIGHT) {
-        closestLeftBlock.classList.add('group-connection-highlight');
-        rightmostBlock.classList.add('group-connection-highlight');
-      }
-      
-      // אם קרוב מאוד, בצע חיבור מיידי
-      if (minLeftDistance <= 5) {
-        // חבר את הבלוקים
-        connectBlocks(rightmostBlock, closestLeftBlock, 'left');
+      groupBlocks.forEach(block => {
+        const rect = block.getBoundingClientRect();
         
-        // הסר את המעקב כי החיבור בוצע
-        cleanupReverseMonitoring();
-      }
-    } else {
-      // הסר הדגשות אם אין בלוק קרוב
-      document.querySelectorAll('.group-connection-highlight').forEach(block => {
-        block.classList.remove('group-connection-highlight');
+        if (!leftmostInGroup || rect.left < leftmostRect.left) {
+          leftmostInGroup = block;
+          leftmostRect = rect;
+        }
+        
+        if (!rightmostInGroup || rect.right > rightmostRect.right) {
+          rightmostInGroup = block;
+          rightmostRect = rect;
+        }
       });
-    }
-  }
-  
-  // חיבור שני בלוקים (או קבוצות)
-  function connectBlocks(sourceBlock, targetBlock, direction) {
-    if (CONFIG.DEBUG) {
-      console.log(`[GroupFix] חיבור קבוצות: ${sourceBlock.id} -> ${targetBlock.id} `);
-    }
-    
-    // בדוק אם מדובר בגרירת קבוצה
-    const isGroupDrag = document.querySelectorAll('.group-dragging').length > 1;
-    
-    if (isGroupDrag && direction === 'left') {
-      // חיבור קבוצה מימין לשמאל (המקרה המורכב)
-      connectGroupToBlockReverse(sourceBlock, targetBlock);
-    } else {
-      // בצע הצמדה רגילה בין שני בלוקים
-      performPerfectSnap(sourceBlock, targetBlock, direction);
-    }
-    
-    // השמע צליל חיבור
-    playConnectionSound();
-    
-    if (CONFIG.DEBUG) {
-      console.log(`[GroupFix] חיבור הושלם בהצלחה `);
-    }
-  }
-  
-  // חיבור קבוצה בכיוון של מימין לשמאל
-  function connectGroupToBlockReverse(rightmostBlock, targetBlock) {
-    // קבל את כל הבלוקים בקבוצה
-    const groupBlocks = Array.from(document.querySelectorAll('.group-dragging'));
-    
-    // מצא את המיקום היחסי של כל בלוק ביחס לבלוק הימני ביותר
-    const rightmostRect = rightmostBlock.getBoundingClientRect();
-    const targetRect = targetBlock.getBoundingClientRect();
-    
-    // חשב את ההיסט שיש להזיז את הקבוצה
-    const offsetX = targetRect.left - rightmostRect.right - CONFIG.PERFECT_SNAP_DISTANCE;
-    
-    // הזז את כל הבלוקים בקבוצה
-    for (const block of groupBlocks) {
-      const blockRect = block.getBoundingClientRect();
-      const newLeft = blockRect.left + offsetX;
       
-      // החל מיקום מדויק על כל בלוק
-      applyExactPosition(block, newLeft, blockRect.top);
-    }
-    
-    // סמן את הבלוקים המחוברים
-    rightmostBlock.classList.add('right-connected');
-    targetBlock.classList.add('left-connected');
-  }
-  
-  // תפיסת האינטרקציה בין בלוקים ברמת המסמך
-  function setupInteractionMonitor() {
-    // שמור את הפונקציות המקוריות (אם קיימות)
-    if (typeof window.handleMouseDown === 'function') {
-      originalDragHandler = window.handleMouseDown;
-      window.handleMouseDown = handleMouseDown;
-    }
-    
-    if (typeof window.handleMouseUp === 'function') {
-      originalDropHandler = window.handleMouseUp;
-    }
-    
-    // הוסף האזנה לאירועי עכבר
-    document.addEventListener('mousedown', function(e) {
-      const block = e.target.closest('.block');
-      if (block) {
-        handleMouseDown(e);
-      }
-    }, true);
-    
-    console.log("[GroupFix] דורס פונקציות גרירת קבוצות");
-  }
-  
-  // פונקציה לטיפול בבעיות מחשב נמוך
-  function optimizeForPerformance() {
-    // התאם הגדרות לביצועים נמוכים אם צריך
-    if (window.navigator && window.navigator.hardwareConcurrency) {
-      if (window.navigator.hardwareConcurrency <= 2) {
-        // מחשב חלש, הורד את תדירות הבדיקות ואפשרויות הדיבוג
-        CONFIG.DEBUG = false;
-      }
-    }
-  }
-  
-  // פונקציה לביטול רווחים בין בלוקים מחוברים
-  function fixExistingConnections() {
-    // מצא את כל הבלוקים המחוברים
-    const allBlocks = Array.from(document.querySelectorAll('.block'));
-    
-    // עבור על כל זוג בלוקים כדי לזהות חיבורים
-    for (let i = 0; i < allBlocks.length; i++) {
-      const block1 = allBlocks[i];
-      const rect1 = block1.getBoundingClientRect();
+      // בדוק אם יש חיבור פוטנציאלי לבלוק כלשהו
+      let closestBlock = null;
+      let minDistance = CONFIG.SNAP_THRESHOLD;
+      let snapDirection = null;
       
-      for (let j = 0; j < allBlocks.length; j++) {
-        if (i === j) continue;
+      for (const block of otherBlocks) {
+        const blockRect = block.getBoundingClientRect();
         
-        const block2 = allBlocks[j];
-        const rect2 = block2.getBoundingClientRect();
+        // בדוק מרחק מהימני ביותר לבלוק משמאל (חיבור רגיל)
+        const rightToLeftDist = Math.abs(rightmostRect.right - blockRect.left);
         
-        // בדוק אם הבלוקים מחוברים
-        if (Math.abs(rect1.right - rect2.left) <= 2) {
-          // יש חיבור מימין של block1 לשמאל של block2
-          block1.classList.add('right-connected');
-          block2.classList.add('left-connected');
-        } else if (Math.abs(rect1.left - rect2.right) <= 2) {
-          // יש חיבור משמאל של block1 לימין של block2
-          block1.classList.add('left-connected');
-          block2.classList.add('right-connected');
+        // בדוק מרחק מהשמאלי ביותר לבלוק מימין (חיבור הפוך)
+        const leftToRightDist = Math.abs(leftmostRect.left - blockRect.right);
+        
+        // בדוק גם יישור אנכי
+        const verticalAlignmentRight = Math.abs(rightmostRect.top - blockRect.top) < 10;
+        const verticalAlignmentLeft = Math.abs(leftmostRect.top - blockRect.top) < 10;
+        
+        // מצא את החיבור הקרוב ביותר
+        if (rightToLeftDist < minDistance && verticalAlignmentRight) {
+          minDistance = rightToLeftDist;
+          closestBlock = block;
+          snapDirection = 'right';
+        }
+        
+        if (leftToRightDist < minDistance && verticalAlignmentLeft) {
+          minDistance = leftToRightDist;
+          closestBlock = block;
+          snapDirection = 'left';
         }
       }
-    }
+      
+      // אם נמצא בלוק קרוב מספיק, בצע הצמדה
+      if (closestBlock && minDistance <= 5) {
+        console.log(`[GroupFix] חיבור קבוצות: ${snapDirection === 'right' ? rightmostInGroup.id : leftmostInGroup.id} -> ${closestBlock.id} `);
+        
+        // בצע הצמדה מותאמת לכיוון
+        if (snapDirection === 'right') {
+          snapBlocksWithPerfectFit(rightmostInGroup, closestBlock, 'right');
+        } else {
+          snapBlocksWithPerfectFit(leftmostInGroup, closestBlock, 'left');
+        }
+        
+        // השמע צליל חיבור
+        playConnectionSound();
+        
+        console.log(`[GroupFix] חיבור הושלם בהצלחה `);
+      }
+      
+      // בכל מקרה, בצע תיקון כללי של חיבורים
+      setTimeout(fixAllConnections, 150);
+    });
   }
   
   // אתחול המודול
@@ -413,14 +377,17 @@
     // הגדר מערכת אודיו
     setupAudio();
     
-    // התקן מעקב אינטרקציה
-    setupInteractionMonitor();
+    // התקן חלפים לפונקציות של מערכת הגרירה המקורית
+    monkeyPatchLinkageSystem();
+    
+    // הוסף האזנה לחיבורים בגרירת קבוצה
+    addGroupDragListeners();
+    
+    // הפעל תיקון חיבורים אוטומטי מדי זמן קצוב
+    fixingInterval = setInterval(fixAllConnections, CONFIG.FIX_INTERVAL);
     
     // תקן חיבורים קיימים
-    setTimeout(fixExistingConnections, 500);
-    
-    // בצע אופטימיזציה לביצועים
-    optimizeForPerformance();
+    setTimeout(fixAllConnections, 500);
     
     console.log("[GroupFix] אתחול הושלם");
   }
