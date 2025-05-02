@@ -2,7 +2,12 @@
 
 // --- GROUP-CONNECT.JS v1.0.0 ---
 // מודול לחיבור קבוצות בלוקים מחוברות
+console.log("--- group-connect.js RAW SCRIPT LOAD ---"); 
 
+// --- GROUP-CONNECT.JS v1.0.0 ---
+// ... rest of the file
+(function() {
+//...
 (function() {
   'use strict';
 
