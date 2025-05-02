@@ -9,7 +9,10 @@
     FIX_INTERVAL: 40,               // בדיקה כל 40 מילישניות
     FORCE_CONNECT: true,            // כפיית חיבור ויזואלי
     OVERLAP_PIXELS: 2,              // כמה פיקסלים של חפיפה
-    USE_ABSOLUTE_POSITIONING: true  // שימוש במיקום מוחלט
+    USE_ABSOLUTE_POSITIONING: true, // שימוש במיקום מוחלט
+    CONNECTION_THRESHOLD: 15,       // סף מופחת להופעת עיגולים (במקום 40)
+    LEFT_COLOR: '#2196F3',          // כחול לעיגול שמאלי
+    RIGHT_COLOR: '#FF9800'          // כתום לעיגול ימני
   };
   
   // משתנים גלובליים
@@ -66,10 +69,64 @@
         background: inherit;
         z-index: 25;
       }
+      
+      /* עיגולי עגינה - צבעים שונים והופעה מהירה יותר */
+      .right-connection-point {
+        position: absolute !important;
+        width: 20px !important;
+        height: 20px !important;
+        top: 50% !important;
+        right: -10px !important;
+        transform: translateY(-50%) !important;
+        background-color: ${CONFIG.RIGHT_COLOR} !important;
+        border-radius: 50% !important;
+        opacity: 0;
+        transition: opacity 0.1s ease-out !important;
+        pointer-events: none !important;
+        z-index: 9999 !important;
+        box-shadow: 0 0 10px 4px rgba(255,152,0,0.95) !important;
+        border: 2px solid #FFF !important;
+      }
+
+      .left-connection-point {
+        position: absolute !important;
+        width: 20px !important;
+        height: 20px !important;
+        top: 50% !important;
+        left: -10px !important;
+        transform: translateY(-50%) !important;
+        background-color: ${CONFIG.LEFT_COLOR} !important;
+        border-radius: 50% !important;
+        opacity: 0;
+        transition: opacity 0.1s ease-out !important;
+        pointer-events: none !important;
+        z-index: 9999 !important;
+        box-shadow: 0 0 10px 4px rgba(33,150,243,0.95) !important;
+        border: 2px solid #FFF !important;
+      }
     `;
     
     document.head.appendChild(styleEl);
     console.log("[VisualPuzzle] סגנונות חיבור ויזואלי הוזרקו");
+  }
+  
+  // עקיפת פונקציית Threshold המקורית - להופעה מהירה יותר של העיגולים
+  function overrideThresholdFunction() {
+    if (typeof window.handleThresholdMet === 'function') {
+      const originalThreshold = window.handleThresholdMet;
+      
+      window.handleThresholdMet = function(sourceBlock, targetBlock, direction, distance) {
+        // שימוש בסף נמוך יותר להופעת העיגולים
+        if (distance <= CONFIG.CONNECTION_THRESHOLD) {
+          // הפעל את הפונקציה המקורית
+          return originalThreshold.apply(this, arguments);
+        }
+        
+        return false;
+      };
+      
+      console.log("[VisualPuzzle] עקפתי את פונקציית הסף להופעה מהירה יותר של עיגולים");
+    }
   }
   
   // חיבור ויזואלי מושלם של שני בלוקים
@@ -221,6 +278,9 @@
     
     // הזרק סגנונות
     addStyles();
+    
+    // עקוף פונקציות סף
+    overrideThresholdFunction();
     
     // הוסף מאזינים
     addMouseListeners();
