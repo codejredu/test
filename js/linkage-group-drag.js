@@ -1,85 +1,79 @@
-// perfect-group-connect.js - פתרון מושלם לחיבור קבוצות בלוקים
+// visual-puzzle-connect.js - מודול ייעודי לחיבור ויזואלי של קבוצות בלוקים
 
 (function() {
-  console.log("[PerfectConnect] טוען מודול חיבור פאזל מושלם לקבוצות");
+  console.log("[VisualPuzzle] טוען מודול חיבור ויזואלי מושלם");
   
-  // קונפיגורציה אגרסיבית יותר לחיבור מושלם
+  // קונפיגורציה קיצונית לחיבור ויזואלי
   const CONFIG = {
-    DEBUG: true,                      // הדפסת הודעות דיבוג
-    OVERLAP: -3,                      // ערך חפיפה של 3 פיקסלים בחיבור (שלילי = חפיפה)
-    HORIZONTAL_FINE_TUNING: -15,      // כוונון אופקי אגרסיבי לסגירת רווחים
-    VERTICAL_OFFSET: 0,               // יישור אנכי
-    CONNECTION_DELAY: 1,              // זמן מינימלי לתגובה מהירה
-    Z_INDEX_LEFT: 15,                 // שכבה גבוהה לבלוק שמאלי
-    Z_INDEX_RIGHT: 5,                 // שכבה נמוכה לבלוק ימני
-    GROUP_FIX_INTERVAL: 50,           // בדיקת חיבורים תכופה
-    BORDER_COMPENSATION: -1,          // פיצוי לגבולות
-    APPLY_FORCE: true                 // כפה סגנונות בצורה אגרסיבית
+    DEBUG: true,                    // הדפסת הודעות דיבוג
+    FIX_INTERVAL: 40,               // בדיקה כל 40 מילישניות
+    FORCE_CONNECT: true,            // כפיית חיבור ויזואלי
+    OVERLAP_PIXELS: 2,              // כמה פיקסלים של חפיפה
+    USE_ABSOLUTE_POSITIONING: true  // שימוש במיקום מוחלט
   };
   
   // משתנים גלובליים
-  let checkInterval = null;
+  let fixInterval = null;
   
-  // הזרקת סגנונות CSS לחיבור מושלם
-  function injectStyles() {
-    // הסר סגנון קודם אם קיים
-    const oldStyle = document.getElementById('perfect-puzzle-fix-styles');
-    if (oldStyle) {
-      oldStyle.remove();
+  // הוספת סגנונות CSS
+  function addStyles() {
+    const styleId = 'visual-puzzle-fix-css';
+    let styleEl = document.getElementById(styleId);
+    
+    if (styleEl) {
+      styleEl.remove();
     }
     
-    // יצירת סגנון חדש
-    const style = document.createElement('style');
-    style.id = 'perfect-puzzle-fix-styles';
-    style.textContent = `
-      /* סגנונות לחיבור פאזל מושלם */
-      .perfect-left {
-        position: relative !important;
-        z-index: ${CONFIG.Z_INDEX_LEFT} !important;
-        margin-right: ${CONFIG.OVERLAP}px !important;
+    styleEl = document.createElement('style');
+    styleEl.id = styleId;
+    styleEl.textContent = `
+      /* סגנונות לחיבור ויזואלי מושלם */
+      .visual-connected-left {
+        /* חפיפה בצד ימין */
+        margin-right: -${CONFIG.OVERLAP_PIXELS}px !important;
         padding-right: 0 !important;
         border-right: 0 !important;
+        position: relative !important;
+        z-index: 20 !important;
       }
       
-      .perfect-right {
-        position: relative !important;
-        z-index: ${CONFIG.Z_INDEX_RIGHT} !important;
-        margin-left: ${CONFIG.OVERLAP}px !important;
+      .visual-connected-right {
+        /* חפיפה בצד שמאל */
+        margin-left: -${CONFIG.OVERLAP_PIXELS}px !important;
         padding-left: 0 !important;
         border-left: 0 !important;
+        position: relative !important;
+        z-index: 10 !important;
       }
       
-      /* הסרת מעברים ואנימציות */
-      .perfect-connect {
-        transition: none !important;
+      /* ביטול אפקטים שעלולים להפריע */
+      .visual-connected {
         transform: none !important;
-      }
-      
-      /* הסרת מסגרות */
-      .perfect-connect * {
-        outline: none !important;
+        transition: none !important;
+        animation: none !important;
         box-shadow: none !important;
+        outline: none !important;
       }
       
-      /* טיפול בכל בלוק */
-      .block {
-        box-sizing: border-box !important;
-      }
-      
-      /* אין מרווחים בקבוצה */
-      .group-connection {
-        display: flex !important;
-        flex-direction: row !important;
-        gap: ${CONFIG.OVERLAP}px !important;
+      /* הגברת אפקט הפאזל */
+      .visual-connected-left:after {
+        content: '';
+        position: absolute;
+        right: -2px;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: inherit;
+        z-index: 25;
       }
     `;
     
-    document.head.appendChild(style);
-    console.log("[PerfectConnect] סגנונות CSS משופרים הוזרקו");
+    document.head.appendChild(styleEl);
+    console.log("[VisualPuzzle] סגנונות חיבור ויזואלי הוזרקו");
   }
   
-  // פונקציה ליצירת חיבור פאזל מושלם בין שני בלוקים
-  function createPerfectConnection(leftBlock, rightBlock) {
+  // חיבור ויזואלי מושלם של שני בלוקים
+  function forceVisualConnection(leftBlock, rightBlock) {
     if (!leftBlock || !rightBlock) return false;
     
     try {
@@ -87,436 +81,162 @@
       const leftRect = leftBlock.getBoundingClientRect();
       const rightRect = rightBlock.getBoundingClientRect();
       
-      // חשב את המיקום האידיאלי בלי רווח
-      const idealLeft = leftRect.right + CONFIG.HORIZONTAL_FINE_TUNING + CONFIG.BORDER_COMPENSATION;
-      const idealTop = leftRect.top + CONFIG.VERTICAL_OFFSET;
+      // בדוק האם נדרש תיקון
+      const currentGap = Math.abs(leftRect.right - rightRect.left);
       
-      // קבל את אזור התכנות
-      const programArea = document.getElementById('programming-area') || 
-                          document.getElementById('program-blocks') || 
-                          document.body;
-      const areaRect = programArea.getBoundingClientRect();
+      // אם יש כבר חיבור טוב, לא צריך לתקן
+      if (currentGap < 0.5) return true;
       
-      // חשב את המיקום האבסולוטי בדף
-      const absoluteLeft = idealLeft - areaRect.left + programArea.scrollLeft;
-      const absoluteTop = idealTop - areaRect.top + programArea.scrollTop;
+      // סגירת הרווח באופן מוחלט
+      // הוסף מחלקות לשני הבלוקים
+      leftBlock.classList.add('visual-connected-left', 'visual-connected');
+      rightBlock.classList.add('visual-connected-right', 'visual-connected');
       
-      // החלת המיקום החדש - דרך ראשונה
-      if (CONFIG.APPLY_FORCE) {
-        // החלה ישירה ואגרסיבית של סגנונות
+      // אפשרות לכפיית מיקום
+      if (CONFIG.USE_ABSOLUTE_POSITIONING && CONFIG.FORCE_CONNECT) {
+        const areaEl = document.getElementById('programming-area') || 
+                      document.getElementById('program-blocks') || 
+                      document.body;
+        const areaRect = areaEl.getBoundingClientRect();
+        
+        // חשב מיקום אידיאלי
+        const idealLeft = leftRect.right - CONFIG.OVERLAP_PIXELS;
+        const idealTop = leftRect.top;
+        
+        // המר למיקום בדף
+        const absoluteLeft = idealLeft - areaRect.left + areaEl.scrollLeft;
+        const absoluteTop = idealTop - areaRect.top + areaEl.scrollTop;
+        
+        // החל מיקום על הבלוק הימני
         rightBlock.style.cssText = `
           position: absolute !important;
-          left: ${Math.round(absoluteLeft)}px !important;
-          top: ${Math.round(absoluteTop)}px !important;
+          left: ${absoluteLeft}px !important;
+          top: ${absoluteTop}px !important;
           margin: 0 !important;
           padding: 0 !important;
           border: 0 !important;
           transform: none !important;
           transition: none !important;
-          z-index: ${CONFIG.Z_INDEX_RIGHT} !important;
+          z-index: 10 !important;
         `;
-      } else {
-        // החלה רגילה
-        rightBlock.style.position = 'absolute';
-        rightBlock.style.left = `${Math.round(absoluteLeft)}px`;
-        rightBlock.style.top = `${Math.round(absoluteTop)}px`;
+        
+        // כפה רנדור
+        void rightBlock.offsetWidth;
       }
       
-      // כפה רנדור מחדש
-      void rightBlock.offsetWidth;
-      
-      // הוסף מחלקות
-      leftBlock.classList.add('perfect-left', 'perfect-connect');
-      rightBlock.classList.add('perfect-right', 'perfect-connect');
-      
-      // נסה לבטל טרנספורמציות גם בבלוק השמאלי
-      leftBlock.style.transform = 'none';
-      leftBlock.style.transition = 'none';
-      leftBlock.style.margin = '0';
-      leftBlock.style.border = '0';
-      
       if (CONFIG.DEBUG) {
-        console.log(`[PerfectConnect] חיבור מושלם בין ${leftBlock.id} ל-${rightBlock.id}`);
-        console.log(`[PerfectConnect] מיקום: ${Math.round(absoluteLeft)}, ${Math.round(absoluteTop)}`);
+        console.log(`[VisualPuzzle] חיבור ויזואלי בין ${leftBlock.id} ל-${rightBlock.id}`);
       }
       
       return true;
     } catch (err) {
-      console.error('[PerfectConnect] שגיאה בחיבור:', err);
+      console.error('[VisualPuzzle] שגיאה בחיבור:', err);
       return false;
     }
   }
   
-  // טיפול בחיבור בין קבוצות בלוקים
-  function connectBlockGroups(leftGroup, rightGroup) {
-    if (!leftGroup || !leftGroup.length || !rightGroup || !rightGroup.length) return false;
-    
-    try {
-      // מצא את הבלוק הימני ביותר בקבוצה השמאלית
-      let rightmostInLeft = findRightmostBlock(leftGroup);
-      
-      // מצא את הבלוק השמאלי ביותר בקבוצה הימנית
-      let leftmostInRight = findLeftmostBlock(rightGroup);
-      
-      // יצור חיבור מושלם בין שני הבלוקים
-      return createPerfectConnection(rightmostInLeft, leftmostInRight);
-    } catch (err) {
-      console.error('[PerfectConnect] שגיאה בחיבור קבוצות:', err);
-      return false;
-    }
-  }
-  
-  // מציאת הבלוק הימני ביותר בקבוצה
-  function findRightmostBlock(blocks) {
-    if (!blocks || !blocks.length) return null;
-    
-    let rightmost = blocks[0];
-    let rightmostRect = rightmost.getBoundingClientRect();
-    
-    for (const block of blocks) {
-      const rect = block.getBoundingClientRect();
-      if (rect.right > rightmostRect.right) {
-        rightmost = block;
-        rightmostRect = rect;
-      }
-    }
-    
-    return rightmost;
-  }
-  
-  // מציאת הבלוק השמאלי ביותר בקבוצה
-  function findLeftmostBlock(blocks) {
-    if (!blocks || !blocks.length) return null;
-    
-    let leftmost = blocks[0];
-    let leftmostRect = leftmost.getBoundingClientRect();
-    
-    for (const block of blocks) {
-      const rect = block.getBoundingClientRect();
-      if (rect.left < leftmostRect.left) {
-        leftmost = block;
-        leftmostRect = rect;
-      }
-    }
-    
-    return leftmost;
-  }
-  
-  // מציאת כל זוגות הבלוקים שמחוברים עם רווח
-  function findAllConnectedPairsWithGap() {
+  // זיהוי זוגות בלוקים שאמורים להיות מחוברים
+  function findBlocksToConnect() {
     const allBlocks = Array.from(document.querySelectorAll('.block:not(.in-drawer)'));
-    const pairs = [];
+    const connectedPairs = [];
     
     for (let i = 0; i < allBlocks.length; i++) {
       const block1 = allBlocks[i];
       const rect1 = block1.getBoundingClientRect();
       
-      for (let j = i + 1; j < allBlocks.length; j++) {
+      for (let j = 0; j < allBlocks.length; j++) {
+        if (i === j) continue;
+        
         const block2 = allBlocks[j];
         const rect2 = block2.getBoundingClientRect();
         
-        // חישוב מרחק אופקי בין הבלוקים
-        const rightToLeftGap = Math.abs(rect1.right - rect2.left);
+        // בדוק אם הבלוקים אמורים להיות מחוברים
+        const gap = Math.abs(rect1.right - rect2.left);
+        const verticalAligned = Math.abs(rect1.top - rect2.top) < 5;
         
-        // יישור אנכי
-        const verticalAligned = Math.abs(rect1.top - rect2.top) < 10;
-        
-        // בדוק אם יש רווח (אבל הם קרובים ביחס)
-        if (rightToLeftGap <= 20 && rightToLeftGap > 0 && verticalAligned && rect1.left < rect2.left) {
-          // הבלוק הראשון משמאל לשני
-          pairs.push({
+        // רק אם הבלוק 1 משמאל לבלוק 2
+        if (gap < 5 && verticalAligned && rect1.right < rect2.right) {
+          connectedPairs.push({
             left: block1,
             right: block2,
-            gap: rightToLeftGap
+            gap: gap
           });
         }
       }
     }
     
-    return pairs;
+    return connectedPairs;
   }
   
-  // תיקון כל הרווחים בחיבורי בלוקים
-  function fixAllConnections() {
-    const pairs = findAllConnectedPairsWithGap();
+  // תיקון כל החיבורים הויזואליים 
+  function fixAllVisualConnections() {
+    const pairs = findBlocksToConnect();
     let fixed = 0;
     
     for (const pair of pairs) {
-      if (createPerfectConnection(pair.left, pair.right)) {
+      if (forceVisualConnection(pair.left, pair.right)) {
         fixed++;
       }
     }
     
     if (fixed > 0 && CONFIG.DEBUG) {
-      console.log(`[PerfectConnect] תוקנו ${fixed} חיבורים עם רווחים`);
+      console.log(`[VisualPuzzle] תוקנו ${fixed} חיבורים ויזואליים`);
     }
     
     return fixed;
   }
   
-  // מציאת קבוצות בלוקים פעילות 
-  function findActiveGroups() {
-    const groupBlocks = document.querySelectorAll('.group-dragging');
-    
-    if (groupBlocks.length <= 1) {
-      return [];
-    }
-    
-    const groups = [];
-    const processedBlocks = new Set();
-    
-    Array.from(groupBlocks).forEach(block => {
-      if (processedBlocks.has(block.id)) return;
-      
-      // מצא את כל הבלוקים הקשורים (בקבוצה)
-      const connectedBlocks = findConnectedBlocks(block);
-      
-      // סמן את כל הבלוקים כמעובדים
-      connectedBlocks.forEach(b => processedBlocks.add(b.id));
-      
-      // הוסף את הקבוצה
-      if (connectedBlocks.length > 0) {
-        groups.push(connectedBlocks);
-      }
-    });
-    
-    return groups;
-  }
-  
-  // מציאת כל הבלוקים המחוברים לבלוק נתון
-  function findConnectedBlocks(startBlock) {
-    if (!startBlock) return [];
-    
-    const visited = new Set([startBlock.id]);
-    const queue = [startBlock];
-    const result = [startBlock];
-    
-    while (queue.length > 0) {
-      const current = queue.shift();
-      const rect = current.getBoundingClientRect();
-      
-      // בדוק את כל הבלוקים האחרים
-      document.querySelectorAll('.group-dragging').forEach(block => {
-        if (visited.has(block.id)) return;
-        
-        const blockRect = block.getBoundingClientRect();
-        
-        // בדוק אם הבלוקים מחוברים
-        const rightToLeftGap = Math.abs(rect.right - blockRect.left);
-        const leftToRightGap = Math.abs(rect.left - blockRect.right);
-        
-        // יישור אנכי
-        const verticalAligned = Math.abs(rect.top - blockRect.top) < 10;
-        
-        if ((rightToLeftGap < 20 || leftToRightGap < 20) && verticalAligned) {
-          visited.add(block.id);
-          queue.push(block);
-          result.push(block);
-        }
-      });
-    }
-    
-    return result;
-  }
-  
-  // טיפול בחיבור בין כל הקבוצות הפעילות
-  function fixAllGroupConnections() {
-    const groups = findActiveGroups();
-    
-    if (groups.length < 2) return 0;
-    
-    let fixed = 0;
-    
-    // בדוק חיבורים בין כל זוג קבוצות
-    for (let i = 0; i < groups.length; i++) {
-      for (let j = i + 1; j < groups.length; j++) {
-        const group1 = groups[i];
-        const group2 = groups[j];
-        
-        // מצא את הבלוק הימני ביותר בקבוצה 1
-        const rightmost1 = findRightmostBlock(group1);
-        const rightRect1 = rightmost1.getBoundingClientRect();
-        
-        // מצא את הבלוק השמאלי ביותר בקבוצה 2
-        const leftmost2 = findLeftmostBlock(group2);
-        const leftRect2 = leftmost2.getBoundingClientRect();
-        
-        // גם להיפך
-        const leftmost1 = findLeftmostBlock(group1);
-        const leftRect1 = leftmost1.getBoundingClientRect();
-        
-        const rightmost2 = findRightmostBlock(group2);
-        const rightRect2 = rightmost2.getBoundingClientRect();
-        
-        // בדוק את המרחק בין הקבוצות
-        const dist1to2 = Math.abs(rightRect1.right - leftRect2.left);
-        const dist2to1 = Math.abs(rightRect2.right - leftRect1.left);
-        
-        // יישור אנכי
-        const verticalAligned1to2 = Math.abs(rightRect1.top - leftRect2.top) < 10;
-        const verticalAligned2to1 = Math.abs(rightRect2.top - leftRect1.top) < 10;
-        
-        if (dist1to2 < 20 && verticalAligned1to2) {
-          // קבוצה 1 משמאל לקבוצה 2
-          if (createPerfectConnection(rightmost1, leftmost2)) {
-            fixed++;
-          }
-        } else if (dist2to1 < 20 && verticalAligned2to1) {
-          // קבוצה 2 משמאל לקבוצה 1
-          if (createPerfectConnection(rightmost2, leftmost1)) {
-            fixed++;
-          }
-        }
-      }
-    }
-    
-    if (fixed > 0 && CONFIG.DEBUG) {
-      console.log(`[PerfectConnect] תוקנו ${fixed} חיבורי קבוצות`);
-    }
-    
-    return fixed;
-  }
-  
-  // עקיפת הפונקציה המקורית - performSnap
-  function overrideSnapFunction() {
-    if (typeof window.performSnap === 'function') {
-      const originalPerformSnap = window.performSnap;
-      
-      window.performSnap = function(sourceBlock, targetBlock, direction) {
-        // הפעל את הפונקציה המקורית
-        const result = originalPerformSnap.apply(this, arguments);
-        
-        // אם החיבור הצליח והכיוון ימינה, תקן את החיבור
-        if (result && direction === 'right') {
-          setTimeout(() => {
-            createPerfectConnection(sourceBlock, targetBlock);
-          }, CONFIG.CONNECTION_DELAY);
-        }
-        
-        return result;
-      };
-      
-      console.log("[PerfectConnect] עקפתי את פונקציית ההצמדה המקורית");
-    }
-  }
-  
-  // עקיפת פונקציית mouseUp
-  function overrideMouseUpFunction() {
-    if (typeof window.handleMouseUp === 'function') {
-      const originalMouseUp = window.handleMouseUp;
-      
-      window.handleMouseUp = function(e) {
-        // הפעל את הפונקציה המקורית
-        const result = originalMouseUp.apply(this, arguments);
-        
-        // תקן חיבורים
-        setTimeout(() => {
-          fixAllConnections();
-          fixAllGroupConnections();
-        }, CONFIG.CONNECTION_DELAY);
-        
-        return result;
-      };
-      
-      console.log("[PerfectConnect] עקפתי את פונקציית שחרור העכבר המקורית");
-    }
-  }
-  
-  // האזנה לאירועי גרירת קבוצות
-  function listenForGroupEvents() {
+  // האזנה לאירועי עכבר
+  function addMouseListeners() {
     document.addEventListener('mouseup', function(e) {
-      const draggedGroups = document.querySelectorAll('.group-dragging');
+      // בדוק חיבורים מיד אחרי עזיבת העכבר
+      setTimeout(fixAllVisualConnections, 10);
       
-      if (draggedGroups.length > 1) {
-        // טיפול מיידי בקבוצות
-        setTimeout(() => {
-          fixAllGroupConnections();
-          fixAllConnections();
-        }, CONFIG.CONNECTION_DELAY);
-        
-        // טיפול נוסף
-        setTimeout(() => {
-          fixAllGroupConnections();
-          fixAllConnections();
-        }, CONFIG.CONNECTION_DELAY * 10);
-      }
+      // ובדוק שוב מאוחר יותר (למקרה שהמיקום השתנה)
+      setTimeout(fixAllVisualConnections, 100);
     });
     
-    console.log("[PerfectConnect] הוספתי האזנה לאירועי גרירת קבוצות");
+    console.log("[VisualPuzzle] נוספו מאזינים לאירועי עכבר");
   }
   
-  // הפעלת בדיקה תקופתית של חיבורים
-  function startPeriodicCheck() {
-    if (checkInterval) {
-      clearInterval(checkInterval);
+  // הפעלת בדיקה תקופתית
+  function startFixInterval() {
+    if (fixInterval) {
+      clearInterval(fixInterval);
     }
     
-    checkInterval = setInterval(() => {
-      fixAllConnections();
-      fixAllGroupConnections();
-    }, CONFIG.GROUP_FIX_INTERVAL);
-    
-    console.log(`[PerfectConnect] הפעלתי בדיקה תקופתית של חיבורים (כל ${CONFIG.GROUP_FIX_INTERVAL}ms)`);
-  }
-  
-  // גילוי והתחלת הטיפול באירועי "חיבור קבוצות" ממודולים קיימים
-  function hookIntoExistingModules() {
-    // אם קיימת פונקציית חיבור קבוצות, עקוף אותה
-    if (typeof window.connectGroups === 'function') {
-      const originalConnectGroups = window.connectGroups;
-      
-      window.connectGroups = function(leftGroup, rightGroup) {
-        // הפעל את הפונקציה המקורית
-        const result = originalConnectGroups.apply(this, arguments);
-        
-        // הוסף את הטיפול המושלם
-        setTimeout(() => {
-          fixAllGroupConnections();
-        }, CONFIG.CONNECTION_DELAY);
-        
-        return result;
-      };
-      
-      console.log("[PerfectConnect] עקפתי את פונקציית חיבור הקבוצות הקיימת");
-    }
+    fixInterval = setInterval(fixAllVisualConnections, CONFIG.FIX_INTERVAL);
+    console.log(`[VisualPuzzle] הופעלה בדיקה תקופתית כל ${CONFIG.FIX_INTERVAL}ms`);
   }
   
   // אתחול המודול
-  function initializeModule() {
-    // בדיקה אם המודול כבר אותחל
-    if (window.perfectConnectInitialized) {
-      console.log("[PerfectConnect] המודול כבר אותחל");
+  function initialize() {
+    // בדוק אם כבר אותחל
+    if (window.visualPuzzleInitialized) {
+      console.log("[VisualPuzzle] המודול כבר אותחל");
       return;
     }
     
-    console.log("[PerfectConnect] מאתחל מודול חיבור פאזל מושלם לקבוצות");
+    console.log("[VisualPuzzle] אתחול מודול חיבור ויזואלי");
     
     // הזרק סגנונות
-    injectStyles();
+    addStyles();
     
-    // עקוף פונקציות קיימות
-    overrideSnapFunction();
-    overrideMouseUpFunction();
-    hookIntoExistingModules();
-    
-    // האזן לאירועי גרירת קבוצות
-    listenForGroupEvents();
+    // הוסף מאזינים
+    addMouseListeners();
     
     // הפעל בדיקה תקופתית
-    startPeriodicCheck();
+    startFixInterval();
     
     // תיקון ראשוני
-    setTimeout(() => {
-      fixAllConnections();
-      fixAllGroupConnections();
-    }, 500);
+    setTimeout(fixAllVisualConnections, 500);
     
-    // סימון אתחול
-    window.perfectConnectInitialized = true;
+    // סמן אתחול
+    window.visualPuzzleInitialized = true;
     
-    console.log("[PerfectConnect] אתחול המודול הושלם");
+    console.log("[VisualPuzzle] אתחול מודול חיבור ויזואלי הושלם");
   }
   
-  // הפעל את המודול
-  initializeModule();
+  // הפעל
+  initialize();
 })();
