@@ -1,18 +1,18 @@
-// visual-puzzle-connect.js - מודול ייעודי לחיבור ויזואלי של קבוצות בלוקים
+// visual-puzzle-connect.js - מודול ייעודי לחיבור ויזואלי וצבעי עיגולים
 
 (function() {
-  console.log("[VisualPuzzle] טוען מודול חיבור ויזואלי מושלם");
+  console.log("[VisualPuzzle] טוען מודול חיבור ויזואלי ושינוי צבעי עיגולים");
   
-  // קונפיגורציה קיצונית לחיבור ויזואלי
+  // קונפיגורציה
   const CONFIG = {
     DEBUG: true,                    // הדפסת הודעות דיבוג
     FIX_INTERVAL: 40,               // בדיקה כל 40 מילישניות
     FORCE_CONNECT: true,            // כפיית חיבור ויזואלי
     OVERLAP_PIXELS: 2,              // כמה פיקסלים של חפיפה
-    USE_ABSOLUTE_POSITIONING: true, // שימוש במיקום מוחלט
     CONNECTION_THRESHOLD: 15,       // סף מופחת להופעת עיגולים (במקום 40)
     LEFT_COLOR: '#2196F3',          // כחול לעיגול שמאלי
-    RIGHT_COLOR: '#FF9800'          // כתום לעיגול ימני
+    RIGHT_COLOR: '#FF9800',         // כתום לעיגול ימני
+    IMPORTANT_MARKER: '!important;' // סימון חשיבות לסגנונות
   };
   
   // משתנים גלובליים
@@ -58,75 +58,40 @@
         outline: none !important;
       }
       
-      /* הגברת אפקט הפאזל */
-      .visual-connected-left:after {
-        content: '';
-        position: absolute;
-        right: -2px;
-        top: 0;
-        bottom: 0;
-        width: 4px;
-        background: inherit;
-        z-index: 25;
-      }
-      
-      /* עיגולי עגינה - צבעים שונים והופעה מהירה יותר */
-      .right-connection-point {
-        position: absolute !important;
-        width: 20px !important;
-        height: 20px !important;
-        top: 50% !important;
-        right: -10px !important;
-        transform: translateY(-50%) !important;
-        background-color: ${CONFIG.RIGHT_COLOR} !important;
-        border-radius: 50% !important;
-        opacity: 0;
-        transition: opacity 0.1s ease-out !important;
-        pointer-events: none !important;
-        z-index: 9999 !important;
-        box-shadow: 0 0 10px 4px rgba(255,152,0,0.95) !important;
-        border: 2px solid #FFF !important;
+      /* עדיפות גבוהה - תמיד יחליף את ההגדרות המקוריות */
+      .left-connection-point {
+        background-color: ${CONFIG.LEFT_COLOR} !important;
+        box-shadow: 0 0 10px 4px rgba(33,150,243,0.95) !important;
       }
 
-      .left-connection-point {
-        position: absolute !important;
-        width: 20px !important;
-        height: 20px !important;
-        top: 50% !important;
-        left: -10px !important;
-        transform: translateY(-50%) !important;
-        background-color: ${CONFIG.LEFT_COLOR} !important;
-        border-radius: 50% !important;
-        opacity: 0;
-        transition: opacity 0.1s ease-out !important;
-        pointer-events: none !important;
-        z-index: 9999 !important;
-        box-shadow: 0 0 10px 4px rgba(33,150,243,0.95) !important;
-        border: 2px solid #FFF !important;
+      .right-connection-point {
+        background-color: ${CONFIG.RIGHT_COLOR} !important;
+        box-shadow: 0 0 10px 4px rgba(255,152,0,0.95) !important;
       }
     `;
     
     document.head.appendChild(styleEl);
-    console.log("[VisualPuzzle] סגנונות חיבור ויזואלי הוזרקו");
+    console.log("[VisualPuzzle] סגנונות חיבור ויזואלי ושינוי צבעי עיגולים הוזרקו");
   }
   
-  // עקיפת פונקציית Threshold המקורית - להופעה מהירה יותר של העיגולים
-  function overrideThresholdFunction() {
-    if (typeof window.handleThresholdMet === 'function') {
-      const originalThreshold = window.handleThresholdMet;
-      
-      window.handleThresholdMet = function(sourceBlock, targetBlock, direction, distance) {
-        // שימוש בסף נמוך יותר להופעת העיגולים
-        if (distance <= CONFIG.CONNECTION_THRESHOLD) {
-          // הפעל את הפונקציה המקורית
-          return originalThreshold.apply(this, arguments);
-        }
-        
-        return false;
-      };
-      
-      console.log("[VisualPuzzle] עקפתי את פונקציית הסף להופעה מהירה יותר של עיגולים");
-    }
+  // פונקציה לאיתור ועדכון עיגולי חיבור
+  function updateConnectionPoints() {
+    // איתור העיגולים בדף
+    const leftPoints = document.querySelectorAll('.left-connection-point');
+    const rightPoints = document.querySelectorAll('.right-connection-point');
+    
+    // עדכון צבעים באופן ישיר
+    leftPoints.forEach(point => {
+      point.style.backgroundColor = CONFIG.LEFT_COLOR;
+      point.style.boxShadow = '0 0 10px 4px rgba(33,150,243,0.95)';
+    });
+    
+    rightPoints.forEach(point => {
+      point.style.backgroundColor = CONFIG.RIGHT_COLOR;
+      point.style.boxShadow = '0 0 10px 4px rgba(255,152,0,0.95)';
+    });
+    
+    return leftPoints.length + rightPoints.length;
   }
   
   // חיבור ויזואלי מושלם של שני בלוקים
@@ -150,7 +115,7 @@
       rightBlock.classList.add('visual-connected-right', 'visual-connected');
       
       // אפשרות לכפיית מיקום
-      if (CONFIG.USE_ABSOLUTE_POSITIONING && CONFIG.FORCE_CONNECT) {
+      if (CONFIG.FORCE_CONNECT) {
         const areaEl = document.getElementById('programming-area') || 
                       document.getElementById('program-blocks') || 
                       document.body;
@@ -190,6 +155,58 @@
       console.error('[VisualPuzzle] שגיאה בחיבור:', err);
       return false;
     }
+  }
+  
+  // פתרון קיצוני - מחיקה ויצירה מחדש של העיגולים בצבעים הנכונים
+  function recreateConnectionPoints(block) {
+    if (!block) return false;
+    
+    try {
+      // הסר את העיגולים הקיימים
+      const existingLeftPoint = block.querySelector('.left-connection-point');
+      const existingRightPoint = block.querySelector('.right-connection-point');
+      
+      if (existingLeftPoint) existingLeftPoint.remove();
+      if (existingRightPoint) existingRightPoint.remove();
+      
+      // צור עיגולים חדשים עם הצבעים הנכונים
+      const leftPoint = document.createElement('div');
+      leftPoint.className = 'left-connection-point';
+      leftPoint.style.backgroundColor = CONFIG.LEFT_COLOR;
+      leftPoint.style.boxShadow = '0 0 10px 4px rgba(33,150,243,0.95)';
+      
+      const rightPoint = document.createElement('div');
+      rightPoint.className = 'right-connection-point';
+      rightPoint.style.backgroundColor = CONFIG.RIGHT_COLOR;
+      rightPoint.style.boxShadow = '0 0 10px 4px rgba(255,152,0,0.95)';
+      
+      // הוסף לבלוק
+      block.appendChild(leftPoint);
+      block.appendChild(rightPoint);
+      
+      return true;
+    } catch(err) {
+      console.error('[VisualPuzzle] שגיאה ביצירת נקודות חיבור:', err);
+      return false;
+    }
+  }
+  
+  // יצירת עיגולים מחדש עבור כל הבלוקים
+  function recreateAllConnectionPoints() {
+    const allBlocks = document.querySelectorAll('.block:not(.in-drawer)');
+    let recreated = 0;
+    
+    allBlocks.forEach(block => {
+      if (recreateConnectionPoints(block)) {
+        recreated++;
+      }
+    });
+    
+    if (recreated > 0 && CONFIG.DEBUG) {
+      console.log(`[VisualPuzzle] נוצרו מחדש נקודות חיבור עבור ${recreated} בלוקים`);
+    }
+    
+    return recreated;
   }
   
   // זיהוי זוגות בלוקים שאמורים להיות מחוברים
@@ -236,6 +253,9 @@
       }
     }
     
+    // עדכון צבעי עיגולים
+    updateConnectionPoints();
+    
     if (fixed > 0 && CONFIG.DEBUG) {
       console.log(`[VisualPuzzle] תוקנו ${fixed} חיבורים ויזואליים`);
     }
@@ -243,17 +263,70 @@
     return fixed;
   }
   
+  // האזנה לשינויים בDOM - להחלפת עיגולים חדשים שנוצרים
+  function observeDOMChanges() {
+    // יצירת צופה לשינויים בDOM
+    const observer = new MutationObserver(mutations => {
+      let needsUpdate = false;
+      
+      mutations.forEach(mutation => {
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+          // עבור כל אלמנט חדש, בדוק אם יש נקודות חיבור
+          mutation.addedNodes.forEach(node => {
+            if (node.nodeType === 1) { // אלמנט HTML
+              if (node.classList && 
+                  (node.classList.contains('left-connection-point') || 
+                   node.classList.contains('right-connection-point'))) {
+                needsUpdate = true;
+              }
+              
+              // בדוק גם אלמנטים בתוך האלמנט החדש
+              const points = node.querySelectorAll('.left-connection-point, .right-connection-point');
+              if (points.length > 0) {
+                needsUpdate = true;
+              }
+            }
+          });
+        }
+      });
+      
+      if (needsUpdate) {
+        updateConnectionPoints();
+      }
+    });
+    
+    // התחל לעקוב אחרי כל העמוד
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+    
+    console.log("[VisualPuzzle] התחלתי לעקוב אחרי שינויים ב-DOM");
+  }
+  
   // האזנה לאירועי עכבר
   function addMouseListeners() {
     document.addEventListener('mouseup', function(e) {
       // בדוק חיבורים מיד אחרי עזיבת העכבר
-      setTimeout(fixAllVisualConnections, 10);
+      setTimeout(() => {
+        fixAllVisualConnections();
+        updateConnectionPoints();
+      }, 10);
       
-      // ובדוק שוב מאוחר יותר (למקרה שהמיקום השתנה)
-      setTimeout(fixAllVisualConnections, 100);
+      // ובדוק שוב מאוחר יותר
+      setTimeout(() => {
+        fixAllVisualConnections();
+        updateConnectionPoints();
+      }, 100);
     });
     
-    console.log("[VisualPuzzle] נוספו מאזינים לאירועי עכבר");
+    // האזנה לתזוזת עכבר - לעדכון צבעי עיגולים במהלך גרירה
+    document.addEventListener('mousemove', function(e) {
+      // עדכן צבעי עיגולים (אם יש נקודות חיבור פעילות)
+      updateConnectionPoints();
+    });
+    
+    console.log("[VisualPuzzle] נוספו מאזינים לאירועי עכבר ותזוזה");
   }
   
   // הפעלת בדיקה תקופתית
@@ -262,7 +335,11 @@
       clearInterval(fixInterval);
     }
     
-    fixInterval = setInterval(fixAllVisualConnections, CONFIG.FIX_INTERVAL);
+    fixInterval = setInterval(() => {
+      fixAllVisualConnections();
+      updateConnectionPoints();
+    }, CONFIG.FIX_INTERVAL);
+    
     console.log(`[VisualPuzzle] הופעלה בדיקה תקופתית כל ${CONFIG.FIX_INTERVAL}ms`);
   }
   
@@ -274,27 +351,27 @@
       return;
     }
     
-    console.log("[VisualPuzzle] אתחול מודול חיבור ויזואלי");
+    console.log("[VisualPuzzle] אתחול מודול חיבור ויזואלי ושינוי צבעי עיגולים");
     
     // הזרק סגנונות
     addStyles();
     
-    // עקוף פונקציות סף
-    overrideThresholdFunction();
+    // יצירה מחדש של כל העיגולים (פתרון קיצוני)
+    setTimeout(recreateAllConnectionPoints, 500);
     
-    // הוסף מאזינים
+    // הוסף מאזינים לאירועים
     addMouseListeners();
+    
+    // מעקב אחרי שינויים בDOM
+    observeDOMChanges();
     
     // הפעל בדיקה תקופתית
     startFixInterval();
     
-    // תיקון ראשוני
-    setTimeout(fixAllVisualConnections, 500);
-    
     // סמן אתחול
     window.visualPuzzleInitialized = true;
     
-    console.log("[VisualPuzzle] אתחול מודול חיבור ויזואלי הושלם");
+    console.log("[VisualPuzzle] אתחול מודול חיבור ויזואלי ושינוי צבעי עיגולים הושלם");
   }
   
   // הפעל
