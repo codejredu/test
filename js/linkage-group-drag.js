@@ -6,7 +6,7 @@
   // קונפיגורציה
   const CONFIG = {
     DEBUG: true,                  // מצב דיבאג
-    SNAP_MARGIN: -2,              // שולי הצמדה (שלילי = חפיפה)
+    SNAP_MARGIN: -5,              // שולי הצמדה (שלילי = חפיפה)
     CHECK_INTERVAL: 300,          // בדיקה תקופתית כל X מילישניות
     AUDIO_PATH: 'assets/sound/link.mp3', // צליל חיבור
     PHASE: 1                      // שלב הפיתוח (1 = תיקון שמאל לימין, 2 = תיקון מלא)
