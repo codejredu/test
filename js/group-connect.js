@@ -1,13 +1,8 @@
 --- START OF FILE group-connect.js ---
 
-// --- GROUP-CONNECT.JS v1.0.0 ---
-// מודול לחיבור קבוצות בלוקים מחוברות
-console.log("--- group-connect.js RAW SCRIPT LOAD ---"); 
+// --- GROUP-CONNECT.JS v1.0.1 --- 
+// מודול לחיבור קבוצות בלוקים מחוברות (גרסה מתוקנת לבדיקת אתחול)
 
-// --- GROUP-CONNECT.JS v1.0.0 ---
-// ... rest of the file
-(function() {
-//...
 (function() {
   'use strict';
 
@@ -62,18 +57,14 @@ console.log("--- group-connect.js RAW SCRIPT LOAD ---");
   }
   
   // --- פונקציות משוכפלות/מותאמות מ-linkage-group-drag-simplified ---
-  // (במקרה שהן לא זמינות גלובלית, או כדי למנוע תלויות)
   
-  // מציאת כל הבלוקים המחוברים (בהנחה שפונקציה זו קיימת ונגישה, אחרת יש לשכפל)
-  // אם הפונקציה המקורית אינה זמינה גלובלית, יש להעתיק אותה לכאן
+  // מציאת כל הבלוקים המחוברים (כולל Fallback)
   const findConnectedBlocksLocal = (typeof findConnectedBlocks === 'function') ? findConnectedBlocks : function(startBlock) {
-      // *** Fallback/Copied Implementation Here if needed ***
-      console.warn("[GroupConnect] Using local fallback for findConnectedBlocks. Ensure original is available or copy implementation.");
-      if (!startBlock) return [];
+      console.warn("[GroupConnect] Using local fallback for findConnectedBlocks. Ensure original is available globally or copy implementation properly.");
+      if (!startBlock || !document.getElementById(startBlock.id)) return []; // Added check if startBlock exists in DOM
       const result = [startBlock];
       const processed = new Set([startBlock.id]);
       const queue = [startBlock];
-      // ... (rest of the implementation copied from linkage-group-drag-simplified.js) ...
        while (queue.length > 0) {
           const current = queue.shift();
           const connections = [];
@@ -88,6 +79,8 @@ console.log("--- group-connect.js RAW SCRIPT LOAD ---");
                 result.push(block);
                 processed.add(id);
                 queue.push(block);
+              } else {
+                // console.warn(`[findConnectedBlocksLocal] Block with ID ${id} not found.`); // Optional: Log missing blocks
               }
             }
           }
@@ -95,18 +88,21 @@ console.log("--- group-connect.js RAW SCRIPT LOAD ---");
        return result;
   };
 
-  // מציאת הבלוק השמאלי ביותר (בהנחה שפונקציה זו קיימת ונגישה, אחרת יש לשכפל)
+  // מציאת הבלוק השמאלי ביותר (כולל Fallback)
   const findLeftmostBlockLocal = (typeof findLeftmostBlock === 'function') ? findLeftmostBlock : function(blocks) {
-      // *** Fallback/Copied Implementation Here if needed ***
-       console.warn("[GroupConnect] Using local fallback for findLeftmostBlock. Ensure original is available or copy implementation.");
       if (!blocks || blocks.length === 0) return null;
-      let leftmost = blocks[0];
+      // Fallback implementation needs check if blocks are still in DOM
+      const validBlocks = blocks.filter(b => b && document.body.contains(b));
+      if (validBlocks.length === 0) return null;
+      
+      console.warn("[GroupConnect] Using local fallback for findLeftmostBlock. Ensure original is available globally.");
+      let leftmost = validBlocks[0];
       let leftPosition = leftmost.getBoundingClientRect().left;
-      for (let i = 1; i < blocks.length; i++) {
-        const position = blocks[i].getBoundingClientRect().left;
+      for (let i = 1; i < validBlocks.length; i++) {
+        const position = validBlocks[i].getBoundingClientRect().left;
         if (position < leftPosition) {
           leftPosition = position;
-          leftmost = blocks[i];
+          leftmost = validBlocks[i];
         }
       }
       return leftmost;
@@ -114,10 +110,10 @@ console.log("--- group-connect.js RAW SCRIPT LOAD ---");
   
   // --- פונקציות המשתמשות ביכולות של linkageimproved.js ---
   
-  // הדגשת נקודות חיבור פוטנציאליות (בהנחה שהפונקציות זמינות גלובלית)
+  // הדגשת נקודות חיבור פוטנציאליות
   function highlightGroupSnapPoints(sourceBlock, targetBlock, direction) {
     if (typeof clearAllHighlights === 'function') {
-        clearAllHighlights(); // נקה הדגשות קודמות מכל הסוגים
+        clearAllHighlights(); 
     } else {
         console.warn("[GroupConnect] clearAllHighlights function not found.");
     }
@@ -129,26 +125,32 @@ console.log("--- group-connect.js RAW SCRIPT LOAD ---");
     
     // השהייה קטנה כדי לאפשר לאנימציה לעבוד כראוי
     setTimeout(() => {
-        if (direction === 'left') { // מקור מתחבר לשמאל של היעד
-            highlightConnectionPoint(sourceBlock, false); // נקודה ימנית במקור
-            highlightConnectionPoint(targetBlock, true);  // נקודה שמאלית ביעד
-        } else { // direction === 'right' - מקור מתחבר לימין של היעד
-            highlightConnectionPoint(sourceBlock, true);  // נקודה שמאלית במקור
-            highlightConnectionPoint(targetBlock, false); // נקודה ימנית ביעד
+        // Check if blocks are still valid before highlighting
+        if (sourceBlock && document.body.contains(sourceBlock) && targetBlock && document.body.contains(targetBlock)) {
+            if (direction === 'left') { // מקור מתחבר לשמאל של היעד
+                highlightConnectionPoint(sourceBlock, false); // נקודה ימנית במקור
+                highlightConnectionPoint(targetBlock, true);  // נקודה שמאלית ביעד
+            } else { // direction === 'right' - מקור מתחבר לימין של היעד
+                highlightConnectionPoint(sourceBlock, true);  // נקודה שמאלית במקור
+                highlightConnectionPoint(targetBlock, false); // נקודה ימנית ביעד
+            }
+            log(`Highlighting group snap: ${sourceBlock?.id} (${direction === 'left' ? 'R' : 'L'}) <-> ${targetBlock?.id} (${direction === 'left' ? 'L' : 'R'})`);
+        } else {
+             log("Highlighting aborted, block(s) no longer valid.");
+             clearGroupSnapHighlight(); // Clear potential info if blocks disappeared
         }
-        log(`Highlighting group snap: ${sourceBlock?.id} (${direction === 'left' ? 'R' : 'L'}) <-> ${targetBlock?.id} (${direction === 'left' ? 'L' : 'R'})`);
     }, config.highlightDelay);
   }
 
   // ניקוי הדגשות
   function clearGroupSnapHighlight() {
-      if (typeof clearAllHighlights === 'function') {
+      if (potentialSnapInfo && typeof clearAllHighlights === 'function') {
           clearAllHighlights();
       }
       potentialSnapInfo = null; // נקה גם את המידע על הצמדה פוטנציאלית
   }
   
-  // השמעת צליל הצמדה (בהנחה שהפונקציה זמינה גלובלית)
+  // השמעת צליל הצמדה
   function playGroupSnapSound() {
     if (typeof playSnapSound === 'function') {
       playSnapSound();
@@ -157,7 +159,7 @@ console.log("--- group-connect.js RAW SCRIPT LOAD ---");
     }
   }
 
-  // הוספת אנימציית הצמדה (בהנחה שהפונקציה זמינה גלובלית)
+  // הוספת אנימציית הצמדה
   function addGroupSnapAnimation(block) {
      if (typeof addSnapEffectAnimation === 'function') {
          addSnapEffectAnimation(block);
@@ -171,27 +173,45 @@ console.log("--- group-connect.js RAW SCRIPT LOAD ---");
   // בדיקה אם ניתן לחבר את הקבוצה הנגררת לקבוצה/בלוק אחר
   function checkPotentialGroupSnap() {
     // בדוק אם מתבצעת גרירת קבוצה (נשען על המשתנה הגלובלי מ-linkage-group-drag-simplified.js)
-    // ודא שהמשתנים הגלובליים קיימים לפני השימוש בהם
-    if (typeof isGroupDragging === 'undefined' || !isGroupDragging || 
-        typeof groupBlocks === 'undefined' || !groupBlocks || groupBlocks.length === 0) {
-      // אם יש הדגשה קודמת, נקה אותה
+    if (typeof window.isGroupDragging === 'undefined' || !window.isGroupDragging || 
+        typeof window.groupBlocks === 'undefined' || !window.groupBlocks || window.groupBlocks.length === 0) {
       if (potentialSnapInfo) {
           clearGroupSnapHighlight();
       }
       return; 
     }
 
-    const sourceGroupBlocks = groupBlocks; // קבל את הבלוקים מהמודול השני
+    // --- ולידציה נוספת ---
+    // ודא שהבלוקים הנגררים עדיין קיימים ב-DOM
+    const currentGroupBlocks = window.groupBlocks.filter(b => b && document.body.contains(b));
+    if (currentGroupBlocks.length !== window.groupBlocks.length) {
+        // log("Some dragged blocks were removed from DOM, aborting snap check.");
+        if (currentGroupBlocks.length === 0) {
+           clearGroupSnapHighlight(); // נקה אם כל הקבוצה נעלמה
+           return;
+        }
+        // אפשר להמשיך עם הבלוקים שנותרו, או לעצור כאן - נמשיך לעת עתה
+    }
+     if (currentGroupBlocks.length === 0) return; // אם אין בלוקים ולידיים, עצור
+
+
+    const sourceGroupBlocks = currentGroupBlocks; // השתמש בבלוקים הוולידיים
     const programArea = document.getElementById('program-blocks');
     if (!programArea) return;
 
     const sourceLeftmost = findLeftmostBlockLocal(sourceGroupBlocks);
-    const sourceRightmost = findRightmostBlock(sourceGroupBlocks);
+    const sourceRightmost = findRightmostBlock(sourceGroupBlocks); // findRightmostBlock צריך גם להיות עמיד
 
     if (!sourceLeftmost || !sourceRightmost) {
-      log("שגיאה: לא ניתן למצוא בלוקי קצה בקבוצה הנגררת.");
+      // log("Cannot find edge blocks in the dragged group (possibly due to DOM removal).");
       return;
     }
+
+    // ודא שבלוקי הקצה עדיין ב-DOM לפני קריאה ל-getBoundingClientRect
+     if (!document.body.contains(sourceLeftmost) || !document.body.contains(sourceRightmost)) {
+        log("Edge blocks of dragged group are no longer in DOM.");
+        return;
+     }
 
     const sourceLeftRect = sourceLeftmost.getBoundingClientRect();
     const sourceRightRect = sourceRightmost.getBoundingClientRect();
@@ -199,94 +219,111 @@ console.log("--- group-connect.js RAW SCRIPT LOAD ---");
     let bestSnapCandidate = null;
     let minDistance = config.groupConnectThreshold + 1;
 
+    const sourceGroupIds = new Set(sourceGroupBlocks.map(b => b.id)); // סט של ID בקבוצה הנגררת
+
     // מצא את כל הבלוקים באזור התכנות שאינם חלק מהקבוצה הנגררת
     const potentialTargetElements = Array.from(programArea.querySelectorAll('.block-container'))
-                                       .filter(el => !sourceGroupBlocks.some(sourceBlock => sourceBlock.id === el.id));
+                                       .filter(el => el && document.body.contains(el) && !sourceGroupIds.has(el.id));
 
-    const processedTargetLeaders = new Set(); // למנוע בדיקה כפולה של אותה קבוצת יעד
+    const processedTargetLeaders = new Set(); 
 
     for (const potentialElement of potentialTargetElements) {
-        // מצא את ה'מוביל' של הקבוצה אליה שייך האלמנט (יכול להיות האלמנט עצמו אם הוא בודד)
-        const potentialGroup = findConnectedBlocksLocal(potentialElement);
-        const targetLeader = findLeftmostBlockLocal(potentialGroup);
+        // אלמנט יכול להיעלם בין הלולאות, בדוק שוב
+        if (!potentialElement || !document.body.contains(potentialElement)) continue;
 
-        if (!targetLeader || processedTargetLeaders.has(targetLeader.id)) {
-            continue; // דלג אם אין מוביל או שכבר בדקנו קבוצה זו
+        const potentialGroup = findConnectedBlocksLocal(potentialElement);
+        // ודא שכל הבלוקים בקבוצה הפוטנציאלית קיימים
+        const validPotentialGroup = potentialGroup.filter(b => b && document.body.contains(b));
+        if(validPotentialGroup.length === 0) continue;
+
+        const targetLeader = findLeftmostBlockLocal(validPotentialGroup);
+
+        if (!targetLeader || processedTargetLeaders.has(targetLeader.id) || !document.body.contains(targetLeader)) {
+            continue; 
         }
         processedTargetLeaders.add(targetLeader.id);
 
-        const targetGroupBlocks = potentialGroup; // כל הבלוקים בקבוצת היעד
-        const targetLeftmost = targetLeader; // המוביל הוא השמאלי ביותר
-        const targetRightmost = findRightmostBlock(targetGroupBlocks);
+        const targetGroupBlocks = validPotentialGroup; 
+        const targetLeftmost = targetLeader; 
+        const targetRightmost = findRightmostBlock(targetGroupBlocks); // ודא שגם פונקציה זו עמידה
         
-        if (!targetLeftmost || !targetRightmost) continue; // צריך את שני הקצוות
-
-        const targetLeftRect = targetLeftmost.getBoundingClientRect();
-        const targetRightRect = targetRightmost.getBoundingClientRect();
+        if (!targetRightmost || !document.body.contains(targetRightmost)) continue; // צריך את הקצה הימני ושהוא יהיה ב-DOM
 
         // --- בדיקה: חיבור צד ימין של המקור לשמאל של היעד ---
-        // ודא שהצד השמאלי של היעד פנוי
         if (!targetLeftmost.hasAttribute('data-connected-from-left')) {
+            const targetLeftRect = targetLeftmost.getBoundingClientRect(); // קבל רק אם צריך
             const distance = Math.abs(sourceRightRect.right - targetLeftRect.left);
-            const verticalMidSource = sourceRightRect.top + sourceRightRect.height / 2;
-            const verticalMidTarget = targetLeftRect.top + targetLeftRect.height / 2;
-            const verticalDiff = Math.abs(verticalMidSource - verticalMidTarget);
             
-            // בדיקת חפיפה אנכית מינימלית
-            const topOverlap = Math.max(sourceRightRect.top, targetLeftRect.top);
-            const bottomOverlap = Math.min(sourceRightRect.bottom, targetLeftRect.bottom);
-            const verticalOverlap = Math.max(0, bottomOverlap - topOverlap);
-            const minHeightReq = Math.min(sourceRightRect.height, targetLeftRect.height) * config.verticalOverlapReq;
+            if (distance <= config.groupConnectThreshold) { // בדוק מרחק קודם
+                 const verticalMidSource = sourceRightRect.top + sourceRightRect.height / 2;
+                 const verticalMidTarget = targetLeftRect.top + targetLeftRect.height / 2;
+                 const verticalDiff = Math.abs(verticalMidSource - verticalMidTarget);
+                 
+                 const topOverlap = Math.max(sourceRightRect.top, targetLeftRect.top);
+                 const bottomOverlap = Math.min(sourceRightRect.bottom, targetLeftRect.bottom);
+                 const verticalOverlap = Math.max(0, bottomOverlap - topOverlap);
+                 const minHeightReq = Math.min(sourceRightRect.height, targetLeftRect.height) * config.verticalOverlapReq;
 
-            if (distance < minDistance && verticalDiff < config.verticalAlignThreshold && verticalOverlap >= minHeightReq) {
-                 minDistance = distance;
-                 bestSnapCandidate = {
-                     sourceBlock: sourceRightmost, // הבלוק הימני בקבוצה הנגררת
-                     targetBlock: targetLeftmost,  // הבלוק השמאלי בקבוצת היעד
-                     direction: 'left' // המקור מתחבר לשמאל היעד
-                 };
+                 if (distance < minDistance && verticalDiff < config.verticalAlignThreshold && verticalOverlap >= minHeightReq) {
+                      minDistance = distance;
+                      bestSnapCandidate = {
+                          sourceBlock: sourceRightmost, 
+                          targetBlock: targetLeftmost,  
+                          direction: 'left' 
+                      };
+                 }
             }
         }
 
         // --- בדיקה: חיבור צד שמאל של המקור לימין של היעד ---
-        // ודא שהצד הימני של היעד פנוי
         if (!targetRightmost.hasAttribute('data-connected-from-right')) {
-            const distance = Math.abs(sourceLeftRect.left - targetRightRect.right);
-            const verticalMidSource = sourceLeftRect.top + sourceLeftRect.height / 2;
-            const verticalMidTarget = targetRightRect.top + targetRightRect.height / 2;
-            const verticalDiff = Math.abs(verticalMidSource - verticalMidTarget);
+             const targetRightRect = targetRightmost.getBoundingClientRect(); // קבל רק אם צריך
+             const distance = Math.abs(sourceLeftRect.left - targetRightRect.right);
 
-            // בדיקת חפיפה אנכית מינימלית
-            const topOverlap = Math.max(sourceLeftRect.top, targetRightRect.top);
-            const bottomOverlap = Math.min(sourceLeftRect.bottom, targetRightRect.bottom);
-            const verticalOverlap = Math.max(0, bottomOverlap - topOverlap);
-            const minHeightReq = Math.min(sourceLeftRect.height, targetRightRect.height) * config.verticalOverlapReq;
+            if (distance <= config.groupConnectThreshold) { // בדוק מרחק קודם
+                 const verticalMidSource = sourceLeftRect.top + sourceLeftRect.height / 2;
+                 const verticalMidTarget = targetRightRect.top + targetRightRect.height / 2;
+                 const verticalDiff = Math.abs(verticalMidSource - verticalMidTarget);
 
-            if (distance < minDistance && verticalDiff < config.verticalAlignThreshold && verticalOverlap >= minHeightReq) {
-                minDistance = distance;
-                bestSnapCandidate = {
-                    sourceBlock: sourceLeftmost,   // הבלוק השמאלי בקבוצה הנגררת
-                    targetBlock: targetRightmost,  // הבלוק הימני בקבוצת היעד
-                    direction: 'right' // המקור מתחבר לימין היעד
-                };
+                 const topOverlap = Math.max(sourceLeftRect.top, targetRightRect.top);
+                 const bottomOverlap = Math.min(sourceLeftRect.bottom, targetRightRect.bottom);
+                 const verticalOverlap = Math.max(0, bottomOverlap - topOverlap);
+                 const minHeightReq = Math.min(sourceLeftRect.height, targetRightRect.height) * config.verticalOverlapReq;
+
+                 if (distance < minDistance && verticalDiff < config.verticalAlignThreshold && verticalOverlap >= minHeightReq) {
+                    minDistance = distance;
+                    bestSnapCandidate = {
+                        sourceBlock: sourceLeftmost,   
+                        targetBlock: targetRightmost, 
+                        direction: 'right' 
+                    };
+                }
             }
         }
     }
 
     // עדכון הדגשה ומצב
     if (bestSnapCandidate && minDistance <= config.groupConnectThreshold) {
+        // בדוק שהמועמד שונה מהקודם לפני הדגשה מחדש
         if (!potentialSnapInfo || 
             potentialSnapInfo.sourceBlock.id !== bestSnapCandidate.sourceBlock.id ||
-            potentialSnapInfo.targetBlock.id !== bestSnapCandidate.targetBlock.id) 
+            potentialSnapInfo.targetBlock.id !== bestSnapCandidate.targetBlock.id ||
+            potentialSnapInfo.direction !== bestSnapCandidate.direction) 
         {
-            log(`זיהוי הצמדת קבוצה פוטנציאלית: ${bestSnapCandidate.sourceBlock.id} -> ${bestSnapCandidate.targetBlock.id} (כיוון ביעד: ${bestSnapCandidate.direction})`, bestSnapCandidate);
-            highlightGroupSnapPoints(bestSnapCandidate.sourceBlock, bestSnapCandidate.targetBlock, bestSnapCandidate.direction);
-            potentialSnapInfo = bestSnapCandidate;
+            // ודא שהבלוקים עדיין קיימים לפני ששומרים ומדגישים
+            if(document.body.contains(bestSnapCandidate.sourceBlock) && document.body.contains(bestSnapCandidate.targetBlock)){
+                 log(`זיהוי הצמדת קבוצה פוטנציאלית: ${bestSnapCandidate.sourceBlock.id} -> ${bestSnapCandidate.targetBlock.id} (כיוון ביעד: ${bestSnapCandidate.direction})`, bestSnapCandidate);
+                 potentialSnapInfo = bestSnapCandidate; // שמור מידע *לפני* הדגשה א-סינכרונית
+                 highlightGroupSnapPoints(bestSnapCandidate.sourceBlock, bestSnapCandidate.targetBlock, bestSnapCandidate.direction);
+            } else {
+                 log("Snap candidate blocks became invalid before highlighting.");
+                 clearGroupSnapHighlight();
+            }
         }
     } else {
         if (potentialSnapInfo) {
-            log("ביטול הצמדת קבוצה פוטנציאלית - מחוץ לטווח");
-            clearGroupSnapHighlight(); // מנקה גם את potentialSnapInfo
+            // log("ביטול הצמדת קבוצה פוטנציאלית - מחוץ לטווח או לא נמצא מועמד");
+            clearGroupSnapHighlight(); 
         }
     }
   }
@@ -298,34 +335,58 @@ console.log("--- group-connect.js RAW SCRIPT LOAD ---");
       return false;
     }
     
-    // ודא שהמשתנים הגלובליים מהמודול השני עדיין רלוונטיים
-     if (typeof isGroupDragging === 'undefined' || !isGroupDragging || 
-        typeof groupBlocks === 'undefined' || !groupBlocks || groupBlocks.length === 0 ||
-        typeof startPositions === 'undefined' || !startPositions || startPositions.length !== groupBlocks.length) {
+     // ודא שוב שהמשתנים הגלובליים והבלוקים המעורבים עדיין קיימים ותקינים
+     if (typeof window.isGroupDragging === 'undefined' || !window.isGroupDragging || 
+        typeof window.groupBlocks === 'undefined' || !window.groupBlocks || window.groupBlocks.length === 0 ||
+        typeof window.startPositions === 'undefined' || !window.startPositions || window.startPositions.length === 0) {
         console.error("[GroupConnect] שגיאה: נתוני גרירת קבוצה אינם זמינים או לא תקינים בעת ניסיון הצמדה.");
         clearGroupSnapHighlight();
         return false; 
     }
-
-    const { sourceBlock: connectingSourceBlock, targetBlock: connectingTargetBlock, direction } = potentialSnapInfo;
-    const sourceGroup = groupBlocks; // כל הבלוקים בקבוצה הנגררת
-    const originalStartPositions = startPositions; // מיקומים התחלתיים מהמודול השני
     
+    const { sourceBlock: connectingSourceBlock, targetBlock: connectingTargetBlock, direction } = potentialSnapInfo;
+    
+     // ודא שבלוקי החיבור עדיין ב-DOM
+     if (!connectingSourceBlock || !document.body.contains(connectingSourceBlock) || !connectingTargetBlock || !document.body.contains(connectingTargetBlock)) {
+          console.error("[GroupConnect] שגיאה: בלוקי החיבור אינם קיימים ב-DOM בעת ניסיון הצמדה.");
+          clearGroupSnapHighlight();
+          return false;
+     }
+     
+     // ודא שהקבוצה הנגררת עדיין מכילה את בלוק המקור
+     const sourceGroup = window.groupBlocks.filter(b => b && document.body.contains(b));
+     if (sourceGroup.length === 0 || !sourceGroup.some(b => b.id === connectingSourceBlock.id)) {
+         console.error("[GroupConnect] שגיאה: הקבוצה הנגררת אינה תקינה או אינה מכילה את בלוק המקור.");
+         clearGroupSnapHighlight();
+         return false;
+     }
+     
+     // ודא שמערך המיקומים ההתחלתיים תואם באורכו לקבוצה הנוכחית (לאחר סינון)
+      const originalStartPositions = window.startPositions;
+     if(originalStartPositions.length !== sourceGroup.length) {
+         // This might happen if blocks were added/removed during drag without updating startPositions
+         console.warn("[GroupConnect] Mismatch between current group size and startPositions length. Snap might be inaccurate.");
+         // Decide how to handle: abort, or try to find the specific start pos? Let's try to find it.
+     }
+
     log(`ביצוע הצמדת קבוצה: ${connectingSourceBlock.id} -> ${connectingTargetBlock.id} (כיוון ${direction})`);
 
     try {
-        const sourceRect = connectingSourceBlock.getBoundingClientRect();
-        const targetRect = connectingTargetBlock.getBoundingClientRect();
-        const programArea = document.getElementById('program-blocks');
-        const areaRect = programArea.getBoundingClientRect();
-
-        // מצא את המיקום ההתחלתי של הבלוק הספציפי שמתחבר
+        // מצא את המיקום ההתחלתי של הבלוק הספציפי שמתחבר (מתוך המערך המקורי)
         const sourceBlockStartPosition = originalStartPositions.find(p => p.id === connectingSourceBlock.id);
         if (!sourceBlockStartPosition) {
+             // זה לא אמור לקרות אם הבלוק נמצא בקבוצה, אבל נבדוק
              console.error(`[GroupConnect] לא נמצא מיקום התחלתי עבור בלוק המקור המתחבר: ${connectingSourceBlock.id}`);
              clearGroupSnapHighlight();
              return false;
         }
+
+        const sourceRect = connectingSourceBlock.getBoundingClientRect();
+        const targetRect = connectingTargetBlock.getBoundingClientRect();
+        const programArea = document.getElementById('program-blocks');
+        if (!programArea) throw new Error("Programming area not found."); // הוספת בדיקה
+        const areaRect = programArea.getBoundingClientRect();
+
 
         let targetFinalLeft, targetFinalTop; // מיקום הפינה העליונה-שמאלית הרצוי של *connectingSourceBlock*
 
@@ -333,12 +394,11 @@ console.log("--- group-connect.js RAW SCRIPT LOAD ---");
         if (direction === 'left') { // חיבור לימין המקור -> לשמאל היעד
             targetFinalLeft = targetRect.left - sourceRect.width + config.puzzleLeftSocketWidth;
             targetFinalTop = targetRect.top + config.verticalCenterOffset;
-            targetFinalLeft += config.horizontalFineTuningLeft; // כוונון עדין
-            
+            targetFinalLeft += config.horizontalFineTuningLeft; 
         } else { // direction === 'right' - חיבור לשמאל המקור -> לימין היעד
             targetFinalLeft = targetRect.right - config.puzzleRightBulgeWidth;
             targetFinalTop = targetRect.top + config.verticalCenterOffset;
-            targetFinalLeft += config.horizontalFineTuningRight; // כוונון עדין
+            targetFinalLeft += config.horizontalFineTuningRight;
         }
         
         // המר ל-style.left/top (כולל גלילה ו-offset של האזור)
@@ -351,21 +411,31 @@ console.log("--- group-connect.js RAW SCRIPT LOAD ---");
 
         log(`חישוב Delta להצמדה: dX=${deltaX.toFixed(1)}, dY=${deltaY.toFixed(1)}`);
 
-        // הזז את *כל* הבלוקים בקבוצה הנגררת לפי הדלתא שחושבה
-        if (typeof updateGroupPosition === 'function') {
-             // השתמש בפונקציה מהמודול השני אם היא זמינה גלובלית
-             updateGroupPosition(deltaX, deltaY);
-             log("הקבוצה הוזזה באמצעות updateGroupPosition גלובלי.");
-        } else {
-             // Fallback: הזז כל בלוק ידנית (פחות יעיל אם הפונקציה המקורית עושה יותר)
-             console.warn("[GroupConnect] Using local fallback for updateGroupPosition.");
-             for (let i = 0; i < sourceGroup.length; i++) {
-                 const block = sourceGroup[i];
+        // --- הזזת הקבוצה ---
+        // נסה להשתמש בפונקציה הגלובלית אם קיימת ונדרשת
+        let groupMoved = false;
+        if (typeof window.updateGroupPosition === 'function') {
+             try {
+                // ודא שהפונקציה מצפה לאותם פרמטרים
+                window.updateGroupPosition(deltaX, deltaY);
+                log("הקבוצה הוזזה באמצעות updateGroupPosition גלובלי.");
+                groupMoved = true;
+             } catch (updateError) {
+                 console.error("Error calling global updateGroupPosition:", updateError);
+                 // נמשיך ל-Fallback
+             }
+        } 
+        
+        if (!groupMoved) {
+             // Fallback: הזז כל בלוק ידנית (תוך שימוש במיקומים המקוריים שעדיין זמינים)
+             console.warn("[GroupConnect] Using local fallback loop for updateGroupPosition.");
+             for (let i = 0; i < originalStartPositions.length; i++) {
                  const startPos = originalStartPositions[i];
-                 if (block && startPos) {
+                 const block = document.getElementById(startPos.id); // מצא מחדש לפי ID
+                 if (block && sourceGroup.some(b => b.id === startPos.id)) { // ודא שהבלוק עדיין חלק מהקבוצה הנגררת
                     const newLeft = startPos.left + deltaX;
                     const newTop = startPos.top + deltaY;
-                    // ניתן להוסיף כאן הגבלת גבולות אם נדרש
+                    // ניתן להוסיף כאן הגבלת גבולות אם נדרש, אך updateGroupPosition המקורי אמור לעשות זאת
                     block.style.position = 'absolute';
                     block.style.left = `${Math.round(newLeft)}px`;
                     block.style.top = `${Math.round(newTop)}px`;
@@ -384,14 +454,16 @@ console.log("--- group-connect.js RAW SCRIPT LOAD ---");
             connectingSourceBlock.id
         );
 
-        // הוסף קלאסים ויזואליים אם צריך (אופציונלי, linkageimproved מטפל בזה גם)
+        // הוסף קלאסים ויזואליים אם צריך (אופציונלי)
         connectingSourceBlock.classList.add('connected-block');
         connectingTargetBlock.classList.add('has-connected-block');
 
-        // הסר סטטוס גרירה מהבלוקים (המודול השני יעשה זאת גם, אבל טוב להיות בטוח)
+        // הסר סטטוס גרירה מהבלוקים (המודול השני יעשה זאת גם)
         sourceGroup.forEach(block => {
-             block.classList.remove('group-dragging');
-             block.style.zIndex = '';
+             if(block) { // בדוק אם הבלוק עדיין קיים
+                 block.classList.remove('group-dragging');
+                 block.style.zIndex = ''; // אפס ZIndex
+             }
         });
         
         // הפעל אפקטים
@@ -399,10 +471,13 @@ console.log("--- group-connect.js RAW SCRIPT LOAD ---");
         addGroupSnapAnimation(connectingSourceBlock); 
         
         // נקה הדגשות ומצב הצמדה פוטנציאלי
-        clearGroupSnapHighlight();
+        clearGroupSnapHighlight(); // זה מאפס את potentialSnapInfo
 
-        // חשוב: עצם שינוי ה-attributes אמור להפעיל את ה-MutationObserver
-        // ב-linkage-group-drag-simplified.js כדי שיסרוק מחדש ויסמן מנהיגים.
+        // הפעלת סריקה מחדש של מובילים (אמור לקרות אוטומטית דרך Observer, אבל אפשר גם ידנית)
+        if (typeof window.scanAndMarkLeaders === 'function') {
+             // השהייה קלה כדי לאפשר ל-DOM להתעדכן לגמרי
+             setTimeout(window.scanAndMarkLeaders, 50);
+        }
 
         log(`הצמדת קבוצה הושלמה בהצלחה.`);
         return true; // הצמדה הצליחה
@@ -410,11 +485,15 @@ console.log("--- group-connect.js RAW SCRIPT LOAD ---");
     } catch (error) {
         console.error("[GroupConnect] שגיאה בביצוע הצמדת קבוצה:", error);
         clearGroupSnapHighlight();
-        // נסה לנקות מאפיינים שנוספו חלקית אם אירעה שגיאה באמצע
          try {
-             connectingSourceBlock?.removeAttribute('data-connected-to');
-             connectingSourceBlock?.removeAttribute('data-connection-direction');
-             connectingTargetBlock?.removeAttribute(direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right');
+             // נקה מאפיינים שנוספו חלקית אם אירעה שגיאה
+             if (connectingSourceBlock && document.body.contains(connectingSourceBlock)) {
+                 connectingSourceBlock.removeAttribute('data-connected-to');
+                 connectingSourceBlock.removeAttribute('data-connection-direction');
+             }
+             if (connectingTargetBlock && document.body.contains(connectingTargetBlock)) {
+                 connectingTargetBlock.removeAttribute(direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right');
+             }
          } catch (cleanupError) {
             console.error("[GroupConnect] שגיאה בניקוי לאחר שגיאת הצמדה:", cleanupError);
          }
@@ -425,79 +504,133 @@ console.log("--- group-connect.js RAW SCRIPT LOAD ---");
 
   // === מאזיני אירועים ===
 
-  // מאזין לתזוזת עכבר - בודק אפשרות הצמדה רק אם גוררים קבוצה
   function handleGlobalMouseMove(e) {
-    // בדוק אם גרירת קבוצה פעילה דרך המשתנה הגלובלי
-    if (typeof isGroupDragging !== 'undefined' && isGroupDragging) {
-       // בצע בדיקת הצמדה פוטנציאלית
+    // השתמש ב- window.isGroupDragging וכו' כדי לגשת למשתנים הגלובליים
+    if (typeof window.isGroupDragging !== 'undefined' && window.isGroupDragging) {
        checkPotentialGroupSnap();
     } else {
-       // אם לא גוררים קבוצה, וודא שאין הדגשת הצמדת קבוצה מיותרת
        if (potentialSnapInfo) {
            clearGroupSnapHighlight();
        }
     }
   }
 
-  // מאזין לשחרור עכבר - מנסה לבצע הצמדה אם זוהתה אפשרות
   function handleGlobalMouseUp(e) {
-     // חשוב לבדוק את isGroupDragging *לפני* שהמודול השני מאפס אותו
-     const wasGroupDragging = (typeof isGroupDragging !== 'undefined' && isGroupDragging);
+     // בדוק את המצב *לפני* שהמודול השני מאפס אותו
+     const wasGroupDragging = (typeof window.isGroupDragging !== 'undefined' && window.isGroupDragging);
+     const snapCandidateExists = potentialSnapInfo !== null; // שמור את המצב הנוכחי של המועמד
 
-     if (wasGroupDragging && potentialSnapInfo) {
-        // מנע התנהגות ברירת מחדל נוספת אם ביצענו הצמדה
-        e.preventDefault(); 
-        e.stopPropagation(); 
+     if (wasGroupDragging && snapCandidateExists) {
+        // בצע את ההצמדה *רק* אם היינו באמצע גרירת קבוצה והיה מועמד
+        
+        // מניעת התפשטות כדי שהמודול השני לא יבצע פעולות מיותרות או סותרות?
+        // נסה להפעיל את זה אם יש התנהגות לא רצויה בסיום הגרירה
+        // e.preventDefault(); 
+        // e.stopPropagation(); 
 
-        const snapSuccess = performActualGroupSnap();
-        if(snapSuccess) {
-           // אם ההצמדה הצליחה, אולי נרצה לאותת למודול השני לא לעשות פעולות מסוימות?
-           // כרגע, המודול השני ימשיך וינקה את המצב שלו, שזה בסדר.
-        } else {
-           // אם ההצמדה נכשלה, נקה הדגשות
-           clearGroupSnapHighlight();
+        const snapSuccess = performActualGroupSnap(); // זה גם מנקה את potentialSnapInfo
+
+        // אם ההצמדה הצליחה, המודול השני ירוץ אחרי זה ויבצע את הניקוי שלו
+        // (איפוס isGroupDragging, groupBlocks וכו') - זה בסדר.
+        
+        if (!snapSuccess) {
+           // אם ההצמדה נכשלה מסיבה כלשהי, potentialSnapInfo כבר נוקה
+           // המודול השני ידאג לשחרור הבלוקים
+           log("Group snap failed.");
         }
-     } else if (potentialSnapInfo) {
-        // אם היה פוטנציאל הצמדה אבל הגרירה לא הייתה פעילה ברגע הקליק, נקה
-        clearGroupSnapHighlight();
+        
+     } else if (snapCandidateExists) {
+         // אם היה מועמד אבל לא היינו בגרירת קבוצה פעילה (נדיר, אבל אפשרי)
+         clearGroupSnapHighlight();
      }
-     // בכל מקרה אחר, אין מה לעשות כאן. המודולים האחרים יטפלו.
+     // בכל מקרה אחר, אין מה לעשות כאן.
+     // חשוב: לא לנקות כאן את potentialSnapInfo אם הגרירה לא הייתה פעילה, 
+     // כי אולי המשתמש פשוט הזיז את העכבר בלי לגרור ואז לחץ.
   }
 
   // === אתחול המודול ===
   function initGroupConnect() {
-    log("אתחול מודול חיבור קבוצות (group-connect.js)");
+    // הודעת אתחול ראשונה
+    console.log("[GroupConnect] Attempting initGroupConnect..."); 
     
-    // הוסף מאזינים גלובליים שיפעלו במקביל למאזינים של המודולים האחרים
-    // חשוב להוסיף עם useCapture=true כדי לפעול לפני מאזינים אחרים שעשויים לעצור את האירוע
-    // אבל זה עלול להתנגש. נתחיל בלי capture ונראה אם יש צורך.
+    // ודא שה-DOM מוכן מספיק (במיוחד אזור התכנות)
+    const programArea = document.getElementById('program-blocks');
+    if (!programArea) {
+        console.error("[GroupConnect] Initialization failed: 'program-blocks' area not found. Retrying in 200ms.");
+        // נסה שוב מאוחר יותר אם האזור עדיין לא נוצר
+        setTimeout(initGroupConnect, 200); 
+        return;
+    }
+
+    log("Initializing group connection module (group-connect.js v1.0.1)");
+    
+    // הוסף מאזינים גלובליים
+    // הוספה ללא capture כדי לא להפריע למודולים אחרים שעשויים להשתמש ב-preventDefault/stopPropagation
+    document.removeEventListener('mousemove', handleGlobalMouseMove, false); // הסר קודם למקרה של ריצה כפולה
     document.addEventListener('mousemove', handleGlobalMouseMove, false); 
+    
+    document.removeEventListener('mouseup', handleGlobalMouseUp, false); // הסר קודם
     document.addEventListener('mouseup', handleGlobalMouseUp, false); 
 
-    // ודא שהפונקציות הנדרשות מהמודולים האחרים זמינות
-    if (typeof findConnectedBlocks !== 'function' || 
-        typeof findLeftmostBlock !== 'function' ||
-        typeof updateGroupPosition !== 'function' ||
-        typeof clearAllHighlights !== 'function' ||
-        typeof highlightConnectionPoint !== 'function' ||
-        typeof playSnapSound !== 'function' ||
-        typeof addSnapEffectAnimation !== 'function') {
-           console.warn("[GroupConnect] חלק מהפונקציות מהמודולים linkageimproved.js או linkage-group-drag-simplified.js אינן זמינות גלובלית. ייתכנו בעיות תאימות או שימוש ב-fallbacks.");
-    }
+    // בדיקת זמינות פונקציות קריטיות (מודפס אזהרות אם חסר)
+    checkDependencies();
     
     window.groupConnectInitialized = true;
-    log("מודול חיבור קבוצות אותחל בהצלחה.");
+    log("Group connection module initialized successfully.");
+  }
+  
+  // פונקציית עזר לבדיקת תלויות
+  function checkDependencies() {
+      const dependencies = [
+          { name: 'isGroupDragging', type: 'variable', source: 'linkage-group-drag-simplified.js' },
+          { name: 'groupBlocks', type: 'variable', source: 'linkage-group-drag-simplified.js' },
+          { name: 'startPositions', type: 'variable', source: 'linkage-group-drag-simplified.js' },
+          // { name: 'updateGroupPosition', type: 'function', source: 'linkage-group-drag-simplified.js' }, // בדוק אם אתה מייצא אותה
+          { name: 'findConnectedBlocks', type: 'function', source: 'linkage-group-drag-simplified.js' }, // בדוק אם מיוצאת
+          { name: 'findLeftmostBlock', type: 'function', source: 'linkage-group-drag-simplified.js' }, // בדוק אם מיוצאת
+          // { name: 'scanAndMarkLeaders', type: 'function', source: 'linkage-group-drag-simplified.js' }, // בדוק אם מיוצאת
+          { name: 'clearAllHighlights', type: 'function', source: 'linkageimproved.js' },
+          { name: 'highlightConnectionPoint', type: 'function', source: 'linkageimproved.js' },
+          { name: 'playSnapSound', type: 'function', source: 'linkageimproved.js' },
+          { name: 'addSnapEffectAnimation', type: 'function', source: 'linkageimproved.js' }
+      ];
+      
+      let allOk = true;
+      dependencies.forEach(dep => {
+          const exists = (dep.type === 'function') ? (typeof window[dep.name] === 'function') : (typeof window[dep.name] !== 'undefined');
+          if (!exists) {
+              console.warn(`[GroupConnect] Dependency potentially missing: ${dep.type} '${dep.name}' (expected from ${dep.source}). Fallbacks or errors may occur.`);
+              allOk = false;
+          }
+      });
+      
+      if(allOk) {
+          log("All checked dependencies seem to be available globally.");
+      }
   }
 
-  // הפעל את האתחול כשהדף נטען או מיד אם כבר נטען
+  // --- לוגיקת הפעלת האתחול ---
+  
+  // פונקציה להפעלת האתחול לאחר שכל הסקריפטים נטענו (בתקווה)
+  function attemptInitialization() {
+      // בדוק אם המודולים הקודמים סיימו את האתחול שלהם (אם הם מגדירים דגל דומה)
+      if (window.groupDragInitialized && window.blockLinkageInitialized_v3_9_5) {
+          initGroupConnect();
+      } else {
+          // אם המודולים הקודמים עדיין לא סיימו, נסה שוב עוד רגע
+          // log("Waiting for other modules to initialize...");
+          setTimeout(attemptInitialization, 100); // נסה שוב עוד 100ms
+      }
+  }
+
+  // הפעל את ניסיון האתחול כשה-DOM מוכן, או מיד אם כבר מוכן
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initGroupConnect);
+    document.addEventListener('DOMContentLoaded', attemptInitialization);
   } else {
-    // ודא שהמודולים הקודמים הספיקו לטעון את המשתנים הגלובליים שלהם
-    // המתנה קצרה עשויה לעזור במקרים מסוימים
-    setTimeout(initGroupConnect, 50); 
+    // DOM כבר טעון, נסה לאתחל (אולי עם השהייה קטנה כדי לאפשר לסקריפטים אחרים לסיים)
+    setTimeout(attemptInitialization, 50); 
   }
 
 })();
 
---- END OF FILE group-connect.js --- 
+--- END OF FILE group-connect.js ---
