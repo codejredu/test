@@ -1,278 +1,144 @@
-// connection-points-replacer.js - החלפה מוחלטת של עיגולי חיבור ותיקון פאזל
+// pure-puzzle-fix.js - פתרון רווחים בחיבורי פאזל
 
 (function() {
-  console.log("[ConnectionReplacer] מודול החלפת עיגולי חיבור נטען");
+  console.log("[PuzzleFix] מודול תיקון רווחים בחיבורי פאזל");
   
-  // הגדרת קבועים
-  const BLUE_COLOR = "#2196F3"; // כחול
-  const ORANGE_COLOR = "#FF9800"; // כתום
+  // קונפיגורציה מינימלית
+  const CONFIG = {
+    CHECK_INTERVAL: 50, // בדיקה תכופה מאוד של חיבורים
+    OVERLAP: 1,         // חפיפה של פיקסל אחד
+    DEBUG: true         // הדפסת לוג
+  };
   
-  // יצירת שכבת עיגולים מותאמת
-  function createCustomPointsLayer() {
-    // בדוק אם השכבה כבר קיימת
-    if (document.getElementById("custom-points-layer")) {
-      return;
-    }
-    
-    // יצירת שכבה חדשה
-    const layer = document.createElement("div");
-    layer.id = "custom-points-layer";
-    layer.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 10000;
-    `;
-    
-    // יצירת עיגולים מותאמים
-    const leftCircle = document.createElement("div");
-    leftCircle.id = "custom-left-point";
-    leftCircle.style.cssText = `
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background-color: ${BLUE_COLOR};
-      border-radius: 50%;
-      box-shadow: 0 0 10px 4px rgba(33,150,243,0.95);
-      border: 2px solid #FFF;
-      opacity: 0;
-      pointer-events: none;
-      display: none;
-      z-index: 10001;
-    `;
-    
-    const rightCircle = document.createElement("div");
-    rightCircle.id = "custom-right-point";
-    rightCircle.style.cssText = `
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background-color: ${ORANGE_COLOR};
-      border-radius: 50%;
-      box-shadow: 0 0 10px 4px rgba(255,152,0,0.95);
-      border: 2px solid #FFF;
-      opacity: 0;
-      pointer-events: none;
-      display: none;
-      z-index: 10001;
-    `;
-    
-    // הוספת העיגולים לשכבה
-    layer.appendChild(leftCircle);
-    layer.appendChild(rightCircle);
-    
-    // הוספת השכבה למסמך
-    document.body.appendChild(layer);
-    
-    console.log("[ConnectionReplacer] שכבת עיגולים מותאמת נוצרה");
-  }
+  // משתנה גלובלי לבדיקה תקופתית
+  let checkInterval = null;
   
-  // הסרת נקודות חיבור קיימות
-  function removeExistingPoints() {
-    const points = document.querySelectorAll('.left-connection-point, .right-connection-point');
-    points.forEach(point => {
-      point.style.display = 'none';
-      point.style.opacity = '0';
-    });
-  }
-  
-  // הצגת עיגול מותאם לפי סוג וצד
-  function showCustomPoint(isLeft, sourceBlock) {
-    if (!sourceBlock) return;
-    
-    // קבל את העיגול המתאים
-    const pointElement = document.getElementById(isLeft ? "custom-left-point" : "custom-right-point");
-    if (!pointElement) return;
-    
-    // קבל את המיקום של הבלוק
-    const rect = sourceBlock.getBoundingClientRect();
-    
-    // חשב את המיקום המדויק של העיגול
-    const x = isLeft ? rect.left - 10 : rect.right - 10;
-    const y = rect.top + rect.height / 2 - 10;
-    
-    // הצב את העיגול במיקום הנכון
-    pointElement.style.left = `${x}px`;
-    pointElement.style.top = `${y}px`;
-    pointElement.style.display = 'block';
-    pointElement.style.opacity = '1';
-    
-    // תזמן הסרה אוטומטית של העיגול
-    setTimeout(() => {
-      pointElement.style.opacity = '0';
-      setTimeout(() => {
-        pointElement.style.display = 'none';
-      }, 300);
-    }, 3000);
-  }
-  
-  // עקיפת פונקציות הצגת נקודות
-  function overrideConnectionFunctions() {
-    // שמור את הפונקציה המקורית
-    if (typeof window.highlightConnectionPoint === 'function') {
-      const originalFunction = window.highlightConnectionPoint;
+  // פונקציה פשוטה לתיקון רווחים בחיבורי פאזל
+  function fixPuzzleGaps() {
+    try {
+      // מצא את כל הבלוקים המחוברים
+      const allBlocks = document.querySelectorAll('.block:not(.in-drawer)');
+      const pairs = [];
       
-      // דרוס אותה עם שלנו
-      window.highlightConnectionPoint = function(block, isLeft) {
-        // הסתר את העיגולים המקוריים
-        removeExistingPoints();
-        
-        // הצג את העיגול המותאם שלנו
-        showCustomPoint(isLeft, block);
-        
-        // הפעל את הפונקציה המקורית (אופציונלי)
-        // return originalFunction.apply(this, arguments);
-        
-        return true;
-      };
-      
-      console.log("[ConnectionReplacer] פונקציית הצגת נקודות חיבור הוחלפה");
-    }
-  }
-  
-  // תיקון חיבורי פאזל
-  function fixPuzzleConnections() {
-    const blocks = document.querySelectorAll('.block:not(.in-drawer)');
-    const pairs = [];
-    
-    // מצא זוגות מחוברים
-    blocks.forEach(block1 => {
-      // בדוק אם הבלוק מחובר לאחר דרך התכונות
-      const connectedToId = block1.getAttribute('data-connected-to');
-      if (connectedToId) {
-        const block2 = document.getElementById(connectedToId);
-        if (block2) {
-          // קבע איזה בלוק משמאל ואיזה מימין
-          const rect1 = block1.getBoundingClientRect();
-          const rect2 = block2.getBoundingClientRect();
-          
-          if (rect1.left < rect2.left) {
-            pairs.push({ left: block1, right: block2 });
-          } else {
-            pairs.push({ left: block2, right: block1 });
+      // זיהוי בלוקים מחוברים דרך מאפיינים
+      Array.from(allBlocks).forEach(block => {
+        const connectedToId = block.getAttribute('data-connected-to');
+        if (connectedToId) {
+          const otherBlock = document.getElementById(connectedToId);
+          if (otherBlock) {
+            // בדוק איזה בלוק משמאל ואיזה מימין
+            const blockRect = block.getBoundingClientRect();
+            const otherRect = otherBlock.getBoundingClientRect();
+            
+            if (blockRect.left < otherRect.left) {
+              pairs.push({ left: block, right: otherBlock });
+            } else {
+              pairs.push({ left: otherBlock, right: block });
+            }
           }
         }
+      });
+      
+      // תיקון הרווחים
+      let fixed = 0;
+      
+      pairs.forEach(pair => {
+        const leftRect = pair.left.getBoundingClientRect();
+        const rightRect = pair.right.getBoundingClientRect();
+        
+        // בדוק אם יש רווח
+        const gap = Math.abs(leftRect.right - rightRect.left);
+        
+        if (gap > 0) {
+          // קבל אזור תכנות
+          const progArea = document.getElementById('programming-area') || 
+                          document.getElementById('program-blocks') || 
+                          document.body;
+          const areaRect = progArea.getBoundingClientRect();
+          
+          // חשב מיקום ללא רווח
+          const newLeft = leftRect.right - CONFIG.OVERLAP;
+          const scrollX = progArea.scrollLeft || window.scrollX || 0;
+          const scrollY = progArea.scrollTop || window.scrollY || 0;
+          
+          // החל מיקום חדש
+          const absLeft = newLeft - areaRect.left + scrollX;
+          const absTop = leftRect.top - areaRect.top + scrollY;
+          
+          // הגדר מיקום חדש לבלוק הימני
+          pair.right.style.position = 'absolute';
+          pair.right.style.left = Math.round(absLeft) + 'px';
+          pair.right.style.top = Math.round(absTop) + 'px';
+          
+          // הגדר z-index נכון
+          pair.left.style.zIndex = '10';
+          pair.right.style.zIndex = '9';
+          
+          fixed++;
+        }
+      });
+      
+      // דווח על תיקונים
+      if (fixed > 0 && CONFIG.DEBUG) {
+        console.log(`[PuzzleFix] תוקנו ${fixed} רווחים בחיבורי פאזל`);
       }
-    });
-    
-    // תקן את החיבורים
-    pairs.forEach(pair => {
-      // קבל את המיקום הנוכחי
-      const leftRect = pair.left.getBoundingClientRect();
-      const rightRect = pair.right.getBoundingClientRect();
       
-      // אם יש רווח, תקן אותו
-      const gap = Math.abs(leftRect.right - rightRect.left);
-      if (gap > 0) {
-        // קבל את אזור התכנות
-        const progArea = document.getElementById('programming-area') || 
-                        document.getElementById('program-blocks') || 
-                        document.body;
-        const areaRect = progArea.getBoundingClientRect();
-        
-        // חשב מיקום מדויק ללא רווח
-        const newLeft = leftRect.right - 1; // חפיפה של פיקסל אחד
-        const scrollLeft = progArea.scrollLeft || 0;
-        const scrollTop = progArea.scrollTop || 0;
-        
-        // החל מיקום חדש
-        const absoluteLeft = newLeft - areaRect.left + scrollLeft;
-        const absoluteTop = leftRect.top - areaRect.top + scrollTop;
-        
-        // הגדר מיקום חדש ישירות
-        pair.right.style.cssText = `
-          position: absolute !important;
-          left: ${Math.round(absoluteLeft)}px !important;
-          top: ${Math.round(absoluteTop)}px !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          z-index: 9 !important;
-          transition: none !important;
-          transform: none !important;
-        `;
-        
-        // הגדר את z-index של הבלוק השמאלי להיות גבוה יותר
-        pair.left.style.zIndex = '10';
-      }
-    });
-    
-    return pairs.length;
+      return fixed;
+    } catch (err) {
+      console.error('[PuzzleFix] שגיאה בתיקון רווחים:', err);
+      return 0;
+    }
   }
   
-  // האזנה לאירועי עכבר
-  function addMouseListeners() {
-    // האזנה לתנועת עכבר לזיהוי חיבורים אפשריים
-    document.addEventListener('mousemove', function(e) {
-      // הסתר את העיגולים המקוריים
-      removeExistingPoints();
+  // האזנה לשחרור עכבר
+  function setupMouseListeners() {
+    document.addEventListener('mouseup', function() {
+      // תקן רווחים אחרי שחרור עכבר
+      setTimeout(fixPuzzleGaps, 10);
+      setTimeout(fixPuzzleGaps, 100);
     });
-    
-    // האזנה לשחרור עכבר לתיקון חיבורים
-    document.addEventListener('mouseup', function(e) {
-      // תיקון חיבורי פאזל לאחר שחרור
-      setTimeout(fixPuzzleConnections, 50);
-      
-      // וגם בהשהיה ארוכה יותר למקרה שהמיקום משתנה
-      setTimeout(fixPuzzleConnections, 500);
-    });
-    
-    console.log("[ConnectionReplacer] נוספו מאזינים לאירועי עכבר");
   }
   
-  // פונקציה לעדיפות גבוהה
-  function setupMutationObserver() {
-    // הגדר צופה לשינויים בDOM
-    const observer = new MutationObserver(function(mutations) {
-      // הסתר את העיגולים המקוריים
-      removeExistingPoints();
-      
-      // תקן חיבורי פאזל
-      fixPuzzleConnections();
-    });
+  // התחלת בדיקה תקופתית
+  function startPeriodicCheck() {
+    // נקה בדיקה קודמת אם קיימת
+    if (checkInterval) {
+      clearInterval(checkInterval);
+    }
     
-    // התחל לעקוב אחרי שינויים במסמך
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['style', 'class']
-    });
+    // הפעל בדיקה תקופתית חדשה
+    checkInterval = setInterval(fixPuzzleGaps, CONFIG.CHECK_INTERVAL);
     
-    console.log("[ConnectionReplacer] צופה שינויים מוגדר");
+    if (CONFIG.DEBUG) {
+      console.log(`[PuzzleFix] בדיקה תקופתית הופעלה כל ${CONFIG.CHECK_INTERVAL}ms`);
+    }
   }
   
-  // פונקציית אתחול ראשי
+  // אתחול המודול
   function initialize() {
     // בדוק אם כבר אותחל
-    if (window.connectionReplacerInitialized) {
-      console.log("[ConnectionReplacer] כבר אותחל");
+    if (window.puzzleFixInitialized) {
+      console.log('[PuzzleFix] המודול כבר אותחל');
       return;
     }
     
-    // יצירת שכבת עיגולים מותאמת
-    createCustomPointsLayer();
+    console.log('[PuzzleFix] אתחול מודול תיקון רווחים בחיבורי פאזל');
     
-    // החלפת פונקציות הצגת נקודות
-    overrideConnectionFunctions();
+    // הוסף האזנה לאירועי עכבר
+    setupMouseListeners();
     
-    // הוספת מאזינים לאירועי עכבר
-    addMouseListeners();
-    
-    // הגדרת צופה שינויים
-    setupMutationObserver();
+    // הפעל בדיקה תקופתית
+    startPeriodicCheck();
     
     // תיקון ראשוני
-    setTimeout(fixPuzzleConnections, 1000);
+    setTimeout(fixPuzzleGaps, 500);
     
-    // סימון שאותחל
-    window.connectionReplacerInitialized = true;
+    // סמן אתחול
+    window.puzzleFixInitialized = true;
     
-    console.log("[ConnectionReplacer] מודול החלפת עיגולי חיבור אותחל בהצלחה");
+    console.log('[PuzzleFix] אתחול הושלם');
   }
   
-  // הפעלת המודול
+  // הפעל את המודול
   initialize();
 })();
