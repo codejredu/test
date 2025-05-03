@@ -518,3 +518,152 @@
                  block.style.zIndex = ''; // אפס ZIndex
              }
         });
+      console.error("[GroupConnect] שגיאה בביצוע הצמדת קבוצה:", error);
+       clearGroupSnapHighlight();
+        try {
+            // נקה מאפיינים שנוספו חלקית אם אירעה שגיאה
+            if (connectingSourceBlock && document.body.contains(connectingSourceBlock)) {
+                connectingSourceBlock.removeAttribute('data-connected-to');
+                connectingSourceBlock.removeAttribute('data-connection-direction');
+            }
+            if (connectingTargetBlock && document.body.contains(connectingTargetBlock)) {
+                connectingTargetBlock.removeAttribute(direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right');
+            }
+        } catch (cleanupError) {
+           console.error("[GroupConnect] שגיאה בניקוי לאחר שגיאת הצמדה:", cleanupError);
+        }
+       return false; // הצמדה נכשלה
+   }
+ }
+
+
+ // === מאזיני אירועים ===
+
+ function handleGlobalMouseMove(e) {
+   // השתמש ב- window.isGroupDragging וכו' כדי לגשת למשתנים הגלובליים
+   if (typeof window.isGroupDragging !== 'undefined' && window.isGroupDragging) {
+      checkPotentialGroupSnap();
+   } else {
+      if (potentialSnapInfo) {
+          clearGroupSnapHighlight();
+      }
+   }
+ }
+
+ function handleGlobalMouseUp(e) {
+    // בדוק את המצב *לפני* שהמודול השני מאפס אותו
+    const wasGroupDragging = (typeof window.isGroupDragging !== 'undefined' && window.isGroupDragging);
+    const snapCandidateExists = potentialSnapInfo !== null; // שמור את המצב הנוכחי של המועמד
+
+    if (wasGroupDragging && snapCandidateExists) {
+       // בצע את ההצמדה *רק* אם היינו באמצע גרירת קבוצה והיה מועמד
+       
+       // מניעת התפשטות כדי שהמודול השני לא יבצע פעולות מיותרות או סותרות?
+       // נסה להפעיל את זה אם יש התנהגות לא רצויה בסיום הגרירה
+       // e.preventDefault(); 
+       // e.stopPropagation(); 
+
+       const snapSuccess = performActualGroupSnap(); // זה גם מנקה את potentialSnapInfo
+
+       // אם ההצמדה הצליחה, המודול השני ירוץ אחרי זה ויבצע את הניקוי שלו
+       // (איפוס isGroupDragging, groupBlocks וכו') - זה בסדר.
+       
+       if (!snapSuccess) {
+          // אם ההצמדה נכשלה מסיבה כלשהי, potentialSnapInfo כבר נוקה
+          // המודול השני ידאג לשחרור הבלוקים
+          log("Group snap failed.");
+       }
+       
+    } else if (snapCandidateExists) {
+        // אם היה מועמד אבל לא היינו בגרירת קבוצה פעילה (נדיר, אבל אפשרי)
+        clearGroupSnapHighlight();
+    }
+    // בכל מקרה אחר, אין מה לעשות כאן.
+    // חשוב: לא לנקות כאן את potentialSnapInfo אם הגרירה לא הייתה פעילה, 
+    // כי אולי המשתמש פשוט הזיז את העכבר בלי לגרור ואז לחץ.
+ }
+
+ // === אתחול המודול ===
+ function initGroupConnect() {
+   // הודעת אתחול ראשונה
+   console.log("[GroupConnect] Attempting initGroupConnect..."); 
+   
+   // ודא שה-DOM מוכן מספיק (במיוחד אזור התכנות)
+   const programArea = document.getElementById('program-blocks');
+   if (!programArea) {
+       console.error("[GroupConnect] Initialization failed: 'program-blocks' area not found. Retrying in 200ms.");
+       // נסה שוב מאוחר יותר אם האזור עדיין לא נוצר
+       setTimeout(initGroupConnect, 200); 
+       return;
+   }
+
+   log("Initializing group connection module (group-connect.js v1.0.1)");
+   
+   // הוסף מאזינים גלובליים
+   // הוספה ללא capture כדי לא להפריע למודולים אחרים שעשויים להשתמש ב-preventDefault/stopPropagation
+   document.removeEventListener('mousemove', handleGlobalMouseMove, false); // הסר קודם למקרה של ריצה כפולה
+   document.addEventListener('mousemove', handleGlobalMouseMove, false); 
+   
+   document.removeEventListener('mouseup', handleGlobalMouseUp, false); // הסר קודם
+   document.addEventListener('mouseup', handleGlobalMouseUp, false); 
+
+   // בדיקת זמינות פונקציות קריטיות (מודפס אזהרות אם חסר)
+   checkDependencies();
+   
+   window.groupConnectInitialized = true;
+   log("Group connection module initialized successfully.");
+ }
+ 
+ // פונקציית עזר לבדיקת תלויות
+ function checkDependencies() {
+     const dependencies = [
+         { name: 'isGroupDragging', type: 'variable', source: 'linkage-group-drag-simplified.js' },
+         { name: 'groupBlocks', type: 'variable', source: 'linkage-group-drag-simplified.js' },
+         { name: 'startPositions', type: 'variable', source: 'linkage-group-drag-simplified.js' },
+         // { name: 'updateGroupPosition', type: 'function', source: 'linkage-group-drag-simplified.js' }, // בדוק אם אתה מייצא אותה
+         { name: 'findConnectedBlocks', type: 'function', source: 'linkage-group-drag-simplified.js' }, // בדוק אם מיוצאת
+         { name: 'findLeftmostBlock', type: 'function', source: 'linkage-group-drag-simplified.js' }, // בדוק אם מיוצאת
+         // { name: 'scanAndMarkLeaders', type: 'function', source: 'linkage-group-drag-simplified.js' }, // בדוק אם מיוצאת
+         { name: 'clearAllHighlights', type: 'function', source: 'linkageimproved.js' },
+         { name: 'highlightConnectionPoint', type: 'function', source: 'linkageimproved.js' },
+         { name: 'playSnapSound', type: 'function', source: 'linkageimproved.js' },
+         { name: 'addSnapEffectAnimation', type: 'function', source: 'linkageimproved.js' }
+     ];
+     
+     let allOk = true;
+     dependencies.forEach(dep => {
+         const exists = (dep.type === 'function') ? (typeof window[dep.name] === 'function') : (typeof window[dep.name] !== 'undefined');
+         if (!exists) {
+             console.warn(`[GroupConnect] Dependency potentially missing: ${dep.type} '${dep.name}' (expected from ${dep.source}). Fallbacks or errors may occur.`);
+             allOk = false;
+         }
+     });
+     
+     if(allOk) {
+         log("All checked dependencies seem to be available globally.");
+     }
+ }
+
+ // --- לוגיקת הפעלת האתחול ---
+ 
+ // פונקציה להפעלת האתחול לאחר שכל הסקריפטים נטענו (בתקווה)
+ function attemptInitialization() {
+     // בדוק אם המודולים הקודמים סיימו את האתחול שלהם (אם הם מגדירים דגל דומה)
+     if (window.groupDragInitialized && window.blockLinkageInitialized_v3_9_5) {
+         initGroupConnect();
+     } else {
+         // אם המודולים הקודמים עדיין לא סיימו, נסה שוב עוד רגע
+         // log("Waiting for other modules to initialize...");
+         setTimeout(attemptInitialization, 100); // נסה שוב עוד 100ms
+     }
+ }
+
+ // הפעל את ניסיון האתחול כשה-DOM מוכן, או מיד אם כבר מוכן
+ if (document.readyState === 'loading') {
+   document.addEventListener('DOMContentLoaded', attemptInitialization);
+ } else {
+   // DOM כבר טעון, נסה לאתחל (אולי עם השהייה קטנה כדי לאפשר לסקריפטים אחרים לסיים)
+   setTimeout(attemptInitialization, 50); 
+ }
+
+})();
