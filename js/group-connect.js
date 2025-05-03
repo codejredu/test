@@ -518,7 +518,25 @@
                  block.style.zIndex = ''; // אפס ZIndex
              }
         });
-      console.error("[GroupConnect] שגיאה בביצוע הצמדת קבוצה:", error);
+        
+        // הפעל אפקטים
+        playGroupSnapSound();
+        addGroupSnapAnimation(connectingSourceBlock); 
+        
+        // נקה הדגשות ומצב הצמדה פוטנציאלי
+        clearGroupSnapHighlight(); // זה מאפס את potentialSnapInfo
+
+        // הפעלת סריקה מחדש של מובילים (אמור לקרות אוטומטית דרך Observer, אבל אפשר גם ידנית)
+        if (typeof window.scanAndMarkLeaders === 'function') {
+             // השהייה קלה כדי לאפשר ל-DOM להתעדכן לגמרי
+             setTimeout(window.scanAndMarkLeaders, 50);
+        }
+
+        log(`הצמדת קבוצה הושלמה בהצלחה.`);
+        return true; // הצמדה הצליחה
+
+    } catch (error } catch (error) {
+       console.error("[GroupConnect] שגיאה בביצוע הצמדת קבוצה:", error);
        clearGroupSnapHighlight();
         try {
             // נקה מאפיינים שנוספו חלקית אם אירעה שגיאה
