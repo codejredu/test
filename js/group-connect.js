@@ -1,5 +1,3 @@
---- START OF FILE group-connect.js ---
-
 // --- GROUP-CONNECT.JS v1.0.1 --- 
 // מודול לחיבור קבוצות בלוקים מחוברות (גרסה מתוקנת לבדיקת אתחול)
 
@@ -21,7 +19,13 @@
     
     // כוונון עדין - זהה ל-linkageimproved.js
     horizontalFineTuningLeft: 9,
-    horizontalFineTuningRight: -9
+    horizontalFineTuningRight: -9,
+    
+    // צבעים מותאמים לחיבור קבוצות
+    groupSnapColors: {
+      source: '#FF6B35',  // כתום
+      target: '#4A90E2'   // כחול
+    }
   };
 
   // === משתני מצב ===
@@ -107,47 +111,96 @@
       }
       return leftmost;
   };
+
+  // פונקציה חדשה ליצירת מחוונים עם צבעים מותאמים
+  function createColoredHighlight(block, isLeftPoint, color) {
+    // נסה קודם להסיר הדגשות קיימות
+    const existingHighlights = block.querySelectorAll('.connection-highlight');
+    existingHighlights.forEach(el => el.remove());
+    
+    // צור אלמנט הדגשה חדש
+    const highlight = document.createElement('div');
+    highlight.className = 'connection-highlight';
+    
+    // הגדר את הסגנון של ההדגשה
+    highlight.style.position = 'absolute';
+    highlight.style.width = '12px';
+    highlight.style.height = '12px';
+    highlight.style.borderRadius = '50%';
+    highlight.style.backgroundColor = color;
+    highlight.style.border = '2px solid white';
+    highlight.style.boxShadow = '0 0 8px ' + color;
+    highlight.style.zIndex = '1000';
+    highlight.style.opacity = '0';
+    highlight.style.transition = 'opacity 0.3s ease-in-out';
+    
+    // מיקום ההדגשה
+    if (isLeftPoint) {
+      highlight.style.left = '-6px';
+    } else {
+      highlight.style.right = '-6px';
+    }
+    highlight.style.top = '50%';
+    highlight.style.transform = 'translateY(-50%)';
+    
+    // הוסף את ההדגשה לבלוק
+    block.style.position = 'relative';
+    block.appendChild(highlight);
+    
+    // הצג את ההדגשה עם אנימציה
+    setTimeout(() => {
+      highlight.style.opacity = '1';
+    }, 50);
+    
+    return highlight;
+  }
   
   // --- פונקציות המשתמשות ביכולות של linkageimproved.js ---
   
-  // הדגשת נקודות חיבור פוטנציאליות
+  // הדגשת נקודות חיבור פוטנציאליות - גרסה מעודכנת עם צבעים מותאמים
   function highlightGroupSnapPoints(sourceBlock, targetBlock, direction) {
+    // נקה את כל ההדגשות הקיימות
     if (typeof clearAllHighlights === 'function') {
-        clearAllHighlights(); 
-    } else {
-        console.warn("[GroupConnect] clearAllHighlights function not found.");
-    }
-
-    if (typeof highlightConnectionPoint !== 'function') {
-         console.warn("[GroupConnect] highlightConnectionPoint function not found.");
-         return;
+      clearAllHighlights();
     }
     
-    // השהייה קטנה כדי לאפשר לאנימציה לעבוד כראוי
+    // הסר הדגשות צבעוניות קודמות
+    document.querySelectorAll('.connection-highlight').forEach(el => el.remove());
+    
     setTimeout(() => {
-        // Check if blocks are still valid before highlighting
-        if (sourceBlock && document.body.contains(sourceBlock) && targetBlock && document.body.contains(targetBlock)) {
-            if (direction === 'left') { // מקור מתחבר לשמאל של היעד
-                highlightConnectionPoint(sourceBlock, false); // נקודה ימנית במקור
-                highlightConnectionPoint(targetBlock, true);  // נקודה שמאלית ביעד
-            } else { // direction === 'right' - מקור מתחבר לימין של היעד
-                highlightConnectionPoint(sourceBlock, true);  // נקודה שמאלית במקור
-                highlightConnectionPoint(targetBlock, false); // נקודה ימנית ביעד
-            }
-            log(`Highlighting group snap: ${sourceBlock?.id} (${direction === 'left' ? 'R' : 'L'}) <-> ${targetBlock?.id} (${direction === 'left' ? 'L' : 'R'})`);
+      if (sourceBlock && document.body.contains(sourceBlock) && 
+          targetBlock && document.body.contains(targetBlock)) {
+        
+        // השתמש בצבעים מותאמים
+        const sourceColor = config.groupSnapColors.source;
+        const targetColor = config.groupSnapColors.target;
+        
+        if (direction === 'left') {
+          // מקור מתחבר לשמאל של היעד
+          createColoredHighlight(sourceBlock, false, sourceColor);  // נקודה ימנית במקור בכתום
+          createColoredHighlight(targetBlock, true, targetColor);   // נקודה שמאלית ביעד בכחול
         } else {
-             log("Highlighting aborted, block(s) no longer valid.");
-             clearGroupSnapHighlight(); // Clear potential info if blocks disappeared
+          // מקור מתחבר לימין של היעד
+          createColoredHighlight(sourceBlock, true, sourceColor);   // נקודה שמאלית במקור בכתום
+          createColoredHighlight(targetBlock, false, targetColor);  // נקודה ימנית ביעד בכחול
         }
+        
+        log(`Highlighting group snap with custom colors: ${sourceBlock?.id} -> ${targetBlock?.id}`);
+      }
     }, config.highlightDelay);
   }
 
-  // ניקוי הדגשות
+  // ניקוי הדגשות - גרסה מעודכנת
   function clearGroupSnapHighlight() {
-      if (potentialSnapInfo && typeof clearAllHighlights === 'function') {
-          clearAllHighlights();
-      }
-      potentialSnapInfo = null; // נקה גם את המידע על הצמדה פוטנציאלית
+    // נקה הדגשות רגילות
+    if (potentialSnapInfo && typeof clearAllHighlights === 'function') {
+      clearAllHighlights();
+    }
+    
+    // נקה הדגשות צבעוניות
+    document.querySelectorAll('.connection-highlight').forEach(el => el.remove());
+    
+    potentialSnapInfo = null;
   }
   
   // השמעת צליל הצמדה
@@ -465,172 +518,3 @@
                  block.style.zIndex = ''; // אפס ZIndex
              }
         });
-        
-        // הפעל אפקטים
-        playGroupSnapSound();
-        addGroupSnapAnimation(connectingSourceBlock); 
-        
-        // נקה הדגשות ומצב הצמדה פוטנציאלי
-        clearGroupSnapHighlight(); // זה מאפס את potentialSnapInfo
-
-        // הפעלת סריקה מחדש של מובילים (אמור לקרות אוטומטית דרך Observer, אבל אפשר גם ידנית)
-        if (typeof window.scanAndMarkLeaders === 'function') {
-             // השהייה קלה כדי לאפשר ל-DOM להתעדכן לגמרי
-             setTimeout(window.scanAndMarkLeaders, 50);
-        }
-
-        log(`הצמדת קבוצה הושלמה בהצלחה.`);
-        return true; // הצמדה הצליחה
-
-    } catch (error) {
-        console.error("[GroupConnect] שגיאה בביצוע הצמדת קבוצה:", error);
-        clearGroupSnapHighlight();
-         try {
-             // נקה מאפיינים שנוספו חלקית אם אירעה שגיאה
-             if (connectingSourceBlock && document.body.contains(connectingSourceBlock)) {
-                 connectingSourceBlock.removeAttribute('data-connected-to');
-                 connectingSourceBlock.removeAttribute('data-connection-direction');
-             }
-             if (connectingTargetBlock && document.body.contains(connectingTargetBlock)) {
-                 connectingTargetBlock.removeAttribute(direction === 'left' ? 'data-connected-from-left' : 'data-connected-from-right');
-             }
-         } catch (cleanupError) {
-            console.error("[GroupConnect] שגיאה בניקוי לאחר שגיאת הצמדה:", cleanupError);
-         }
-        return false; // הצמדה נכשלה
-    }
-  }
-
-
-  // === מאזיני אירועים ===
-
-  function handleGlobalMouseMove(e) {
-    // השתמש ב- window.isGroupDragging וכו' כדי לגשת למשתנים הגלובליים
-    if (typeof window.isGroupDragging !== 'undefined' && window.isGroupDragging) {
-       checkPotentialGroupSnap();
-    } else {
-       if (potentialSnapInfo) {
-           clearGroupSnapHighlight();
-       }
-    }
-  }
-
-  function handleGlobalMouseUp(e) {
-     // בדוק את המצב *לפני* שהמודול השני מאפס אותו
-     const wasGroupDragging = (typeof window.isGroupDragging !== 'undefined' && window.isGroupDragging);
-     const snapCandidateExists = potentialSnapInfo !== null; // שמור את המצב הנוכחי של המועמד
-
-     if (wasGroupDragging && snapCandidateExists) {
-        // בצע את ההצמדה *רק* אם היינו באמצע גרירת קבוצה והיה מועמד
-        
-        // מניעת התפשטות כדי שהמודול השני לא יבצע פעולות מיותרות או סותרות?
-        // נסה להפעיל את זה אם יש התנהגות לא רצויה בסיום הגרירה
-        // e.preventDefault(); 
-        // e.stopPropagation(); 
-
-        const snapSuccess = performActualGroupSnap(); // זה גם מנקה את potentialSnapInfo
-
-        // אם ההצמדה הצליחה, המודול השני ירוץ אחרי זה ויבצע את הניקוי שלו
-        // (איפוס isGroupDragging, groupBlocks וכו') - זה בסדר.
-        
-        if (!snapSuccess) {
-           // אם ההצמדה נכשלה מסיבה כלשהי, potentialSnapInfo כבר נוקה
-           // המודול השני ידאג לשחרור הבלוקים
-           log("Group snap failed.");
-        }
-        
-     } else if (snapCandidateExists) {
-         // אם היה מועמד אבל לא היינו בגרירת קבוצה פעילה (נדיר, אבל אפשרי)
-         clearGroupSnapHighlight();
-     }
-     // בכל מקרה אחר, אין מה לעשות כאן.
-     // חשוב: לא לנקות כאן את potentialSnapInfo אם הגרירה לא הייתה פעילה, 
-     // כי אולי המשתמש פשוט הזיז את העכבר בלי לגרור ואז לחץ.
-  }
-
-  // === אתחול המודול ===
-  function initGroupConnect() {
-    // הודעת אתחול ראשונה
-    console.log("[GroupConnect] Attempting initGroupConnect..."); 
-    
-    // ודא שה-DOM מוכן מספיק (במיוחד אזור התכנות)
-    const programArea = document.getElementById('program-blocks');
-    if (!programArea) {
-        console.error("[GroupConnect] Initialization failed: 'program-blocks' area not found. Retrying in 200ms.");
-        // נסה שוב מאוחר יותר אם האזור עדיין לא נוצר
-        setTimeout(initGroupConnect, 200); 
-        return;
-    }
-
-    log("Initializing group connection module (group-connect.js v1.0.1)");
-    
-    // הוסף מאזינים גלובליים
-    // הוספה ללא capture כדי לא להפריע למודולים אחרים שעשויים להשתמש ב-preventDefault/stopPropagation
-    document.removeEventListener('mousemove', handleGlobalMouseMove, false); // הסר קודם למקרה של ריצה כפולה
-    document.addEventListener('mousemove', handleGlobalMouseMove, false); 
-    
-    document.removeEventListener('mouseup', handleGlobalMouseUp, false); // הסר קודם
-    document.addEventListener('mouseup', handleGlobalMouseUp, false); 
-
-    // בדיקת זמינות פונקציות קריטיות (מודפס אזהרות אם חסר)
-    checkDependencies();
-    
-    window.groupConnectInitialized = true;
-    log("Group connection module initialized successfully.");
-  }
-  
-  // פונקציית עזר לבדיקת תלויות
-  function checkDependencies() {
-      const dependencies = [
-          { name: 'isGroupDragging', type: 'variable', source: 'linkage-group-drag-simplified.js' },
-          { name: 'groupBlocks', type: 'variable', source: 'linkage-group-drag-simplified.js' },
-          { name: 'startPositions', type: 'variable', source: 'linkage-group-drag-simplified.js' },
-          // { name: 'updateGroupPosition', type: 'function', source: 'linkage-group-drag-simplified.js' }, // בדוק אם אתה מייצא אותה
-          { name: 'findConnectedBlocks', type: 'function', source: 'linkage-group-drag-simplified.js' }, // בדוק אם מיוצאת
-          { name: 'findLeftmostBlock', type: 'function', source: 'linkage-group-drag-simplified.js' }, // בדוק אם מיוצאת
-          // { name: 'scanAndMarkLeaders', type: 'function', source: 'linkage-group-drag-simplified.js' }, // בדוק אם מיוצאת
-          { name: 'clearAllHighlights', type: 'function', source: 'linkageimproved.js' },
-          { name: 'highlightConnectionPoint', type: 'function', source: 'linkageimproved.js' },
-          { name: 'playSnapSound', type: 'function', source: 'linkageimproved.js' },
-          { name: 'addSnapEffectAnimation', type: 'function', source: 'linkageimproved.js' }
-      ];
-      
-      let allOk = true;
-      dependencies.forEach(dep => {
-          const exists = (dep.type === 'function') ? (typeof window[dep.name] === 'function') : (typeof window[dep.name] !== 'undefined');
-          if (!exists) {
-              console.warn(`[GroupConnect] Dependency potentially missing: ${dep.type} '${dep.name}' (expected from ${dep.source}). Fallbacks or errors may occur.`);
-              allOk = false;
-          }
-      });
-      
-      if(allOk) {
-          log("All checked dependencies seem to be available globally.");
-      }
-  }
-
-  // --- לוגיקת הפעלת האתחול ---
-  
-  // פונקציה להפעלת האתחול לאחר שכל הסקריפטים נטענו (בתקווה)
-  function attemptInitialization() {
-      // בדוק אם המודולים הקודמים סיימו את האתחול שלהם (אם הם מגדירים דגל דומה)
-      if (window.groupDragInitialized && window.blockLinkageInitialized_v3_9_5) {
-          initGroupConnect();
-      } else {
-          // אם המודולים הקודמים עדיין לא סיימו, נסה שוב עוד רגע
-          // log("Waiting for other modules to initialize...");
-          setTimeout(attemptInitialization, 100); // נסה שוב עוד 100ms
-      }
-  }
-
-  // הפעל את ניסיון האתחול כשה-DOM מוכן, או מיד אם כבר מוכן
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', attemptInitialization);
-  } else {
-    // DOM כבר טעון, נסה לאתחל (אולי עם השהייה קטנה כדי לאפשר לסקריפטים אחרים לסיים)
-    setTimeout(attemptInitialization, 50); 
-  }
-
-})();
-
---- END OF FILE group-connect.js ---
