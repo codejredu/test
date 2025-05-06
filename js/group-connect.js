@@ -1,16 +1,88 @@
-// group-connect.js
+// group-connect.js - קובץ מאוחד עם CSS ו-JavaScript
+
+// הוספת סגנונות CSS כחלק מהקוד
+function addStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        /* סגנונות לקבוצות */
+        .draggable-group {
+            position: relative;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            padding: 20px;
+            margin: 10px;
+            cursor: move;
+            user-select: none;
+            display: inline-block;
+        }
+
+        /* סגנונות לעוגני קרבה */
+        .proximity-anchor {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 0 3px rgba(0,0,0,0.3);
+            transition: transform 0.2s ease;
+        }
+
+        .proximity-anchor:hover {
+            transform: scale(1.3) translateY(-50%);
+        }
+
+        .left-anchor {
+            left: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+            /* צבע כחול */
+            background-color: #0066cc;
+        }
+
+        .right-anchor {
+            right: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+            /* צבע כתום */
+            background-color: #ff9900;
+        }
+
+        /* סגנונות לחיבורים בין קבוצות */
+        .group-connection {
+            position: absolute;
+            height: 3px;
+            background-color: #555;
+            pointer-events: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .group-connection:hover {
+            background-color: #ff5500;
+        }
+
+        /* אנימציית הבהוב לזיהוי קרבה */
+        .proximity-detected .proximity-anchor {
+            animation: blink 0.5s infinite alternate;
+        }
+
+        @keyframes blink {
+            from { opacity: 0.5; }
+            to { opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+}
 
 // פונקציה ליצירת עוגני קרבה לקבוצה
 function createProximityAnchors(group) {
     // יצירת עוגן שמאלי (כחול)
     const leftAnchor = document.createElement('div');
     leftAnchor.className = 'proximity-anchor left-anchor';
-    leftAnchor.style.backgroundColor = 'blue';
     
     // יצירת עוגן ימני (כתום)
     const rightAnchor = document.createElement('div');
     rightAnchor.className = 'proximity-anchor right-anchor';
-    rightAnchor.style.backgroundColor = 'orange';
     
     // הוספת העוגנים לקבוצה
     group.appendChild(leftAnchor);
@@ -74,38 +146,46 @@ function updateConnectionPosition(connection, groupA, groupB) {
     connection.style.transformOrigin = '0 50%';
 }
 
-// הגדרת סגנון CSS לעוגנים ולחיבורים
-function addStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
-        .proximity-anchor {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            cursor: pointer;
-        }
+// פונקציה להפיכת אלמנטים לגרירים
+function enableDragging() {
+    const draggables = document.querySelectorAll('.draggable-group');
+    
+    draggables.forEach(item => {
+        // משתנים לשמירת מיקום התחלתי
+        let offsetX, offsetY;
         
-        .left-anchor {
-            left: -5px;
-            top: 50%;
-            transform: translateY(-50%);
-        }
+        item.addEventListener('dragstart', (e) => {
+            // שמירת המרחק מהקואורדינטות של העכבר לקצה האלמנט
+            const rect = item.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+            
+            // הגדרת אפקט הגרירה
+            e.dataTransfer.effectAllowed = 'move';
+        });
         
-        .right-anchor {
-            right: -5px;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-        
-        .group-connection {
-            position: absolute;
-            height: 2px;
-            background-color: #333;
-            pointer-events: none;
-        }
-    `;
-    document.head.appendChild(style);
+        item.addEventListener('dragend', (e) => {
+            // חישוב הקואורדינטות החדשות
+            const x = e.clientX - offsetX;
+            const y = e.clientY - offsetY;
+            
+            // עדכון המיקום של האלמנט
+            item.style.position = 'absolute';
+            item.style.left = x + 'px';
+            item.style.top = y + 'px';
+        });
+    });
+    
+    // מניעת התנהגות ברירת המחדל של הדפדפן בגרירה
+    document.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        return false;
+    });
+    
+    document.addEventListener('drop', (e) => {
+        e.preventDefault();
+        return false;
+    });
 }
 
 // פונקציה להוספת האזנה לאירועי גרירה
@@ -124,6 +204,10 @@ function setupDragListeners(groups) {
                 if (group !== otherGroup) {
                     // בדיקת כיוון: מימין לשמאל
                     if (detectGroupProximity(group, otherGroup)) {
+                        // הוספת סימון קרבה
+                        group.classList.add('proximity-detected');
+                        otherGroup.classList.add('proximity-detected');
+                        
                         // אם אין עדיין חיבור בין הקבוצות
                         const connectionKey = `${group.id}-${otherGroup.id}`;
                         if (!connections[connectionKey]) {
@@ -133,10 +217,18 @@ function setupDragListeners(groups) {
                             // עדכון מיקום החיבור הקיים
                             updateConnectionPosition(connections[connectionKey], group, otherGroup);
                         }
+                    } else {
+                        // הסרת סימון קרבה
+                        group.classList.remove('proximity-detected');
+                        otherGroup.classList.remove('proximity-detected');
                     }
                     
                     // בדיקת כיוון: משמאל לימין
                     if (detectGroupProximity(otherGroup, group)) {
+                        // הוספת סימון קרבה
+                        otherGroup.classList.add('proximity-detected');
+                        group.classList.add('proximity-detected');
+                        
                         // אם אין עדיין חיבור בין הקבוצות
                         const connectionKey = `${otherGroup.id}-${group.id}`;
                         if (!connections[connectionKey]) {
@@ -149,6 +241,17 @@ function setupDragListeners(groups) {
                     }
                 }
             });
+            
+            // עדכון כל החיבורים הקיימים
+            Object.entries(connections).forEach(([key, connection]) => {
+                const [groupAId, groupBId] = key.split('-');
+                const groupA = document.getElementById(groupAId);
+                const groupB = document.getElementById(groupBId);
+                
+                if (groupA && groupB) {
+                    updateConnectionPosition(connection, groupA, groupB);
+                }
+            });
         });
     });
 }
@@ -157,6 +260,9 @@ function setupDragListeners(groups) {
 function initGroupConnections() {
     // הוספת סגנונות CSS
     addStyles();
+    
+    // הפעלת גרירה
+    enableDragging();
     
     // בחירת כל הקבוצות בדף
     const groups = document.querySelectorAll('.draggable-group');
