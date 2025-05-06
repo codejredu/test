@@ -1,297 +1,169 @@
-// --- GROUP-CONNECT.JS v1.0.1 --- 
-// מודול לחיבור קבוצות בלוקים מחוברות (גרסה מתוקנת לבדיקת אתחול)
+// group-connect.js
 
-(function() {
-  'use strict';
-
-  // === הגדרות ===
-  const config = {
-    debug: true,                       // האם להדפיס הודעות דיבאג בקונסול
-    groupConnectThreshold: 45,         // מרחק מרבי (בפיקסלים) לזיהוי אפשרות חיבור קבוצה
-    verticalAlignThreshold: 30,        // סף חפיפה אנכית (בפיקסלים) - רחב יותר לקבוצות
-    verticalOverlapReq: 0.2,           // דרישת חפיפה אנכית יחסית מינימלית (20%)
-    highlightDelay: 10,                // השהייה קטנה לפני הצגת הדגשה
+// פונקציה ליצירת עוגני קרבה לקבוצה
+function createProximityAnchors(group) {
+    // יצירת עוגן שמאלי (כחול)
+    const leftAnchor = document.createElement('div');
+    leftAnchor.className = 'proximity-anchor left-anchor';
+    leftAnchor.style.backgroundColor = 'blue';
     
-    // ערכי היסט פאזל - זהים ל-linkageimproved.js
-    puzzleRightBulgeWidth: 10, 
-    puzzleLeftSocketWidth: 10,
-    verticalCenterOffset: 0,
+    // יצירת עוגן ימני (כתום)
+    const rightAnchor = document.createElement('div');
+    rightAnchor.className = 'proximity-anchor right-anchor';
+    rightAnchor.style.backgroundColor = 'orange';
     
-    // כוונון עדין - זהה ל-linkageimproved.js
-    horizontalFineTuningLeft: 9,
-    horizontalFineTuningRight: -9,
+    // הוספת העוגנים לקבוצה
+    group.appendChild(leftAnchor);
+    group.appendChild(rightAnchor);
     
-    // צבעים מותאמים לחיבור קבוצות
-    groupSnapColors: {
-      source: '#FF6B35',  // כתום
-      target: '#4A90E2'   // כחול
-    }
-  };
+    // החזרת אובייקט עם שני העוגנים
+    return { leftAnchor, rightAnchor };
+}
 
-  // === משתני מצב ===
-  let potentialSnapInfo = null; // { sourceBlock, targetBlock, direction ('left'/'right') }
-
-  // === פונקציות עזר ===
-  
-  // הדפסת הודעות דיבאג
-  function log(message, data) {
-    if (config.debug) {
-      if (data !== undefined) {
-        console.log(`[GroupConnect] ${message}`, data);
-      } else {
-        console.log(`[GroupConnect] ${message}`);
-      }
-    }
-  }
-
-  // פונקציה חדשה ליצירת מחוונים עם צבעים מותאמים
-  function createColoredHighlight(block, isLeftPoint, color) {
-    if (!block) {
-      log("Can't create highlight - block is null");
-      return null;
-    }
-
-    // נסה קודם להסיר הדגשות קיימות
-    const existingHighlights = block.querySelectorAll('.connection-highlight');
-    existingHighlights.forEach(el => el.remove());
+// פונקציה לזיהוי קרבה בין קבוצות
+function detectGroupProximity(groupA, groupB, threshold = 50) {
+    // קבלת המיקום של העוגנים
+    const groupARight = groupA.querySelector('.right-anchor').getBoundingClientRect();
+    const groupBLeft = groupB.querySelector('.left-anchor').getBoundingClientRect();
     
-    // צור אלמנט הדגשה חדש
-    const highlight = document.createElement('div');
-    highlight.className = 'connection-highlight';
+    // חישוב המרחק בין העוגן הימני של קבוצה A לעוגן השמאלי של קבוצה B
+    const distance = Math.abs(groupARight.right - groupBLeft.left);
     
-    // הגדר את הסגנון של ההדגשה
-    highlight.style.position = 'absolute';
-    highlight.style.width = '14px';
-    highlight.style.height = '14px';
-    highlight.style.borderRadius = '50%';
-    highlight.style.backgroundColor = color;
-    highlight.style.border = '2px solid white';
-    highlight.style.boxShadow = `0 0 12px ${color}`;
-    highlight.style.zIndex = '1000';
-    highlight.style.opacity = '0';
-    highlight.style.transition = 'opacity 0.3s ease-in-out';
+    // בדיקה אם המרחק קטן מהסף שהוגדר
+    return distance < threshold;
+}
+
+// פונקציה לחיבור בין שתי קבוצות
+function connectGroups(groupA, groupB) {
+    // יצירת אלמנט החיבור
+    const connection = document.createElement('div');
+    connection.className = 'group-connection';
     
-    // מיקום ההדגשה
-    if (isLeftPoint) {
-      highlight.style.left = '-7px';
-    } else {
-      highlight.style.right = '-7px';
-    }
-    highlight.style.top = '50%';
-    highlight.style.transform = 'translateY(-50%)';
+    // שמירת מזהים של הקבוצות המחוברות
+    connection.dataset.groupA = groupA.id;
+    connection.dataset.groupB = groupB.id;
     
-    // וודא שהבלוק הוא אלמנט בעל relative/absolute positioning
-    const computedStyle = window.getComputedStyle(block);
-    if (computedStyle.position === 'static') {
-      block.style.position = 'relative';
-    }
+    // הוספת החיבור לדף
+    document.body.appendChild(connection);
     
-    // הוסף את ההדגשה לבלוק
-    block.appendChild(highlight);
+    // עדכון מיקום החיבור
+    updateConnectionPosition(connection, groupA, groupB);
     
-    // הצג את ההדגשה עם אנימציה
-    setTimeout(() => {
-      highlight.style.opacity = '1';
-    }, 50);
+    return connection;
+}
+
+// פונקציה לעדכון מיקום החיבור בין קבוצות
+function updateConnectionPosition(connection, groupA, groupB) {
+    const groupARight = groupA.querySelector('.right-anchor').getBoundingClientRect();
+    const groupBLeft = groupB.querySelector('.left-anchor').getBoundingClientRect();
     
-    // הוסף אנימציית פועם
-    const pulseAnimation = highlight.animate([
-      { transform: 'translateY(-50%) scale(1)', opacity: 1 },
-      { transform: 'translateY(-50%) scale(1.2)', opacity: 0.8 },
-      { transform: 'translateY(-50%) scale(1)', opacity: 1 }
-    ], {
-      duration: 1000,
-      iterations: Infinity,
-      easing: 'ease-in-out'
-    });
+    // חישוב נקודת האמצע בין שני העוגנים
+    const startX = groupARight.right;
+    const startY = groupARight.top + groupARight.height / 2;
+    const endX = groupBLeft.left;
+    const endY = groupBLeft.top + groupBLeft.height / 2;
     
-    log(`Created highlight for block ${block.id} at ${isLeftPoint ? 'left' : 'right'} with color ${color}`);
+    // עדכון המיקום והגודל של החיבור
+    const length = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+    const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
     
-    return highlight;
-  }
+    connection.style.width = `${length}px`;
+    connection.style.left = `${startX}px`;
+    connection.style.top = `${startY}px`;
+    connection.style.transform = `rotate(${angle}deg)`;
+    connection.style.transformOrigin = '0 50%';
+}
 
-  // הדגשת נקודות חיבור פוטנציאליות
-  function highlightGroupSnapPoints(sourceBlock, targetBlock, direction) {
-    log(`Attempting to highlight: ${sourceBlock?.id} -> ${targetBlock?.id} (${direction})`);
-    
-    // נקה את כל ההדגשות הקיימות
-    clearGroupSnapHighlight();
-    
-    // הצג מיד ללא השהייה
-    if (sourceBlock && document.body.contains(sourceBlock) && 
-        targetBlock && document.body.contains(targetBlock)) {
-      
-      const sourceColor = config.groupSnapColors.source;
-      const targetColor = config.groupSnapColors.target;
-      
-      if (direction === 'left') {
-        // מקור מתחבר לשמאל של היעד
-        createColoredHighlight(sourceBlock, false, sourceColor);  // נקודה ימנית במקור בכתום
-        createColoredHighlight(targetBlock, true, targetColor);   // נקודה שמאלית ביעד בכחול
-      } else {
-        // מקור מתחבר לימין של היעד
-        createColoredHighlight(sourceBlock, true, sourceColor);   // נקודה שמאלית במקור בכתום
-        createColoredHighlight(targetBlock, false, targetColor);  // נקודה ימנית ביעד בכחול
-      }
-      
-      log(`Successfully highlighted snap points`);
-    } else {
-      log("Cannot highlight - blocks not valid or not in DOM");
-    }
-  }
-
-  // ניקוי הדגשות
-  function clearGroupSnapHighlight() {
-    // נקה הדגשות צבעוניות
-    const highlights = document.querySelectorAll('.connection-highlight');
-    highlights.forEach(el => {
-      el.style.opacity = '0';
-      setTimeout(() => el.remove(), 300);
-    });
-    
-    potentialSnapInfo = null;
-    log("Cleared all highlights");
-  }
-
-  // === בדיקת גרירת קבוצה ===
-  function isGroupBeingDragged() {
-    // בדיקה פשוטה יותר
-    return window.isGroupDragging === true && 
-           window.groupBlocks && 
-           window.groupBlocks.length > 0;
-  }
-
-  // === ליבת הלוגיקה - פשוטה יותר ===
-  function checkPotentialGroupSnap() {
-    // בדוק אם מתבצעת גרירת קבוצה
-    if (!isGroupBeingDragged()) {
-      if (potentialSnapInfo) {
-        clearGroupSnapHighlight();
-      }
-      return;
-    }
-
-    const programArea = document.getElementById('program-blocks');
-    if (!programArea) return;
-
-    // קבל את הבלוקים הנגררים
-    const draggedBlocks = window.groupBlocks.filter(b => b && document.body.contains(b));
-    if (draggedBlocks.length === 0) return;
-
-    // מצא את בלוק הקצה הימני של הקבוצה הנגררת
-    let rightmostDragged = draggedBlocks[0];
-    let rightPosition = rightmostDragged.getBoundingClientRect().right;
-    
-    for (let i = 1; i < draggedBlocks.length; i++) {
-      const pos = draggedBlocks[i].getBoundingClientRect().right;
-      if (pos > rightPosition) {
-        rightPosition = pos;
-        rightmostDragged = draggedBlocks[i];
-      }
-    }
-
-    // מצא את כל הבלוקים שאינם חלק מהקבוצה הנגררת
-    const draggedIds = new Set(draggedBlocks.map(b => b.id));
-    const allBlocks = Array.from(programArea.querySelectorAll('.block-container'));
-    const targetBlocks = allBlocks.filter(b => !draggedIds.has(b.id));
-
-    let closestTarget = null;
-    let minDistance = config.groupConnectThreshold + 1;
-
-    // חפש את הבלוק הקרוב ביותר
-    for (const targetBlock of targetBlocks) {
-      if (!targetBlock || !document.body.contains(targetBlock)) continue;
-      
-      const targetRect = targetBlock.getBoundingClientRect();
-      const draggedRect = rightmostDragged.getBoundingClientRect();
-      
-      // בדוק מרחק אופקי
-      const distance = Math.abs(draggedRect.right - targetRect.left);
-      
-      // בדוק אם המרחק קטן מהסף
-      if (distance < config.groupConnectThreshold) {
-        // בדוק חפיפה אנכית
-        const topOverlap = Math.max(draggedRect.top, targetRect.top);
-        const bottomOverlap = Math.min(draggedRect.bottom, targetRect.bottom);
-        const verticalOverlap = Math.max(0, bottomOverlap - topOverlap);
-        
-        if (verticalOverlap > 0 && distance < minDistance) {
-          minDistance = distance;
-          closestTarget = targetBlock;
-        }
-      }
-    }
-
-    // אם מצאנו מטרה קרובה, הדגש אותה
-    if (closestTarget && minDistance < config.groupConnectThreshold) {
-      // בדוק אם זה מועמד חדש
-      if (!potentialSnapInfo || 
-          potentialSnapInfo.sourceBlock.id !== rightmostDragged.id ||
-          potentialSnapInfo.targetBlock.id !== closestTarget.id) {
-        
-        log(`Found snap candidate: ${rightmostDragged.id} -> ${closestTarget.id}`);
-        
-        potentialSnapInfo = {
-          sourceBlock: rightmostDragged,
-          targetBlock: closestTarget,
-          direction: 'left'
-        };
-        
-        highlightGroupSnapPoints(rightmostDragged, closestTarget, 'left');
-      }
-    } else {
-      // אם אין מועמד, נקה הדגשות
-      if (potentialSnapInfo) {
-        log("No valid snap candidate found");
-        clearGroupSnapHighlight();
-      }
-    }
-  }
-
-  // === מאזיני אירועים ===
-  function handleGlobalMouseMove(e) {
-    checkPotentialGroupSnap();
-  }
-
-  function handleGlobalMouseUp(e) {
-    const wasGroupDragging = isGroupBeingDragged();
-    const hasSnapCandidate = potentialSnapInfo !== null;
-
-    if (wasGroupDragging && hasSnapCandidate) {
-      log("Mouse up with snap candidate - performing snap...");
-      // כאן תוסיף את הלוגיקה להצמדה
-    }
-    
-    clearGroupSnapHighlight();
-  }
-
-  // === אתחול המודול ===
-  function initGroupConnect() {
-    log("Initializing group-connect module...");
-    
-    // הוסף מאזינים
-    document.addEventListener('mousemove', handleGlobalMouseMove);
-    document.addEventListener('mouseup', handleGlobalMouseUp);
-    
-    // הוסף CSS פעם אחת
+// הגדרת סגנון CSS לעוגנים ולחיבורים
+function addStyles() {
     const style = document.createElement('style');
     style.textContent = `
-      .connection-highlight {
-        pointer-events: none;
-        transition: all 0.3s ease-in-out;
-      }
+        .proximity-anchor {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .left-anchor {
+            left: -5px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .right-anchor {
+            right: -5px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .group-connection {
+            position: absolute;
+            height: 2px;
+            background-color: #333;
+            pointer-events: none;
+        }
     `;
     document.head.appendChild(style);
+}
+
+// פונקציה להוספת האזנה לאירועי גרירה
+function setupDragListeners(groups) {
+    // מעקב אחר חיבורים קיימים
+    const connections = {};
     
-    window.groupConnectInitialized = true;
-    log("Group connect module initialized");
-  }
+    groups.forEach(group => {
+        // יצירת עוגני קרבה לכל קבוצה
+        createProximityAnchors(group);
+        
+        // מעקב אחר תזוזת הקבוצה
+        group.addEventListener('dragend', () => {
+            // בדיקת קרבה לכל הקבוצות האחרות
+            groups.forEach(otherGroup => {
+                if (group !== otherGroup) {
+                    // בדיקת כיוון: מימין לשמאל
+                    if (detectGroupProximity(group, otherGroup)) {
+                        // אם אין עדיין חיבור בין הקבוצות
+                        const connectionKey = `${group.id}-${otherGroup.id}`;
+                        if (!connections[connectionKey]) {
+                            // יצירת חיבור חדש
+                            connections[connectionKey] = connectGroups(group, otherGroup);
+                        } else {
+                            // עדכון מיקום החיבור הקיים
+                            updateConnectionPosition(connections[connectionKey], group, otherGroup);
+                        }
+                    }
+                    
+                    // בדיקת כיוון: משמאל לימין
+                    if (detectGroupProximity(otherGroup, group)) {
+                        // אם אין עדיין חיבור בין הקבוצות
+                        const connectionKey = `${otherGroup.id}-${group.id}`;
+                        if (!connections[connectionKey]) {
+                            // יצירת חיבור חדש
+                            connections[connectionKey] = connectGroups(otherGroup, group);
+                        } else {
+                            // עדכון מיקום החיבור הקיים
+                            updateConnectionPosition(connections[connectionKey], otherGroup, group);
+                        }
+                    }
+                }
+            });
+        });
+    });
+}
 
-  // אתחול מיידי
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initGroupConnect);
-  } else {
-    initGroupConnect();
-  }
+// פונקציה לאתחול המערכת
+function initGroupConnections() {
+    // הוספת סגנונות CSS
+    addStyles();
+    
+    // בחירת כל הקבוצות בדף
+    const groups = document.querySelectorAll('.draggable-group');
+    
+    // הגדרת האזנה לאירועי גרירה
+    setupDragListeners(Array.from(groups));
+}
 
-})();
+// הפעלת האתחול כאשר הדף נטען
+document.addEventListener('DOMContentLoaded', initGroupConnections);
