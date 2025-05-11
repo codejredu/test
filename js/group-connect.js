@@ -1,6 +1,4 @@
-// --- GROUP-CONNECT.JS (גישה עצמאית) ---
-// מטרתו לזהות אפשרות לחיבור קבוצות ולהוציא אותו לפועל.
-// מניח שקוד אחר מטפל בהזזה הפיזית של הבלוק/קבוצה הנגררת.
+// --- GROUP-CONNECT.JS (גישה עצמאית) - עם תיקונים ודיבאג משופר ---
 
 (function() {
   'use strict';
@@ -9,128 +7,101 @@
     CONNECT_THRESHOLD: 40,       // מרחק מרבי לזיהוי קרבה (בפיקסלים)
     VERTICAL_OVERLAP_REQ: 0.4,  // אחוז חפיפה אנכית מינימלי נדרש (40%)
     DEBUG: true,                // הפעלת הודעות דיבאג בקונסול
-    // קלאסים להדגשות:
-    HIGHLIGHT_SOURCE_GROUP_EDGE: 'gc-highlight-source-edge', // לבלוק בקצה הקבוצה הנגררת
-    HIGHLIGHT_TARGET_GROUP_EDGE: 'gc-highlight-target-edge', // לבלוק בקצה קבוצת היעד
-    HIGHLIGHT_CONNECTION_POINT: 'gc-highlight-connection-point' // להדגשת נקודת חיבור ספציפית
+    HIGHLIGHT_SOURCE_GROUP_EDGE: 'gc-highlight-source-edge', // קלאס להדגשת בלוק מקור
+    HIGHLIGHT_TARGET_GROUP_EDGE: 'gc-highlight-target-edge', // קלאס להדגשת בלוק יעד
+    HIGHLIGHT_CONNECTION_POINT: 'gc-highlight-connection-point' // קלאס להדגשת נקודת חיבור
   };
 
   // === משתנים גלובליים במודול ===
-  let isDragRelevantForGroupConnect = false; // האם הגרירה הנוכחית נבדקת לחיבור קבוצתי
-  let currentDraggedBlockElement = null;     // הבלוק שהמשתמש לחץ עליו והתחיל לגרור
-  let draggedGroupInfo = {                 // מידע על הקבוצה הנגררת
-    blocks: [],                           // מערך של כל הבלוקים בקבוצה
-    leftmostBlock: null,                  // הבלוק השמאלי ביותר בקבוצה
-    rightmostBlock: null                  // הבלוק הימני ביותר בקבוצה
+  let isDragRelevantForGroupConnect = false;
+  let currentDraggedBlockElement = null;
+  let draggedGroupInfo = {
+    blocks: [],
+    leftmostBlock: null,
+    rightmostBlock: null
   };
-  let potentialGroupSnapInfo = null;       // פרטי חיבור קבוצתי פוטנציאלי שזוהה
+  let potentialGroupSnapInfo = null;
 
   function log(message, data) {
     if (CONFIG.DEBUG) {
-      const prefix = '[GroupConnect]';
+      const prefix = '[GroupConnectDEBUG]';
       if (data !== undefined) {
-        console.log(prefix, message, data);
+        // שימוש ב-JSON.stringify עם replacer למניעת שגיאות Circular structure
+        const replacer = (key, value) => {
+            if (value instanceof HTMLElement) {
+                return `HTMLElement#${value.id || value.tagName}`;
+            }
+            return value;
+        };
+        try {
+            // אם data הוא אובייקט גדול, נדפיס אותו ישירות כדי שאפשר יהיה לפתוח אותו בקונסול
+            if (typeof data === 'object' && data !== null) {
+                 console.log(prefix, message, data);
+            } else {
+                 console.log(prefix, message, JSON.parse(JSON.stringify(data, replacer)));
+            }
+        } catch (e) {
+             console.log(prefix, message, '(לא ניתן להמיר את הנתונים ל-JSON)');
+        }
+
       } else {
         console.log(prefix, message);
       }
     }
   }
 
-  // === שכפול/התאמת לוגיקות חיוניות ===
-
   /**
    * מאתר את כל הבלוקים המחוברים לבלוק התחלתי נתון.
-   * הלוגיקה מנסה לחקות את אופן פעולת זיהוי קבוצה על בסיס data-attributes.
+   * גרסה מתוקנת ומפושטת, מסתמכת על data-connected-to ו-data-connected-from-left.
    */
-  function findConnectedBlocksRecursively(startBlock, allBlocksInDOM) {
+  function findConnectedBlocksRecursively(startBlock) {
+    log('findConnectedBlocksRecursively: מתחיל עם בלוק:', startBlock ? startBlock.id : 'null');
     if (!startBlock || !startBlock.id) return [];
-
+    
     const group = new Set();
     const queue = [startBlock];
     group.add(startBlock);
 
-    while (queue.length > 0) {
+    let iterations = 0;
+    const MAX_ITERATIONS = 100; // למנוע לולאות אינסופיות במקרי קצה
+
+    while (queue.length > 0 && iterations < MAX_ITERATIONS) {
+      iterations++;
       const current = queue.shift();
+      // log(`findConnectedBlocksRecursively: איטרציה ${iterations}, בודק את ${current.id}`);
 
       // 1. בדוק חיבור ימינה (current מחובר לבלוק מימינו)
       const connectedToId = current.getAttribute('data-connected-to');
       if (connectedToId) {
         const rightBlock = document.getElementById(connectedToId);
+        // log(`findConnectedBlocksRecursively: ${current.id} מחובר מימין ל-${connectedToId}`);
         if (rightBlock && !group.has(rightBlock)) {
           group.add(rightBlock);
           queue.push(rightBlock);
+          // log(`findConnectedBlocksRecursively: הוסיף לקבוצה (מימין): ${rightBlock.id}`);
         }
       }
 
-      // 2. בדוק חיבור שמאלה (current מחובר לבלוק משמאלו)
-      //    כלומר, בלוק אחר ש-data-connected-to שלו הוא current.id
-      //    או, אם יש data-connected-from-right על current
-      const connectedFromRightId = current.getAttribute('data-connected-from-right');
-      if (connectedFromRightId) {
-         const leftBlock = document.getElementById(connectedFromRightId);
-         if (leftBlock && !leftBlock.hasAttribute('data-connected-to') && !group.has(leftBlock)) { // תוספת בדיקה למניעת לולאה אם שני הצדדים מלאים
-            // לא בטוח שהבדיקה הזו נכונה כאן, זה עלול למנוע זיהוי קבוצה שלמה
-         }
-         if (leftBlock && !group.has(leftBlock)) {
-            group.add(leftBlock);
-            queue.push(leftBlock);
-         }
+      // 2. בדוק חיבור שמאלה (בלוק אחר מחובר לצד השמאלי של current)
+      //    זה אומר של-current יש מאפיין data-connected-from-left
+      const connectedFromLeftId = current.getAttribute('data-connected-from-left');
+      if (connectedFromLeftId) {
+        const leftBlock = document.getElementById(connectedFromLeftId);
+        // log(`findConnectedBlocksRecursively: ${current.id} מחובר משמאל מ-${connectedFromLeftId}`);
+        if (leftBlock && !group.has(leftBlock)) {
+          group.add(leftBlock);
+          queue.push(leftBlock);
+          // log(`findConnectedBlocksRecursively: הוסיף לקבוצה (משמאל): ${leftBlock.id}`);
+        }
       }
-      
-      // אם אין data-connected-from-right, נסרוק את כל הבלוקים האחרים (פחות יעיל)
-      // כרגע נניח ש-data-connected-from-right קיים ומתעדכן כראוי על ידי linkageimproved.js
-      // או שנצטרך לממש את הסריקה המלאה.
-      // בנוסף, linkageimproved.js עשוי להשתמש גם ב-data-connected-from-left על הבלוק הימני.
-      // כלומר, אם B מחובר משמאל ל-A (A --- B), אז ל-A יש data-connected-to="B", ול-B יש data-connected-from-left="A"
-      const connectedFromLeftOnOtherBlockId = current.getAttribute('data-connected-from-left'); // זה לא הגיוני על current, זה על הבלוק *השני*
-                                                                                                // מה שחשוב זה מה ש-current מצביע אליו, או מי שמצביע אל current
     }
-    // לוגיקה יותר חזקה (בדומה ל-linkage-group-drag-simplified.js):
-    // נאתחל מחדש את הלוגיקה הזו להיות יותר פשוטה ומבוססת על מעבר דו-כיווני:
-    const finalGroup = new Set();
-    const processingQueue = [startBlock];
-    finalGroup.add(startBlock);
 
-    while(processingQueue.length > 0) {
-        const currentBlock = processingQueue.shift();
-
-        // בדוק ימינה
-        const rightNeighborId = currentBlock.getAttribute('data-connected-to');
-        if (rightNeighborId) {
-            const rightNeighbor = document.getElementById(rightNeighborId);
-            if (rightNeighbor && !finalGroup.has(rightNeighbor)) {
-                finalGroup.add(rightNeighbor);
-                processingQueue.push(rightNeighbor);
-            }
-        }
-        // בדוק שמאלה (מי מחובר אל הצד השמאלי של currentBlock)
-        // זה מתבטא בכך שבלוק אחר (leftNeighbor) יכיל data-connected-to="currentBlock.id"
-        // וגם על currentBlock יהיה data-connected-from-left="leftNeighbor.id"
-        const leftNeighborId = currentBlock.getAttribute('data-connected-from-left');
-         if (leftNeighborId) {
-            const leftNeighbor = document.getElementById(leftNeighborId);
-             if (leftNeighbor && !finalGroup.has(leftNeighbor)) {
-                finalGroup.add(leftNeighbor);
-                processingQueue.push(leftNeighbor);
-            }
-        }
-        // הבדיקה ב-linkage-group-drag-simplified נראית יותר נכונה לחיפוש דו-כיווני:
-        // היא בודקת את data-connected-to של current, ואז את כל הבלוקים שמצביעים על current.
-        // בשביל לפשט כאן, נניח ש-data-connected-from-left ו-data-connected-from-right
-        // מעודכנים כראוי על ידי linkageimproved.js.
-        const alsoConnectedFromRight = currentBlock.getAttribute('data-connected-from-right');
-        if(alsoConnectedFromRight){
-             const blockToLeft = document.getElementById(alsoConnectedFromRight);
-             if (blockToLeft && !finalGroup.has(blockToLeft)) {
-                finalGroup.add(blockToLeft);
-                processingQueue.push(blockToLeft);
-            }
-        }
-
+    if (iterations >= MAX_ITERATIONS) {
+        console.warn(`[GroupConnectDEBUG] findConnectedBlocksRecursively הגיע למגבלת ${MAX_ITERATIONS} איטרציות עבור ${startBlock.id}.`);
     }
-    return Array.from(finalGroup);
+    log('findConnectedBlocksRecursively: קבוצה סופית שנמצאה עבור ' + startBlock.id + ':', Array.from(group).map(b => b.id));
+    return Array.from(group);
   }
-
 
   function getGroupEdgeBlocks(groupBlocksArray) {
     if (!groupBlocksArray || groupBlocksArray.length === 0) {
@@ -138,22 +109,37 @@
     }
     let leftmost = groupBlocksArray[0];
     let rightmost = groupBlocksArray[0];
-    for (let i = 1; i < groupBlocksArray.length; i++) {
-      if (groupBlocksArray[i].getBoundingClientRect().left < leftmost.getBoundingClientRect().left) {
-        leftmost = groupBlocksArray[i];
-      }
-      if (groupBlocksArray[i].getBoundingClientRect().right > rightmost.getBoundingClientRect().right) {
-        rightmost = groupBlocksArray[i];
-      }
-    }
+    
+    let leftmostX = Infinity;
+    let rightmostX = -Infinity;
+
+    // כדי לקבל את המיקומים המדויקים, יש לוודא שהאלמנטים נראים ובעלי מידות
+    groupBlocksArray.forEach(block => {
+        if (block.offsetParent === null) { // אם הבלוק מוסתר או לא ב-layout
+            // log('getGroupEdgeBlocks: בלוק מוסתר, מתעלם מחישוב קצוות עבורו:', block.id);
+            return; 
+        }
+        const rect = block.getBoundingClientRect();
+        if (rect.left < leftmostX) {
+            leftmost = block;
+            leftmostX = rect.left;
+        }
+        if (rect.right > rightmostX) {
+            rightmost = block;
+            rightmostX = rect.right;
+        }
+    });
+    
+    // אם כל הבלוקים היו מוסתרים, נחזיר null
+    if (leftmostX === Infinity) leftmost = null;
+    if (rightmostX === -Infinity) rightmost = null;
+
+    log('getGroupEdgeBlocks: שמאלי:', leftmost ? leftmost.id : 'null', 'ימני:', rightmost ? rightmost.id : 'null');
     return { leftmostBlock: leftmost, rightmostBlock: rightmost };
   }
 
-  /**
-   * מנסה למצוא את אלמנטי ה-DOM של נקודות החיבור ש-linkageimproved.js אמור היה ליצור.
-   */
   function findVisualConnectionPoints(blockEl) {
-    // ההנחה היא ש-linkageimproved יוצר <div class="connection-point left"> וכו'.
+    if (!blockEl) return { leftPoint: null, rightPoint: null };
     const leftPoint = blockEl.querySelector('.connection-point.left');
     const rightPoint = blockEl.querySelector('.connection-point.right');
     return { leftPoint, rightPoint };
@@ -177,126 +163,174 @@
       });
     document.querySelectorAll(`.${CONFIG.HIGHLIGHT_CONNECTION_POINT}`)
       .forEach(el => el.classList.remove(CONFIG.HIGHLIGHT_CONNECTION_POINT));
-    log('ניקוי כל הדגשות החיבור הקבוצתי.');
   }
 
-  /**
-   * בודק קרבה בין שני מלבנים (למשל, של בלוקים).
-   * sourceSide ו-targetSide מציינים איזה צד של המלבן משתתף בבדיקה ('left' או 'right').
-   */
   function checkProximity(sourceRect, targetRect, sourceSide, targetSide) {
-    // 1. בדיקת חפיפה אנכית מינימלית
+    if (!sourceRect || !targetRect || sourceRect.width === 0 || sourceRect.height === 0 || targetRect.width === 0 || targetRect.height === 0) {
+        log('checkProximity: נתוני מלבן לא תקינים או בעלי מידות אפס.', {sourceRect, targetRect});
+        return false;
+    }
+
     const verticalOverlap = Math.max(0, Math.min(sourceRect.bottom, targetRect.bottom) - Math.max(sourceRect.top, targetRect.top));
-    const minHeightForOverlap = Math.min(sourceRect.height, targetRect.height) * CONFIG.VERTICAL_OVERLAP_REQ;
-    if (verticalOverlap < minHeightForOverlap) {
+    const minHeightForOverlapCheck = Math.min(sourceRect.height, targetRect.height);
+    if (minHeightForOverlapCheck === 0) return false; // מניעת חלוקה באפס
+    const actualVerticalOverlapRatio = verticalOverlap / minHeightForOverlapCheck;
+    
+    // log('checkProximity:', {
+    //     sourceRect, targetRect, sourceSide, targetSide,
+    //     verticalOverlap, minHeightForOverlapCheck, actualVerticalOverlapRatio,
+    //     VERTICAL_OVERLAP_REQ: CONFIG.VERTICAL_OVERLAP_REQ
+    // });
+
+    if (actualVerticalOverlapRatio < CONFIG.VERTICAL_OVERLAP_REQ) {
       return false;
     }
 
-    // 2. בדיקת מרחק אופקי
     let horizontalDistance;
     if (sourceSide === 'right' && targetSide === 'left') {
-      horizontalDistance = Math.abs(targetRect.left - sourceRect.right);
+      horizontalDistance = targetRect.left - sourceRect.right; // חיובי אם יש רווח, שלילי אם יש חפיפה
     } else if (sourceSide === 'left' && targetSide === 'right') {
-      horizontalDistance = Math.abs(sourceRect.left - targetRect.right);
+      horizontalDistance = sourceRect.left - targetRect.right; // חיובי אם יש רווח, שלילי אם יש חפיפה
     } else {
-      return false; // צירוף צדדים לא נתמך
+      return false;
     }
-
-    return horizontalDistance < CONFIG.CONNECT_THRESHOLD;
+    
+    // אנחנו רוצים שהמרחק יהיה קטן (קרוב לאפס) ואפילו חפיפה קלה (ערך שלילי קטן)
+    // CONFIG.CONNECT_THRESHOLD הוא המרחק המרבי המותר (אם הוא 0, אז רק חפיפה תתפוס)
+    // נניח ש-CONNECT_THRESHOLD יכול להיות גם קצת שלילי כדי לאפשר snap גם בחפיפה קלה
+    // log('checkProximity: horizontalDistance:', horizontalDistance.toFixed(1), 'CONNECT_THRESHOLD:', CONFIG.CONNECT_THRESHOLD);
+    return horizontalDistance >= -5 && horizontalDistance < CONFIG.CONNECT_THRESHOLD; // מאפשר חפיפה קלה של עד 5px או רווח עד סף החיבור
   }
 
   function evaluatePotentialGroupSnaps() {
     if (!isDragRelevantForGroupConnect || !currentDraggedBlockElement) return;
-
-    // עדכון מידע על הקבוצה הנגררת (מיקומה עשוי להשתנות ע"י הקוד האחר)
-    const currentGroupBlocks = findConnectedBlocksRecursively(currentDraggedBlockElement);
-    const { leftmostBlock, rightmostBlock } = getGroupEdgeBlocks(currentGroupBlocks);
     
-    draggedGroupInfo = { // עדכון המידע הגלובלי במודול
+    const currentGroupBlocks = findConnectedBlocksRecursively(currentDraggedBlockElement);
+    if (currentGroupBlocks.length === 0) {
+        log('evaluatePotentialGroupSnaps: לא נמצאה קבוצה לבלוק הנגרר:', currentDraggedBlockElement.id);
+        clearAllGroupConnectHighlights();
+        potentialGroupSnapInfo = null;
+        return;
+    }
+
+    const { leftmostBlock: dragLeftmost, rightmostBlock: dragRightmost } = getGroupEdgeBlocks(currentGroupBlocks);
+    
+    draggedGroupInfo = { // עדכון המידע הגלובלי
         blocks: currentGroupBlocks,
-        leftmostBlock: leftmostBlock,
-        rightmostBlock: rightmostBlock
+        leftmostBlock: dragLeftmost,
+        rightmostBlock: dragRightmost
     };
 
-    if (!leftmostBlock || !rightmostBlock) {
+    if (!dragLeftmost || !dragRightmost) {
+      log('evaluatePotentialGroupSnaps: לא נמצאו קצוות לקבוצה הנגררת.');
       clearAllGroupConnectHighlights();
       potentialGroupSnapInfo = null;
       return;
     }
+    // log('evaluatePotentialGroupSnaps: קבוצה נגררת:', {
+    //     ids: currentGroupBlocks.map(b => b.id),
+    //     leftmost: dragLeftmost.id,
+    //     rightmost: dragRightmost.id
+    // });
 
     const programmingArea = document.getElementById('program-blocks');
     if (!programmingArea) return;
 
-    potentialGroupSnapInfo = null; // איפוס לפני כל בדיקה
-    // אין לנקות הדגשות כאן, רק אם אין שום התאמה בסוף הלולאה
+    let bestSnapFound = null;
 
     const allPossibleTargets = Array.from(programmingArea.querySelectorAll('.block-container'))
       .filter(block => !draggedGroupInfo.blocks.some(draggedBlock => draggedBlock.id === block.id) && block.offsetParent !== null);
-
-    let bestSnapFound = null;
+    
+    // log('evaluatePotentialGroupSnaps: מספר מטרות פוטנציאליות לבדיקה:', allPossibleTargets.length);
 
     for (const targetCandidateElement of allPossibleTargets) {
-      const targetGroupBlocks = findConnectedBlocksRecursively(targetCandidateElement);
-      const { leftmostBlock: targetLeftmost, rightmostBlock: targetRightmost } = getGroupEdgeBlocks(targetGroupBlocks.length > 0 ? targetGroupBlocks : [targetCandidateElement]);
+      const targetGroupRaw = findConnectedBlocksRecursively(targetCandidateElement);
+      const targetGroupActual = targetGroupRaw.length > 0 ? targetGroupRaw : [targetCandidateElement];
+      const { leftmostBlock: targetLeftmost, rightmostBlock: targetRightmost } = getGroupEdgeBlocks(targetGroupActual);
 
-      // תרחיש 1: חיבור הצד הימני של הקבוצה הנגררת לצד השמאלי של קבוצת/בלוק יעד
-      if (rightmostBlock && !rightmostBlock.hasAttribute('data-connected-to') && targetLeftmost && !targetLeftmost.hasAttribute('data-connected-from-left')) {
-        if (checkProximity(rightmostBlock.getBoundingClientRect(), targetLeftmost.getBoundingClientRect(), 'right', 'left')) {
+      if (!targetLeftmost || !targetRightmost) continue;
+
+      // תרחיש 1: חיבור הצד הימני של הקבוצה הנגררת (dragRightmost) לצד השמאלי של קבוצת/בלוק יעד (targetLeftmost)
+      const isDragRightSideFree = !dragRightmost.hasAttribute('data-connected-to');
+      const isTargetLeftSideFree = !targetLeftmost.hasAttribute('data-connected-from-left');
+      
+      // log(`evaluatePotentialGroupSnaps: בדיקת ${dragRightmost.id}(ימין) -> ${targetLeftmost.id}(שמאל). נגרר פנוי: ${isDragRightSideFree}, יעד פנוי: ${isTargetLeftSideFree}`);
+      if (isDragRightSideFree && isTargetLeftSideFree) {
+        const dragRightRect = dragRightmost.getBoundingClientRect();
+        const targetLeftRect = targetLeftmost.getBoundingClientRect();
+        if (checkProximity(dragRightRect, targetLeftRect, 'right', 'left')) {
           bestSnapFound = {
-            sourceDragConnectingBlock: rightmostBlock, // הבלוק בקצה הקבוצה הנגררת
-            targetStaticConnectingBlock: targetLeftmost, // הבלוק בקצה קבוצת היעד
+            sourceDragConnectingBlock: dragRightmost,
+            targetStaticConnectingBlock: targetLeftmost,
             sourceDragSide: 'right',
             targetStaticSide: 'left',
             entireDraggedGroupArray: draggedGroupInfo.blocks
           };
-          break; // מצאנו התאמה, הפסק לחפש (אפשר לשכלל למצוא את "הכי טובה")
+          log('evaluatePotentialGroupSnaps: מצא התאמה (ימין לשמאל):', {src: dragRightmost.id, tgt: targetLeftmost.id });
+          break; 
         }
       }
 
-      // תרחיש 2: חיבור הצד השמאלי של הקבוצה הנגררת לצד הימני של קבוצת/בלוק יעד
-      if (leftmostBlock && !leftmostBlock.hasAttribute('data-connected-from-right') && targetRightmost && !targetRightmost.hasAttribute('data-connected-from-right')) { // נראה ש-data-connected-from-right הוא הנכון לבלוק ימני שמחובר למשהו משמאלו
-        if (checkProximity(leftmostBlock.getBoundingClientRect(), targetRightmost.getBoundingClientRect(), 'left', 'right')) {
+      if (bestSnapFound) break;
+
+      // תרחיש 2: חיבור הצד השמאלי של הקבוצה הנגררת (dragLeftmost) לצד הימני של קבוצת/בלוק יעד (targetRightmost)
+      const isDragLeftSideFree = !dragLeftmost.hasAttribute('data-connected-from-left');
+      const isTargetRightSideFree = !targetRightmost.hasAttribute('data-connected-to');
+      
+      // log(`evaluatePotentialGroupSnaps: בדיקת ${dragLeftmost.id}(שמאל) -> ${targetRightmost.id}(ימין). נגרר פנוי: ${isDragLeftSideFree}, יעד פנוי: ${isTargetRightSideFree}`);
+      if (isDragLeftSideFree && isTargetRightSideFree) {
+        const dragLeftRect = dragLeftmost.getBoundingClientRect();
+        const targetRightRect = targetRightmost.getBoundingClientRect();
+        if (checkProximity(dragLeftRect, targetRightRect, 'left', 'right')) {
           bestSnapFound = {
-            sourceDragConnectingBlock: leftmostBlock,
+            sourceDragConnectingBlock: dragLeftmost,
             targetStaticConnectingBlock: targetRightmost,
             sourceDragSide: 'left',
             targetStaticSide: 'right',
             entireDraggedGroupArray: draggedGroupInfo.blocks
           };
+          log('evaluatePotentialGroupSnaps: מצא התאמה (שמאל לימין):', {src: dragLeftmost.id, tgt: targetRightmost.id });
           break;
         }
       }
+      if (bestSnapFound) break;
     }
     
-    clearAllGroupConnectHighlights(); // נקה הדגשות קודמות לפני הדגשת החדש (אם יש)
     if (bestSnapFound) {
-      potentialGroupSnapInfo = bestSnapFound;
-      log('זוהה חיבור קבוצתי פוטנציאלי:', potentialGroupSnapInfo);
-      
-      // הדגשת הבלוקים והנקודות
-      potentialGroupSnapInfo.sourceDragConnectingBlock.classList.add(CONFIG.HIGHLIGHT_SOURCE_GROUP_EDGE);
-      potentialGroupSnapInfo.targetStaticConnectingBlock.classList.add(CONFIG.HIGHLIGHT_TARGET_GROUP_EDGE);
+        if (potentialGroupSnapInfo?.sourceDragConnectingBlock?.id !== bestSnapFound.sourceDragConnectingBlock.id ||
+            potentialGroupSnapInfo?.targetStaticConnectingBlock?.id !== bestSnapFound.targetStaticConnectingBlock.id) {
+            
+            clearAllGroupConnectHighlights();
+            potentialGroupSnapInfo = bestSnapFound;
+            log('מעדכן הדגשה עבור חיבור פוטנציאלי:', {src: potentialGroupSnapInfo.sourceDragConnectingBlock.id, tgt: potentialGroupSnapInfo.targetStaticConnectingBlock.id});
+            
+            // אין צורך ב-HIGHLIGHT_SOURCE_GROUP_EDGE וכו' על כל הבלוק, הנקודות מספיקות
+            // potentialGroupSnapInfo.sourceDragConnectingBlock.classList.add(CONFIG.HIGHLIGHT_SOURCE_GROUP_EDGE);
+            // potentialGroupSnapInfo.targetStaticConnectingBlock.classList.add(CONFIG.HIGHLIGHT_TARGET_GROUP_EDGE);
 
-      const sourcePoints = findVisualConnectionPoints(potentialGroupSnapInfo.sourceDragConnectingBlock);
-      const targetPoints = findVisualConnectionPoints(potentialGroupSnapInfo.targetStaticConnectingBlock);
+            const sourcePoints = findVisualConnectionPoints(potentialGroupSnapInfo.sourceDragConnectingBlock);
+            const targetPoints = findVisualConnectionPoints(potentialGroupSnapInfo.targetStaticConnectingBlock);
 
-      if (potentialGroupSnapInfo.sourceDragSide === 'right') {
-        applyHighlightToConnectionPoint(sourcePoints.rightPoint, true);
-        applyHighlightToConnectionPoint(targetPoints.leftPoint, true);
-      } else { // sourceDragSide === 'left'
-        applyHighlightToConnectionPoint(sourcePoints.leftPoint, true);
-        applyHighlightToConnectionPoint(targetPoints.rightPoint, true);
-      }
+            if (potentialGroupSnapInfo.sourceDragSide === 'right') {
+                applyHighlightToConnectionPoint(sourcePoints.rightPoint, true);
+                applyHighlightToConnectionPoint(targetPoints.leftPoint, true);
+            } else { 
+                applyHighlightToConnectionPoint(sourcePoints.leftPoint, true);
+                applyHighlightToConnectionPoint(targetPoints.rightPoint, true);
+            }
+        }
+    } else {
+        if (potentialGroupSnapInfo) {
+            clearAllGroupConnectHighlights();
+            potentialGroupSnapInfo = null;
+            log('לא נמצאה התאמה, מנקה הדגשות קודמות.');
+        }
     }
   }
 
-  /**
-   * מבצע את החיבור הקבוצתי בפועל.
-   * כולל עדכון data-attributes והתאמת מיקום הקבוצה הנגררת.
-   */
   function executeActualGroupSnap() {
     if (!potentialGroupSnapInfo) {
-      log('אין חיבור קבוצתי לביצוע.');
+      log('executeActualGroupSnap: אין חיבור קבוצתי לביצוע.');
       return false;
     }
 
@@ -307,179 +341,185 @@
       entireDraggedGroupArray
     } = potentialGroupSnapInfo;
 
-    log('מבצע חיבור קבוצתי:', potentialGroupSnapInfo);
+    log('executeActualGroupSnap: מבצע חיבור:', {
+        sourceBlock: sourceDragConnectingBlock.id,
+        targetBlock: targetStaticConnectingBlock.id,
+        sourceSide: sourceDragSide
+    });
 
-    // 1. ניקוי חיבורים קודמים (אם היו) בבלוקים המעורבים בצד החיבור
-    // זהירות: חלק זה עלול להיות מורכב ודורש הבנה מדויקת של איך linkageimproved מנהל את זה.
-    // ננסה להיות מינימליים כדי לא לשבור דברים.
-    if (sourceDragSide === 'right') {
-      const oldConnectedTo = sourceDragConnectingBlock.getAttribute('data-connected-to');
-      if (oldConnectedTo) document.getElementById(oldConnectedTo)?.removeAttribute('data-connected-from-left');
-      sourceDragConnectingBlock.removeAttribute('data-connected-to');
-    } else { // sourceDragSide === 'left'
-      const oldConnectedFromRight = sourceDragConnectingBlock.getAttribute('data-connected-from-right');
-      if (oldConnectedFromRight) document.getElementById(oldConnectedFromRight)?.removeAttribute('data-connected-to'); // ההנחה היא שהשני היה מחובר אליו מימין
-      sourceDragConnectingBlock.removeAttribute('data-connected-from-right');
+    // 1. ניקוי חיבורים ישנים של הבלוקים המעורבים בצד הרלוונטי
+    if (sourceDragSide === 'right') { // הצד הימני של הנגרר מתחבר
+        const oldConnectedToId = sourceDragConnectingBlock.getAttribute('data-connected-to');
+        if (oldConnectedToId) document.getElementById(oldConnectedToId)?.removeAttribute('data-connected-from-left');
+        sourceDragConnectingBlock.removeAttribute('data-connected-to');
+    } else { // הצד השמאלי של הנגרר מתחבר (sourceDragSide === 'left')
+        const oldConnectedFromLeftId = sourceDragConnectingBlock.getAttribute('data-connected-from-left');
+        if (oldConnectedFromLeftId) document.getElementById(oldConnectedFromLeftId)?.removeAttribute('data-connected-to');
+        sourceDragConnectingBlock.removeAttribute('data-connected-from-left');
     }
-    // (בדיעבד, אולי לא צריך לנקות את היעד, כי הוא סטטי. החיבור החדש אמור לדרוס)
+    // ניקוי הצד המתאים של בלוק היעד הסטטי
+    if (potentialGroupSnapInfo.targetStaticSide === 'left') { // הצד השמאלי של היעד מתחבר
+        const oldConnectedFromLeftIdOnTarget = targetStaticConnectingBlock.getAttribute('data-connected-from-left');
+        if (oldConnectedFromLeftIdOnTarget) document.getElementById(oldConnectedFromLeftIdOnTarget)?.removeAttribute('data-connected-to');
+        targetStaticConnectingBlock.removeAttribute('data-connected-from-left');
+    } else { // הצד הימני של היעד מתחבר (targetStaticSide === 'right')
+        const oldConnectedToIdOnTarget = targetStaticConnectingBlock.getAttribute('data-connected-to');
+        if (oldConnectedToIdOnTarget) document.getElementById(oldConnectedToIdOnTarget)?.removeAttribute('data-connected-from-left');
+        targetStaticConnectingBlock.removeAttribute('data-connected-to');
+    }
 
-    // 2. יצירת החיבור החדש (עדכון data-attributes)
-    if (sourceDragSide === 'right') { // הבלוק הנגרר מתחבר עם צדו הימני => הוא יהיה משמאל ליעד
+
+    // 2. יצירת החיבור החדש
+    if (sourceDragSide === 'right') { // הנגרר משמאל ליעד
       sourceDragConnectingBlock.setAttribute('data-connected-to', targetStaticConnectingBlock.id);
       targetStaticConnectingBlock.setAttribute('data-connected-from-left', sourceDragConnectingBlock.id);
-    } else { // sourceDragSide === 'left' // הבלוק הנגרר מתחבר עם צדו השמאלי => הוא יהיה מימין ליעד
-      sourceDragConnectingBlock.setAttribute('data-connected-from-right', targetStaticConnectingBlock.id); // שונה ממה שחשבתי קודם - זה נראה יותר נכון
-      targetStaticConnectingBlock.setAttribute('data-connected-to', sourceDragConnectingBlock.id);      // אם linkageimproved מצפה לזה כך
+    } else { // הנגרר מימין ליעד (sourceDragSide === 'left')
+      targetStaticConnectingBlock.setAttribute('data-connected-to', sourceDragConnectingBlock.id);
+      sourceDragConnectingBlock.setAttribute('data-connected-from-left', targetStaticConnectingBlock.id);
     }
+    log(`executeActualGroupSnap: מאפייני data עודכנו.`);
 
-    // 3. התאמת מיקום של כל הקבוצה הנגררת
+    // 3. התאמת מיקום הקבוצה הנגררת
+    // ודא שהבלוקים עדיין קיימים לפני קריאה ל-getBoundingClientRect
+    if (!document.body.contains(sourceDragConnectingBlock) || !document.body.contains(targetStaticConnectingBlock)) {
+        log('executeActualGroupSnap: אחד מבלוקי החיבור הוסר מה-DOM לפני התאמת מיקום.');
+        clearAllGroupConnectHighlights();
+        potentialGroupSnapInfo = null;
+        return false;
+    }
     const sourceRectBeforeAlignment = sourceDragConnectingBlock.getBoundingClientRect();
     const targetRect = targetStaticConnectingBlock.getBoundingClientRect();
     let newSourceX, newSourceY;
 
-    if (sourceDragSide === 'right') { // הבלוק הנגרר צריך להיות משמאל ליעד
-      newSourceX = targetRect.left - sourceDragConnectingBlock.offsetWidth; // - רווח אם יש
-    } else { // הבלอก הנגרר צריך להיות מימין ליעד
-      newSourceX = targetRect.right; // + רווח אם יש
+    if (sourceDragSide === 'right') {
+      newSourceX = targetRect.left - sourceDragConnectingBlock.offsetWidth; // אין רווח ביניהם
+    } else { 
+      newSourceX = targetRect.right; // אין רווח ביניהם
     }
-    // יישור אנכי פשוט: קצה עליון לקצה עליון
-    newSourceY = targetRect.top;
+    // יישור אנכי: מרכז הבלוק הנגרר למרכז בלוק היעד
+    newSourceY = targetRect.top + (targetRect.height / 2) - (sourceDragConnectingBlock.offsetHeight / 2);
 
     const deltaX = newSourceX - sourceRectBeforeAlignment.left;
     const deltaY = newSourceY - sourceRectBeforeAlignment.top;
 
     entireDraggedGroupArray.forEach(memberBlock => {
-      const currentLeft = parseFloat(memberBlock.style.left || 0);
-      const currentTop = parseFloat(memberBlock.style.top || 0);
+      if (!document.body.contains(memberBlock)) return; // ודא שגם חברי הקבוצה קיימים
+      // קריאת המיקום הנוכחי מ-style.left/top או מ-getComputedStyle
+      let currentLeft = parseFloat(memberBlock.style.left || 0);
+      let currentTop = parseFloat(memberBlock.style.top || 0);
+      // אם style.left/top לא מוגדרים, getComputedStyle עשוי לתת ערכים התחלתיים טובים יותר
+      // אך זה יכול להיות מורכב אם הבלוקים לא ממוקמים אבסולוטית באותו הקשר.
+      // נניח כרגע ש-style.left/top הם המקור האמין למיקום הנוכחי שניתן לשנות.
+      
       memberBlock.style.left = `${currentLeft + deltaX}px`;
       memberBlock.style.top = `${currentTop + deltaY}px`;
     });
 
-    log(`הקבוצה הנגררת הוזזה (${deltaX.toFixed(1)}px, ${deltaY.toFixed(1)}px) לחיבור.`);
-
-    // 4. ניקוי סופי
+    log(`executeActualGroupSnap: הקבוצה הנגררת הוזזה (${deltaX.toFixed(1)}px, ${deltaY.toFixed(1)}px).`);
+    
     clearAllGroupConnectHighlights();
-    potentialGroupSnapInfo = null;
-
-    // השמעת צליל - לא אפשרי ישירות ללא API.
-    // עדכון מנהיגי קבוצות - אם linkage-group-drag-simplified.js מאזין לשינויי attributes,
-    // הוא עשוי לעשות זאת אוטומטית.
-
+    potentialGroupSnapInfo = null; // איפוס לאחר ביצוע מוצלח
     return true;
   }
 
-  // === מאזיני אירועים גלובליים ===
   function onMouseDown(event) {
+    // log('onMouseDown: התקבל אירוע');
     const target = event.target.closest('.block-container');
     if (!target) {
       isDragRelevantForGroupConnect = false;
       return;
     }
-
-    // נניח שהגרירה רלוונטית אם לוחצים על בלוק כלשהו באזור התכנות.
-    // הקוד האחר יטפל בהזזה. אנחנו רק נעקוב.
+    
     currentDraggedBlockElement = target;
     isDragRelevantForGroupConnect = true;
-    potentialGroupSnapInfo = null; // איפוס
+    potentialGroupSnapInfo = null; 
+    clearAllGroupConnectHighlights(); 
 
-    // הוספת קלאס זמני לבלוקים הנגררים (אם זוהו כקבוצה)
-    // כדי ש-evaluatePotentialGroupSnaps יוכל להתעלם מהם כיעדים.
-    // (הבדיקה הפנימית ב-evaluate אמורה גם היא לכסות זאת)
-    const group = findConnectedBlocksRecursively(currentDraggedBlockElement);
-    group.forEach(b => b.classList.add('gc-is-dragged-member'));
-
+    // הוספת קלאס זמני - אולי לא נחוץ אם הסינון עובד טוב
+    // const group = findConnectedBlocksRecursively(currentDraggedBlockElement);
+    // group.forEach(b => b.classList.add('gc-is-dragged-member'));
 
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
-    log('MouseDown זוהה, מעקב אחר גרירה לחיבור קבוצתי:', currentDraggedBlockElement.id);
+    log('onMouseDown: מעקב גרירה החל עבור:', currentDraggedBlockElement.id);
   }
 
   function onMouseMove(event) {
     if (!isDragRelevantForGroupConnect || !currentDraggedBlockElement) return;
-
-    // ההנחה היא שהקוד האחר (linkageimproved/linkage-group-drag) מזיז את הבלוק/קבוצה.
-    // אנחנו רק צריכים לבדוק אפשרויות חיבור על סמך המיקום המעודכן.
     evaluatePotentialGroupSnaps();
-    event.preventDefault(); // למניעת התנהגויות ברירת מחדל של גרירה כמו בחירת טקסט
+    // event.preventDefault(); // נבדוק אם זה מפריע לקוד האחר
   }
 
   function onMouseUp(event) {
+    // log('onMouseUp: התקבל אירוע');
     if (!isDragRelevantForGroupConnect) return;
     
-    const group = findConnectedBlocksRecursively(currentDraggedBlockElement); // קבל את הגרסה העדכנית ביותר
-    group.forEach(b => b.classList.remove('gc-is-dragged-member'));
+    // הסרת קלאס זמני אם היה בשימוש
+    // findConnectedBlocksRecursively(currentDraggedBlockElement)
+    //    .forEach(b => b.classList.remove('gc-is-dragged-member'));
 
     if (potentialGroupSnapInfo) {
       const snapSuccess = executeActualGroupSnap();
       if (snapSuccess) {
-        log('חיבור קבוצתי בוצע בהצלחה.');
-        // כאן הבעיה: מה אם linkageimproved.js גם מנסה לבצע חיבור?
-        // אם שינינו את מאפייני ה-data- כראוי, ייתכן שהחיבור שלו "ייכשל" או לא יהיה רלוונטי.
-        // אסטרטגיה אפשרית (מורכבת): להמתין רגע עם setTimeout(0), לבדוק את מאפייני ה-data-
-        // של הבלוקים המעורבים, ואם linkageimproved.js דרס אותם, לנסות לתקן.
-        // כרגע, נסתמך על כך שהשינויים שלנו יהיו הקובעים.
+        log('onMouseUp: חיבור קבוצתי בוצע בהצלחה.');
+        // אם linkage-group-drag-simplified.js מאזין לשינויי attributes,
+        // הוא אמור להגיב אוטומטית.
       }
     } else {
-      clearAllGroupConnectHighlights(); // אם לא היה חיבור, רק נקה הדגשות שלנו
+      clearAllGroupConnectHighlights(); // אם לא היה חיבור, נקה הדגשות סופית
     }
 
     isDragRelevantForGroupConnect = false;
     currentDraggedBlockElement = null;
-    potentialGroupSnapInfo = null;
     draggedGroupInfo = { blocks: [], leftmostBlock: null, rightmostBlock: null };
+    // potentialGroupSnapInfo כבר אמור להיות null
 
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('mouseup', onMouseUp);
-    log('MouseUp, סיום טיפול בחיבור קבוצתי.');
+    log('onMouseUp: סיום טיפול בחיבור קבוצתי.');
   }
 
-  // === אתחול המודול ===
   function init() {
+    log('init: מתחיל אתחול מודול GroupConnect.');
     const programmingArea = document.getElementById('program-blocks');
     if (!programmingArea) {
-      console.error('[GroupConnect] אלמנט #program-blocks לא נמצא. המודול לא יאותחל.');
+      console.error('[GroupConnectDEBUG] אלמנט #program-blocks לא נמצא. המודול לא יאותחל.');
       return;
     }
 
-    // הוספת מאזין mousedown לאזור הכללי של הבלוקים.
-    // חשוב: סדר הפעלת מאזיני mousedown מרובים על אותו אלמנט אינו מובטח תמיד,
-    // אך בדרך כלל הוא לפי סדר ההוספה. אם linkageimproved.js מוסיף את שלו קודם,
-    // הוא עשוי להתחיל לטפל בגרירה לפנינו. זה בסדר, כי אנחנו לא מזיזים את הבלוק, רק עוקבים.
-    programmingArea.addEventListener('mousedown', onMouseDown, false); // false = bubbling phase
+    programmingArea.addEventListener('mousedown', onMouseDown, false);
 
-    // הוספת סגנונות CSS דינמיים להדגשות
     const styleId = 'group-connect-styles';
     if (!document.getElementById(styleId)) {
       const styleSheet = document.createElement('style');
       styleSheet.id = styleId;
       styleSheet.textContent = `
-        .${CONFIG.HIGHLIGHT_SOURCE_GROUP_EDGE}, .${CONFIG.HIGHLIGHT_TARGET_GROUP_EDGE} {
-          /* אפשר להוסיף כאן סגנון לכל הבלוק, למשל outline, אבל זה עלול להתנגש */
-        }
+        /* אין צורך בהדגשת כל הבלוק, הנקודות מספיקות ופחות מפריעות */
+        /* .${CONFIG.HIGHLIGHT_SOURCE_GROUP_EDGE}, .${CONFIG.HIGHLIGHT_TARGET_GROUP_EDGE} {
+             outline: 1px dashed #007bff; 
+        } */
         .connection-point.${CONFIG.HIGHLIGHT_CONNECTION_POINT} {
-          background-color: #FFEB3B !important; /* צהוב בהיר, דריסה חזקה */
-          border: 2px solid #FFC107 !important; /* כתום-זהב */
-          transform: scale(1.6) !important;
+          background-color: #FFD700 !important; /* צבע זהב */
+          border: 2px solid #FFA500 !important; /* כתום כהה */
+          transform: scale(1.8) !important; 
           opacity: 1 !important;
-          z-index: 10001 !important; /* ודא שהוא מעל נקודות רגילות */
+          z-index: 20000 !important; /* גבוה מאוד כדי להיות מעל הכל */
           border-radius: 50%;
+          box-shadow: 0 0 10px #FFD700; 
         }
-        .gc-is-dragged-member {
-          /* אופציונלי: סגנון לבלוקים בזמן שהם חלק מקבוצה נגררת הנבדקת לחיבור */
-          /* לדוגמה: opacity: 0.9; */
-        }
+        /* .gc-is-dragged-member { } */
       `;
       document.head.appendChild(styleSheet);
+      log('init: הוספו סגנונות CSS דינמיים.');
     }
 
-    log('מודול GroupConnect (גישה עצמאית) אותחל.');
+    log('מודול GroupConnect (עם דיבאג משופר) אותחל.');
   }
 
-  // המתן לטעינת ה-DOM לפני האתחול
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
-    init(); // אם ה-DOM כבר נטען
+    init();
   }
 
 })();
