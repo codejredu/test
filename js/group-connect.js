@@ -1,4 +1,4 @@
-// --- LINKAGE-GROUP-DRAG-SIMPLIFIED.JS v1.0.0 ---
+// --- LINKAGE-GROUP-DRAG-SIMPLIFIED.JS (עם דיבאג ב-onMouseMove) ---
 // מודול פשוט לגרירת קבוצות בלוקים מחוברים
 
 (function() {
@@ -13,9 +13,9 @@
   
   // === הגדרות ===
   const config = {
-    debug: true,                       // האם להדפיס הודעות דיבאג בקונסול
+    debug: true,                       // האם להדפיס הודעות דיבאג בקונסול (מלבד הדיבאג הנרחב ב-onMouseMove)
     groupMinSize: 2,                   // גודל מינימלי לקבוצה (מספר בלוקים)
-    leaderHighlightColor: '#FFA500',   // צבע ההדגשה לבלוק המוביל (כתום)
+    leaderHighlightColor: '#FFA500',   // צבע ההדגשה לבלוק המוביל (כתום) - לא בשימוש פעיל בקוד זה כרגע להדגשה ויזואלית
     dragZIndex: 1000,                  // z-index לבלוקים בזמן גרירה
     dragOpacity: 0.95                  // אטימות בזמן גרירה
   };
@@ -25,7 +25,7 @@
   // הדפסת הודעות דיבאג
   function log(message, data) {
     if (config.debug) {
-      if (data) {
+      if (data !== undefined) { // בדיקה מפורשת ל-undefined כדי לאפשר הדפסת false, 0, null
         console.log(`[GroupDrag] ${message}`, data);
       } else {
         console.log(`[GroupDrag] ${message}`);
@@ -41,12 +41,19 @@
   // מציאת הבלוק המוביל (השמאלי ביותר) של קבוצה שאליה שייך בלוק נתון
   function findLeaderOfBlock(blockElement) {
     let current = blockElement;
+    const visitedInLoop = new Set(); // למניעת לולאות מקומיות בחיפוש מוביל
+    visitedInLoop.add(current.id);
+
     // נווט שמאלה עד שתגיע לבלוק שאין לו חיבור משמאל, או לבלוק שכבר סומן כמוביל
     while (current.dataset.connectedFromLeft && document.getElementById(current.dataset.connectedFromLeft) && !current.dataset.isGroupLeader) {
       let prevBlockId = current.dataset.connectedFromLeft;
       let prevBlock = document.getElementById(prevBlockId);
-      if (!prevBlock || prevBlock === current) break; // מניעת לולאה אינסופית
+      if (!prevBlock || prevBlock === current || visitedInLoop.has(prevBlockId)) { // מניעת לולאה אינסופית
+        log('אזהרה: זוהתה לולאה או חוסר עקביות בחיפוש מוביל שמאלי.', {currentId: current.id, prevBlockId: prevBlockId});
+        break; 
+      }
       current = prevBlock;
+      visitedInLoop.add(current.id);
     }
     return current;
   }
@@ -84,40 +91,57 @@
     // נקה סימונים קודמים של מובילים
     allBlocks.forEach(block => {
       delete block.dataset.isGroupLeader;
-      block.style.border = block.dataset.originalBorder || ''; // שחזר גבול מקורי אם יש
+      // block.style.border = block.dataset.originalBorder || ''; // שחזר גבול מקורי אם יש (כרגע לא בשימוש)
     });
 
+    const processedLeaders = new Set(); // למנוע עיבוד כפול של אותה קבוצה
+
     allBlocks.forEach(block => {
-      // אם הבלוק כבר נבדק כחלק מקבוצה אחרת, דלג
-      if (allBlocks.find(b => b.dataset.isGroupLeader && findConnectedBlocks(b).includes(block) && b !== block)) {
+      // אם הבלוק כבר טופל כחלק מקבוצה ידועה, דלג
+      if (processedLeaders.has(findLeaderOfBlock(block).id) && !block.dataset.isGroupLeader) {
           return;
       }
-
+      
       const leader = findLeaderOfBlock(block);
+      // אם המוביל הזה כבר סומן (למשל, אם הבלוק הנוכחי הוא המוביל עצמו), אל תספור מחדש
+      if(leader.dataset.isGroupLeader) {
+        // ודא שכל חברי הקבוצה שלו מסומנים כחלק ממנה (למקרה שהקבוצה טופלה דרך חבר אחר שלה)
+         const groupForThisLeader = findConnectedBlocks(leader);
+         if (groupForThisLeader.length >= config.groupMinSize) {
+            groupForThisLeader.forEach(member => processedLeaders.add(member.id));
+         }
+        return;
+      }
+
       const group = findConnectedBlocks(leader);
 
       if (group.length >= config.groupMinSize) {
         groupCount++;
         leader.dataset.isGroupLeader = 'true';
-        // ניתן להוסיף כאן הדגשה ויזואלית למוביל אם רוצים
-        // leader.dataset.originalBorder = leader.style.border;
-        // leader.style.border = `2px solid ${config.leaderHighlightColor}`;
-        log(`זוהתה קבוצה עם מוביל: ${leader.id}, גודל: ${group.length}`);
+        group.forEach(member => processedLeaders.add(member.id)); // סמן את כל חברי הקבוצה כמעובדים דרך מוביל זה
+        log(`זוהתה קבוצה עם מוביל: ${leader.id}, גודל: ${group.length}, חברים: ${group.map(b=>b.id).join(',')}`);
       }
     });
-    log(`נמצאו ${groupCount} קבוצות בלוקים`);
+    log(`נמצאו ${groupCount} קבוצות בלוקים העומדות בתנאי המינימום.`);
   }
 
   // === אירועי עכבר ===
   
   function onMouseDown(event) {
     let targetBlock = event.target.closest('.block-container');
+    
+    // בדוק אם הלחיצה היא על כפתור המחיקה או אלמנט אינטראקטיבי אחר בתוך הבלוק שאמור למנוע גרירה
+    if (event.target.closest('.delete-button') || event.target.closest('input, select, textarea, button:not(.block-container)')) {
+        log('לחיצה על אלמנט פנימי, גרירת קבוצה מבוטלת.');
+        return;
+    }
+
     if (!targetBlock || !targetBlock.parentElement || targetBlock.parentElement.id !== 'program-blocks') {
         // אם הלחיצה לא על בלוק ישירות, או על בלוק בתוך פלטה, התעלם
         return;
     }
 
-    log('MouseDown על בלוק:', targetBlock.id);
+    log(`MouseDown על בלוק: ${targetBlock.id}`);
 
     let leaderCandidate = findLeaderOfBlock(targetBlock);
     const currentGroup = findConnectedBlocks(leaderCandidate);
@@ -129,12 +153,21 @@
       
       log(`מתחיל גרירת קבוצה. מוביל: ${groupLeader.id}, בלוקים בקבוצה: ${groupBlocks.map(b => b.id).join(', ')}`);
 
-      const leaderRect = groupLeader.getBoundingClientRect();
-      const programAreaRect = document.getElementById('programming-area').getBoundingClientRect();
+      const leaderRect = groupLeader.getBoundingClientRect(); // מיקום יחסי ל-viewport
       
-      // חשב היסט ביחס ל-programming-area כדי לתמוך בגלילה
-      dragOffset.x = event.clientX - (leaderRect.left - programAreaRect.left);
-      dragOffset.y = event.clientY - (leaderRect.top - programAreaRect.top);
+      // האלמנט #program-blocks הוא מיכל הבלוקים שהמיקומים `left` ו-`top` שלהם יחסיים אליו
+      const programBlocksElem = document.getElementById('program-blocks');
+      if (!programBlocksElem) {
+        console.error('[GroupDrag] onMouseDown: #program-blocks element not found!');
+        isGroupDragging = false; // בטל גרירה אם המיכל לא נמצא
+        return;
+      }
+      const programBlocksRect = programBlocksElem.getBoundingClientRect();
+      
+      // ההיסט של העכבר הוא מנקודת הלחיצה (event.clientX/Y)
+      // לנקודה השמאלית-עליונה של הבלוק המוביל, אך מנורמל לתוך מערכת הקואורדינטות של programBlocksElem
+      dragOffset.x = event.clientX - (leaderRect.left - programBlocksRect.left);
+      dragOffset.y = event.clientY - (leaderRect.top - programBlocksRect.top);
 
       startPositions = groupBlocks.map(block => {
         const style = window.getComputedStyle(block);
@@ -147,57 +180,107 @@
         };
       });
 
-      groupBlocks.forEach(data => {
-        data.block.style.zIndex = config.dragZIndex;
-        data.block.style.opacity = config.dragOpacity;
-        // מניעת בחירת טקסט בזמן גרירה
-        data.block.style.userSelect = 'none'; 
+      groupBlocks.forEach(block => { // שים לב: groupBlocks הוא מערך של אלמנטים, לא של אובייקטים מ-startPositions
+        block.style.zIndex = config.dragZIndex;
+        block.style.opacity = config.dragOpacity;
+        block.style.userSelect = 'none'; 
       });
       
       document.addEventListener('mousemove', onMouseMove);
       document.addEventListener('mouseup', onMouseUp);
-      event.preventDefault(); // מניעת התנהגות ברירת מחדל של גרירה (כמו גרירת תמונה)
+      event.preventDefault(); 
     } else {
-      log(`הבלוק ${targetBlock.id} אינו חלק מקבוצה (או שהקבוצה קטנה מדי)`);
+      log(`הבלוק ${targetBlock.id} אינו חלק מקבוצה העומדת בתנאים (מוביל: ${leaderCandidate.id}, גודל קבוצה שנמצאה: ${currentGroup.length})`);
     }
   }
 
+  // --- פונקציית onMouseMove עם הדפסות דיבאג ---
   function onMouseMove(event) {
-    if (!isGroupDragging) return;
+    if (!isGroupDragging) {
+      // console.log('[GroupDrag Debug] onMouseMove called but isGroupDragging is false'); // בטל הערה אם יש ספק
+      return;
+    }
 
-    // קבל את גבולות אזור התכנות כדי לוודא שהבלוקים לא יוצאים ממנו (אופציונלי)
-    const programArea = document.getElementById('programming-area');
-    const programAreaRect = programArea.getBoundingClientRect();
+    console.log('[GroupDrag Debug] onMouseMove START'); // הודעת התחלה
 
-    // מיקום חדש של הבלוק המוביל, יחסית ל-programming-area
-    let newLeaderX = event.clientX - programAreaRect.left - dragOffset.x;
-    let newLeaderY = event.clientY - programAreaRect.top - dragOffset.y;
+    const programBlocksElem = document.getElementById('program-blocks'); 
+    if (!programBlocksElem) {
+        console.error('[GroupDrag Debug] onMouseMove: #program-blocks element not found!');
+        return;
+    }
+    const programBlocksRect = programBlocksElem.getBoundingClientRect();
+
+    // מיקום חדש של הבלוק המוביל, יחסית למיכל הבלוקים
+    let newLeaderX = event.clientX - programBlocksRect.left - dragOffset.x;
+    let newLeaderY = event.clientY - programBlocksRect.top - dragOffset.y;
     
-    // חישוב ההפרש מהמיקום המקורי של המוביל
-    const deltaX = newLeaderX - startPositions.find(p => p.block === groupLeader).left;
-    const deltaY = newLeaderY - startPositions.find(p => p.block === groupLeader).top;
+    // אם מיכל הבלוקים (#program-blocks) יכול להיגלל, יש להוסיף את ערכי הגלילה:
+    // newLeaderX += programBlocksElem.scrollLeft;
+    // newLeaderY += programBlocksElem.scrollTop;
 
-    groupBlocks.forEach((block, index) => {
-      const originalPos = startPositions[index];
-      block.style.left = `${originalPos.left + deltaX}px`;
-      block.style.top = `${originalPos.top + deltaY}px`;
+    console.log(`[GroupDrag Debug] event.clientX: ${event.clientX}, event.clientY: ${event.clientY}`);
+    console.log(`[GroupDrag Debug] programBlocksRect.left: ${programBlocksRect.left}, programBlocksRect.top: ${programBlocksRect.top}`);
+    console.log(`[GroupDrag Debug] dragOffset.x: ${dragOffset.x}, dragOffset.y: ${dragOffset.y}`);
+    console.log(`[GroupDrag Debug] Calculated newLeaderX: ${newLeaderX}, newLeaderY: ${newLeaderY}`);
+
+    // מציאת המיקום ההתחלתי של הבלוק המוביל
+    const leaderStartPosData = startPositions.find(p => p.block === groupLeader);
+    if (!leaderStartPosData) {
+        console.error('[GroupDrag Debug] Could not find start position for groupLeader:', groupLeader);
+        return;
+    }
+    const leaderStartLeft = leaderStartPosData.left;
+    const leaderStartTop = leaderStartPosData.top;
+
+    console.log(`[GroupDrag Debug] Leader startPos: left=${leaderStartLeft}, top=${leaderStartTop}`);
+
+    // חישוב ההפרש מהמיקום המקורי של המוביל
+    const deltaX = newLeaderX - leaderStartLeft;
+    const deltaY = newLeaderY - leaderStartTop;
+
+    console.log(`[GroupDrag Debug] deltaX: ${deltaX}, deltaY: ${deltaY}`);
+
+    if (isNaN(deltaX) || isNaN(deltaY)) {
+        console.error('[GroupDrag Debug] deltaX or deltaY is NaN. Halting movement.');
+        return;
+    }
+
+    groupBlocks.forEach((block, index) => { // block הוא אלמנט DOM
+      const originalPos = startPositions.find(p => p.block === block); // מצא את המידע ההתחלתי עבור הבלוק הספציפי הזה
+      if (!originalPos) {
+          console.error(`[GroupDrag Debug] No startPosition data for block ${block.id} at index ${index}`);
+          return;
+      }
+
+      const newBlockX = originalPos.left + deltaX;
+      const newBlockY = originalPos.top + deltaY;
+
+      console.log(`[GroupDrag Debug] Updating block: ${block.id}. Old L/T: ${originalPos.left}/${originalPos.top}. New L/T: ${newBlockX}/${newBlockY}`);
+      
+      block.style.left = `${newBlockX}px`;
+      block.style.top = `${newBlockY}px`;
     });
+
     event.preventDefault();
+    console.log('[GroupDrag Debug] onMouseMove END'); // הודעת סיום
   }
+  // --- סוף פונקציית onMouseMove עם דיבאג ---
+
 
   function onMouseUp(event) {
     if (!isGroupDragging) return;
 
-    log(`סיום גרירת קבוצה. מוביל: ${groupLeader.id}`);
+    log(`סיום גרירת קבוצה. מוביל: ${groupLeader ? groupLeader.id : 'unknown'}`);
     
-    groupBlocks.forEach(data => {
-      const original = startPositions.find(p => p.block === data);
-      if (original) {
-        original.block.style.zIndex = original.originalZIndex;
-        original.block.style.opacity = original.originalOpacity;
-        original.block.style.userSelect = ''; // אפשר בחירת טקסט מחדש
-      }
+    // שחזור סגנונות מקוריים לכל הבלוקים בקבוצה
+    startPositions.forEach(posData => { // startPositions מכיל את המידע המקורי, כולל הבלוק עצמו
+        if (posData.block) {
+            posData.block.style.zIndex = posData.originalZIndex;
+            posData.block.style.opacity = posData.originalOpacity;
+            posData.block.style.userSelect = ''; 
+        }
     });
+
 
     isGroupDragging = false;
     groupLeader = null;
@@ -207,29 +290,20 @@
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('mouseup', onMouseUp);
     
-    // בצע סריקה מחדש לאחר הגרירה, למקרה שהמיקומים השפיעו על זיהוי חיבורים (אם linkageimproved מטפל בזה)
-    // זה חשוב אם מערכת החיבור הבסיסית (linkageimproved.js) יכולה לנתק/לחבר בלוקים כתוצאה מגרירה
-    // ואז נרצה שה-GroupConnectDEBUG (ב-linkageimproved.js) יפעל מחדש על הקבוצה.
-    // במודל הנוכחי, GroupDrag רק מזיז קבוצה קיימת.
-    // אם רוצים לאפשר "שחרור" של קבוצה מעל בלוק אחר לחיבור, זה דורש אינטגרציה עמוקה יותר
-    // עם לוגיקת ה-snap של linkageimproved.js.
-    if (typeof window.runSnapDetection === 'function') {
-        // נניח ש-linkageimproved.js חושף פונקציה כזו
-        // window.runSnapDetection(groupBlocks[0]); // או כל בלוק אחר בקבוצה
-    }
-    
-    // עדכן את סימון המובילים, ייתכן שהגרירה שינתה את המבנה הלוגי (פחות סביר במודל זה)
-    scanAndMarkLeaders(); 
+    // אין צורך להריץ כאן scanAndMarkLeaders באופן יזום,
+    // כי ה-MutationObserver אמור לטפל בזה אם מאפייני החיבור ישתנו כתוצאה מפעולת snap של linkageimproved
+    // אם הגרירה עצמה (ללא snap) משנה את האפשרות לחיבורים, linkageimproved אמור לטפל בזה.
+    // scanAndMarkLeaders יפעל אוטומטית אם linkageimproved ישנה data-attributes.
   }
 
   // === אתחול ===
   
   function init() {
-    if (window.groupDragInitialized) {
-      log('מודול גרירת קבוצות כבר אותחל.');
+    if (window.groupDragInitialized_v1_0_0_debug) { // שינוי שם המשתנה למניעת התנגשות עם גרסאות קודמות
+      log('מודול גרירת קבוצות (עם דיבאג) כבר אותחל.');
       return;
     }
-    log('אתחול מודול גרירת קבוצות');
+    log('אתחול מודול גרירת קבוצות (עם דיבאג ב-onMouseMove)');
     
     try {
       const programBlocksDiv = document.getElementById('program-blocks');
@@ -238,57 +312,42 @@
         return;
       }
       
-      // הוספת מאזין ללחיצה על אזור הבלוקים הראשי (event delegation)
-      // מאזין זה יופעל רק אם הלחיצה היא על .block-container
       programBlocksDiv.addEventListener('mousedown', onMouseDown, false); 
-      // 'false' (או השמטה) משמעו event bubbling phase.
       
-      // הוספת סגנונות CSS דינמיים (אם צריך)
-      // const styles = `...`;
-      // const styleSheet = document.createElement("style");
-      // styleSheet.type = "text/css";
-      // styleSheet.innerText = styles;
-      // document.head.appendChild(styleSheet);
-      // log('סגנונות גרירת קבוצות נוספו');
+      // אין צורך להוסיף סגנונות CSS דינמיים דרך JS אם הם כבר בקובץ CSS ראשי
 
-      // שימוש ב-MutationObserver כדי לעקוב אחרי שינויים בחיבורי הבלוקים
-      // (שנגרמים על ידי linkageimproved.js) ולעדכן את סימון המובילים בהתאם.
       const observer = new MutationObserver(mutations => {
         let shouldUpdate = false;
+        log('[GroupDrag MutationObserver] זוהו שינויים:', mutations); // דיבאג נוסף ל-Observer
         
         for (const mutation of mutations) {
           if (mutation.type === 'childList' || 
               (mutation.type === 'attributes' && 
                ['data-connected-to', 'data-connected-from-left', 'data-connected-from-right'].includes(mutation.attributeName))) {
             shouldUpdate = true;
+            log(`[GroupDrag MutationObserver] שינוי רלוונטי זוהה: type=${mutation.type}, attribute=${mutation.attributeName}, target=${mutation.target.id || mutation.target.nodeName}`);
             break;
           }
         }
         
         if (shouldUpdate) {
-          // השהה מעט את העדכון כדי לאפשר לכל השינויים להתבצע
-          setTimeout(scanAndMarkLeaders, 100);
+          log('[GroupDrag MutationObserver] מבצע עדכון קבוצות (scanAndMarkLeaders) בעקבות שינוי.');
+          setTimeout(scanAndMarkLeaders, 100); // השהיה קלה
         }
       });
       
-      // הפעל את המאזין למוטציות
-      const programArea = document.getElementById('program-blocks');
-      if (programArea) {
-        observer.observe(programArea, {
-          childList: true,
-          subtree: true,
-          attributes: true,
-          attributeFilter: ['data-connected-to', 'data-connected-from-left', 'data-connected-from-right']
-        });
-      }
+      observer.observe(programBlocksDiv, { // שים לב: המאזין הוא על programBlocksDiv
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['data-connected-to', 'data-connected-from-left', 'data-connected-from-right']
+      });
+      log('[GroupDrag] משקיף לשינויים (MutationObserver) הופעל על #program-blocks');
       
-      // סמן שהמודול אותחל
-      window.groupDragInitialized = true;
-      log('מודול גרירת קבוצות אותחל בהצלחה (גרסה 1.0.0)');
-      log(`סף קבוצה: מינימום ${config.groupMinSize} בלוקים`);
+      window.groupDragInitialized_v1_0_0_debug = true;
+      log(`מודול גרירת קבוצות (עם דיבאג) אותחל בהצלחה. סף קבוצה: מינימום ${config.groupMinSize} בלוקים`);
       
-      // בצע סריקה ראשונית לזיהוי קבוצות קיימות בעת טעינה
-      setTimeout(scanAndMarkLeaders, 500); // השהייה קלה כדי לאפשר ל-linkageimproved לאתחל
+      setTimeout(scanAndMarkLeaders, 500); 
       
     } catch (error) {
       console.error('[GroupDrag] שגיאה באתחול מודול גרירת קבוצות:', error);
@@ -299,7 +358,6 @@
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
-    // DOMContentLoaded כבר התרחש
     init();
   }
 
