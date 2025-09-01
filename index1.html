@@ -1,314 +1,695 @@
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+<html dir="rtl" lang="he">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>סביבת תכנות בלוקים</title>
+    <title>תכנות רובוט ים - בלוקלי</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/blockly.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/9.3.3/msg/he.min.js"></script>
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap');
-
+        * { box-sizing: border-box; }
         body {
-            font-family: 'Heebo', sans-serif;
             margin: 0;
-            padding: 0;
-            background-color: #f0f4f8;
-            color: #334e68;
-            display: flex;
-            flex-direction: column;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             height: 100vh;
             overflow: hidden;
         }
-
-        .container {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
+        .app-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
         }
-
-        header {
-            background-color: #fff;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        h1 {
-            font-weight: 700;
-            color: #102a43;
+        .app-title {
+            color: white;
             margin: 0;
-            font-size: 2.5rem;
-        }
-
-        .main-content {
+            font-size: 28px;
+            font-weight: 300;
             display: flex;
-            flex-grow: 1;
-            padding: 20px;
-            gap: 20px;
+            align-items: center;
+            gap: 18px;
         }
-
-        #blocklyDiv {
-            flex-grow: 1;
-            background-color: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-
-        .code-panel {
-            flex-basis: 350px;
-            background-color: #1e1e1e;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        .robot-icon { font-size: 36px; }
+        .main-container {
             display: flex;
-            flex-direction: column;
+            height: calc(100vh - 80px);
+            gap: 1px;
+        }
+        .blockly-container {
+            flex: 1;
+            background: white;
+            border-radius: 8px 0 0 0;
             overflow: hidden;
         }
-
-        .code-panel h2 {
-            margin: 0;
-            padding: 15px;
-            background-color: #2b2b2b;
-            color: #fff;
-            font-size: 1.25rem;
-            text-align: center;
-            border-top-left-radius: 12px;
-            border-top-right-radius: 12px;
+        .control-panel {
+            width: 320px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            overflow-y: auto;
         }
-
-        #codeArea {
-            flex-grow: 1;
-            background-color: #1e1e1e;
-            color: #d4d4d4;
+        .panel-title {
+            color: #2a5298;
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 18px;
+            border-bottom: 2px solid #e3f2fd;
+            padding-bottom: 10px;
+        }
+        .control-button {
+            width: 100%;
+            padding: 15px 20px;
+            margin: 10px 0;
+            background: linear-gradient(135deg, #1976d2, #42a5f5);
+            color: white;
             border: none;
-            padding: 15px;
-            font-family: 'Courier New', Courier, monospace;
-            resize: none;
-            outline: none;
-            line-height: 1.4;
-            tab-size: 4;
-            -moz-tab-size: 4;
+            border-radius: 10px;
+            font-size: 17px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
-
-        @media (max-width: 768px) {
-            .main-content {
-                flex-direction: column;
-            }
-            .code-panel {
-                flex-basis: auto;
-                height: 300px;
-            }
+        .control-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.4);
         }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #e8f5e8;
+            border-radius: 8px;
+            border-left: 5px solid #4caf50;
+            font-size: 16px;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4caf50;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .code-preview {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 18px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 180px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            color: #495057;
+        }
+        .panel-section { margin-bottom: 30px; }
+        #blocklyDiv { height: 100%; width: 100%; }
     </style>
 </head>
 <body>
-    <header>
-        <h1>סביבת תכנות בלוקים</h1>
-    </header>
+    <div class="app-header">
+        <h1 class="app-title">
+            <span class="robot-icon">🤖🌊</span>
+            תכנות רובוט ים - בלוקלי
+        </h1>
+    </div>
 
-    <div class="container">
-        <div class="main-content">
+    <div class="main-container">
+        <div class="blockly-container">
             <div id="blocklyDiv"></div>
-            <div class="code-panel">
-                <h2>קוד פייתון</h2>
-                <textarea id="codeArea" readonly></textarea>
+        </div>
+
+        <div class="control-panel">
+            <div class="panel-section">
+                <h3 class="panel-title">🔧 בקרה</h3>
+                <button class="control-button" onclick="runCode()">▶️ הרץ קוד</button>
+                <button class="control-button" onclick="generateCode()">🔄 יצר קוד</button>
+                <button class="control-button" onclick="clearWorkspace()">🗑️ נקה</button>
+            </div>
+
+            <div class="panel-section">
+                <h3 class="panel-title">📡 סטטוס רובוט</h3>
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span>מוכן לתכנות</span>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3 class="panel-title">💾 קוד שנוצר</h3>
+                <div id="codePreview" class="code-preview">// הקוד יופיע כאן</div>
             </div>
         </div>
     </div>
 
-    <!-- הגדרת הבלוקים הייעודיים וה-Toolbox -->
-    <xml id="toolbox" style="display: none">
-        <category name="לוגיקה" colour="#5b80a5">
+    <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
+        <category name="🚀 תנועה" colour="#4CAF50">
+            <block type="sea_move_forward"></block>
+            <block type="sea_move_backward"></block>
+            <block type="sea_turn_left"></block>
+            <block type="sea_turn_right"></block>
+            <block type="sea_dive"></block>
+            <block type="sea_surface"></block>
+        </category>
+        
+        <category name="🔬 Micro:bit" colour="#00D4AA">
+            <block type="mb_show_string"></block>
+            <block type="mb_show_number"></block>
+            <block type="mb_show_icon"></block>
+            <block type="mb_clear_display"></block>
+            <block type="mb_button"></block>
+            <block type="mb_temperature"></block>
+            <block type="mb_light"></block>
+            <block type="mb_accelerometer"></block>
+            <block type="mb_compass"></block>
+            <block type="mb_play_tone"></block>
+        </category>
+        
+        <category name="🔍 חיישנים" colour="#2196F3">
+            <block type="sea_depth_sensor"></block>
+            <block type="sea_temp_sensor"></block>
+            <block type="sea_pressure_sensor"></block>
+        </category>
+        
+        <category name="💡 פעולות" colour="#FF9800">
+            <block type="sea_led_on"></block>
+            <block type="sea_led_off"></block>
+            <block type="sea_camera"></block>
+            <block type="sea_sonar"></block>
+        </category>
+        
+        <category name="🎛️ בקרה" colour="#9C27B0">
             <block type="controls_if"></block>
+            <block type="controls_repeat_ext"></block>
+            <block type="controls_whileUntil"></block>
             <block type="logic_compare"></block>
             <block type="logic_operation"></block>
         </category>
-        <category name="לולאות" colour="#5ba55b">
-            <block type="controls_repeat_ext">
-                <value name="TIMES">
-                    <shadow type="math_number">
-                        <field name="NUM">10</field>
-                    </shadow>
-                </value>
-            </block>
-            <block type="controls_whileUntil"></block>
-        </category>
-        <category name="מתמטיקה" colour="#5b67a5">
+        
+        <category name="🔢 מתמטיקה" colour="#795548">
             <block type="math_number"></block>
-            <block type="math_arithmetic">
-                <value name="A">
-                    <shadow type="math_number">
-                        <field name="NUM">1</field>
-                    </shadow>
-                </value>
-                <value name="B">
-                    <shadow type="math_number">
-                        <field name="NUM">1</field>
-                    </shadow>
-                </value>
-            </block>
+            <block type="math_arithmetic"></block>
+            <block type="math_single"></block>
+            <block type="math_round"></block>
         </category>
-        <category name="משתנים" colour="#a580a5" custom="VARIABLE"></category>
-        <category name="פונקציות" colour="#a55b80" custom="PROCEDURE"></category>
-        <category name="הדפסה וטקסט" colour="#a55b5b">
-            <block type="text_print"></block>
+        
+        <category name="📝 טקסט" colour="#607D8B">
             <block type="text"></block>
+            <block type="text_join"></block>
+            <block type="text_length"></block>
         </category>
-        <!-- קטגוריה חדשה ל-Micro:bit -->
-        <category name="MICROBIT" colour="#42b883">
-            <block type="microbit_show_text"></block>
-            <block type="microbit_show_number"></block>
-            <block type="microbit_is_button_pressed"></block>
-            <block type="microbit_play_tone"></block>
-            <block type="microbit_move_robot"></block>
-        </category>
+        
+        <category name="📊 משתנים" colour="#E91E63" custom="VARIABLE"></category>
     </xml>
 
-    <!-- Script tags at the end of the body to ensure they load after the DOM -->
-    <script src="https://cdn.jsdelivr.net/npm/blockly@9.0.0/blockly_compressed.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/blockly@9.0.0/blocks_compressed.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/blockly@9.0.0/msg/he.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/blockly@9.0.0/generators/python_compressed.js"></script>
-    
-    <!-- Main script to initialize Blockly and define custom blocks -->
     <script>
-        // Micro:bit block definitions
-        Blockly.Blocks['microbit_show_text'] = {
-            init: function() {
-                this.appendValueInput('TEXT')
-                    .setCheck('String')
-                    .appendField("הצג טקסט");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour(60);
-                this.setTooltip("מציג מחרוזת על מסך ה-LED של המיקרוביט");
-            }
-        };
+        let workspace;
 
-        Blockly.Python['microbit_show_text'] = function(block) {
-            var value_text = Blockly.Python.valueToCode(block, 'TEXT', Blockly.Python.ORDER_ATOMIC);
-            var code = 'display.scroll(' + value_text + ')\n';
-            return code;
-        };
-
-        Blockly.Blocks['microbit_show_number'] = {
-            init: function() {
-                this.appendValueInput('NUMBER')
-                    .setCheck('Number')
-                    .appendField("הצג מספר");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour(60);
-                this.setTooltip("מציג מספר על מסך ה-LED של המיקרוביט");
-            }
-        };
-
-        Blockly.Python['microbit_show_number'] = function(block) {
-            var value_number = Blockly.Python.valueToCode(block, 'NUMBER', Blockly.Python.ORDER_ATOMIC);
-            var code = 'display.scroll(str(' + value_number + '))\n';
-            return code;
-        };
-
-        Blockly.Blocks['microbit_is_button_pressed'] = {
-            init: function() {
-                this.appendDummyInput()
-                    .appendField("כפתור A לחוץ?");
-                this.setOutput(true, 'Boolean');
-                this.setColour(210);
-                this.setTooltip("בדיקה האם כפתור A לחוץ");
-            }
-        };
-
-        Blockly.Python['microbit_is_button_pressed'] = function(block) {
-            var code = 'button_a.is_pressed()';
-            return [code, Blockly.Python.ORDER_NONE];
-        };
-
-        Blockly.Blocks['microbit_play_tone'] = {
-            init: function() {
-                this.appendValueInput('FREQUENCY')
-                    .setCheck('Number')
-                    .appendField("נגן צליל בתדר");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour(290);
-                this.setTooltip("מנגן צליל בתדר מסוים");
-            }
-        };
-
-        Blockly.Python['microbit_play_tone'] = function(block) {
-            var value_frequency = Blockly.Python.valueToCode(block, 'FREQUENCY', Blockly.Python.ORDER_ATOMIC);
-            var code = 'music.play(sound.pitch(' + value_frequency + ', 1000))\n';
-            return code;
-        };
-
-        Blockly.Blocks['microbit_move_robot'] = {
-            init: function() {
-                this.appendDummyInput()
-                    .appendField("הזז רובוט")
-                    .appendField(new Blockly.FieldDropdown([["קדימה", "FORWARD"], ["אחורה", "BACKWARD"], ["עצור", "STOP"]]), "DIRECTION");
-                this.setPreviousStatement(true, null);
-                this.setNextStatement(true, null);
-                this.setColour(20);
-                this.setTooltip("הזזת רובוט בכיוון מסוים");
-            }
-        };
-
-        Blockly.Python['microbit_move_robot'] = function(block) {
-            var dropdown_direction = block.getFieldValue('DIRECTION');
-            var code = `move_robot("${dropdown_direction}")\n`;
-            return code;
-        };
-
-        var workspace = Blockly.inject('blocklyDiv', {
-            toolbox: document.getElementById('toolbox'),
-            scrollbars: true,
-            media: 'https://cdn.jsdelivr.net/npm/blockly@9.0.0/media/',
-            zoom: {
-                controls: true,
-                wheel: true,
-                startScale: 1.0,
-                maxScale: 3,
-                minScale: 0.3,
-                scaleSpeed: 1.2
-            },
-            rtl: true
-        });
-
-        function updateCode(event) {
-            if (Blockly.Python) {
-                var pythonCode = Blockly.Python.workspaceToCode(workspace);
-                
-                // Add MicroPython imports for the generated code
-                var imports = "from microbit import *\n";
-                
-                // Check if any music blocks are in the workspace to add the music import
-                if (pythonCode.includes("music.")) {
-                    imports += "import music\n";
+        function defineBlocks() {
+            // Sea robot movement blocks
+            Blockly.Blocks['sea_move_forward'] = {
+                init: function() {
+                    this.appendValueInput("SPEED").setCheck("Number").appendField("🏊 קדימה במהירות");
+                    this.appendValueInput("TIME").setCheck("Number").appendField("למשך (שניות)");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(76);
+                    this.setTooltip("הזז רובוט קדימה");
                 }
+            };
 
-                // Check if any robot move blocks are in the workspace
-                if (pythonCode.includes("move_robot")) {
-                    imports += "\n# הפעלת רובוט - הגדר פונקציה זו בהתאם לחיבורים של הרובוט שלך\n";
-                    imports += "def move_robot(direction):\n";
-                    imports += "    # לדוגמה: קוד להפעלת מנועים בהתאם לכיוון\n";
-                    imports += "    if direction == 'FORWARD':\n";
-                    imports += "        pin1.write_digital(1)\n";
-                    imports += "        pin2.write_digital(0)\n";
-                    imports += "    elif direction == 'BACKWARD':\n";
-                    imports += "        pin1.write_digital(0)\n";
-                    imports += "        pin2.write_digital(1)\n";
-                    imports += "    else:\n";
-                    imports += "        pin1.write_digital(0)\n";
-                    imports += "        pin2.write_digital(0)\n";
-                    imports += "\n";
+            Blockly.Blocks['sea_move_backward'] = {
+                init: function() {
+                    this.appendValueInput("SPEED").setCheck("Number").appendField("🔄 אחורה במהירות");
+                    this.appendValueInput("TIME").setCheck("Number").appendField("למשך (שניות)");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(76);
                 }
+            };
 
-                document.getElementById('codeArea').value = imports + pythonCode;
+            Blockly.Blocks['sea_turn_left'] = {
+                init: function() {
+                    this.appendValueInput("ANGLE").setCheck("Number").appendField("↶ פנה שמאלה");
+                    this.appendDummyInput().appendField("מעלות");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(76);
+                }
+            };
+
+            Blockly.Blocks['sea_turn_right'] = {
+                init: function() {
+                    this.appendValueInput("ANGLE").setCheck("Number").appendField("↷ פנה ימינה");
+                    this.appendDummyInput().appendField("מעלות");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(76);
+                }
+            };
+
+            Blockly.Blocks['sea_dive'] = {
+                init: function() {
+                    this.appendValueInput("DEPTH").setCheck("Number").appendField("🏊‍♂️ צלול לעומק");
+                    this.appendDummyInput().appendField("מטר");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(76);
+                }
+            };
+
+            Blockly.Blocks['sea_surface'] = {
+                init: function() {
+                    this.appendDummyInput().appendField("⬆️ עלה לפני השטח");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(76);
+                }
+            };
+
+            // Micro:bit blocks
+            Blockly.Blocks['mb_show_string'] = {
+                init: function() {
+                    this.appendValueInput("TEXT").setCheck("String").appendField("📟 הצג טקסט");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(0);
+                }
+            };
+
+            Blockly.Blocks['mb_show_number'] = {
+                init: function() {
+                    this.appendValueInput("NUM").setCheck("Number").appendField("🔢 הצג מספר");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(0);
+                }
+            };
+
+            Blockly.Blocks['mb_show_icon'] = {
+                init: function() {
+                    this.appendDummyInput()
+                        .appendField("😊 הצג אייקון")
+                        .appendField(new Blockly.FieldDropdown([
+                            ["לב ❤️", "HEART"],
+                            ["שמח 😊", "HAPPY"],
+                            ["עצוב 😢", "SAD"],
+                            ["כוכב ⭐", "STAR"],
+                            ["חץ צפון ↑", "ARROW_N"],
+                            ["חץ דרום ↓", "ARROW_S"],
+                            ["יהלום 💎", "DIAMOND"]
+                        ]), "ICON");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(0);
+                }
+            };
+
+            Blockly.Blocks['mb_clear_display'] = {
+                init: function() {
+                    this.appendDummyInput().appendField("🧹 נקה מסך");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(0);
+                }
+            };
+
+            Blockly.Blocks['mb_button'] = {
+                init: function() {
+                    this.appendDummyInput()
+                        .appendField("🔘 כפתור")
+                        .appendField(new Blockly.FieldDropdown([
+                            ["A", "A"],
+                            ["B", "B"],
+                            ["A+B", "A+B"]
+                        ]), "BTN")
+                        .appendField("נלחץ?");
+                    this.setOutput(true, "Boolean");
+                    this.setColour(0);
+                }
+            };
+
+            Blockly.Blocks['mb_temperature'] = {
+                init: function() {
+                    this.appendDummyInput().appendField("🌡️ טמפרטורה");
+                    this.setOutput(true, "Number");
+                    this.setColour(0);
+                }
+            };
+
+            Blockly.Blocks['mb_light'] = {
+                init: function() {
+                    this.appendDummyInput().appendField("💡 עוצמת אור");
+                    this.setOutput(true, "Number");
+                    this.setColour(0);
+                }
+            };
+
+            Blockly.Blocks['mb_accelerometer'] = {
+                init: function() {
+                    this.appendDummyInput()
+                        .appendField("📱 תאוצהמד")
+                        .appendField(new Blockly.FieldDropdown([
+                            ["X", "x"],
+                            ["Y", "y"],
+                            ["Z", "z"],
+                            ["עוצמה", "strength"]
+                        ]), "AXIS");
+                    this.setOutput(true, "Number");
+                    this.setColour(0);
+                }
+            };
+
+            Blockly.Blocks['mb_compass'] = {
+                init: function() {
+                    this.appendDummyInput().appendField("🧭 כיוון מצפן");
+                    this.setOutput(true, "Number");
+                    this.setColour(0);
+                }
+            };
+
+            Blockly.Blocks['mb_play_tone'] = {
+                init: function() {
+                    this.appendValueInput("FREQ").setCheck("Number").appendField("🎵 נגן צליל בתדירות");
+                    this.appendValueInput("TIME").setCheck("Number").appendField("למשך (ms)");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(0);
+                }
+            };
+
+            // Sea sensors
+            Blockly.Blocks['sea_depth_sensor'] = {
+                init: function() {
+                    this.appendDummyInput().appendField("📏 חיישן עומק");
+                    this.setOutput(true, "Number");
+                    this.setColour(33);
+                }
+            };
+
+            Blockly.Blocks['sea_temp_sensor'] = {
+                init: function() {
+                    this.appendDummyInput().appendField("🌡️ חיישן טמפרטורה");
+                    this.setOutput(true, "Number");
+                    this.setColour(33);
+                }
+            };
+
+            Blockly.Blocks['sea_pressure_sensor'] = {
+                init: function() {
+                    this.appendDummyInput().appendField("📊 חיישן לחץ");
+                    this.setOutput(true, "Number");
+                    this.setColour(33);
+                }
+            };
+
+            // Sea actions
+            Blockly.Blocks['sea_led_on'] = {
+                init: function() {
+                    this.appendDummyInput().appendField("💡 הדלק פנס");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(255);
+                }
+            };
+
+            Blockly.Blocks['sea_led_off'] = {
+                init: function() {
+                    this.appendDummyInput().appendField("🔦 כבה פנס");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(255);
+                }
+            };
+
+            Blockly.Blocks['sea_camera'] = {
+                init: function() {
+                    this.appendDummyInput().appendField("📸 צלם תמונה");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(255);
+                }
+            };
+
+            Blockly.Blocks['sea_sonar'] = {
+                init: function() {
+                    this.appendDummyInput().appendField("📡 בדיקת סונאר");
+                    this.setOutput(true, "Number");
+                    this.setColour(255);
+                }
+            };
+        }
+
+        function defineGenerators() {
+            // Sea robot generators
+            Blockly.JavaScript['sea_move_forward'] = function(block) {
+                const speed = Blockly.JavaScript.valueToCode(block, 'SPEED', Blockly.JavaScript.ORDER_ATOMIC) || '50';
+                const time = Blockly.JavaScript.valueToCode(block, 'TIME', Blockly.JavaScript.ORDER_ATOMIC) || '1';
+                return `seaRobot.moveForward(${speed}, ${time});\n`;
+            };
+
+            Blockly.JavaScript['sea_move_backward'] = function(block) {
+                const speed = Blockly.JavaScript.valueToCode(block, 'SPEED', Blockly.JavaScript.ORDER_ATOMIC) || '50';
+                const time = Blockly.JavaScript.valueToCode(block, 'TIME', Blockly.JavaScript.ORDER_ATOMIC) || '1';
+                return `seaRobot.moveBackward(${speed}, ${time});\n`;
+            };
+
+            Blockly.JavaScript['sea_turn_left'] = function(block) {
+                const angle = Blockly.JavaScript.valueToCode(block, 'ANGLE', Blockly.JavaScript.ORDER_ATOMIC) || '90';
+                return `seaRobot.turnLeft(${angle});\n`;
+            };
+
+            Blockly.JavaScript['sea_turn_right'] = function(block) {
+                const angle = Blockly.JavaScript.valueToCode(block, 'ANGLE', Blockly.JavaScript.ORDER_ATOMIC) || '90';
+                return `seaRobot.turnRight(${angle});\n`;
+            };
+
+            Blockly.JavaScript['sea_dive'] = function(block) {
+                const depth = Blockly.JavaScript.valueToCode(block, 'DEPTH', Blockly.JavaScript.ORDER_ATOMIC) || '5';
+                return `seaRobot.dive(${depth});\n`;
+            };
+
+            Blockly.JavaScript['sea_surface'] = function(block) {
+                return 'seaRobot.surface();\n';
+            };
+
+            // Micro:bit generators
+            Blockly.JavaScript['mb_show_string'] = function(block) {
+                const text = Blockly.JavaScript.valueToCode(block, 'TEXT', Blockly.JavaScript.ORDER_ATOMIC) || '""';
+                return `display.show(${text});\n`;
+            };
+
+            Blockly.JavaScript['mb_show_number'] = function(block) {
+                const num = Blockly.JavaScript.valueToCode(block, 'NUM', Blockly.JavaScript.ORDER_ATOMIC) || '0';
+                return `display.show(${num});\n`;
+            };
+
+            Blockly.JavaScript['mb_show_icon'] = function(block) {
+                const icon = block.getFieldValue('ICON');
+                return `display.show(Image.${icon});\n`;
+            };
+
+            Blockly.JavaScript['mb_clear_display'] = function(block) {
+                return 'display.clear();\n';
+            };
+
+            Blockly.JavaScript['mb_button'] = function(block) {
+                const btn = block.getFieldValue('BTN');
+                return [`button_${btn.toLowerCase().replace('+', '_')}.is_pressed()`, Blockly.JavaScript.ORDER_FUNCTION_CALL];
+            };
+
+            Blockly.JavaScript['mb_temperature'] = function(block) {
+                return ['temperature()', Blockly.JavaScript.ORDER_FUNCTION_CALL];
+            };
+
+            Blockly.JavaScript['mb_light'] = function(block) {
+                return ['display.read_light_level()', Blockly.JavaScript.ORDER_FUNCTION_CALL];
+            };
+
+            Blockly.JavaScript['mb_accelerometer'] = function(block) {
+                const axis = block.getFieldValue('AXIS');
+                if (axis === 'strength') {
+                    return ['accelerometer.get_strength()', Blockly.JavaScript.ORDER_FUNCTION_CALL];
+                } else {
+                    return [`accelerometer.get_${axis}()`, Blockly.JavaScript.ORDER_FUNCTION_CALL];
+                }
+            };
+
+            Blockly.JavaScript['mb_compass'] = function(block) {
+                return ['compass.heading()', Blockly.JavaScript.ORDER_FUNCTION_CALL];
+            };
+
+            Blockly.JavaScript['mb_play_tone'] = function(block) {
+                const freq = Blockly.JavaScript.valueToCode(block, 'FREQ', Blockly.JavaScript.ORDER_ATOMIC) || '440';
+                const time = Blockly.JavaScript.valueToCode(block, 'TIME', Blockly.JavaScript.ORDER_ATOMIC) || '1000';
+                return `music.pitch(${freq}, ${time});\n`;
+            };
+
+            // Sea sensors generators
+            Blockly.JavaScript['sea_depth_sensor'] = function(block) {
+                return ['seaRobot.getDepth()', Blockly.JavaScript.ORDER_FUNCTION_CALL];
+            };
+
+            Blockly.JavaScript['sea_temp_sensor'] = function(block) {
+                return ['seaRobot.getTemperature()', Blockly.JavaScript.ORDER_FUNCTION_CALL];
+            };
+
+            Blockly.JavaScript['sea_pressure_sensor'] = function(block) {
+                return ['seaRobot.getPressure()', Blockly.JavaScript.ORDER_FUNCTION_CALL];
+            };
+
+            // Sea actions generators
+            Blockly.JavaScript['sea_led_on'] = function(block) {
+                return 'seaRobot.ledOn();\n';
+            };
+
+            Blockly.JavaScript['sea_led_off'] = function(block) {
+                return 'seaRobot.ledOff();\n';
+            };
+
+            Blockly.JavaScript['sea_camera'] = function(block) {
+                return 'seaRobot.takePhoto();\n';
+            };
+
+            Blockly.JavaScript['sea_sonar'] = function(block) {
+                return ['seaRobot.sonarPing()', Blockly.JavaScript.ORDER_FUNCTION_CALL];
+            };
+        }
+
+        function initBlockly() {
+            try {
+                defineBlocks();
+                defineGenerators();
+
+                workspace = Blockly.inject('blocklyDiv', {
+                    toolbox: document.getElementById('toolbox'),
+                    rtl: true,
+                    scrollbars: true,
+                    trashcan: true,
+                    zoom: {
+                        controls: true,
+                        wheel: true,
+                        startScale: 1.25,
+                        maxScale: 4,
+                        minScale: 0.5,
+                        scaleSpeed: 1.2
+                    }
+                });
+
+                workspace.addChangeListener(function(event) {
+                    if (event.type !== Blockly.Events.UI) {
+                        generateCode();
+                    }
+                });
+
+                // Add comprehensive sample blocks
+                setTimeout(() => {
+                    const xml = Blockly.utils.xml.textToDom(`
+                        <xml xmlns="https://developers.google.com/blockly/xml">
+                            <block type="mb_show_string" x="50" y="50">
+                                <value name="TEXT">
+                                    <block type="text">
+                                        <field name="TEXT">רובוט ים!</field>
+                                    </block>
+                                </value>
+                                <next>
+                                    <block type="mb_show_icon">
+                                        <field name="ICON">HEART</field>
+                                        <next>
+                                            <block type="mb_clear_display">
+                                                <next>
+                                                    <block type="sea_move_forward">
+                                                        <value name="SPEED">
+                                                            <block type="math_number">
+                                                                <field name="NUM">60</field>
+                                                            </block>
+                                                        </value>
+                                                        <value name="TIME">
+                                                            <block type="math_number">
+                                                                <field name="NUM">3</field>
+                                                            </block>
+                                                        </value>
+                                                    </block>
+                                                </next>
+                                            </block>
+                                        </next>
+                                    </block>
+                                </next>
+                            </block>
+                            
+                            <block type="mb_button" x="400" y="50">
+                                <field name="BTN">A</field>
+                            </block>
+                            
+                            <block type="mb_temperature" x="400" y="120">
+                            </block>
+                            
+                            <block type="sea_dive" x="50" y="250">
+                                <value name="DEPTH">
+                                    <block type="math_number">
+                                        <field name="NUM">10</field>
+                                    </block>
+                                </value>
+                                <next>
+                                    <block type="sea_camera"></block>
+                                </next>
+                            </block>
+                            
+                            <block type="mb_play_tone" x="400" y="190">
+                                <value name="FREQ">
+                                    <block type="math_number">
+                                        <field name="NUM">523</field>
+                                    </block>
+                                </value>
+                                <value name="TIME">
+                                    <block type="math_number">
+                                        <field name="NUM">500</field>
+                                    </block>
+                                </value>
+                            </block>
+                        </xml>
+                    `);
+                    Blockly.Xml.domToWorkspace(xml, workspace);
+                }, 500);
+
+                console.log('✅ Blockly loaded!');
+            } catch (error) {
+                console.error('❌ Blockly error:', error);
             }
         }
-        workspace.addChangeListener(updateCode);
-        
-        // Initial code generation
-        updateCode();
+
+        function runCode() {
+            const code = Blockly.JavaScript.workspaceToCode(workspace);
+            alert('🚀 הרצת קוד:\n\n' + code);
+        }
+
+        function generateCode() {
+            const code = Blockly.JavaScript.workspaceToCode(workspace);
+            document.getElementById('codePreview').textContent = code || '// הקוד יופיע כאן';
+        }
+
+        function clearWorkspace() {
+            if (confirm('למחוק הכל?')) {
+                workspace.clear();
+            }
+        }
+
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                if (typeof Blockly !== 'undefined') {
+                    initBlockly();
+                } else {
+                    document.getElementById('blocklyDiv').innerHTML = '<div style="padding: 50px; text-align: center; color: red;">שגיאה בטעינת Blockly</div>';
+                }
+            }, 1000);
+        });
     </script>
 </body>
 </html>
