@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>סביבת תכנות בלוקים</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Heebo', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f4f8;
+            color: #334e68;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        header {
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        h1 {
+            font-weight: 700;
+            color: #102a43;
+            margin: 0;
+            font-size: 2.5rem;
+        }
+
+        .main-content {
+            display: flex;
+            flex-grow: 1;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        #blocklyDiv {
+            flex-grow: 1;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .code-panel {
+            flex-basis: 350px;
+            background-color: #1e1e1e;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .code-panel h2 {
+            margin: 0;
+            padding: 15px;
+            background-color: #2b2b2b;
+            color: #fff;
+            font-size: 1.25rem;
+            text-align: center;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+        }
+
+        #codeArea {
+            flex-grow: 1;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            border: none;
+            padding: 15px;
+            font-family: 'Courier New', Courier, monospace;
+            resize: none;
+            outline: none;
+            line-height: 1.4;
+            tab-size: 4;
+            -moz-tab-size: 4;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            .code-panel {
+                flex-basis: auto;
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>סביבת תכנות בלוקים</h1>
+    </header>
+
+    <div class="container">
+        <div class="main-content">
+            <div id="blocklyDiv"></div>
+            <div class="code-panel">
+                <h2>קוד פייתון</h2>
+                <textarea id="codeArea" readonly></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- הגדרת הבלוקים הייעודיים וה-Toolbox -->
+    <xml id="toolbox" style="display: none">
+        <category name="לוגיקה" colour="#5b80a5">
+            <block type="controls_if"></block>
+            <block type="logic_compare"></block>
+            <block type="logic_operation"></block>
+        </category>
+        <category name="לולאות" colour="#5ba55b">
+            <block type="controls_repeat_ext">
+                <value name="TIMES">
+                    <shadow type="math_number">
+                        <field name="NUM">10</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="controls_whileUntil"></block>
+        </category>
+        <category name="מתמטיקה" colour="#5b67a5">
+            <block type="math_number"></block>
+            <block type="math_arithmetic">
+                <value name="A">
+                    <shadow type="math_number">
+                        <field name="NUM">1</field>
+                    </shadow>
+                </value>
+                <value name="B">
+                    <shadow type="math_number">
+                        <field name="NUM">1</field>
+                    </shadow>
+                </value>
+            </block>
+        </category>
+        <category name="משתנים" colour="#a580a5" custom="VARIABLE"></category>
+        <category name="פונקציות" colour="#a55b80" custom="PROCEDURE"></category>
+        <category name="הדפסה וטקסט" colour="#a55b5b">
+            <block type="text_print"></block>
+            <block type="text"></block>
+        </category>
+        <!-- קטגוריה חדשה ל-Micro:bit -->
+        <category name="MICROBIT" colour="#42b883">
+            <block type="microbit_show_text"></block>
+            <block type="microbit_show_number"></block>
+            <block type="microbit_is_button_pressed"></block>
+            <block type="microbit_play_tone"></block>
+            <block type="microbit_move_robot"></block>
+        </category>
+    </xml>
+
+    <!-- Script tags at the end of the body to ensure they load after the DOM -->
+    <script src="https://cdn.jsdelivr.net/npm/blockly@9.0.0/blockly_compressed.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/blockly@9.0.0/blocks_compressed.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/blockly@9.0.0/msg/he.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/blockly@9.0.0/generators/python_compressed.js"></script>
+    
+    <!-- Main script to initialize Blockly and define custom blocks -->
+    <script>
+        // Micro:bit block definitions
+        Blockly.Blocks['microbit_show_text'] = {
+            init: function() {
+                this.appendValueInput('TEXT')
+                    .setCheck('String')
+                    .appendField("הצג טקסט");
+                this.setPreviousStatement(true, null);
+                this.setNextStatement(true, null);
+                this.setColour(60);
+                this.setTooltip("מציג מחרוזת על מסך ה-LED של המיקרוביט");
+            }
+        };
+
+        Blockly.Python['microbit_show_text'] = function(block) {
+            var value_text = Blockly.Python.valueToCode(block, 'TEXT', Blockly.Python.ORDER_ATOMIC);
+            var code = 'display.scroll(' + value_text + ')\n';
+            return code;
+        };
+
+        Blockly.Blocks['microbit_show_number'] = {
+            init: function() {
+                this.appendValueInput('NUMBER')
+                    .setCheck('Number')
+                    .appendField("הצג מספר");
+                this.setPreviousStatement(true, null);
+                this.setNextStatement(true, null);
+                this.setColour(60);
+                this.setTooltip("מציג מספר על מסך ה-LED של המיקרוביט");
+            }
+        };
+
+        Blockly.Python['microbit_show_number'] = function(block) {
+            var value_number = Blockly.Python.valueToCode(block, 'NUMBER', Blockly.Python.ORDER_ATOMIC);
+            var code = 'display.scroll(str(' + value_number + '))\n';
+            return code;
+        };
+
+        Blockly.Blocks['microbit_is_button_pressed'] = {
+            init: function() {
+                this.appendDummyInput()
+                    .appendField("כפתור A לחוץ?");
+                this.setOutput(true, 'Boolean');
+                this.setColour(210);
+                this.setTooltip("בדיקה האם כפתור A לחוץ");
+            }
+        };
+
+        Blockly.Python['microbit_is_button_pressed'] = function(block) {
+            var code = 'button_a.is_pressed()';
+            return [code, Blockly.Python.ORDER_NONE];
+        };
+
+        Blockly.Blocks['microbit_play_tone'] = {
+            init: function() {
+                this.appendValueInput('FREQUENCY')
+                    .setCheck('Number')
+                    .appendField("נגן צליל בתדר");
+                this.setPreviousStatement(true, null);
+                this.setNextStatement(true, null);
+                this.setColour(290);
+                this.setTooltip("מנגן צליל בתדר מסוים");
+            }
+        };
+
+        Blockly.Python['microbit_play_tone'] = function(block) {
+            var value_frequency = Blockly.Python.valueToCode(block, 'FREQUENCY', Blockly.Python.ORDER_ATOMIC);
+            var code = 'music.play(sound.pitch(' + value_frequency + ', 1000))\n';
+            return code;
+        };
+
+        Blockly.Blocks['microbit_move_robot'] = {
+            init: function() {
+                this.appendDummyInput()
+                    .appendField("הזז רובוט")
+                    .appendField(new Blockly.FieldDropdown([["קדימה", "FORWARD"], ["אחורה", "BACKWARD"], ["עצור", "STOP"]]), "DIRECTION");
+                this.setPreviousStatement(true, null);
+                this.setNextStatement(true, null);
+                this.setColour(20);
+                this.setTooltip("הזזת רובוט בכיוון מסוים");
+            }
+        };
+
+        Blockly.Python['microbit_move_robot'] = function(block) {
+            var dropdown_direction = block.getFieldValue('DIRECTION');
+            var code = `move_robot("${dropdown_direction}")\n`;
+            return code;
+        };
+
+        var workspace = Blockly.inject('blocklyDiv', {
+            toolbox: document.getElementById('toolbox'),
+            scrollbars: true,
+            media: 'https://cdn.jsdelivr.net/npm/blockly@9.0.0/media/',
+            zoom: {
+                controls: true,
+                wheel: true,
+                startScale: 1.0,
+                maxScale: 3,
+                minScale: 0.3,
+                scaleSpeed: 1.2
+            },
+            rtl: true
+        });
+
+        function updateCode(event) {
+            if (Blockly.Python) {
+                var pythonCode = Blockly.Python.workspaceToCode(workspace);
+                
+                // Add MicroPython imports for the generated code
+                var imports = "from microbit import *\n";
+                
+                // Check if any music blocks are in the workspace to add the music import
+                if (pythonCode.includes("music.")) {
+                    imports += "import music\n";
+                }
+
+                // Check if any robot move blocks are in the workspace
+                if (pythonCode.includes("move_robot")) {
+                    imports += "\n# הפעלת רובוט - הגדר פונקציה זו בהתאם לחיבורים של הרובוט שלך\n";
+                    imports += "def move_robot(direction):\n";
+                    imports += "    # לדוגמה: קוד להפעלת מנועים בהתאם לכיוון\n";
+                    imports += "    if direction == 'FORWARD':\n";
+                    imports += "        pin1.write_digital(1)\n";
+                    imports += "        pin2.write_digital(0)\n";
+                    imports += "    elif direction == 'BACKWARD':\n";
+                    imports += "        pin1.write_digital(0)\n";
+                    imports += "        pin2.write_digital(1)\n";
+                    imports += "    else:\n";
+                    imports += "        pin1.write_digital(0)\n";
+                    imports += "        pin2.write_digital(0)\n";
+                    imports += "\n";
+                }
+
+                document.getElementById('codeArea').value = imports + pythonCode;
+            }
+        }
+        workspace.addChangeListener(updateCode);
+        
+        // Initial code generation
+        updateCode();
+    </script>
+</body>
+</html>
