@@ -1,53 +1,78 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Svg Vector Icons : http://www.onlinewebfonts.com/icon -->
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Transformed by: SVG Repo Mixer Tools -->
 
 <svg
+   width="35"
+   height="36"
+   viewBox="0 0 8.75 9"
+   fill="none"
    version="1.1"
-   x="0px"
-   y="0px"
-   viewBox="0 0 40 40.000001"
-   enable-background="new 0 0 256 256"
-   xml:space="preserve"
-   id="svg4"
+   id="svg1"
    sodipodi:docname="iconsx.svg"
-   width="40"
-   height="40"
    inkscape:version="1.4 (86a8ad7, 2024-10-11)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg"><defs
-   id="defs4" /><sodipodi:namedview
-   id="namedview4"
-   pagecolor="#ffffff"
-   bordercolor="#111111"
-   borderopacity="1"
-   inkscape:showpageshadow="0"
-   inkscape:pageopacity="0"
-   inkscape:pagecheckerboard="1"
-   inkscape:deskcolor="#d1d1d1"
-   inkscape:zoom="3.0195312"
-   inkscape:cx="112.10349"
-   inkscape:cy="-14.40621"
-   inkscape:window-width="1920"
-   inkscape:window-height="1017"
-   inkscape:window-x="-8"
-   inkscape:window-y="-8"
-   inkscape:window-maximized="1"
-   inkscape:current-layer="svg4" />
-<metadata
-   id="metadata1"> Svg Vector Icons : http://www.onlinewebfonts.com/icon </metadata>
-<path
-   fill="#000000"
-   d="m 34.806936,25.644052 v 4.085447 H 23.532362 v -5.950543 h -1.938058 v 14.891158 h 1.938058 v -5.950543 h 11.274574 v 4.085447 l 3.876115,-5.595285 z"
-   id="path1"
-   style="fill:#ffffff;stroke-width:0.213391" /><path
-   fill="#000000"
-   d="M 17.533611,29.331823 H 6.2590371 v -4.267167 l -3.8761156,5.844162 3.8761156,5.844164 V 32.485816 H 17.533611 v 6.184298 h 1.938058 V 23.116602 h -1.938058 z"
-   id="path2"
-   style="fill:#ffffff;stroke-width:0.218086" /><path
-   fill="#000000"
-   d="m 21.808019,13.236926 -2.121578,2.314394 c -0.355038,0.390743 -0.48493,0.691314 -0.398336,0.924255 0.173191,0.232943 0.52823,0.345657 1.056459,0.345657 h 0.268444 v 0.924255 h -8.737432 v -0.91674 h 0.268445 c 0.796674,0 1.636645,-0.465886 2.519913,-1.390141 L 19.03698,10.802303 16.638299,8.7133383 C 15.322056,7.4058553 13.997153,6.7070283 12.67225,6.6318856 V 5.7076307 h 6.35607 v 0.9242549 c -0.701419,0 -1.19501,0.112714 -1.454795,0.3456563 -0.17319,0.308085 -0.0433,0.6537414 0.398337,1.0444834 l 1.853132,1.735796 2.121577,-2.2016807 C 22.215015,7.2480555 22.258313,7.0151133 22.076462,6.864828 21.903273,6.7145426 21.548234,6.6318856 21.020005,6.6318856 V 5.7076307 h 8.347755 v 0.9242549 c -1.056459,0 -1.983025,0.5410273 -2.779699,1.6230817 l -3.844817,4.0577037 3.446481,3.125935 c 1.056458,0.924255 2.034981,1.390141 2.909591,1.390141 v 0.924254 h -6.096287 v -0.924254 c 0.796674,0 1.238308,-0.150286 1.324904,-0.465886 0.08659,-0.308084 -0.173191,-0.77397 -0.796674,-1.390139 z"
-   id="path3"
-   style="fill:#ffffff;stroke-width:0.080665" />
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+    <linearGradient
+       id="swatch3"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#031519;stop-opacity:0.025;"
+         offset="0"
+         id="stop3" />
+    </linearGradient>
+  </defs>
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#111111"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="12.078125"
+     inkscape:cx="30.758085"
+     inkscape:cy="32"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer2" />
+  <g
+     id="SVGRepo_tracerCarrier"
+     stroke-linecap="round"
+     stroke-linejoin="round" />
+  <g
+     id="SVGRepo_bgCarrier"
+     stroke-width="0" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer1"
+     inkscape:label="Layer 1">
+    <ellipse
+       style="fill:#4682b4;stroke:#2aa1f0;stroke-width:0.197167;stroke-dasharray:none;stroke-opacity:0.566496"
+       id="path3"
+       cx="4.395216"
+       cy="4.56145"
+       rx="4.1717057"
+       ry="4.2441506" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Layer 2">
+    <g
+       id="SVGRepo_iconCarrier"
+       transform="matrix(0.52261234,0,0,0.50341545,0.20862038,0.54144101)">
+      <path
+         d="M 5.1716,8.00003 1.08582,3.91424 3.91424,1.08582 8.00003,5.1716 12.0858,1.08582 14.9142,3.91424 10.8285,8.00003 14.9142,12.0858 12.0858,14.9142 8.00003,10.8285 3.91424,14.9142 1.08582,12.0858 Z"
+         fill="#ffffff"
+         id="path1" />
+    </g>
+  </g>
 </svg>

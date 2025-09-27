@@ -1,60 +1,78 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Svg Vector Icons : http://www.onlinewebfonts.com/icon -->
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Transformed by: SVG Repo Mixer Tools -->
 
 <svg
+   width="35"
+   height="36"
+   viewBox="0 0 8.75 9"
+   fill="none"
    version="1.1"
-   x="0px"
-   y="0px"
-   viewBox="0 0 24 40.000001"
-   enable-background="new 0 0 256 256"
-   xml:space="preserve"
-   id="svg4"
+   id="svg1"
    sodipodi:docname="iconsy.svg"
-   width="24"
-   height="40"
    inkscape:version="1.4 (86a8ad7, 2024-10-11)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg"><defs
-   id="defs4" /><sodipodi:namedview
-   id="namedview4"
-   pagecolor="#ffffff"
-   bordercolor="#111111"
-   borderopacity="1"
-   inkscape:showpageshadow="0"
-   inkscape:pageopacity="0"
-   inkscape:pagecheckerboard="1"
-   inkscape:deskcolor="#d1d1d1"
-   inkscape:zoom="4.270262"
-   inkscape:cx="104.56033"
-   inkscape:cy="99.408421"
-   inkscape:window-width="1920"
-   inkscape:window-height="1017"
-   inkscape:window-x="-8"
-   inkscape:window-y="-8"
-   inkscape:window-maximized="1"
-   inkscape:current-layer="svg4"
-   showgrid="false" />
-<metadata
-   id="metadata1"> Svg Vector Icons : http://www.onlinewebfonts.com/icon </metadata>
-<g
-   id="g4"
-   style="fill:#ffffff"
-   transform="matrix(-7.6546242e-4,0.15381235,-0.16374575,-7.5659459e-4,40.971248,2.1917313)"><path
-     fill="#000000"
-     d="m 213.79313,173.57632 0.0382,19.49389 -62.2639,-0.19298 -0.0557,-28.39328 -10.70294,-0.0334 0.13939,71.05381 10.70294,0.0334 -0.0557,-28.39327 62.2639,0.19298 0.0382,19.4939 21.35352,-26.63181 z"
-     id="path1"
-     style="fill:#ffffff;stroke-width:1.0954" /><path
-     fill="#000000"
-     d="m 121.65722,191.9186 -58.250584,-0.22184 -0.04395,-19.90059 -19.965934,27.1789 20.08631,27.33143 -0.04395,-19.9006 58.250588,0.22184 0.0637,28.84144 10.01305,0.0381 -0.16018,-72.53623 -10.01306,-0.0381 z"
-     id="path2"
-     style="fill:#ffffff;stroke-width:1.07051" /><path
-     id="path3"
-     style="fill:#ffffff"
-     d="m 35.69951,15.947556 c 0.169986,-0.100874 0.550168,-0.290245 0.683855,-0.37456 -0.186919,0.01974 -0.265128,0.01496 -0.482334,0.03939 -0.05165,0.0058 -0.128855,0.0553 -0.190102,0.07516 z m 46.758724,37.016756 0.306269,0.308038 c 0.04245,-0.05973 0.07039,-0.126751 0.113367,-0.186212 -0.140023,-0.03961 -0.279573,-0.08221 -0.419636,-0.121826 z m 1.098899,58.187458 c 0.766134,0.001 1.532228,-5.8e-4 2.298365,0.002 -0.572236,-0.24872 -1.139895,-0.50952 -1.730434,-0.70988 l -0.18931,0.23608 z M 119.26458,64.762524 c 0.12573,0.1599 0.23751,0.330255 0.35797,0.493477 0.68983,-0.08606 1.37337,-0.191735 2.05552,-0.319078 -0.67392,-0.215639 -1.34733,-0.433309 -2.02217,-0.646622 z m 25.51629,-27.216408 c 1.45493,0.133565 2.91012,0.259608 4.36975,0.326178 1.15422,0.05264 2.31232,0.08258 3.46711,0.10758 -1.27082,-0.13902 -2.53512,-0.308121 -3.77381,-0.502267 -1.35413,0.02948 -2.70884,0.04146 -4.06305,0.06851 z m 55.44272,0.570199 c 0.31407,0.384626 0.59944,0.810255 0.90751,1.208878 0.34609,-0.428243 0.6851,-0.857585 1.03501,-1.267473 -0.29426,0.0041 -0.60315,-0.01392 -0.88885,0.0042 -0.35059,0.02199 -0.70298,0.03444 -1.05367,0.05444 z m 1.91593,-26.115781 c 0.67976,0.06605 1.17101,0.117479 2.01999,0.200996 0.29528,-0.06383 0.58852,-0.134915 0.87517,-0.202151 z" /></g>
-<path
-   fill="#000000"
-   d="m 18.862711,14.012313 v 1.561846 l 0.819959,0.200039 0.09309,0.477015 -2.123299,6.193527 -1.041958,-6.316627 0.111004,-0.400076 0.744767,-0.161573 v -1.554151 h -3.927926 v 1.515685 l 0.891571,0.238505 1.489533,9.440318 -0.390287,4.43933 -0.186192,0.523182 -0.913054,0.161568 v 1.600317 h 4.189308 v -1.561846 l -0.891569,-0.246199 -0.128903,-0.323143 0.46548,-5.116391 3.107966,-8.840195 0.819959,-0.361612 v -1.469519 z"
-   id="path1-9"
-   style="fill:#ffffff;stroke-width:0.0524872" /></svg>
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1">
+    <linearGradient
+       id="swatch3"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#031519;stop-opacity:0.025;"
+         offset="0"
+         id="stop3" />
+    </linearGradient>
+  </defs>
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#111111"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="12.078125"
+     inkscape:cx="30.758085"
+     inkscape:cy="32"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer2" />
+  <g
+     id="SVGRepo_tracerCarrier"
+     stroke-linecap="round"
+     stroke-linejoin="round" />
+  <g
+     id="SVGRepo_bgCarrier"
+     stroke-width="0" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer1"
+     inkscape:label="Layer 1">
+    <ellipse
+       style="fill:#4682b4;stroke:#2aa1f0;stroke-width:0.197167;stroke-dasharray:none;stroke-opacity:0.566496"
+       id="path3"
+       cx="4.395216"
+       cy="4.56145"
+       rx="4.1717057"
+       ry="4.2441506" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Layer 2">
+    <g
+       id="SVGRepo_iconCarrier"
+       transform="matrix(0.39924788,0,0,0.41785252,1.1665015,1.5924968)">
+      <path
+         d="M 6.50001,9.4155 0.850708,0 H 4.34928 L 7.99999,6.08452 11.6507,0 h 3.4986 L 9.50001,9.41546 V 16 h -3 z"
+         fill="#ffffff"
+         id="path1" />
+    </g>
+  </g>
+</svg>
