@@ -1,0 +1,7 @@
+{
+  "name": "קודקודי גרסה 3",
+  "description": "An empty app",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
