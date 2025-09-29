@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   height="24px"
+   viewBox="0 -960 960 960"
+   width="24px"
+   fill="#FFFFFF"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="allman.svg"
+   inkscape:version="1.4 (86a8ad7, 2024-10-11)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#111111"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="32.208333"
+     inkscape:cx="12"
+     inkscape:cy="12"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1" />
+  <path
+     d="M 121.94049,-87.451488 V -367.45149 H 21.940492 v -240 q 0,-33 23.5,-56.5 23.5,-23.5 56.499998,-23.5 h 160 q 33,0 56.5,23.5 23.5,23.5 23.5,56.5 v 240 h -100 v 280.000002 z m 60,-640.000002 q -33,0 -56.5,-23.5 -23.5,-23.5 -23.5,-56.5 0,-33 23.5,-56.5 23.5,-23.5 56.5,-23.5 33,0 56.5,23.5 23.5,23.5 23.5,56.5 0,33 -23.5,56.5 -23.5,23.5 -56.5,23.5 z"
+     id="path1"
+     style="fill:#00bfff" />
+  <path
+     d="m 385.95085,-93.09186 v -280 h -100 v -240 q 0,-33 23.5,-56.5 23.5,-23.5 56.5,-23.5 h 160 q 33,0 56.5,23.5 23.5,23.5 23.5,56.5 v 240 h -100 v 280 z m 60,-640 q -33,0 -56.5,-23.5 -23.5,-23.5 -23.5,-56.5 0,-33 23.5,-56.5 23.5,-23.5 56.5,-23.5 33,0 56.5,23.5 23.5,23.5 23.5,56.5 0,33 -23.5,56.5 -23.5,23.5 -56.5,23.5 z"
+     id="path1-8"
+     style="fill:#9acd32" />
+  <path
+     d="M 592.41915,-89.417861 V -369.41786 h -100 v -240 q 0,-33 23.5,-56.5 23.5,-23.5 56.5,-23.5 h 160 q 33,0 56.5,23.5 23.5,23.5 23.5,56.5 v 240 h -100 v 279.999999 z m 60,-639.999999 q -33,0 -56.5,-23.5 -23.5,-23.5 -23.5,-56.5 0,-33 23.5,-56.5 23.5,-23.5 56.5,-23.5 33,0 56.5,23.5 23.5,23.5 23.5,56.5 0,33 -23.5,56.5 -23.5,23.5 -56.5,23.5 z"
+     id="path1-5"
+     style="fill:#ff4500" />
+  <path
+     d="m 742.74256,-101.83701 v -280 h -100 v -240 q 0,-33 23.5,-56.5 23.5,-23.5 56.5,-23.5 h 160 q 33,0 56.5,23.5 23.5,23.5 23.5,56.5 v 240 h -100 v 280 z m 60,-640 q -33,0 -56.5,-23.5 -23.5,-23.5 -23.5,-56.5 0,-33 23.5,-56.5 23.5,-23.5 56.5,-23.5 33,0 56.5,23.5 23.5,23.5 23.5,56.5 0,33 -23.5,56.5 -23.5,23.5 -56.5,23.5 z"
+     id="path1-1"
+     style="fill:#ffd700" />
+</svg>
