@@ -6,6 +6,7 @@
     <title>תכנות micro:bit - Blockly</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/10.4.0/blockly.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/10.4.0/python_compressed.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@microbit/microbit-universal-hex@0.2.5/dist/browser/microbit-universal-hex.umd.js"></script>
     <style>
         * {
             margin: 0;
@@ -45,7 +46,7 @@
             padding: 20px;
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-center;
             gap: 20px;
         }
         
@@ -154,7 +155,7 @@
             padding: 16px;
             display: flex;
             gap: 12px;
-            justify-content: center;
+            justify-center;
             flex-wrap: wrap;
         }
         
@@ -352,6 +353,19 @@
         let directoryHandle = null;
         let isConnected = false;
 
+        // Fetch micro:bit universal hex firmware
+        let microbitFirmware = null;
+
+        async function loadFirmware() {
+            try {
+                const response = await fetch('https://cdn.jsdelivr.net/gh/microbit-foundation/micropython-microbit-v2@v2.1.1/firmware/firmware.hex');
+                microbitFirmware = await response.text();
+                console.log('Firmware loaded successfully');
+            } catch (error) {
+                console.error('Failed to load firmware:', error);
+            }
+        }
+
         // Initialize Blockly
         function initBlockly() {
             // Define blocks
@@ -522,38 +536,40 @@
             }
         }
 
-        // Convert Python to HEX using Microsoft MakeCode API
-        async function pythonToHex(pythonCode) {
+        // Create HEX file with Python code
+        async function createHexFile(pythonCode) {
             const loadingBox = document.getElementById('loadingBox');
             loadingBox.classList.add('active');
 
             try {
-                // Use the Python editor's compilation service
-                const response = await fetch('https://python.microbit.org/v/3/api/compile', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        python: pythonCode,
-                        version: 'microbit-v2'
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to compile');
+                if (!microbitFirmware) {
+                    await loadFirmware();
                 }
 
-                const data = await response.json();
-                
-                if (data.hex) {
-                    return data.hex;
+                if (!microbitFirmware) {
+                    throw new Error('Failed to load firmware');
+                }
+
+                // Use the universal hex library to add Python code
+                if (window.MicrobitUniversalHex) {
+                    const hex = await window.MicrobitUniversalHex.createUniversalHex([{
+                        hex: microbitFirmware,
+                        boardId: window.MicrobitUniversalHex.BoardId.V2
+                    }], {
+                        fileSystems: [{
+                            files: [{
+                                name: 'main.py',
+                                content: pythonCode
+                            }]
+                        }]
+                    });
+                    
+                    return hex;
                 } else {
-                    throw new Error('No HEX data received');
+                    throw new Error('Universal Hex library not loaded');
                 }
             } catch (error) {
-                console.error('Compilation error:', error);
-                // Fallback: return Python code with instructions
+                console.error('HEX creation error:', error);
                 return null;
             } finally {
                 loadingBox.classList.remove('active');
@@ -603,24 +619,17 @@
             }
 
             try {
-                const hexData = await pythonToHex(code);
+                const hexData = await createHexFile(code);
                 
                 if (hexData) {
-                    // Save HEX file
-                    const fileHandle = await directoryHandle.getFileHandle('program.hex', { create: true });
+                    const fileHandle = await directoryHandle.getFileHandle('microbit.hex', { create: true });
                     const writable = await fileHandle.createWritable();
                     await writable.write(hexData);
                     await writable.close();
                     
                     alert('✅ התוכנית הועלתה בהצלחה!');
                 } else {
-                    // Fallback to Python file
-                    const fileHandle = await directoryHandle.getFileHandle('program.py', { create: true });
-                    const writable = await fileHandle.createWritable();
-                    await writable.write(code);
-                    await writable.close();
-                    
-                    alert('⚠️ נשמר כקובץ Python.\nיש להמיר ידנית ב-python.microbit.org');
+                    alert('⚠️ לא הצלחתי ליצור קובץ HEX.\nנסה "הורד HEX" ו גרור אותו ידנית ל-MICROBIT');
                 }
             } catch (error) {
                 console.error('Upload error:', error);
@@ -636,10 +645,9 @@
                 return;
             }
 
-            const hexData = await pythonToHex(code);
+            const hexData = await createHexFile(code);
 
             if (hexData) {
-                // Download HEX
                 const blob = new Blob([hexData], { type: 'text/plain' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -647,17 +655,9 @@
                 a.download = 'microbit-program.hex';
                 a.click();
                 URL.revokeObjectURL(url);
+                alert('✅ קובץ HEX הורד בהצלחה!\nגרור אותו לתיקיית MICROBIT');
             } else {
-                // Fallback to Python
-                const blob = new Blob([code], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'microbit-program.py';
-                a.click();
-                URL.revokeObjectURL(url);
-                
-                alert('⚠️ הורד כקובץ Python.\nיש להמיר ב-python.microbit.org');
+                alert('⚠️ לא הצלחתי ליצור קובץ HEX.\nאנא בדוק את החיבור לאינטרנט ונסה שוב.');
             }
         });
 
@@ -669,7 +669,10 @@
         });
 
         // Initialize when page loads
-        window.addEventListener('load', initBlockly);
+        window.addEventListener('load', () => {
+            initBlockly();
+            loadFirmware();
+        });
     </script>
 </body>
 </html>
