@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>תכנות micro:bit - Blockly</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/10.4.0/blockly.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blockly/10.4.0/python_compressed.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #f3e8ff 100%);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: linear-gradient(90deg, #3b82f6 0%, #9333ea 100%);
+            color: white;
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            color: #dbeafe;
+            font-size: 1.1em;
+        }
+        
+        .status-bar {
+            background: white;
+            border-bottom: 4px solid #c084fc;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 32px;
+            border-radius: 16px;
+            font-size: 1.5em;
+            font-weight: bold;
+            border: 4px solid;
+            transition: all 0.3s;
+        }
+        
+        .status-indicator.connected {
+            background: #dcfce7;
+            color: #15803d;
+            border-color: #22c55e;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
+        }
+        
+        .status-indicator.disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+            border-color: #ef4444;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        }
+        
+        .status-light {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-indicator.connected .status-light {
+            background: #22c55e;
+        }
+        
+        .status-indicator.disconnected .status-light {
+            background: #ef4444;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 32px;
+            border: none;
+            border-radius: 16px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            border: 4px solid #2563eb;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        
+        .btn-success {
+            background: #22c55e;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #16a34a;
+        }
+        
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+        
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        
+        .btn:disabled {
+            background: #d1d5db;
+            color: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .toolbar {
+            background: white;
+            border-bottom: 4px solid #c084fc;
+            padding: 16px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .main-content {
+            flex: 1;
+            display: flex;
+            gap: 16px;
+            padding: 16px;
+            overflow: hidden;
+        }
+        
+        .blockly-area {
+            flex: 1;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            border: 4px solid #c084fc;
+            overflow: hidden;
+        }
+        
+        #blocklyDiv {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .sidebar {
+            width: 400px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            border: 4px solid #93c5fd;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .sidebar h2 {
+            color: #7c3aed;
+            font-size: 1.5em;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .code-preview {
+            flex: 1;
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 16px;
+            overflow: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            direction: ltr;
+            text-align: left;
+            white-space: pre-wrap;
+            margin-bottom: 16px;
+        }
+        
+        .instructions {
+            padding: 16px;
+            background: #dbeafe;
+            border: 2px solid #3b82f6;
+            border-radius: 12px;
+            margin-top: 16px;
+        }
+        
+        .instructions h3 {
+            color: #1e40af;
+            font-size: 1.1em;
+            margin-bottom: 12px;
+        }
+        
+        .instructions ol {
+            color: #1e40af;
+            font-size: 0.9em;
+            padding-right: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        
+        .success-box {
+            padding: 16px;
+            background: #dcfce7;
+            border: 2px solid #22c55e;
+            border-radius: 12px;
+            text-align: center;
+            animation: bounce 1s infinite;
+        }
+        
+        .success-box p {
+            color: #15803d;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .icon {
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎮 תכנות micro:bit 🎮</h1>
+        <p>גרור בלוקים ובנה את התוכנית שלך!</p>
+    </div>
+
+    <div class="status-bar">
+        <div id="statusIndicator" class="status-indicator disconnected">
+            <div class="status-light"></div>
+            <span id="statusText">לא מחובר</span>
+        </div>
+        <button id="connectBtn" class="btn btn-primary">🔌 חבר micro:bit</button>
+    </div>
+
+    <div class="toolbar">
+        <button id="uploadBtn" class="btn btn-success" disabled>▶️ העלה לכרטיס</button>
+        <button id="downloadBtn" class="btn btn-primary">💾 הורד קובץ</button>
+        <button id="clearBtn" class="btn btn-danger">🗑️ נקה הכל</button>
+    </div>
+
+    <div class="main-content">
+        <div class="blockly-area">
+            <div id="blocklyDiv"></div>
+        </div>
+
+        <div class="sidebar">
+            <h2>💻 הקוד שלך</h2>
+            <div id="codePreview" class="code-preview">// בנה תוכנית עם הבלוקים מהצד שמאל!</div>
+            
+            <div id="instructionsBox" class="instructions">
+                <h3>🚀 התחלה מהירה:</h3>
+                <ol>
+                    <li>חבר את ה-micro:bit עם כבל USB למחשב</li>
+                    <li>לחץ על "חבר micro:bit" למעלה</li>
+                    <li>בחר את התיקייה <strong>MICROBIT</strong></li>
+                    <li>הנורה תהפוך לירוקה ✅</li>
+                    <li>בנה תוכנית ולחץ "העלה לכרטיס"!</li>
+                </ol>
+            </div>
+            
+            <div id="successBox" class="success-box" style="display: none;">
+                <p>✨ מוכן להעלאה! ✨</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let workspace;
+        let directoryHandle = null;
+        let isConnected = false;
+
+        // Initialize Blockly
+        function initBlockly() {
+            // Define blocks
+            Blockly.Blocks['microbit_show_icon'] = {
+                init: function() {
+                    this.appendDummyInput()
+                        .appendField("הצג על המסך")
+                        .appendField(new Blockly.FieldDropdown([
+                            ["❤️ לב", "HEART"],
+                            ["😊 פרצוף שמח", "HAPPY"],
+                            ["😢 פרצוף עצוב", "SAD"],
+                            ["⭐ כוכב", "STAR"],
+                            ["🎵 מוזיקה", "MUSIC_QUAVER"]
+                        ]), "ICON");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(230);
+                }
+            };
+
+            Blockly.Blocks['microbit_show_text'] = {
+                init: function() {
+                    this.appendDummyInput()
+                        .appendField("הצג טקסט")
+                        .appendField(new Blockly.FieldTextInput("שלום"), "TEXT");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(230);
+                }
+            };
+
+            Blockly.Blocks['microbit_play_melody'] = {
+                init: function() {
+                    this.appendDummyInput()
+                        .appendField("נגן מנגינה")
+                        .appendField(new Blockly.FieldDropdown([
+                            ["🎵 דודו", "DADADADUM"],
+                            ["🎂 יום הולדת", "BIRTHDAY"],
+                            ["🎪 כניסה", "ENTERTAINER"],
+                            ["🔔 פעמון", "RINGTONE"]
+                        ]), "MELODY");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(290);
+                }
+            };
+
+            Blockly.Blocks['microbit_sleep'] = {
+                init: function() {
+                    this.appendDummyInput()
+                        .appendField("חכה")
+                        .appendField(new Blockly.FieldNumber(1, 0, 10), "TIME")
+                        .appendField("שניות");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(120);
+                }
+            };
+
+            Blockly.Blocks['microbit_clear'] = {
+                init: function() {
+                    this.appendDummyInput()
+                        .appendField("נקה מסך");
+                    this.setPreviousStatement(true, null);
+                    this.setNextStatement(true, null);
+                    this.setColour(230);
+                }
+            };
+
+            Blockly.Blocks['microbit_button_pressed'] = {
+                init: function() {
+                    this.appendDummyInput()
+                        .appendField("כאשר לוחצים על כפתור")
+                        .appendField(new Blockly.FieldDropdown([
+                            ["A", "button_a"],
+                            ["B", "button_b"],
+                            ["A+B", "button_a and button_b"]
+                        ]), "BUTTON");
+                    this.appendStatementInput("DO")
+                        .appendField("עשה");
+                    this.setColour(20);
+                }
+            };
+
+            // Python generators
+            Blockly.Python['microbit_show_icon'] = function(block) {
+                const icon = block.getFieldValue('ICON');
+                return `display.show(Image.${icon})\n`;
+            };
+
+            Blockly.Python['microbit_show_text'] = function(block) {
+                const text = block.getFieldValue('TEXT');
+                return `display.scroll("${text}")\n`;
+            };
+
+            Blockly.Python['microbit_play_melody'] = function(block) {
+                const melody = block.getFieldValue('MELODY');
+                return `music.play(music.${melody})\n`;
+            };
+
+            Blockly.Python['microbit_sleep'] = function(block) {
+                const time = block.getFieldValue('TIME');
+                return `sleep(${time * 1000})\n`;
+            };
+
+            Blockly.Python['microbit_clear'] = function(block) {
+                return `display.clear()\n`;
+            };
+
+            Blockly.Python['microbit_button_pressed'] = function(block) {
+                const button = block.getFieldValue('BUTTON');
+                const statements = Blockly.Python.statementToCode(block, 'DO');
+                return `if ${button}.is_pressed():\n${statements || '    pass\n'}`;
+            };
+
+            // Create workspace
+            workspace = Blockly.inject('blocklyDiv', {
+                toolbox: {
+                    kind: 'flyoutToolbox',
+                    contents: [
+                        { kind: 'block', type: 'microbit_show_icon' },
+                        { kind: 'block', type: 'microbit_show_text' },
+                        { kind: 'block', type: 'microbit_play_melody' },
+                        { kind: 'block', type: 'microbit_sleep' },
+                        { kind: 'block', type: 'microbit_clear' },
+                        { kind: 'block', type: 'microbit_button_pressed' }
+                    ]
+                },
+                zoom: {
+                    controls: true,
+                    wheel: true,
+                    startScale: 1.2
+                },
+                trashcan: true,
+                rtl: true
+            });
+
+            workspace.addChangeListener(updateCode);
+        }
+
+        function updateCode() {
+            Blockly.Python.INFINITE_LOOP_TRAP = null;
+            const code = Blockly.Python.workspaceToCode(workspace);
+            const fullCode = `from microbit import *\nimport music\n\n${code}`;
+            document.getElementById('codePreview').textContent = fullCode || '// בנה תוכנית עם הבלוקים!';
+        }
+
+        function updateStatus(connected) {
+            isConnected = connected;
+            const indicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const successBox = document.getElementById('successBox');
+            const instructionsBox = document.getElementById('instructionsBox');
+
+            if (connected) {
+                indicator.className = 'status-indicator connected';
+                statusText.textContent = '✅ micro:bit מחובר!';
+                uploadBtn.disabled = false;
+                successBox.style.display = 'block';
+                instructionsBox.style.display = 'none';
+            } else {
+                indicator.className = 'status-indicator disconnected';
+                statusText.textContent = '🔌 חבר את ה-micro:bit';
+                uploadBtn.disabled = true;
+                successBox.style.display = 'none';
+                instructionsBox.style.display = 'block';
+            }
+        }
+
+        // Connect to micro:bit
+        document.getElementById('connectBtn').addEventListener('click', async () => {
+            try {
+                if (!('showDirectoryPicker' in window)) {
+                    alert('הדפדפן לא תומך בתכונה הזו.\nהשתמש ב-Chrome או Edge בגרסה עדכנית.');
+                    return;
+                }
+
+                directoryHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+                updateStatus(true);
+                
+                // Check connection periodically
+                setInterval(async () => {
+                    try {
+                        const permission = await directoryHandle.queryPermission({ mode: 'readwrite' });
+                        updateStatus(permission === 'granted');
+                    } catch {
+                        updateStatus(false);
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    console.error('Connection error:', error);
+                    alert('שגיאה בחיבור: ' + error.message);
+                }
+            }
+        });
+
+        // Upload to micro:bit
+        document.getElementById('uploadBtn').addEventListener('click', async () => {
+            if (!directoryHandle || !isConnected) {
+                alert('קודם חבר את ה-micro:bit!');
+                return;
+            }
+
+            const code = document.getElementById('codePreview').textContent;
+            if (!code || code.includes('בנה תוכנית')) {
+                alert('אין קוד להעלות! בנה תוכנית תחילה.');
+                return;
+            }
+
+            try {
+                const fileHandle = await directoryHandle.getFileHandle('program.py', { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(code);
+                await writable.close();
+                
+                alert('✅ התוכנית הועלתה בהצלחה!');
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('שגיאה בהעלאה: ' + error.message);
+            }
+        });
+
+        // Download file
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            const code = document.getElementById('codePreview').textContent;
+            if (!code || code.includes('בנה תוכנית')) {
+                alert('אין קוד להוריד! בנה תוכנית תחילה.');
+                return;
+            }
+
+            const blob = new Blob([code], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'microbit-program.py';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Clear workspace
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            if (confirm('למחוק את כל הבלוקים?')) {
+                workspace.clear();
+            }
+        });
+
+        // Initialize when page loads
+        window.addEventListener('load', initBlockly);
+    </script>
+</body>
+</html>
