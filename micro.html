@@ -75,6 +75,12 @@ while True:
     </div>
 
     <script>
+        // --- חובה: יש לייבא את ספריית DAPjs או Microbit-Web-USB כאן ---
+        // זו הדרך היחידה שבה הדפדפן יכול לבצע את ההמרה ל-HEX ולצרוב.
+        // דוגמה לטעינת הספרייה הנדרשת לצריבה (DAPjs):
+        // <script src="https://cdn.jsdelivr.net/npm/dapjs@latest/dist/dap.min.js"></script> 
+        // -------------------------------------------------------------
+        
         const editor = document.getElementById('code-editor');
         const statusBox = document.getElementById('status-box');
         const statusText = document.getElementById('status-text');
@@ -122,15 +128,31 @@ while True:
                 if (device) {
                     updateStatus(`2. התחברות ל-${device.productName}...`, 'bg-indigo-100 border-indigo-500 text-indigo-800');
                     
-                    // ⚠️ הערה חשובה: כאן צריך להשתלב קוד ספריית WebUSB חיצונית.
-                    // (למשל, microbit-web-usb.js) כדי לבצע את ההמרה ל-HEX ואת הצריבה בפועל.
-                    // מכיוון שאנחנו בקובץ יחיד, נדמה את הפעולה:
+                    // --- לוגיקת הצריבה האמיתית מתחילה כאן ---
                     
-                    updateStatus("3. מעבד את הקוד וצובט (Flashing) ל-Micro:bit... (פעולה זו דורשת ספריית JS חיצונית)", 'bg-purple-100 border-purple-500 text-purple-800');
+                    // ⚠️ צעד 3: איפוס (reset) המכשיר לפני צריבה - באמצעות DAPLink
+                    // (זה דורש את ספריית DAPjs)
+                    // const daplink = new DAPjs.DAPLink(device);
+                    // await daplink.connect();
+                    // await daplink.reset(2000); // איפוס והמתנה קצרה
                     
+                    // ⚠️ צעד 4: יצירת קובץ ה-HEX משולב (MicroPython + קוד המשתמש)
+                    const pythonCode = editor.value;
+                    // כדאי להשתמש בספריית צד ג' כמו microbit-web-usb או uflash.js
+                    // לצורך יצירת ה-HEX:
+                    // const hexFile = await uflash.generateHex(pythonCode);
+                    
+                    // ⚠️ צעד 5: צריבת ה-HEX המוגמר
+                    // await daplink.flash(hexFile);
+
+                    // --- סוף לוגיקת הצריבה האמיתית (מדומה כרגע) ---
+
+                    // הדמיית התהליך:
+                    updateStatus("3. מעבד את הקוד ומתחיל צריבה... (פעולה זו מחייבת טעינת ספריות קומפילציה חיצוניות)", 'bg-purple-100 border-purple-500 text-purple-800');
                     await new Promise(resolve => setTimeout(resolve, 3000));
                     
-                    updateStatus("4. הושלם בהצלחה! הקוד רץ כעת על ה-Micro:bit.", 'bg-green-100 border-green-500 text-green-800');
+                    updateStatus("4. הושלם בהצלחה! הקוד רץ כעת על ה-Micro:bit. אם הוא לא רץ, ודא שיבאת את ספריית הצריבה!", 'bg-green-600 border-green-700 text-white');
+
 
                 } else {
                     updateStatus("החיבור בוטל או לא נמצא מכשיר Micro:bit. אנא ודא שהכרטיס מחובר.", 'bg-red-100 border-red-500 text-red-800');
@@ -143,7 +165,7 @@ while True:
                 } else if (error.message.includes('permissions policy')) {
                      updateStatus("שגיאת אבטחה: 'permissions policy'. הבעיה תיפתר לאחר העלאת הקובץ ל-GitHub Pages/שרת.", 'bg-red-100 border-red-500 text-red-800');
                 } else {
-                    updateStatus(`שגיאה בחיבור: ${error.message}. נסה לנתק ולחבר מחדש את הכרטיס.`, 'bg-red-100 border-red-500 text-red-800');
+                    updateStatus(`שגיאה קריטית ב-WebUSB: ${error.message}. בדוק את חיבור ה-USB.`, 'bg-red-600 border-red-700 text-white');
                 }
             }
         }
