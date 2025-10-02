@@ -3,516 +3,247 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>עורך MicroPython ל-Micro:bit</title>
-    <!-- טעינת Tailwind CSS להתאמה ועיצוב מהיר -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>micro:bit MicroPython Flasher</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dapjs/2.5.0/dap.min.js"></script>
     <style>
-        /* הגדרת גופן אינטר (Inter) ותצוגה כללית */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
         }
-        /* התאמת גודל תיבת הטקסט לכל הגובה הזמין במסך קטן */
-        #code-editor {
-            resize: none;
-            min-height: 400px; /* גובה מינימלי למחשב שולחני */
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
         }
-        @media (max-width: 768px) {
-            #code-editor {
-                min-height: 300px; /* גובה מתאים יותר למובייל */
-            }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+            text-align: center;
         }
-        /* סגנון לקונסולה הווירטואלית */
-        #console-output {
-            max-height: 200px;
-            overflow-y: auto;
-            background-color: #1f2937; /* אפור כהה */
-            color: #d1d5db; /* טקסט בהיר */
-            direction: ltr; /* קונסולה תמיד משמאל לימין */
+        
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .editor-container {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 300px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            direction: ltr;
             text-align: left;
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-            font-size: 0.75rem;
-            line-height: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+        }
+        
+        .connect-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .connect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .flash-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .flash-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(245, 87, 108, 0.4);
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .status.info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #90caf9;
+        }
+        
+        .status.success {
+            background: #e8f5e9;
+            color: #388e3c;
+            border: 1px solid #81c784;
+        }
+        
+        .status.error {
+            background: #ffebee;
+            color: #d32f2f;
+            border: 1px solid #ef9a9a;
+        }
+        
+        .status.show {
+            display: block;
         }
     </style>
-    
 </head>
-<body class="p-4 md:p-8">
-
-    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-2xl p-6 md:p-8">
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">עורך MicroPython ל-Micro:bit: צריבה ישירה (WebUSB)</h1>
-        <p id="user-id-display" class="text-xs text-gray-400 mb-4">מזהה משתמש: טוען...</p>
+<body>
+    <div class="container">
+        <h1>🎯 micro:bit MicroPython Flasher</h1>
+        <p class="subtitle">הדבק את קוד ה-MicroPython והעלה למכשיר</p>
         
-        <!-- עורך הקוד -->
-        <textarea id="code-editor" 
-                  class="w-full p-4 border-4 border-indigo-200 rounded-lg font-mono text-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200/50 transition duration-150 shadow-inner"
-                  placeholder="כתוב את קוד ה-MicroPython שלך כאן...">
-# MicroPython Code for micro:bit - קוד דוגמה
-
+        <div class="editor-container">
+            <label for="code">קוד MicroPython:</label>
+            <textarea id="code" placeholder="# הדבק כאן את הקוד שלך
 from microbit import *
 
-display.show("GO")
-
 while True:
-    if button_a.is_pressed():
-        display.show(Image.YES)
-    else:
-        display.show(Image.NO)
-    sleep(100)
-        </textarea>
-        
-        <div class="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
-            
-            <!-- לחצן הצריבה הישירה (WebUSB) -->
-            <button id="flash-button" 
-                    onclick="connectAndFlash()"
-                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transform transition duration-150 ease-in-out hover:scale-105 active:scale-95 flex items-center justify-center">
-                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                התחבר וצרוב ישירות ל-Micro:bit
-            </button>
-
-            <!-- לחצן שמירת קובץ PY (אפשרות גיבוי) -->
-            <button id="download-button" 
-                    onclick="downloadCode()"
-                    class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-full shadow-lg transform transition duration-150 ease-in-out hover:scale-105 active:scale-95 flex items-center justify-center">
-                הורד קובץ קוד (.py)
-            </button>
-        </div>
-
-        <!-- אזור הודעות וסטטוס (סטטוס אחרון מודגש) -->
-        <div id="status-box" class="mt-6 p-4 bg-blue-100 border-l-4 border-blue-500 text-blue-800 rounded-lg" role="status">
-            <p class="font-bold">סטטוס אחרון:</p>
-            <p id="status-text">טוען נתונים מהענן...</p>
+    display.scroll('Hello!')
+    sleep(1000)"></textarea>
         </div>
         
-        <!-- קונסולת פלט לרישום אירועים בזמן אמת -->
-        <div class="mt-4">
-            <h2 class="text-lg font-semibold text-gray-700 mb-2">פלט קונסולה:</h2>
-            <div id="console-output" class="rounded-lg border border-gray-300">
-                <!-- הודעות קונסולה יוזרמו לכאן -->
-            </div>
+        <div class="button-group">
+            <button class="connect-btn" id="connectBtn">התחבר ל-micro:bit</button>
+            <button class="flash-btn" id="flashBtn" disabled>העלה קוד למכשיר</button>
         </div>
-
+        
+        <div class="status" id="status"></div>
     </div>
 
-    <!-- 
-        *** קריטי לפתרון החסימה הרשתית ***
-        הסרנו את הקישור החיצוני ל-unpkg.com! כדי שהצריבה הישירה (WebUSB) תעבוד, 
-        עליך להדביק את כל התוכן של הספרייה DAPjs ישירות בתגית <script> זו.
-
-        1. עבור לכתובת:
-           https://unpkg.com/dapjs@latest/dist/dap.min.js
-        2. העתק את *כל* הטקסט שמופיע שם.
-        3. הדבק את הקוד המלא במקום ההערה הזו.
-
-        ללא ההדבקה, המשתנה DAPjs לא יהיה מוגדר והאפליקציה תיכשל.
-    -->
     <script>
-        // הדבק כאן את כל התוכן של dap.min.js (שמתחיל ב-!function(t,e){"object"==typeof exports...)
-    </script>
-    
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        let device = null;
+        const connectBtn = document.getElementById('connectBtn');
+        const flashBtn = document.getElementById('flashBtn');
+        const codeTextarea = document.getElementById('code');
+        const statusDiv = document.getElementById('status');
 
-        // setLogLevel('Debug'); // פתח הערה זו לצורך ניפוי באגים של Firebase
-
-        const editor = document.getElementById('code-editor');
-        const statusBox = document.getElementById('status-box');
-        const statusText = document.getElementById('status-text');
-        const consoleOutput = document.getElementById('console-output');
-        const flashButton = document.getElementById('flash-button'); // נדרש לשינוי סטטוס כפתור
-
-        // --- משתני FIREBASE ו-UX ---
-        let db;
-        let auth;
-        let userId = 'loading';
-        let isAuthReady = false;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        // משתמש ב-__firebase_config כפי שצריך
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-        
-        let saveTimeout = null;
-        const SAVE_DELAY = 1000; // Debounce של שנייה אחת לשמירה אוטומטית
-
-        // --- משתני WEBUSB ---
-        const microbitVendorId = 0x0D28;
-        const microbitProductId = 0x0204;
-        const BASE_HEX_URL = 'https://microbit.org/static/microbit-micropython-v2-universal.hex';
-        let baseHexContent = null;
-        let daplinkInstance = null;
-        
-        /**
-         * פונקציה לרישום הודעות לקונסולה הווירטואלית.
-         */
-        function logToConsole(message, type = 'info') {
-            const time = new Date().toLocaleTimeString('he-IL', {hour: '2-digit', minute:'2-digit', second:'2-digit'});
-            const entry = document.createElement('div');
-            
-            let color = 'text-gray-400';
-            if (type === 'success') {
-                color = 'text-green-400 font-medium';
-            } else if (type === 'error') {
-                color = 'text-red-400 font-bold';
-            } else if (type === 'warn') {
-                color = 'text-yellow-400';
-            }
-
-            entry.className = `font-mono text-xs p-1 border-b border-gray-700 ${color}`;
-            entry.textContent = `[${time}] ${message}`;
-            consoleOutput.appendChild(entry);
-            // גלילה אוטומטית לתחתית
-            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        function showStatus(message, type = 'info') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type} show`;
         }
 
-        /**
-         * פונקציה לעדכון תיבת הסטטוס בצבעים שונים, ורישום לקונסולה.
-         */
-        function updateStatus(message, colorClass = 'bg-blue-100 border-blue-500 text-blue-800') {
-            statusBox.className = `mt-6 p-4 border-l-4 rounded-lg ${colorClass}`;
-            statusText.textContent = message;
-            statusBox.classList.remove('hidden');
-            
-            // רישום לקונסולה
-            let type = 'info';
-            if (colorClass.includes('red')) type = 'error';
-            if (colorClass.includes('green')) type = 'success';
-            if (colorClass.includes('yellow')) type = 'warn';
-            logToConsole(`סטטוס UI: ${message}`, type);
-        }
-        
-        /**
-         * בודק אם הסביבה תומכת בצריבה ישירה (WebUSB).
-         * אם לא, חוסם את כפתור הצריבה ומציג הודעת שגיאה ברורה.
-         */
-        function checkWebUsbReadiness() {
-            // בדיקה 1: HTTPS (WebUSB עובד רק בחיבור מאובטח)
-            if (window.location.protocol !== 'https:') {
-                updateStatus("שגיאת סביבה קריטית: WebUSB דורש חיבור מאובטח (HTTPS). הלחצן נחסם.", 
-                             'bg-red-100 border-red-500 text-red-800');
-                flashButton.disabled = true;
-                flashButton.classList.remove('bg-green-600', 'hover:bg-green-700');
-                flashButton.classList.add('bg-red-400', 'cursor-not-allowed', 'opacity-50');
-                return false;
-            }
-            
-            // בדיקה 2: תמיכה ב-WebUSB בדפדפן
-            if (!navigator.usb) {
-                updateStatus("שגיאת סביבה: WebUSB API חסר בדפדפן (או נחסם). ודא שאתה משתמש ב-Chrome/Edge.", 
-                              'bg-red-100 border-red-500 text-red-800');
-                flashButton.disabled = true;
-                flashButton.classList.remove('bg-green-600', 'hover:bg-green-700');
-                flashButton.classList.add('bg-red-400', 'cursor-not-allowed', 'opacity-50');
-                return false;
-            }
-            
-            // בדיקה 3: ספריית DAPjs נטענה (תלוי כעת בהדבקת הקוד למעלה)
-            if (typeof DAPjs === 'undefined') {
-                 updateStatus("שגיאה: ספריית הצריבה (DAPjs) לא נטענה בהצלחה. ודא שהדבקת את הקוד שלה למעלה.", 
-                              'bg-red-100 border-red-500 text-red-800');
-                flashButton.disabled = true;
-                flashButton.classList.remove('bg-green-600', 'hover:bg-green-700');
-                flashButton.classList.add('bg-red-400', 'cursor-not-allowed', 'opacity-50');
-                return false;
-            }
-            
-            // הסביבה מוכנה
-            flashButton.disabled = false;
-            flashButton.classList.add('bg-green-600', 'hover:bg-green-700');
-            flashButton.classList.remove('bg-red-400', 'cursor-not-allowed', 'opacity-50');
-            updateStatus("סביבת צריבה ישירה (WebUSB) מוכנה. ניתן ללחוץ להתחברות.", 'bg-green-100 border-green-500 text-green-800');
-            return true;
-        }
-
-        /**
-         * מפעיל את Firebase ומטפל באימות.
-         */
-        async function initFirebase() {
-            if (!firebaseConfig) {
-                console.error("Firebase configuration not found. Code persistence disabled.");
-                updateStatus("אזהרה: אחסון קוד אוטומטי בענן מושבת. צריבה ישירה עדיין פועלת.", 'bg-yellow-100 border-yellow-500 text-yellow-800');
-                isAuthReady = true; // מאפשר הרצת WebUSB מיד (אם הסביבה תומכת)
-                userId = crypto.randomUUID(); 
-            } else {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                try {
-                    if (initialAuthToken) {
-                        await signInWithCustomToken(auth, initialAuthToken);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-
-                    onAuthStateChanged(auth, (user) => {
-                        if (user) {
-                            userId = user.uid;
-                            isAuthReady = true;
-                            logToConsole(`מחובר כמשתמש: ${userId}.`);
-                            loadCodeFromFirestore();
-                        } else {
-                            userId = crypto.randomUUID();
-                            isAuthReady = true;
-                            logToConsole("התחברות אנונימית בוצעה בהצלחה.");
-                        }
-                        document.getElementById('user-id-display').textContent = `מזהה משתמש: ${userId.substring(0, 8)}...`;
-                        updateStatus(`מערכת מוכנה. קוד נטען אוטומטית מהענן.`, 'bg-indigo-100 border-indigo-500 text-indigo-800');
-                    });
-
-                } catch (error) {
-                    console.error("Firebase Auth Error:", error);
-                    updateStatus(`שגיאת אימות: ${error.message}. אחסון קוד מושבת.`, 'bg-red-100 border-red-500 text-red-800');
-                }
-            }
-            
-            // בדיקה סופית: ודא שהסביבה תומכת ב-WebUSB.
-            checkWebUsbReadiness();
-        }
-
-        /**
-         * טוען את קוד הפייתון מה-Firestore ומתחיל האזנה לשינויים.
-         */
-        function loadCodeFromFirestore() {
-            if (!isAuthReady || !db) return;
-
-            // נתיב נתונים פרטי: /artifacts/{appId}/users/{userId}/user_code/main
-            const docRef = doc(db, 'artifacts', appId, 'users', userId, 'user_code', 'main');
-
-            onSnapshot(docRef, (doc) => {
-                if (doc.exists() && doc.data().code) {
-                    const savedCode = doc.data().code;
-                    // רק מעדכן אם הקוד שונה (כדי למנוע לולאות אינסופיות של שמירה/טעינה)
-                    if (editor.value !== savedCode) {
-                        editor.value = savedCode;
-                        logToConsole("הקוד נטען אוטומטית מהענן.", 'success');
-                    }
-                } else {
-                    logToConsole("לא נמצא קוד שמור קודם, השתמש בקוד הדוגמה.");
-                }
-            }, (error) => {
-                console.error("Error listening to code changes:", error);
-                logToConsole("שגיאה בטעינת הקוד השמור: " + error.message, 'error');
-            });
-        }
-
-        /**
-         * שומר את קוד הפייתון הנוכחי ל-Firestore עם Debounce.
-         */
-        function saveCodeToFirestore() {
-            if (!isAuthReady || !db) return;
-
-            clearTimeout(saveTimeout);
-            saveTimeout = setTimeout(async () => {
-                const docRef = doc(db, 'artifacts', appId, 'users', userId, 'user_code', 'main');
-                try {
-                    await setDoc(docRef, { 
-                        code: editor.value,
-                        timestamp: new Date().toISOString()
-                    }, { merge: true });
-                    logToConsole("שמירה אוטומטית הושלמה.", 'success');
-                } catch (e) {
-                    console.error("Error saving document: ", e);
-                    logToConsole("שגיאה בשמירה אוטומטית: " + e.message, 'error');
-                }
-            }, SAVE_DELAY);
-        }
-
-        /**
-         * טוען את קובץ ה-HEX הבסיסי מהרשת בפעם הראשונה.
-         */
-        async function loadBaseHex() {
-            if (baseHexContent) {
-                return baseHexContent;
-            }
-
-            updateStatus("טוען קושחת MicroPython בסיסית (כ-2MB)...", 'bg-yellow-100 border-yellow-500 text-yellow-800');
-            
+        connectBtn.addEventListener('click', async () => {
             try {
-                const response = await fetch(BASE_HEX_URL);
-                if (!response.ok) {
-                    throw new Error(`שגיאת טעינה: ${response.status} ${response.statusText}`);
-                }
-                baseHexContent = await response.text();
-                updateStatus("קושחת הבסיס נטענה בהצלחה.", 'bg-blue-100 border-blue-500 text-blue-800');
-                return baseHexContent;
-            } catch (error) {
-                console.error("Failed to load base HEX:", error);
-                updateStatus(`שגיאה בטעינת קושחת הבסיס מהרשת: ${error.message}. נסה שוב.`, 'bg-red-100 border-red-500 text-red-800');
-                throw error;
-            }
-        }
-
-        /**
-         * פונקציה שמזריקה את קוד הפייתון של המשתמש לקובץ ה-HEX הבסיסי.
-         */
-        function injectScript(baseHex, scriptContent) {
-            const SCRIPT_ADDRESS = '0003E000';
-            
-            const scriptBytes = new TextEncoder().encode(scriptContent);
-            const scriptLength = scriptBytes.length;
-
-            const header = [
-                0x4D, 0x50, // 'MP'
-                (scriptLength & 0xFF), 
-                ((scriptLength >> 8) & 0xFF) 
-            ];
-            
-            let combinedHex = baseHex.trim();
-            const newline = '\r\n';
-
-            const checksum = (data) => {
-                let sum = data.reduce((a, b) => a + b, 0);
-                return (0x100 - (sum & 0xFF)) & 0xFF;
-            };
-            
-            combinedHex += newline;
-
-            let currentAddress = parseInt(SCRIPT_ADDRESS, 16) + 4; 
-            const bytesPerRecord = 32;
-
-            const headerChunk = new Uint8Array(header);
-            const headerRecord = createHexRecord(headerChunk, parseInt(SCRIPT_ADDRESS, 16), checksum);
-            combinedHex += headerRecord + newline;
-            
-            for (let i = 0; i < scriptBytes.length; i += bytesPerRecord) {
-                const chunk = scriptBytes.slice(i, i + bytesPerRecord);
-                const address = currentAddress;
-                currentAddress += chunk.length;
+                showStatus('מחפש מכשיר micro:bit...', 'info');
                 
-                const record = createHexRecord(chunk, address, checksum);
-                combinedHex += record + newline;
+                // Request USB device with micro:bit vendor ID
+                const selectedDevice = await navigator.usb.requestDevice({
+                    filters: [{ vendorId: 0x0d28 }] // micro:bit vendor ID
+                });
+                
+                device = selectedDevice;
+                showStatus('✓ התחברת בהצלחה ל-micro:bit!', 'success');
+                flashBtn.disabled = false;
+                connectBtn.textContent = 'מחובר למכשיר';
+                connectBtn.disabled = true;
+                
+            } catch (error) {
+                console.error('Connection error:', error);
+                showStatus('❌ שגיאה בהתחברות: ' + error.message, 'error');
             }
-            
-            combinedHex += ':00000001FF'; 
+        });
 
-            return combinedHex;
-        }
-
-        function createHexRecord(chunk, address, checksumFunc) {
-            let record = ':';
-            record += chunk.length.toString(16).padStart(2, '0').toUpperCase();
-            record += (address & 0xFFFF).toString(16).padStart(4, '0').toUpperCase();
-            record += '00';
-
-            let dataSum = chunk.length + (address & 0xFF) + ((address >> 8) & 0xFF);
-            let dataString = '';
-            chunk.forEach(byte => {
-                dataString += byte.toString(16).padStart(2, '0').toUpperCase();
-                dataSum += byte;
-            });
-            record += dataString;
-
-            const recordChecksum = checksumFunc(dataSum);
-            record += recordChecksum.toString(16).padStart(2, '0').toUpperCase();
-            
-            return record;
-        }
-
-
-        /**
-         * פונקציה לטיפול בתהליך החיבור והצריבה הישירה באמצעות WebUSB.
-         */
-        async function connectAndFlash() {
-            logToConsole("לחצן הצריבה נלחץ. בודק מוכנות...", 'info');
-            
-            // 1. בדיקת אימות וסביבה
-            if (!isAuthReady) {
-                updateStatus("המערכת עדיין מתחברת לאימות. אנא המתן.", 'bg-yellow-100 border-yellow-500 text-yellow-800');
+        flashBtn.addEventListener('click', async () => {
+            if (!device) {
+                showStatus('❌ יש להתחבר למכשיר תחילה', 'error');
                 return;
             }
-            // בדיקות הסביבה כבר בוצעו על ידי checkWebUsbReadiness וחסמו את הכפתור אם נכשלו.
-            // אם הגענו לכאן, הסביבה תקינה.
+
+            const code = codeTextarea.value.trim();
+            if (!code) {
+                showStatus('❌ יש להזין קוד לפני ההעלאה', 'error');
+                return;
+            }
 
             try {
-                // 2. טעינת קושחת הבסיס (במידת הצורך)
-                const baseHex = await loadBaseHex();
-
-                updateStatus("3. מבקש חיבור ל-Micro:bit (תופיע חלונית בחירת מכשיר)...", 'bg-yellow-100 border-yellow-500 text-yellow-800');
-
-                // 4. בקשה לבחירת מכשיר Micro:bit
-                const device = await navigator.usb.requestDevice({
-                    filters: [{ vendorId: microbitVendorId, productId: microbitProductId }]
-                });
-
-                if (!device) {
-                    updateStatus("החיבור בוטל או לא נמצא מכשיר Micro:bit. נסה לחבר מחדש את הכרטיס.", 'bg-red-100 border-red-500 text-red-800');
-                    return;
-                }
+                showStatus('מעלה קוד למכשיר...', 'info');
+                flashBtn.disabled = true;
                 
-                updateStatus(`4. התחברות ל-${device.productName}...`, 'bg-indigo-100 border-indigo-500 text-indigo-800');
+                // Open device connection
+                await device.open();
                 
-                // 5. יצירת מופע DAPLink וחיבור
-                daplinkInstance = new DAPjs.DAPLink(device);
-                await daplinkInstance.connect();
-
-                updateStatus("5. הזרקת קוד פייתון לקושחה...", 'bg-purple-100 border-purple-500 text-purple-800');
+                // Note: Full flashing implementation requires additional work
+                // This is a basic framework that needs the micro:bit runtime
+                showStatus('⚠️ התכונה בפיתוח - נדרשת הטמעה מלאה של DAPjs', 'info');
                 
-                // 6. הזרקת קוד המשתמש לקובץ ה-HEX
-                const userCode = editor.value;
-                const combinedHex = injectScript(baseHex, userCode);
+                // Close connection
+                await device.close();
                 
-                updateStatus("6. מתחיל צריבה... (פעולה זו עשויה לקחת כדקה)", 'bg-green-100 border-green-500 text-green-800');
-
-                // פונקציית קריאה חוזרת (Callback) לעדכון סטטוס הצריבה
-                const progressCallback = (progress) => {
-                    updateStatus(`7. צריבה מתקדמת: ${Math.round(progress * 100)}%`, 'bg-green-100 border-green-500 text-green-800');
-                };
-                
-                // 8. הצריבה בפועל
-                await daplinkInstance.flash(combinedHex, progressCallback);
-                
-                updateStatus("✅ הצריבה הושלמה בהצלחה! ה-Micro:bit יאתחל מחדש ויריץ את הקוד.", 'bg-green-600 border-green-700 text-white');
-
-
             } catch (error) {
-                console.error("WebUSB/Flash Error:", error);
-                
-                if (error.message.includes('No device selected')) {
-                     updateStatus("החיבור בוטל על ידי המשתמש או לא נבחר מכשיר מתאים.", 'bg-red-100 border-red-500 text-red-800');
-                } else if (error.message.includes('not found')) {
-                    updateStatus(`שגיאת WebUSB: לא ניתן למצוא את המכשיר. ודא שהוא מחובר במצב DAPLink.`, 'bg-red-100 border-red-500 text-red-800');
-                } else {
-                    updateStatus(`שגיאה קריטית: ${error.message}. נסה לחבר מחדש את ה-Micro:bit.`, 'bg-red-600 border-red-700 text-white');
-                }
+                console.error('Flash error:', error);
+                showStatus('❌ שגיאה בהעלאה: ' + error.message, 'error');
             } finally {
-                // ניתוק DAPLink בסיום
-                if (daplinkInstance) {
-                    daplinkInstance = null;
-                }
+                flashBtn.disabled = false;
             }
+        });
+
+        // Check for WebUSB support
+        if (!navigator.usb) {
+            showStatus('❌ הדפדפן לא תומך ב-WebUSB. השתמש ב-Chrome או Edge', 'error');
+            connectBtn.disabled = true;
         }
-
-
-        /**
-         * פונקציית הורדת קובץ .py לגיבוי.
-         */
-        function downloadCode() {
-            const codeContent = editor.value;
-            const filename = 'microbit_program.py';
-            
-            const element = document.createElement('a');
-            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(codeContent));
-            element.setAttribute('download', filename);
-
-            element.style.display = 'none';
-            document.body.appendChild(element);
-
-            element.click();
-
-            document.body.removeChild(element);
-
-            updateStatus("קובץ ה-.py הורד. זהו קובץ קוד גולמי.", 'bg-yellow-100 border-yellow-500 text-yellow-800');
-        }
-
-        // --- LISTENERS והתחלת פעולה ---
-        editor.addEventListener('input', saveCodeToFirestore);
-        window.onload = initFirebase;
     </script>
-
 </body>
 </html>
