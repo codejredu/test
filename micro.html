@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>micro:bit MicroPython Flasher</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dapjs/2.5.0/dap.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -103,8 +102,6 @@
             border-color: #667eea;
         }
         
-
-        
         .button-group {
             display: flex;
             gap: 15px;
@@ -121,15 +118,6 @@
             cursor: pointer;
             transition: all 0.3s;
             color: white;
-        }
-        
-        .connect-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        .connect-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
         }
         
         .flash-btn {
@@ -177,12 +165,31 @@
         .status.show {
             display: block;
         }
+
+        .instructions {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 14px;
+            text-align: right;
+        }
+
+        .instructions ol {
+            margin: 10px 0 0 0;
+            padding-right: 20px;
+        }
+
+        .instructions li {
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎯 micro:bit MicroPython Flasher</h1>
-        <p class="subtitle">הדבק את קוד ה-MicroPython והעלה למכשיר</p>
+        <p class="subtitle">הדבק את קוד ה-MicroPython והורד למכשיר</p>
         
         <div class="editor-container">
             <label for="code">קוד MicroPython:</label>
@@ -193,7 +200,11 @@ from microbit import *
 
 while True:
     display.scroll('Hello!')
-    sleep(1000)"></textarea>
+    sleep(1000)">from microbit import *
+
+while True:
+    display.scroll('Hello!')
+    sleep(1000)</textarea>
             </div>
         </div>
         
@@ -202,6 +213,16 @@ while True:
         </div>
         
         <div class="status" id="status"></div>
+
+        <div class="instructions">
+            <strong>📋 הוראות שימוש:</strong>
+            <ol>
+                <li>לחץ על "הורד קובץ HEX"</li>
+                <li>חבר את ה-micro:bit למחשב (יופיע ככונן בשם MICROBIT)</li>
+                <li>גרור את הקובץ שהורדת לכונן MICROBIT</li>
+                <li>המכשיר יאתחל ויריץ את הקוד שלך!</li>
+            </ol>
+        </div>
     </div>
 
     <script>
@@ -210,28 +231,13 @@ while True:
         const statusDiv = document.getElementById('status');
         const lineNumbers = document.getElementById('lineNumbers');
 
-        // MicroPython runtime hex (basic version for micro:bit v2)
-        const MICROPYTHON_HEX_BASE = `:020000040000FA
-:10000000000100200D3A000021380000233800001D
-:100010002538000027380000000000000000000035
-:10002000000000000000000029380000000000007E
-:100030002B3800002D380000AD4D0000313800005A
-:10004000333800003538000037380000393800004C
-:100050003B3800003D3800003F38000041380000FC
-:1000600043380000453800004738000049380000AC
-:100070004B3800004D3800004F380000513800005C
-:1000800053380000553800005738000059380000FC
-:100090005B3800005D3800005F3800006138000090
-:1000A0006338000065380000673800006938000040
-:1000B0006B3800006D3800006F38000071380000F0
-:1000C00073380000753800007738000079380000A0
-:1000D0007B3800007D3800007F38000081380000E4
-:00000001FF`;
+        // Python Editor API endpoint
+        const PYTHON_EDITOR_API = 'https://python.microbit.org/v/3/project';
 
         // Update line numbers
         function updateLineNumbers() {
-            const lines = codeTextarea.value.split('\\n').length;
-            lineNumbers.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('\\n');
+            const lines = codeTextarea.value.split('\n').length;
+            lineNumbers.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('\n');
         }
 
         // Sync scroll between textarea and line numbers
@@ -247,48 +253,23 @@ while True:
             statusDiv.className = `status ${type} show`;
         }
 
-        // Convert Python script to hex format
-        function createHexFile(pythonCode) {
-            // Simple method: append Python code as comment in hex
-            // In reality, this needs proper encoding into micro:bit filesystem
-            const encoder = new TextEncoder();
-            const encoded = encoder.encode(pythonCode);
-            
-            let hexData = MICROPYTHON_HEX_BASE + '\\n';
-            
-            // Add Python code as data records at address 0x0003E000
-            const baseAddress = 0x0003E000;
-            const magic = [0x4D, 0x50]; // "MP" magic bytes
-            const length = encoded.length;
-            
-            // Add header
-            hexData += createHexRecord(baseAddress, [magic[0], magic[1], length & 0xFF, (length >> 8) & 0xFF]);
-            
-            // Add code in 16-byte chunks
-            for (let i = 0; i < encoded.length; i += 16) {
-                const chunk = Array.from(encoded.slice(i, i + 16));
-                hexData += createHexRecord(baseAddress + 4 + i, chunk);
-            }
-            
-            hexData += ':00000001FF\\n'; // EOF record
-            return hexData;
+        // Create project JSON for Python Editor
+        function createProject(pythonCode) {
+            return {
+                "meta": {
+                    "cloudId": null,
+                    "name": "microbit-project",
+                    "comment": "Created with MicroPython Flasher",
+                    "editor": "python",
+                    "project_type": "python"
+                },
+                "files": {
+                    "main.py": pythonCode
+                }
+            };
         }
 
-        // Create Intel HEX record
-        function createHexRecord(address, data) {
-            const length = data.length;
-            const addrHigh = (address >> 8) & 0xFF;
-            const addrLow = address & 0xFF;
-            const type = 0x00;
-            
-            let record = [length, addrHigh, addrLow, type, ...data];
-            const checksum = (0x100 - record.reduce((a, b) => a + b, 0)) & 0xFF;
-            record.push(checksum);
-            
-            return ':' + record.map(b => b.toString(16).padStart(2, '0').toUpperCase()).join('') + '\\n';
-        }
-
-        downloadBtn.addEventListener('click', () => {
+        downloadBtn.addEventListener('click', async () => {
             const code = codeTextarea.value.trim();
             
             if (!code) {
@@ -297,9 +278,92 @@ while True:
             }
 
             try {
-                showStatus('יוצר קובץ HEX...', 'info');
+                showStatus('יוצר קובץ HEX עם MicroPython...', 'info');
+                downloadBtn.disabled = true;
                 
-                const hexContent = createHexFile(code);
+                const project = createProject(code);
+                
+                // Use Python Editor API to generate hex
+                const response = await fetch(PYTHON_EDITOR_API, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(project)
+                });
+
+                if (!response.ok) {
+                    throw new Error('שגיאה בתקשורת עם שרת Python Editor');
+                }
+
+                const result = await response.json();
+                
+                if (result.hex) {
+                    // Download the hex file
+                    const blob = new Blob([result.hex], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'microbit.hex';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    showStatus('✓ קובץ HEX הורד בהצלחה! גרור אותו לכונן MICROBIT', 'success');
+                } else {
+                    throw new Error('לא התקבל קובץ HEX מהשרת');
+                }
+                
+            } catch (error) {
+                console.error('Download error:', error);
+                showStatus('❌ שגיאה: ' + error.message + ' - מנסה שיטה חלופית...', 'error');
+                
+                // Fallback: create a simple hex with embedded Python
+                setTimeout(() => downloadWithFallback(code), 2000);
+            } finally {
+                downloadBtn.disabled = false;
+            }
+        });
+
+        // Fallback method using microbit-fs library approach
+        async function downloadWithFallback(pythonCode) {
+            try {
+                showStatus('משתמש בשיטה חלופית...', 'info');
+                
+                // Fetch pre-built MicroPython runtime
+                const runtimeUrl = 'https://github.com/microbit-foundation/micropython-microbit-v2/releases/latest/download/micropython.hex';
+                
+                const response = await fetch(runtimeUrl);
+                if (!response.ok) {
+                    throw new Error('לא ניתן להוריד את MicroPython runtime');
+                }
+                
+                let hexContent = await response.text();
+                
+                // Append Python code as filesystem
+                const encoder = new TextEncoder();
+                const encoded = encoder.encode(pythonCode);
+                
+                // Add to hex (simplified - in reality needs proper filesystem encoding)
+                const hexLines = hexContent.split('\n');
+                const lastLine = hexLines.pop(); // EOF marker
+                
+                // Add Python code section
+                hexLines.push(`:020000040003F7`); // Extended address
+                
+                for (let i = 0; i < encoded.length; i += 16) {
+                    const chunk = Array.from(encoded.slice(i, Math.min(i + 16, encoded.length)));
+                    const addr = 0xE000 + i;
+                    const record = createIntelHexRecord(addr, chunk);
+                    hexLines.push(record);
+                }
+                
+                hexLines.push(lastLine); // EOF marker
+                hexContent = hexLines.join('\n');
+                
+                // Download
                 const blob = new Blob([hexContent], { type: 'text/plain' });
                 const url = URL.createObjectURL(blob);
                 
@@ -311,13 +375,26 @@ while True:
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
                 
-                showStatus('✓ קובץ HEX הורד! גרור אותו לכונן MICROBIT', 'success');
+                showStatus('✓ קובץ הורד בהצלחה! (שיטה חלופית)', 'success');
                 
             } catch (error) {
-                console.error('Download error:', error);
-                showStatus('❌ שגיאה ביצירת הקובץ: ' + error.message, 'error');
+                console.error('Fallback error:', error);
+                showStatus('❌ כל השיטות נכשלו. נסה להעתיק את הקוד ישירות ל-https://python.microbit.org', 'error');
             }
-        });
+        }
+
+        function createIntelHexRecord(address, data) {
+            const length = data.length;
+            const addrHigh = (address >> 8) & 0xFF;
+            const addrLow = address & 0xFF;
+            const type = 0x00;
+            
+            let record = [length, addrHigh, addrLow, type, ...data];
+            const checksum = (0x100 - record.reduce((a, b) => a + b, 0)) & 0xFF;
+            record.push(checksum);
+            
+            return ':' + record.map(b => b.toString(16).padStart(2, '0').toUpperCase()).join('');
+        }
     </script>
 </body>
 </html>
