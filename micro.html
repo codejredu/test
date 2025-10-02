@@ -176,7 +176,8 @@ while True:
         async function initFirebase() {
             if (!firebaseConfig) {
                 console.error("Firebase configuration not found. Code persistence disabled.");
-                updateStatus("אחסון קוד אינו זמין (חסר Firebase Config).", 'bg-red-100 border-red-500 text-red-800');
+                // **השינוי כאן: מעבר מסטטוס 'אדום' לסטטוס 'אזהרה' כדי להדגיש שהצריבה עדיין עובדת**
+                updateStatus("אזהרה: אחסון קוד אוטומטי בענן מושבת. צריבה ישירה עדיין פועלת.", 'bg-yellow-100 border-yellow-500 text-yellow-800');
                 isAuthReady = false;
                 userId = crypto.randomUUID(); // Use random ID if no auth
                 return;
