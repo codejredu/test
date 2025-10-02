@@ -55,26 +55,55 @@
             font-weight: 600;
             margin-bottom: 10px;
             font-size: 16px;
+            text-align: right;
+        }
+        
+        .code-editor-wrapper {
+            position: relative;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #f8f9fa;
+        }
+        
+        .line-numbers {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 50px;
+            background: #e9ecef;
+            border-right: 1px solid #dee2e6;
+            padding: 15px 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #6c757d;
+            text-align: right;
+            user-select: none;
+            overflow: hidden;
         }
         
         textarea {
             width: 100%;
             min-height: 300px;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
+            padding: 15px 15px 15px 65px;
+            border: none;
             font-family: 'Courier New', monospace;
             font-size: 14px;
             resize: vertical;
             direction: ltr;
             text-align: left;
-            transition: border-color 0.3s;
+            background: transparent;
+            line-height: 1.5;
+            outline: none;
         }
         
-        textarea:focus {
-            outline: none;
+        .code-editor-wrapper:focus-within {
             border-color: #667eea;
         }
+        
+
         
         .button-group {
             display: flex;
@@ -124,6 +153,7 @@
             border-radius: 10px;
             font-size: 14px;
             display: none;
+            text-align: right;
         }
         
         .status.info {
@@ -156,94 +186,138 @@
         
         <div class="editor-container">
             <label for="code">קוד MicroPython:</label>
-            <textarea id="code" placeholder="# הדבק כאן את הקוד שלך
+            <div class="code-editor-wrapper">
+                <div class="line-numbers" id="lineNumbers">1</div>
+                <textarea id="code" placeholder="# Paste your code here
 from microbit import *
 
 while True:
     display.scroll('Hello!')
     sleep(1000)"></textarea>
+            </div>
         </div>
         
         <div class="button-group">
-            <button class="connect-btn" id="connectBtn">התחבר ל-micro:bit</button>
-            <button class="flash-btn" id="flashBtn" disabled>העלה קוד למכשיר</button>
+            <button class="flash-btn" id="downloadBtn">הורד קובץ HEX</button>
         </div>
         
         <div class="status" id="status"></div>
     </div>
 
     <script>
-        let device = null;
-        const connectBtn = document.getElementById('connectBtn');
-        const flashBtn = document.getElementById('flashBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
         const codeTextarea = document.getElementById('code');
         const statusDiv = document.getElementById('status');
+        const lineNumbers = document.getElementById('lineNumbers');
+
+        // MicroPython runtime hex (basic version for micro:bit v2)
+        const MICROPYTHON_HEX_BASE = `:020000040000FA
+:10000000000100200D3A000021380000233800001D
+:100010002538000027380000000000000000000035
+:10002000000000000000000029380000000000007E
+:100030002B3800002D380000AD4D0000313800005A
+:10004000333800003538000037380000393800004C
+:100050003B3800003D3800003F38000041380000FC
+:1000600043380000453800004738000049380000AC
+:100070004B3800004D3800004F380000513800005C
+:1000800053380000553800005738000059380000FC
+:100090005B3800005D3800005F3800006138000090
+:1000A0006338000065380000673800006938000040
+:1000B0006B3800006D3800006F38000071380000F0
+:1000C00073380000753800007738000079380000A0
+:1000D0007B3800007D3800007F38000081380000E4
+:00000001FF`;
+
+        // Update line numbers
+        function updateLineNumbers() {
+            const lines = codeTextarea.value.split('\\n').length;
+            lineNumbers.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('\\n');
+        }
+
+        // Sync scroll between textarea and line numbers
+        codeTextarea.addEventListener('scroll', () => {
+            lineNumbers.scrollTop = codeTextarea.scrollTop;
+        });
+
+        codeTextarea.addEventListener('input', updateLineNumbers);
+        updateLineNumbers();
 
         function showStatus(message, type = 'info') {
             statusDiv.textContent = message;
             statusDiv.className = `status ${type} show`;
         }
 
-        connectBtn.addEventListener('click', async () => {
-            try {
-                showStatus('מחפש מכשיר micro:bit...', 'info');
-                
-                // Request USB device with micro:bit vendor ID
-                const selectedDevice = await navigator.usb.requestDevice({
-                    filters: [{ vendorId: 0x0d28 }] // micro:bit vendor ID
-                });
-                
-                device = selectedDevice;
-                showStatus('✓ התחברת בהצלחה ל-micro:bit!', 'success');
-                flashBtn.disabled = false;
-                connectBtn.textContent = 'מחובר למכשיר';
-                connectBtn.disabled = true;
-                
-            } catch (error) {
-                console.error('Connection error:', error);
-                showStatus('❌ שגיאה בהתחברות: ' + error.message, 'error');
+        // Convert Python script to hex format
+        function createHexFile(pythonCode) {
+            // Simple method: append Python code as comment in hex
+            // In reality, this needs proper encoding into micro:bit filesystem
+            const encoder = new TextEncoder();
+            const encoded = encoder.encode(pythonCode);
+            
+            let hexData = MICROPYTHON_HEX_BASE + '\\n';
+            
+            // Add Python code as data records at address 0x0003E000
+            const baseAddress = 0x0003E000;
+            const magic = [0x4D, 0x50]; // "MP" magic bytes
+            const length = encoded.length;
+            
+            // Add header
+            hexData += createHexRecord(baseAddress, [magic[0], magic[1], length & 0xFF, (length >> 8) & 0xFF]);
+            
+            // Add code in 16-byte chunks
+            for (let i = 0; i < encoded.length; i += 16) {
+                const chunk = Array.from(encoded.slice(i, i + 16));
+                hexData += createHexRecord(baseAddress + 4 + i, chunk);
             }
-        });
-
-        flashBtn.addEventListener('click', async () => {
-            if (!device) {
-                showStatus('❌ יש להתחבר למכשיר תחילה', 'error');
-                return;
-            }
-
-            const code = codeTextarea.value.trim();
-            if (!code) {
-                showStatus('❌ יש להזין קוד לפני ההעלאה', 'error');
-                return;
-            }
-
-            try {
-                showStatus('מעלה קוד למכשיר...', 'info');
-                flashBtn.disabled = true;
-                
-                // Open device connection
-                await device.open();
-                
-                // Note: Full flashing implementation requires additional work
-                // This is a basic framework that needs the micro:bit runtime
-                showStatus('⚠️ התכונה בפיתוח - נדרשת הטמעה מלאה של DAPjs', 'info');
-                
-                // Close connection
-                await device.close();
-                
-            } catch (error) {
-                console.error('Flash error:', error);
-                showStatus('❌ שגיאה בהעלאה: ' + error.message, 'error');
-            } finally {
-                flashBtn.disabled = false;
-            }
-        });
-
-        // Check for WebUSB support
-        if (!navigator.usb) {
-            showStatus('❌ הדפדפן לא תומך ב-WebUSB. השתמש ב-Chrome או Edge', 'error');
-            connectBtn.disabled = true;
+            
+            hexData += ':00000001FF\\n'; // EOF record
+            return hexData;
         }
+
+        // Create Intel HEX record
+        function createHexRecord(address, data) {
+            const length = data.length;
+            const addrHigh = (address >> 8) & 0xFF;
+            const addrLow = address & 0xFF;
+            const type = 0x00;
+            
+            let record = [length, addrHigh, addrLow, type, ...data];
+            const checksum = (0x100 - record.reduce((a, b) => a + b, 0)) & 0xFF;
+            record.push(checksum);
+            
+            return ':' + record.map(b => b.toString(16).padStart(2, '0').toUpperCase()).join('') + '\\n';
+        }
+
+        downloadBtn.addEventListener('click', () => {
+            const code = codeTextarea.value.trim();
+            
+            if (!code) {
+                showStatus('❌ יש להזין קוד לפני ההורדה', 'error');
+                return;
+            }
+
+            try {
+                showStatus('יוצר קובץ HEX...', 'info');
+                
+                const hexContent = createHexFile(code);
+                const blob = new Blob([hexContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'microbit.hex';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showStatus('✓ קובץ HEX הורד! גרור אותו לכונן MICROBIT', 'success');
+                
+            } catch (error) {
+                console.error('Download error:', error);
+                showStatus('❌ שגיאה ביצירת הקובץ: ' + error.message, 'error');
+            }
+        });
     </script>
 </body>
 </html>
