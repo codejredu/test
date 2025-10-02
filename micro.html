@@ -23,6 +23,12 @@
             }
         }
     </style>
+    
+    <!-- זהירות: יש לשלב את ספריית הצריבה (כמו DAPjs) כאן כאשר מפתחים באופן עצמאי. -->
+    <!-- דוגמה לייבוא: -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/dapjs@latest/dist/dap.min.js"></script> -->
+    <!-- הערה זו מוסתרת כדי לא להופיע כטקסט על המסך. -->
+
 </head>
 <body class="p-4 md:p-8">
 
@@ -75,12 +81,6 @@ while True:
     </div>
 
     <script>
-        // --- חובה: יש לייבא את ספריית DAPjs או Microbit-Web-USB כאן ---
-        // זו הדרך היחידה שבה הדפדפן יכול לבצע את ההמרה ל-HEX ולצרוב.
-        // דוגמה לטעינת הספרייה הנדרשת לצריבה (DAPjs):
-        // <script src="https://cdn.jsdelivr.net/npm/dapjs@latest/dist/dap.min.js"></script> 
-        // -------------------------------------------------------------
-        
         const editor = document.getElementById('code-editor');
         const statusBox = document.getElementById('status-box');
         const statusText = document.getElementById('status-text');
