@@ -176,10 +176,10 @@ while True:
         async function initFirebase() {
             if (!firebaseConfig) {
                 console.error("Firebase configuration not found. Code persistence disabled.");
-                // **השינוי כאן: מעבר מסטטוס 'אדום' לסטטוס 'אזהרה' כדי להדגיש שהצריבה עדיין עובדת**
+                // **תיקון הבאג: הגדרת isAuthReady ל-true כאשר Firebase מושבת, כדי לאפשר WebUSB**
                 updateStatus("אזהרה: אחסון קוד אוטומטי בענן מושבת. צריבה ישירה עדיין פועלת.", 'bg-yellow-100 border-yellow-500 text-yellow-800');
-                isAuthReady = false;
-                userId = crypto.randomUUID(); // Use random ID if no auth
+                isAuthReady = true; // מאפשר הרצת WebUSB מיד
+                userId = crypto.randomUUID(); // שימוש ב-ID רנדומלי במקום ID של Firebase
                 return;
             }
 
@@ -372,8 +372,9 @@ while True:
          * פונקציה לטיפול בתהליך החיבור והצריבה הישירה באמצעות WebUSB.
          */
         async function connectAndFlash() {
+            // ה-check הזה עדיין חשוב כאשר Firebase פעיל, כדי לוודא שה-onAuthStateChanged הסתיים
             if (!isAuthReady) {
-                updateStatus("המערכת עדיין מתחברת ל-Firebase. אנא המתן מספר שניות.", 'bg-yellow-100 border-yellow-500 text-yellow-800');
+                updateStatus("המערכת עדיין מתחברת לאימות (Firebase). אנא המתן מספר שניות.", 'bg-yellow-100 border-yellow-500 text-yellow-800');
                 return;
             }
 
