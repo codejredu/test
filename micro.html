@@ -96,8 +96,8 @@ while True:
 
     </div>
 
-    <!-- ייבוא ספריית הצריבה DAPjs - חיוני לשימוש ב-WebUSB. הועבר לכאן כדי למנוע בעיות טעינה בסביבות מסוימות. -->
-    <script src="https://cdn.jsdelivr.net/npm/dapjs@latest/dist/dap.min.js"></script>
+    <!-- ייבוא ספריית הצריבה DAPjs - הכתובת שונתה ל-unpkg כדי לנסות לעקוף חסימת רשת אפשרית. -->
+    <script src="https://unpkg.com/dapjs@latest/dist/dap.min.js"></script>
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -119,7 +119,7 @@ while True:
         let userId = 'loading';
         let isAuthReady = false;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        // תיקון: שימוש ב-__firebase_config במקום __firebaseConfig כדי לתקן את שגיאת ה-ReferenceError
+        // משתמש ב-__firebase_config כפי שצריך
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         
