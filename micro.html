@@ -96,8 +96,21 @@ while True:
 
     </div>
 
-    <!-- ייבוא ספריית הצריבה DAPjs - הכתובת שונתה ל-unpkg כדי לנסות לעקוף חסימת רשת אפשרית. -->
-    <script src="https://unpkg.com/dapjs@latest/dist/dap.min.js"></script>
+    <!-- 
+        *** קריטי לפתרון החסימה הרשתית ***
+        הסרנו את הקישור החיצוני ל-unpkg.com! כדי שהצריבה הישירה (WebUSB) תעבוד, 
+        עליך להדביק את כל התוכן של הספרייה DAPjs ישירות בתגית <script> זו.
+
+        1. עבור לכתובת:
+           https://unpkg.com/dapjs@latest/dist/dap.min.js
+        2. העתק את *כל* הטקסט שמופיע שם.
+        3. הדבק את הקוד המלא במקום ההערה הזו.
+
+        ללא ההדבקה, המשתנה DAPjs לא יהיה מוגדר והאפליקציה תיכשל.
+    -->
+    <script>
+        // הדבק כאן את כל התוכן של dap.min.js (שמתחיל ב-!function(t,e){"object"==typeof exports...)
+    </script>
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -197,9 +210,9 @@ while True:
                 return false;
             }
             
-            // בדיקה 3: ספריית DAPjs נטענה
+            // בדיקה 3: ספריית DAPjs נטענה (תלוי כעת בהדבקת הקוד למעלה)
             if (typeof DAPjs === 'undefined') {
-                 updateStatus("שגיאה: ספריית הצריבה (DAPjs) לא נטענה בהצלחה. נסה לרענן את הדף.", 
+                 updateStatus("שגיאה: ספריית הצריבה (DAPjs) לא נטענה בהצלחה. ודא שהדבקת את הקוד שלה למעלה.", 
                               'bg-red-100 border-red-500 text-red-800');
                 flashButton.disabled = true;
                 flashButton.classList.remove('bg-green-600', 'hover:bg-green-700');
