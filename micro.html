@@ -111,6 +111,7 @@ while True:
         const statusBox = document.getElementById('status-box');
         const statusText = document.getElementById('status-text');
         const consoleOutput = document.getElementById('console-output');
+        const flashButton = document.getElementById('flash-button'); // נדרש לשינוי סטטוס כפתור
 
         // --- משתני FIREBASE ו-UX ---
         let db;
@@ -171,48 +172,78 @@ while True:
         }
         
         /**
+         * בודק אם הסביבה תומכת בצריבה ישירה (WebUSB).
+         * אם לא, חוסם את כפתור הצריבה ומציג הודעת שגיאה ברורה.
+         */
+        function checkWebUsbReadiness() {
+            // בדיקת HTTPS: WebUSB עובד רק בחיבור מאובטח
+            if (window.location.protocol !== 'https:') {
+                updateStatus("שגיאת סביבה: WebUSB דורש חיבור מאובטח (HTTPS). הלחצן נחסם.", 
+                             'bg-red-100 border-red-500 text-red-800');
+                flashButton.disabled = true;
+                flashButton.classList.remove('bg-green-600', 'hover:bg-green-700');
+                flashButton.classList.add('bg-red-400', 'cursor-not-allowed', 'opacity-50');
+                return false;
+            }
+            
+            // בדיקת תמיכה ב-WebUSB בדפדפן וטעינת DAPjs
+            if (!navigator.usb || typeof DAPjs === 'undefined') {
+                updateStatus("שגיאת סביבה: הדפדפן אינו תומך ב-WebUSB. הלחצן נחסם.", 
+                              'bg-red-100 border-red-500 text-red-800');
+                flashButton.disabled = true;
+                flashButton.classList.remove('bg-green-600', 'hover:bg-green-700');
+                flashButton.classList.add('bg-red-400', 'cursor-not-allowed', 'opacity-50');
+                return false;
+            }
+            
+            // הסביבה מוכנה
+            return true;
+        }
+
+        /**
          * מפעיל את Firebase ומטפל באימות.
          */
         async function initFirebase() {
             if (!firebaseConfig) {
                 console.error("Firebase configuration not found. Code persistence disabled.");
-                // **תיקון הבאג: הגדרת isAuthReady ל-true כאשר Firebase מושבת, כדי לאפשר WebUSB**
                 updateStatus("אזהרה: אחסון קוד אוטומטי בענן מושבת. צריבה ישירה עדיין פועלת.", 'bg-yellow-100 border-yellow-500 text-yellow-800');
-                isAuthReady = true; // מאפשר הרצת WebUSB מיד
-                userId = crypto.randomUUID(); // שימוש ב-ID רנדומלי במקום ID של Firebase
-                return;
-            }
+                isAuthReady = true; // מאפשר הרצת WebUSB מיד (אם הסביבה תומכת)
+                userId = crypto.randomUUID(); 
+            } else {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
 
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-
-            try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        isAuthReady = true;
-                        logToConsole(`מחובר כמשתמש: ${userId}.`);
-                        loadCodeFromFirestore();
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
                     } else {
-                        userId = crypto.randomUUID();
-                        isAuthReady = true;
-                        logToConsole("התחברות אנונימית בוצעה בהצלחה.");
+                        await signInAnonymously(auth);
                     }
-                    document.getElementById('user-id-display').textContent = `מזהה משתמש: ${userId.substring(0, 8)}...`;
-                    updateStatus(`מערכת מוכנה. קוד נטען אוטומטית מהענן.`, 'bg-indigo-100 border-indigo-500 text-indigo-800');
-                });
 
-            } catch (error) {
-                console.error("Firebase Auth Error:", error);
-                updateStatus(`שגיאת אימות: ${error.message}. אחסון קוד מושבת.`, 'bg-red-100 border-red-500 text-red-800');
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            userId = user.uid;
+                            isAuthReady = true;
+                            logToConsole(`מחובר כמשתמש: ${userId}.`);
+                            loadCodeFromFirestore();
+                        } else {
+                            userId = crypto.randomUUID();
+                            isAuthReady = true;
+                            logToConsole("התחברות אנונימית בוצעה בהצלחה.");
+                        }
+                        document.getElementById('user-id-display').textContent = `מזהה משתמש: ${userId.substring(0, 8)}...`;
+                        updateStatus(`מערכת מוכנה. קוד נטען אוטומטית מהענן.`, 'bg-indigo-100 border-indigo-500 text-indigo-800');
+                    });
+
+                } catch (error) {
+                    console.error("Firebase Auth Error:", error);
+                    updateStatus(`שגיאת אימות: ${error.message}. אחסון קוד מושבת.`, 'bg-red-100 border-red-500 text-red-800');
+                }
             }
+            
+            // בדיקה סופית: ודא שהסביבה תומכת ב-WebUSB.
+            checkWebUsbReadiness();
         }
 
         /**
@@ -290,16 +321,13 @@ while True:
 
         /**
          * פונקציה שמזריקה את קוד הפייתון של המשתמש לקובץ ה-HEX הבסיסי.
-         * הפונקציה משתמשת בשיטת הזרקת ה-Intel HEX (הוספת רשומות חדשות).
          */
         function injectScript(baseHex, scriptContent) {
             const SCRIPT_ADDRESS = '0003E000';
             
-            // 1. קבלת קוד הפייתון בפורמט HEX/ASCII.
             const scriptBytes = new TextEncoder().encode(scriptContent);
             const scriptLength = scriptBytes.length;
 
-            // 2. יצירת ה-Header: 2 בתים 'MP' + 2 בתים אורך (Little Endian).
             const header = [
                 0x4D, 0x50, // 'MP'
                 (scriptLength & 0xFF), 
@@ -309,7 +337,6 @@ while True:
             let combinedHex = baseHex.trim();
             const newline = '\r\n';
 
-            // פונקציית עזר לחישוב Checksum
             const checksum = (data) => {
                 let sum = data.reduce((a, b) => a + b, 0);
                 return (0x100 - (sum & 0xFF)) & 0xFF;
@@ -317,16 +344,13 @@ while True:
             
             combinedHex += newline;
 
-            // 3. הוספת רשומות הקוד
-            let currentAddress = parseInt(SCRIPT_ADDRESS, 16) + 4; // מתחיל אחרי ה-Header (4 בתים)
+            let currentAddress = parseInt(SCRIPT_ADDRESS, 16) + 4; 
             const bytesPerRecord = 32;
 
-            // הוספת ה-Header כרשומת קוד רגילה (Type 00)
             const headerChunk = new Uint8Array(header);
             const headerRecord = createHexRecord(headerChunk, parseInt(SCRIPT_ADDRESS, 16), checksum);
             combinedHex += headerRecord + newline;
             
-            // הוספת רשומות הקוד בפועל
             for (let i = 0; i < scriptBytes.length; i += bytesPerRecord) {
                 const chunk = scriptBytes.slice(i, i + bytesPerRecord);
                 const address = currentAddress;
@@ -336,7 +360,6 @@ while True:
                 combinedHex += record + newline;
             }
             
-            // הוספת סוף הקובץ (EOF) - חשוב שיהיה הרשומה האחרונה
             combinedHex += ':00000001FF'; 
 
             return combinedHex;
@@ -344,14 +367,10 @@ while True:
 
         function createHexRecord(chunk, address, checksumFunc) {
             let record = ':';
-            // Byte Count (1 byte)
             record += chunk.length.toString(16).padStart(2, '0').toUpperCase();
-            // Address (2 bytes)
             record += (address & 0xFFFF).toString(16).padStart(4, '0').toUpperCase();
-            // Record Type (00)
             record += '00';
 
-            // Data (N bytes)
             let dataSum = chunk.length + (address & 0xFF) + ((address >> 8) & 0xFF);
             let dataString = '';
             chunk.forEach(byte => {
@@ -360,7 +379,6 @@ while True:
             });
             record += dataString;
 
-            // Checksum (1 byte)
             const recordChecksum = checksumFunc(dataSum);
             record += recordChecksum.toString(16).padStart(2, '0').toUpperCase();
             
@@ -372,60 +390,52 @@ while True:
          * פונקציה לטיפול בתהליך החיבור והצריבה הישירה באמצעות WebUSB.
          */
         async function connectAndFlash() {
-            // ה-check הזה עדיין חשוב כאשר Firebase פעיל, כדי לוודא שה-onAuthStateChanged הסתיים
+            logToConsole("לחצן הצריבה נלחץ. בודק מוכנות...", 'info');
+            
+            // 1. בדיקת אימות וסביבה
             if (!isAuthReady) {
-                updateStatus("המערכת עדיין מתחברת לאימות (Firebase). אנא המתן מספר שניות.", 'bg-yellow-100 border-yellow-500 text-yellow-800');
+                updateStatus("המערכת עדיין מתחברת לאימות. אנא המתן.", 'bg-yellow-100 border-yellow-500 text-yellow-800');
                 return;
             }
-
-            if (!navigator.usb || typeof DAPjs === 'undefined') {
-                updateStatus("דפדפן זה אינו תומך ב-WebUSB או ספריית DAPjs חסרה.", 
-                              'bg-red-100 border-red-500 text-red-800');
-                return;
-            }
-
-            if (window.location.protocol !== 'https:') {
-                updateStatus("דרוש חיבור מאובטח (HTTPS) כדי להשתמש ב-WebUSB. אנא העלה את האפליקציה לשרת מאובטח.", 
-                              'bg-red-100 border-red-500 text-red-800');
-                return;
-            }
+            // בדיקות הסביבה כבר בוצעו על ידי checkWebUsbReadiness וחסמו את הכפתור אם נכשלו.
+            // אם הגענו לכאן, הסביבה תקינה.
 
             try {
-                // 1. טעינת קושחת הבסיס (במידת הצורך)
+                // 2. טעינת קושחת הבסיס (במידת הצורך)
                 const baseHex = await loadBaseHex();
 
-                updateStatus("2. מבקש חיבור ל-Micro:bit (תופיע חלונית בחירת מכשיר)...", 'bg-yellow-100 border-yellow-500 text-yellow-800');
+                updateStatus("3. מבקש חיבור ל-Micro:bit (תופיע חלונית בחירת מכשיר)...", 'bg-yellow-100 border-yellow-500 text-yellow-800');
 
-                // 3. בקשה לבחירת מכשיר Micro:bit
+                // 4. בקשה לבחירת מכשיר Micro:bit
                 const device = await navigator.usb.requestDevice({
                     filters: [{ vendorId: microbitVendorId, productId: microbitProductId }]
                 });
 
                 if (!device) {
-                    updateStatus("החיבור בוטל או לא נמצא מכשיר Micro:bit.", 'bg-red-100 border-red-500 text-red-800');
+                    updateStatus("החיבור בוטל או לא נמצא מכשיר Micro:bit. נסה לחבר מחדש את הכרטיס.", 'bg-red-100 border-red-500 text-red-800');
                     return;
                 }
                 
-                updateStatus(`3. התחברות ל-${device.productName}...`, 'bg-indigo-100 border-indigo-500 text-indigo-800');
+                updateStatus(`4. התחברות ל-${device.productName}...`, 'bg-indigo-100 border-indigo-500 text-indigo-800');
                 
-                // 4. יצירת מופע DAPLink וחיבור
+                // 5. יצירת מופע DAPLink וחיבור
                 daplinkInstance = new DAPjs.DAPLink(device);
                 await daplinkInstance.connect();
 
-                updateStatus("4. הזרקת קוד פייתון לקושחה...", 'bg-purple-100 border-purple-500 text-purple-800');
+                updateStatus("5. הזרקת קוד פייתון לקושחה...", 'bg-purple-100 border-purple-500 text-purple-800');
                 
-                // 5. הזרקת קוד המשתמש לקובץ ה-HEX
+                // 6. הזרקת קוד המשתמש לקובץ ה-HEX
                 const userCode = editor.value;
                 const combinedHex = injectScript(baseHex, userCode);
                 
-                updateStatus("5. מתחיל צריבה... (פעולה זו עשויה לקחת כדקה)", 'bg-green-100 border-green-500 text-green-800');
+                updateStatus("6. מתחיל צריבה... (פעולה זו עשויה לקחת כדקה)", 'bg-green-100 border-green-500 text-green-800');
 
                 // פונקציית קריאה חוזרת (Callback) לעדכון סטטוס הצריבה
                 const progressCallback = (progress) => {
-                    updateStatus(`6. צריבה מתקדמת: ${Math.round(progress * 100)}%`, 'bg-green-100 border-green-500 text-green-800');
+                    updateStatus(`7. צריבה מתקדמת: ${Math.round(progress * 100)}%`, 'bg-green-100 border-green-500 text-green-800');
                 };
                 
-                // 7. הצריבה בפועל
+                // 8. הצריבה בפועל
                 await daplinkInstance.flash(combinedHex, progressCallback);
                 
                 updateStatus("✅ הצריבה הושלמה בהצלחה! ה-Micro:bit יאתחל מחדש ויריץ את הקוד.", 'bg-green-600 border-green-700 text-white');
@@ -435,14 +445,15 @@ while True:
                 console.error("WebUSB/Flash Error:", error);
                 
                 if (error.message.includes('No device selected')) {
-                     updateStatus("החיבור בוטל על ידי המשתמש.", 'bg-red-100 border-red-500 text-red-800');
+                     updateStatus("החיבור בוטל על ידי המשתמש או לא נבחר מכשיר מתאים.", 'bg-red-100 border-red-500 text-red-800');
+                } else if (error.message.includes('not found')) {
+                    updateStatus(`שגיאת WebUSB: לא ניתן למצוא את המכשיר. ודא שהוא מחובר במצב DAPLink.`, 'bg-red-100 border-red-500 text-red-800');
                 } else {
-                    updateStatus(`שגיאה קריטית: ${error.message}. ודא שה-Micro:bit מחובר ושדפדפן Chrome/Edge פועל ב-HTTPS.`, 'bg-red-600 border-red-700 text-white');
+                    updateStatus(`שגיאה קריטית: ${error.message}. נסה לחבר מחדש את ה-Micro:bit.`, 'bg-red-600 border-red-700 text-white');
                 }
             } finally {
                 // ניתוק DAPLink בסיום
                 if (daplinkInstance) {
-                    // מנותק אוטומטית ע"י DAPjs לאחר הצריבה
                     daplinkInstance = null;
                 }
             }
