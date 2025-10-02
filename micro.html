@@ -44,61 +44,6 @@
             font-size: 14px;
         }
         
-        .upload-section {
-            background: #f8f9fa;
-            border: 2px dashed #dee2e6;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            text-align: right;
-        }
-
-        .upload-section h3 {
-            color: #555;
-            margin-bottom: 10px;
-            font-size: 16px;
-        }
-
-        .upload-section p {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 15px;
-        }
-
-        .file-input-wrapper {
-            position: relative;
-            display: inline-block;
-        }
-
-        input[type="file"] {
-            position: absolute;
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .file-input-label {
-            display: inline-block;
-            padding: 10px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .file-input-label:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .file-name {
-            margin-top: 10px;
-            color: #388e3c;
-            font-weight: 600;
-        }
-        
         .editor-container {
             margin-bottom: 20px;
         }
@@ -140,7 +85,7 @@
         
         textarea {
             width: 100%;
-            min-height: 300px;
+            min-height: 350px;
             padding: 15px 15px 15px 65px;
             border: none;
             font-family: 'Courier New', monospace;
@@ -245,43 +190,18 @@
         .instructions li {
             margin: 5px 0;
         }
-
-        .instructions a {
-            color: #1976d2;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .instructions a:hover {
-            text-decoration: underline;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎯 micro:bit MicroPython Flasher</h1>
-        <p class="subtitle">צור קבצי HEX עם הספרייה הרשמית של micro:bit</p>
-        
-        <div class="upload-section">
-            <h3>📁 העלה קובץ MicroPython Runtime</h3>
-            <p>הורד את הקובץ המתאים ל-micro:bit שלך והעלה אותו כאן:</p>
-            <div style="margin-bottom: 15px; padding: 10px; background: white; border-radius: 5px;">
-                <strong>קישורי הורדה:</strong><br>
-                <a href="https://micropython.org/resources/firmware/microbit-micropython-v2.1.2.hex" target="_blank" download style="color: #1976d2; text-decoration: none;">⬇️ micro:bit V2 (המומלץ)</a><br>
-                <a href="https://micropython.org/download/MICROBIT/" target="_blank" style="color: #1976d2; text-decoration: none;">⬇️ גרסאות נוספות</a>
-            </div>
-            <div class="file-input-wrapper">
-                <input type="file" id="runtimeFile" accept=".hex">
-                <label for="runtimeFile" class="file-input-label">בחר קובץ HEX</label>
-            </div>
-            <div id="fileName" class="file-name"></div>
-        </div>
+        <p class="subtitle">כתוב קוד והורד ישירות ל-micro:bit - פשוט ומהיר!</p>
         
         <div class="editor-container">
             <label for="code">קוד MicroPython:</label>
             <div class="code-editor-wrapper">
                 <div class="line-numbers" id="lineNumbers">1</div>
-                <textarea id="code" placeholder="# Paste your code here
+                <textarea id="code" placeholder="# Write your code here
 from microbit import *
 
 while True:
@@ -303,16 +223,14 @@ while True:
         <div class="instructions">
             <strong>📋 הוראות שימוש:</strong>
             <ol>
-                <li>לחץ על <strong>"⬇️ micro:bit V2 (המומלץ)"</strong> למעלה כדי להוריד את קובץ ה-Runtime</li>
-                <li>לחץ על <strong>"בחר קובץ HEX"</strong> והעלה את הקובץ שהורדת</li>
-                <li>הדבק את הקוד שלך בעורך</li>
-                <li>לחץ <strong>"הורד קובץ HEX"</strong></li>
+                <li>כתוב או הדבק את הקוד שלך בעורך למעלה</li>
+                <li>לחץ <strong>"הורד קובץ HEX"</strong> (הורדה אוטומטית של MicroPython + הקוד שלך)</li>
                 <li>חבר את ה-micro:bit למחשב (יופיע ככונן <strong>MICROBIT</strong>)</li>
                 <li>גרור את הקובץ שהורדת לכונן MICROBIT</li>
                 <li>המכשיר יאתחל ויריץ את הקוד שלך! ✨</li>
             </ol>
             <p style="margin-top: 10px; color: #666; font-size: 13px;">
-                💡 <strong>טיפ:</strong> צריך להוריד את ה-Runtime רק פעם אחת. אחר כך תוכל להשתמש בו עם כמה קודים שתרצה!
+                💡 <strong>שימו לב:</strong> בהורדה הראשונה, המערכת תוריד את MicroPython (עלול לקחת מספר שניות). הורדות הבאות יהיו מהירות יותר!
             </p>
         </div>
     </div>
@@ -324,11 +242,8 @@ while True:
         const codeTextarea = document.getElementById('code');
         const statusDiv = document.getElementById('status');
         const lineNumbers = document.getElementById('lineNumbers');
-        const runtimeFile = document.getElementById('runtimeFile');
-        const fileNameDiv = document.getElementById('fileName');
 
-        let uploadedRuntime = null;
-        let boardId = 0x9904; // Default to V2
+        let cachedRuntimeV2 = null;
 
         // Update line numbers
         function updateLineNumbers() {
@@ -336,7 +251,6 @@ while True:
             lineNumbers.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('\n');
         }
 
-        // Sync scroll
         codeTextarea.addEventListener('scroll', () => {
             lineNumbers.scrollTop = codeTextarea.scrollTop;
         });
@@ -349,29 +263,30 @@ while True:
             statusDiv.className = `status ${type} show`;
         }
 
-        // Handle runtime file upload
-        runtimeFile.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    uploadedRuntime = event.target.result;
-                    fileNameDiv.textContent = `✓ קובץ נטען: ${file.name}`;
-                    
-                    // Try to detect board version from filename
-                    if (file.name.includes('v1') || file.name.includes('V1')) {
-                        boardId = 0x9900;
-                        showStatus('✓ זוהה micro:bit V1', 'success');
-                    } else if (file.name.includes('v2') || file.name.includes('V2')) {
-                        boardId = 0x9904;
-                        showStatus('✓ זוהה micro:bit V2', 'success');
-                    } else {
-                        showStatus('✓ קובץ Runtime נטען בהצלחה!', 'success');
-                    }
-                };
-                reader.readAsText(file);
+        // Download MicroPython runtime
+        async function getMicroPythonRuntime() {
+            if (cachedRuntimeV2) {
+                return cachedRuntimeV2;
             }
-        });
+
+            showStatus('מוריד MicroPython runtime (פעם אחת בלבד)...', 'info');
+            
+            try {
+                const response = await fetch('https://micropython.org/resources/firmware/microbit-micropython-v2.1.2.hex');
+                
+                if (!response.ok) {
+                    throw new Error('Failed to download runtime');
+                }
+                
+                const hexData = await response.text();
+                cachedRuntimeV2 = hexData;
+                showStatus('✓ MicroPython runtime הורד בהצלחה!', 'success');
+                return hexData;
+            } catch (error) {
+                console.error('Failed to fetch runtime:', error);
+                throw new Error('לא הצלחתי להוריד את MicroPython. בדוק את החיבור לאינטרנט');
+            }
+        }
 
         downloadBtn.addEventListener('click', async () => {
             const code = codeTextarea.value.trim();
@@ -381,26 +296,24 @@ while True:
                 return;
             }
 
-            if (!uploadedRuntime) {
-                showStatus('❌ יש להעלות קובץ MicroPython Runtime תחילה. עקוב אחרי ההוראות למטה', 'error');
-                return;
-            }
-
             downloadBtn.disabled = true;
 
             try {
-                showStatus('יוצר קובץ HEX עם @microbit/microbit-fs...', 'info');
+                // Get runtime
+                const runtime = await getMicroPythonRuntime();
+                
+                showStatus('יוצר קובץ HEX עם הקוד שלך...', 'info');
                 
                 // Create MicropythonFsHex instance
                 const fs = new MicropythonFsHex([{
-                    hex: uploadedRuntime,
-                    boardId: boardId
+                    hex: runtime,
+                    boardId: 0x9904 // V2
                 }]);
                 
                 // Add main.py file with user code
                 await fs.write('main.py', code);
                 
-                // Get the final hex with filesystem
+                // Get the final hex
                 const finalHex = fs.getUniversalHex();
                 
                 // Download file
