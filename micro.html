@@ -260,11 +260,16 @@
 <body>
     <div class="container">
         <h1>🎯 micro:bit MicroPython Flasher</h1>
-        <p class="subtitle">צור קבצי HEX למכשיר micro:bit</p>
+        <p class="subtitle">צור קבצי HEX עם הספרייה הרשמית של micro:bit</p>
         
         <div class="upload-section">
-            <h3>📁 העלה קובץ MicroPython Runtime (אופציונלי)</h3>
-            <p>העלה קובץ .hex של MicroPython או השאר ריק לשימוש בשיטה החלופית</p>
+            <h3>📁 העלה קובץ MicroPython Runtime</h3>
+            <p>הורד את הקובץ המתאים ל-micro:bit שלך והעלה אותו כאן:</p>
+            <div style="margin-bottom: 15px; padding: 10px; background: white; border-radius: 5px;">
+                <strong>קישורי הורדה:</strong><br>
+                <a href="https://micropython.org/resources/firmware/microbit-micropython-v2.1.2.hex" target="_blank" download style="color: #1976d2; text-decoration: none;">⬇️ micro:bit V2 (המומלץ)</a><br>
+                <a href="https://micropython.org/download/MICROBIT/" target="_blank" style="color: #1976d2; text-decoration: none;">⬇️ גרסאות נוספות</a>
+            </div>
             <div class="file-input-wrapper">
                 <input type="file" id="runtimeFile" accept=".hex">
                 <label for="runtimeFile" class="file-input-label">בחר קובץ HEX</label>
@@ -296,19 +301,25 @@ while True:
         <div class="status" id="status"></div>
 
         <div class="instructions">
-            <strong>📋 כיצד להשתמש:</strong>
+            <strong>📋 הוראות שימוש:</strong>
             <ol>
-                <li>הורד קובץ MicroPython runtime: לך ל-<a href="https://python.microbit.org" target="_blank">python.microbit.org</a></li>
-                <li>במסך העורך, מחק את כל הקוד ולחץ <strong>Download</strong></li>
-                <li>העלה את הקובץ שהורדת בסעיף "העלה קובץ MicroPython Runtime" למעלה</li>
+                <li>לחץ על <strong>"⬇️ micro:bit V2 (המומלץ)"</strong> למעלה כדי להוריד את קובץ ה-Runtime</li>
+                <li>לחץ על <strong>"בחר קובץ HEX"</strong> והעלה את הקובץ שהורדת</li>
                 <li>הדבק את הקוד שלך בעורך</li>
-                <li>לחץ "הורד קובץ HEX"</li>
-                <li>גרור את הקובץ לכונן MICROBIT והמכשיר יריץ את הקוד! ✨</li>
+                <li>לחץ <strong>"הורד קובץ HEX"</strong></li>
+                <li>חבר את ה-micro:bit למחשב (יופיע ככונן <strong>MICROBIT</strong>)</li>
+                <li>גרור את הקובץ שהורדת לכונן MICROBIT</li>
+                <li>המכשיר יאתחל ויריץ את הקוד שלך! ✨</li>
             </ol>
+            <p style="margin-top: 10px; color: #666; font-size: 13px;">
+                💡 <strong>טיפ:</strong> צריך להוריד את ה-Runtime רק פעם אחת. אחר כך תוכל להשתמש בו עם כמה קודים שתרצה!
+            </p>
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { MicropythonFsHex } from 'https://cdn.jsdelivr.net/npm/@microbit/microbit-fs@0.10.0/+esm';
+
         const downloadBtn = document.getElementById('downloadBtn');
         const codeTextarea = document.getElementById('code');
         const statusDiv = document.getElementById('status');
@@ -317,6 +328,7 @@ while True:
         const fileNameDiv = document.getElementById('fileName');
 
         let uploadedRuntime = null;
+        let boardId = 0x9904; // Default to V2
 
         // Update line numbers
         function updateLineNumbers() {
@@ -345,64 +357,23 @@ while True:
                 reader.onload = (event) => {
                     uploadedRuntime = event.target.result;
                     fileNameDiv.textContent = `✓ קובץ נטען: ${file.name}`;
-                    showStatus('✓ קובץ Runtime נטען בהצלחה!', 'success');
+                    
+                    // Try to detect board version from filename
+                    if (file.name.includes('v1') || file.name.includes('V1')) {
+                        boardId = 0x9900;
+                        showStatus('✓ זוהה micro:bit V1', 'success');
+                    } else if (file.name.includes('v2') || file.name.includes('V2')) {
+                        boardId = 0x9904;
+                        showStatus('✓ זוהה micro:bit V2', 'success');
+                    } else {
+                        showStatus('✓ קובץ Runtime נטען בהצלחה!', 'success');
+                    }
                 };
                 reader.readAsText(file);
             }
         });
 
-        // Download with runtime
-        function appendPythonToHex(baseHex, pythonCode) {
-            const encoder = new TextEncoder();
-            const codeBytes = encoder.encode(pythonCode);
-            
-            // MicroPython V1 script address
-            const SCRIPT_ADDR = 0x3e000;
-            
-            // Magic header
-            const magic = new Uint8Array([0x4d, 0x50]); // "MP"
-            const length = codeBytes.length;
-            const lengthBytes = new Uint8Array([length & 0xff, (length >> 8) & 0xff]);
-            
-            const fullData = new Uint8Array(4 + codeBytes.length);
-            fullData.set(magic, 0);
-            fullData.set(lengthBytes, 2);
-            fullData.set(codeBytes, 4);
-            
-            const hexLines = baseHex.split('\n');
-            let endRecord = hexLines[hexLines.length - 1];
-            if (!endRecord || !endRecord.startsWith(':00000001')) {
-                endRecord = ':00000001FF';
-            }
-            hexLines.pop();
-            
-            // Add script
-            for (let i = 0; i < fullData.length; i += 16) {
-                const chunk = Array.from(fullData.slice(i, Math.min(i + 16, fullData.length)));
-                const addr = SCRIPT_ADDR + i;
-                const record = createIntelHexRecord(addr, chunk);
-                hexLines.push(record);
-            }
-            
-            hexLines.push(endRecord);
-            return hexLines.join('\n');
-        }
-
-        function createIntelHexRecord(address, data) {
-            const length = data.length;
-            const addrHigh = (address >> 8) & 0xFFFF;
-            const addrLow = address & 0xFF;
-            const type = 0x00;
-            
-            let bytes = [length, (addrHigh >> 8) & 0xFF, addrHigh & 0xFF, type, ...data];
-            const sum = bytes.reduce((a, b) => a + b, 0);
-            const checksum = (0x100 - (sum & 0xFF)) & 0xFF;
-            bytes.push(checksum);
-            
-            return ':' + bytes.map(b => b.toString(16).padStart(2, '0').toUpperCase()).join('');
-        }
-
-        downloadBtn.addEventListener('click', () => {
+        downloadBtn.addEventListener('click', async () => {
             const code = codeTextarea.value.trim();
             
             if (!code) {
@@ -415,11 +386,24 @@ while True:
                 return;
             }
 
+            downloadBtn.disabled = true;
+
             try {
-                showStatus('יוצר קובץ HEX...', 'info');
+                showStatus('יוצר קובץ HEX עם @microbit/microbit-fs...', 'info');
                 
-                const finalHex = appendPythonToHex(uploadedRuntime, code);
+                // Create MicropythonFsHex instance
+                const fs = new MicropythonFsHex([{
+                    hex: uploadedRuntime,
+                    boardId: boardId
+                }]);
                 
+                // Add main.py file with user code
+                await fs.write('main.py', code);
+                
+                // Get the final hex with filesystem
+                const finalHex = fs.getUniversalHex();
+                
+                // Download file
                 const blob = new Blob([finalHex], { type: 'text/plain' });
                 const url = URL.createObjectURL(blob);
                 
@@ -431,11 +415,13 @@ while True:
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
                 
-                showStatus('✅ קובץ HEX הורד בהצלחה! גרור אותו לכונן MICROBIT', 'success');
+                showStatus('✅ קובץ HEX הורד בהצלחה! גרור אותו לכונן MICROBIT והקוד ירוץ!', 'success');
                 
             } catch (error) {
                 console.error('Error:', error);
                 showStatus('❌ שגיאה: ' + error.message, 'error');
+            } finally {
+                downloadBtn.disabled = false;
             }
         });
     </script>
