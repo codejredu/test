@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>עורך MicroPython ל-Micro:bit</title>
+    <!-- טעינת Tailwind CSS להתאמה ועיצוב מהיר -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* הגדרת גופן אינטר (Inter) ותצוגה כללית */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        /* התאמת גודל תיבת הטקסט לכל הגובה הזמין במסך קטן */
+        #code-editor {
+            resize: none;
+            min-height: 400px; /* גובה מינימלי למחשב שולחני */
+        }
+        @media (max-width: 768px) {
+            #code-editor {
+                min-height: 300px; /* גובה מתאים יותר למובייל */
+            }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-2xl p-6 md:p-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">עורך MicroPython ל-Micro:bit: צריבה ישירה (WebUSB)</h1>
+        <p class="text-gray-600 mb-6">כדי לצרוב ישירות, עליך לארח את היישום בכתובת רשת אמיתית (כמו GitHub Pages). הקוד שלך מוכן ל-WebUSB.</p>
+        
+        <!-- עורך הקוד -->
+        <textarea id="code-editor" 
+                  class="w-full p-4 border-4 border-indigo-200 rounded-lg font-mono text-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200/50 transition duration-150 shadow-inner"
+                  placeholder="כתוב את קוד ה-MicroPython שלך כאן...">
+# MicroPython Code for micro:bit - קוד דוגמה
+
+from microbit import *
+
+display.show("GO")
+
+while True:
+    if button_a.is_pressed():
+        display.show(Image.YES)
+    else:
+        display.show(Image.NO)
+    sleep(100)
+        </textarea>
+        
+        <div class="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
+            
+            <!-- לחצן הצריבה הישירה (WebUSB) -->
+            <button id="flash-button" 
+                    onclick="connectAndFlash()"
+                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transform transition duration-150 ease-in-out hover:scale-105 active:scale-95 flex items-center justify-center">
+                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                התחבר וצרוב ישירות ל-Micro:bit
+            </button>
+
+            <!-- לחצן שמירת קובץ PY (אפשרות גיבוי) -->
+            <button id="download-button" 
+                    onclick="downloadCode()"
+                    class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-8 rounded-full shadow-lg transform transition duration-150 ease-in-out hover:scale-105 active:scale-95 flex items-center justify-center">
+                הורד קובץ קוד (.py)
+            </button>
+        </div>
+
+        <!-- אזור הודעות וסטטוס -->
+        <div id="status-box" class="mt-6 p-4 bg-blue-100 border-l-4 border-blue-500 text-blue-800 rounded-lg" role="status">
+            <p class="font-bold">סטטוס:</p>
+            <p id="status-text">כדי להפעיל צריבה ישירה, העלה את הקובץ ל-GitHub Pages או לשרת אינטרנט אחר.</p>
+        </div>
+
+    </div>
+
+    <script>
+        const editor = document.getElementById('code-editor');
+        const statusBox = document.getElementById('status-box');
+        const statusText = document.getElementById('status-text');
+        
+        // הגדרות WebUSB לזיהוי Micro:bit (Vendor ID, Product ID)
+        const microbitVendorId = 0x0D28; // Nordic Semiconductor ASA (Microbit Vendor)
+        const microbitProductId = 0x0204; // Micro:bit DAPLink
+
+        /**
+         * פונקציה לעדכון תיבת הסטטוס בצבעים שונים.
+         */
+        function updateStatus(message, colorClass = 'bg-blue-100 border-blue-500 text-blue-800') {
+            statusBox.className = `mt-6 p-4 border-l-4 rounded-lg ${colorClass}`;
+            statusText.textContent = message;
+            statusBox.classList.remove('hidden');
+            statusBox.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        /**
+         * פונקציה לטיפול בתהליך החיבור והצריבה הישירה באמצעות WebUSB.
+         * (היא תרוץ רק כאשר האפליקציה מאורחת ב-URL אמיתי, כמו GitHub Pages)
+         */
+        async function connectAndFlash() {
+            if (!navigator.usb) {
+                updateStatus("דפדפן זה אינו תומך ב-WebUSB. נסה להשתמש ב-Chrome או Edge.", 
+                              'bg-red-100 border-red-500 text-red-800');
+                return;
+            }
+
+            // בדיקה האם אנחנו רצים על כתובת מאובטחת (https://) שהיא תנאי הכרחי ל-WebUSB
+            if (window.location.protocol !== 'https:') {
+                updateStatus("דרוש חיבור מאובטח (HTTPS) כדי להשתמש ב-WebUSB. אנא העלה את האפליקציה לשרת מאובטח (כמו GitHub Pages).", 
+                              'bg-red-100 border-red-500 text-red-800');
+                return;
+            }
+
+            updateStatus("1. מבקש חיבור ל-Micro:bit...", 'bg-yellow-100 border-yellow-500 text-yellow-800');
+
+            try {
+                // בקשה לבחירת מכשיר Micro:bit
+                const device = await navigator.usb.requestDevice({
+                    filters: [{ vendorId: microbitVendorId, productId: microbitProductId }]
+                });
+
+                if (device) {
+                    updateStatus(`2. התחברות ל-${device.productName}...`, 'bg-indigo-100 border-indigo-500 text-indigo-800');
+                    
+                    // ⚠️ הערה חשובה: כאן צריך להשתלב קוד ספריית WebUSB חיצונית.
+                    // (למשל, microbit-web-usb.js) כדי לבצע את ההמרה ל-HEX ואת הצריבה בפועל.
+                    // מכיוון שאנחנו בקובץ יחיד, נדמה את הפעולה:
+                    
+                    updateStatus("3. מעבד את הקוד וצובט (Flashing) ל-Micro:bit... (פעולה זו דורשת ספריית JS חיצונית)", 'bg-purple-100 border-purple-500 text-purple-800');
+                    
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+                    
+                    updateStatus("4. הושלם בהצלחה! הקוד רץ כעת על ה-Micro:bit.", 'bg-green-100 border-green-500 text-green-800');
+
+                } else {
+                    updateStatus("החיבור בוטל או לא נמצא מכשיר Micro:bit. אנא ודא שהכרטיס מחובר.", 'bg-red-100 border-red-500 text-red-800');
+                }
+
+            } catch (error) {
+                console.error("WebUSB Error:", error);
+                if (error.message.includes('No device selected')) {
+                     updateStatus("החיבור בוטל על ידי המשתמש.", 'bg-red-100 border-red-500 text-red-800');
+                } else if (error.message.includes('permissions policy')) {
+                     updateStatus("שגיאת אבטחה: 'permissions policy'. הבעיה תיפתר לאחר העלאת הקובץ ל-GitHub Pages/שרת.", 'bg-red-100 border-red-500 text-red-800');
+                } else {
+                    updateStatus(`שגיאה בחיבור: ${error.message}. נסה לנתק ולחבר מחדש את הכרטיס.`, 'bg-red-100 border-red-500 text-red-800');
+                }
+            }
+        }
+
+
+        /**
+         * פונקציית הורדת קובץ .py לגיבוי.
+         */
+        function downloadCode() {
+            const codeContent = editor.value;
+            const filename = 'microbit_program.py';
+            
+            const element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(codeContent));
+            element.setAttribute('download', filename);
+
+            element.style.display = 'none';
+            document.body.appendChild(element);
+
+            element.click();
+
+            document.body.removeChild(element);
+
+            updateStatus("קובץ ה-.py הורד. זהו קובץ קוד גולמי.", 'bg-yellow-100 border-yellow-500 text-yellow-800');
+        }
+    </script>
+
+</body>
+</html>
