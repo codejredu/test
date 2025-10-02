@@ -37,9 +37,6 @@
         }
     </style>
     
-    <!-- ייבוא ספריית הצריבה DAPjs - חיוני לשימוש ב-WebUSB -->
-    <script src="https://cdn.jsdelivr.net/npm/dapjs@latest/dist/dap.min.js"></script>
-    
 </head>
 <body class="p-4 md:p-8">
 
@@ -99,6 +96,9 @@ while True:
 
     </div>
 
+    <!-- ייבוא ספריית הצריבה DAPjs - חיוני לשימוש ב-WebUSB. הועבר לכאן כדי למנוע בעיות טעינה בסביבות מסוימות. -->
+    <script src="https://cdn.jsdelivr.net/npm/dapjs@latest/dist/dap.min.js"></script>
+    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -119,7 +119,8 @@ while True:
         let userId = 'loading';
         let isAuthReady = false;
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebaseConfig) : null;
+        // תיקון: שימוש ב-__firebase_config במקום __firebaseConfig כדי לתקן את שגיאת ה-ReferenceError
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         
         let saveTimeout = null;
