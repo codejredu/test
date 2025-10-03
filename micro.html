@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -133,8 +133,8 @@
              * פונקציה המטפלת בלחיצה על כפתור החיבור
              */
             connectButton.addEventListener('click', async () => {
-                // מנקה שגיאות קודמות ומעדכן סטטוס
-                statusElement.innerHTML = 'סטטוס: מנסה להתחבר... אנא אשר בחלון הקופץ.';
+                // *** עדכון סטטוס מיידי כדי לראות תגובה ללחיצה ***
+                statusElement.innerHTML = 'סטטוס: ⏳ מנסה להתחבר... אנא אשר בחלון הקופץ.';
                 
                 try {
                     // ניסיון ליזום את תהליך החיבור WebUSB
@@ -149,17 +149,14 @@
                     }
 
                 } catch (error) {
-                    // *** הוספנו בדיקות מפורטות יותר לשגיאות אפשריות של WebUSB ***
+                    // *** לכידת שגיאות ועדכון סטטוס מפורט ***
                     if (error.message.includes('No device selected')) {
                          statusElement.innerHTML = 'סטטוס: ❌ <strong>החיבור בוטל על ידי המשתמש.</strong>';
                     } else if (error instanceof DOMException && error.name === 'NotAllowedError') {
-                        // שגיאה זו נזרקת אם המשתמש חסם את הרשאת ה-USB או אם האתר לא ב-HTTPS
                         statusElement.innerHTML = 'סטטוס: 🔒 <strong>הרשאת USB נחסמה.</strong> אנא ודא שהרשאת ה-USB לא נחסמה עבור דף זה.';
                     } else if (error instanceof DOMException && error.name === 'NotFoundError') {
-                         // שגיאה זו נזרקת אם לא נמצאו מכשירים רלוונטיים לאחר בקשת החיבור
                         statusElement.innerHTML = 'סטטוס: 🔎 <strong>לא נמצא מכשיר מתאים.</strong> ודא שה-Micro:bit מחובר פיזית למחשב.';
                     } else if (error.message.includes('A transfer error has occurred')) {
-                        // שגיאה נפוצה המתרחשת אם ה-Micro:bit מחובר אך עסוק או לא מוכן לתקשורת
                         statusElement.innerHTML = 'סטטוס: ⚠️ <strong>שגיאת העברה.</strong> נתק וחבר שוב את המיקרוביט, ונסה להתחבר שוב.';
                     }
                     else {
