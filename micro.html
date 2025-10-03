@@ -221,16 +221,34 @@ while True:
     <script type="importmap">
     {
         "imports": {
-            "@microbit/microbit-connection": "https://unpkg.com/@microbit/microbit-connection@0.0.0-alpha.39/dist/esm/index.js",
-            "@microbit/microbit-fs": "https://unpkg.com/@microbit/microbit-fs@0.0.0-alpha.16/dist/esm/index.js"
+            "@microbit/microbit-connection": "https://cdn.skypack.dev/@microbit/microbit-connection@0.0.0-alpha.39",
+            "@microbit/microbit-fs": "https://cdn.skypack.dev/@microbit/microbit-fs@0.0.0-alpha.16"
         }
     }
     </script>
 
     <script type="module">
         // Import the micro:bit connection library
-        import { createWebUSBConnection, createUniversalHexFlashDataSource, BoardId } from '@microbit/microbit-connection';
-        import { MicropythonFsHex, microbitBoardId } from '@microbit/microbit-fs';
+        let createWebUSBConnection, createUniversalHexFlashDataSource, BoardId;
+        let MicropythonFsHex, microbitBoardId;
+        
+        // Try to import libraries with error handling
+        try {
+            const connectionModule = await import('@microbit/microbit-connection');
+            createWebUSBConnection = connectionModule.createWebUSBConnection;
+            createUniversalHexFlashDataSource = connectionModule.createUniversalHexFlashDataSource;
+            BoardId = connectionModule.BoardId;
+            
+            const fsModule = await import('@microbit/microbit-fs');
+            MicropythonFsHex = fsModule.MicropythonFsHex;
+            microbitBoardId = fsModule.microbitBoardId;
+            
+            console.log('Libraries loaded successfully!');
+        } catch (error) {
+            console.error('Failed to load libraries:', error);
+            document.getElementById('status').textContent = 'שגיאה בטעינת הספריות: ' + error.message;
+            document.getElementById('status').className = 'status error show';
+        }
         
         let usbConnection = null;
         let isConnected = false;
@@ -272,9 +290,19 @@ while True:
                     return;
                 }
 
+                // Check if libraries are loaded
+                if (!createWebUSBConnection) {
+                    showStatus('הספריות לא נטענו כראוי. רענן את הדף ונסה שוב', 'error');
+                    connectBtn.disabled = false;
+                    return;
+                }
+
                 // Create USB connection
                 usbConnection = createWebUSBConnection();
+                console.log('USB connection object created:', usbConnection);
+                
                 const connectionStatus = await usbConnection.connect();
+                console.log('Connection status:', connectionStatus);
 
                 if (connectionStatus === 'CONNECTED') {
                     isConnected = true;
