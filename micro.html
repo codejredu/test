@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>כלי חיבור Micro:bit WebUSB</title>
     
-    <!-- החזרת הסקריפט לטעינה גלובלית ב-HEAD כדי למנוע שגיאת CORS -->
-    <script src="https://unpkg.com/@microbit/microbit-connection@latest/dist/microbit-connection.js"></script>
+    <!-- שימוש ב-jsdelivr - נשאר זהה, אך כעת הסקריפט אמור לרוץ מיד -->
+    <script src="https://cdn.jsdelivr.net/npm/@microbit/microbit-connection@latest/dist/microbit-connection.js"></script>
 
     <style>
         /* סגנונות כלליים ו-RTL */
@@ -113,15 +113,15 @@
         </div>
     </div>
 
-    <!-- שימוש בסקריפט רגיל והבטחת הרצה רק לאחר טעינת כל המשאבים (window.onload) -->
+    <!-- הלוגיקה רצה ישירות בתוך IIFE -->
     <script>
-        // עוטפים את כל הלוגיקה ב-window.onload כדי להבטיח ש-microbit_connection מוגדר
-        window.addEventListener('load', () => {
+        (function() { // עוטפים את כל הקוד בפונקציה שנקראת באופן מיידי
+            // *** הסרת עטיפת window.onload ***
             // גישה למשתנה הגלובלי microbit_connection שנוצר על ידי תגית <script>
-            // אנחנו משתמשים ב-typeof כדי לוודא ש-microbit_connection קיים לפני שננסה להשתמש בו.
             if (typeof microbit_connection === 'undefined') {
-                document.getElementById('status').innerHTML = 'סטטוס: 🚨 <strong>שגיאה!</strong> הספרייה החיצונית (microbit-connection) לא נטענה עקב בעיה בשרת (ייתכן CORS).';
-                return;
+                // הודעה מותאמת לכישלון טעינה חוזר ונשנה
+                document.getElementById('status').innerHTML = 'סטטוס: 🛑 <strong>שגיאת אבטחה/טעינה קריטית.</strong> לא ניתן לטעון את ספריית החיבור החיצונית. נסה להפעיל את הדף בדפדפן התומך ב-WebUSB מחוץ לסביבה זו.';
+                return; // הצהרת ה-return חוקית כעת בתוך ה-IIFE
             }
 
             const { createWebUSBConnection, ConnectionStatus } = microbit_connection;
@@ -182,7 +182,7 @@
                     statusElement.innerHTML = 'סטטוס: 🛑 <strong>נותקת.</strong> אנא חבר שוב את המיקרוביט ולחץ על התחבר.';
                 });
             }
-        });
+        })(); // סיום ה-IIFE
     </script>
 </body>
 </html>
