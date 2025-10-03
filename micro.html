@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>micro:bit Flasher - צורב קוד</title>
+    <title>micro:bit Python Editor - עורך קוד</title>
     <style>
         * {
             box-sizing: border-box;
@@ -16,9 +16,6 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
 
         .container {
@@ -26,8 +23,8 @@
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             padding: 40px;
-            max-width: 800px;
-            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         h1 {
@@ -42,17 +39,36 @@
             font-size: 0.9em;
         }
 
+        .editor-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .editor-panel {
+            background: #f8f9fa;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .panel-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
         .code-editor {
             width: 100%;
-            min-height: 300px;
+            min-height: 350px;
             padding: 15px;
             border: 2px solid #ddd;
             border-radius: 10px;
             font-family: 'Courier New', monospace;
             font-size: 14px;
             resize: vertical;
-            margin-bottom: 20px;
-            background: #f8f9fa;
+            background: white;
             direction: ltr;
             text-align: left;
         }
@@ -60,17 +76,32 @@
         .code-editor:focus {
             outline: none;
             border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .terminal {
+            width: 100%;
+            min-height: 350px;
+            padding: 15px;
+            border: 2px solid #333;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            background: #1e1e1e;
+            color: #00ff00;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            direction: ltr;
+            text-align: left;
         }
 
         .button-group {
             display: flex;
             gap: 15px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
         button {
-            flex: 1;
             padding: 15px 30px;
             font-size: 16px;
             font-weight: bold;
@@ -93,15 +124,26 @@
         button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
-            transform: none;
         }
 
         .btn-connect {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
 
-        .btn-flash {
+        .btn-download {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .btn-run {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .btn-clear {
+            background: #6c757d;
         }
 
         .status {
@@ -130,37 +172,8 @@
             border-right: 4px solid #c62828;
         }
 
-        .status.warning {
-            background: #fff3cd;
-            color: #856404;
-            border-right: 4px solid #ffc107;
-        }
-
         .status.show {
             display: block;
-        }
-
-        .progress-container {
-            width: 100%;
-            height: 30px;
-            background: #f0f0f0;
-            border-radius: 15px;
-            overflow: hidden;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            width: 0%;
-            transition: width 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 12px;
         }
 
         .info-box {
@@ -187,13 +200,13 @@
         }
 
         .file-input-wrapper {
-            margin-bottom: 20px;
+            display: inline-block;
         }
 
         .file-input-label {
             display: inline-block;
             padding: 12px 24px;
-            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
             color: white;
             border-radius: 10px;
             cursor: pointer;
@@ -210,205 +223,259 @@
             display: none;
         }
 
-        .file-name {
-            margin-right: 10px;
-            color: #666;
-            font-size: 14px;
+        @media (max-width: 768px) {
+            .editor-container {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔧 micro:bit Flasher</h1>
-        <p class="subtitle">צרוב קוד למיקרוביט שלך</p>
+        <h1>🐍 micro:bit Python Editor</h1>
+        <p class="subtitle">כתוב והרץ קוד Python על המיקרוביט שלך</p>
 
         <div class="info-box">
-            <h3>שתי דרכים לצריבה:</h3>
+            <h3>איך להשתמש:</h3>
             <ul>
-                <li><strong>אופציה 1:</strong> הדבק קוד Python והכלי ישמור אותו כקובץ (פשוט יותר)</li>
-                <li><strong>אופציה 2:</strong> העלה קובץ .hex מוכן (מהעורך של micro:bit)</li>
-                <li>לחץ על "התחבר למיקרוביט" וחבר את הכרטיס דרך USB</li>
-                <li>לאחר החיבור, לחץ על "צרוב לכרטיס"</li>
+                <li>כתוב את קוד ה-Python בחלון העורך משמאל</li>
+                <li>לחץ "התחבר למיקרוביט" כדי להתחבר דרך Serial Port</li>
+                <li>לחץ "הרץ קוד" כדי לשלוח את הקוד למיקרוביט ולראות פלט בטרמינל</li>
+                <li>לחץ "הורד כקובץ" כדי לשמור את הקוד כקובץ .py במחשב</li>
+                <li>גרור קבצי .hex ישירות לכונן MICROBIT שמופיע במחשב כדי לצרוב</li>
             </ul>
         </div>
 
-        <div class="file-input-wrapper">
-            <label class="file-input-label" for="hexFile">
-                📁 בחר קובץ .hex (אופציונלי)
-            </label>
-            <input type="file" id="hexFile" class="file-input" accept=".hex">
-            <span class="file-name" id="fileName"></span>
-        </div>
-
-        <textarea class="code-editor" id="codeEditor" placeholder="או הדבק כאן את קוד ה-Python שלך...
-לדוגמה:
-from microbit import *
-
-while True:
-    display.show(Image.HEART)
-    sleep(1000)
-    display.show(Image.HEART_SMALL)
-    sleep(1000)"></textarea>
-
         <div class="button-group">
             <button class="btn-connect" id="connectBtn">🔌 התחבר למיקרוביט</button>
-            <button class="btn-flash" id="flashBtn" disabled>⚡ צרוב לכרטיס</button>
+            <button class="btn-run" id="runBtn" disabled>▶️ הרץ קוד</button>
+            <button class="btn-stop" id="stopBtn" disabled>⏹️ עצור</button>
+            <button class="btn-clear" id="clearBtn">🗑️ נקה טרמינל</button>
+            <button class="btn-download" id="downloadBtn">💾 הורד כקובץ</button>
+            <div class="file-input-wrapper">
+                <label class="file-input-label" for="fileInput">📁 פתח קובץ</label>
+                <input type="file" id="fileInput" class="file-input" accept=".py,.txt">
+            </div>
         </div>
 
-        <div class="progress-container" id="progressContainer">
-            <div class="progress-bar" id="progressBar">0%</div>
+        <div class="editor-container">
+            <div class="editor-panel">
+                <div class="panel-title">📝 עורך Python</div>
+                <textarea class="code-editor" id="codeEditor" placeholder="כתוב כאן את קוד ה-Python שלך...">from microbit import *
+
+# הצג לב על המסך
+display.show(Image.HEART)
+sleep(1000)
+
+# הצג טקסט
+display.scroll('Hello!')
+
+# לולאה אינסופית
+while True:
+    display.show(Image.HAPPY)
+    sleep(500)
+    display.show(Image.SAD)
+    sleep(500)</textarea>
+            </div>
+
+            <div class="editor-panel">
+                <div class="panel-title">💻 טרמינל</div>
+                <div class="terminal" id="terminal">>>> מחכה לחיבור...</div>
+            </div>
         </div>
 
         <div class="status" id="status"></div>
     </div>
 
     <script type="module">
-        let device = null;
+        let port = null;
+        let reader = null;
+        let writer = null;
         let isConnected = false;
-        let hexFileContent = null;
+        let isRunning = false;
 
         const connectBtn = document.getElementById('connectBtn');
-        const flashBtn = document.getElementById('flashBtn');
+        const runBtn = document.getElementById('runBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
         const codeEditor = document.getElementById('codeEditor');
+        const terminal = document.getElementById('terminal');
         const statusDiv = document.getElementById('status');
-        const progressContainer = document.getElementById('progressContainer');
-        const progressBar = document.getElementById('progressBar');
-        const hexFileInput = document.getElementById('hexFile');
-        const fileNameSpan = document.getElementById('fileName');
+        const fileInput = document.getElementById('fileInput');
 
         function showStatus(message, type = 'info') {
             statusDiv.textContent = message;
             statusDiv.className = `status ${type} show`;
+            setTimeout(() => {
+                statusDiv.classList.remove('show');
+            }, 5000);
         }
 
-        function updateProgress(percentage) {
-            progressContainer.style.display = 'block';
-            progressBar.style.width = percentage + '%';
-            progressBar.textContent = Math.round(percentage) + '%';
+        function writeToTerminal(text, newLine = true) {
+            terminal.textContent += (newLine ? '\n' : '') + text;
+            terminal.scrollTop = terminal.scrollHeight;
         }
 
-        function hideProgress() {
-            progressContainer.style.display = 'none';
-            progressBar.style.width = '0%';
-        }
-
-        // Handle hex file upload
-        hexFileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    hexFileContent = event.target.result;
-                    fileNameSpan.textContent = `נבחר: ${file.name}`;
-                    showStatus(`קובץ ${file.name} נטען בהצלחה`, 'success');
-                };
-                reader.readAsText(file);
-            }
-        });
-
-        // WebUSB connection
+        // Connect via Web Serial
         connectBtn.addEventListener('click', async () => {
             try {
-                showStatus('מתחבר למיקרוביט...', 'info');
-                connectBtn.disabled = true;
-
-                if (!navigator.usb) {
-                    showStatus('הדפדפן שלך לא תומך ב-WebUSB. השתמש ב-Chrome, Edge או Opera', 'error');
-                    connectBtn.disabled = false;
+                if (!('serial' in navigator)) {
+                    showStatus('הדפדפן שלך לא תומך ב-Web Serial. השתמש ב-Chrome, Edge או Opera', 'error');
                     return;
                 }
 
-                // Request device with micro:bit vendor ID
-                device = await navigator.usb.requestDevice({
-                    filters: [
-                        { vendorId: 0x0d28, productId: 0x0204 } // micro:bit
-                    ]
-                });
+                showStatus('מתחבר למיקרוביט...', 'info');
+                
+                port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 115200 });
 
-                await device.open();
-                await device.selectConfiguration(1);
-                await device.claimInterface(0);
+                const textDecoder = new TextDecoderStream();
+                const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+                reader = textDecoder.readable.getReader();
+
+                const textEncoder = new TextEncoderStream();
+                const writableStreamClosed = textEncoder.readable.pipeTo(port.writable);
+                writer = textEncoder.writable.getWriter();
 
                 isConnected = true;
-                showStatus('✅ התחברת בהצלחה למיקרוביט!', 'success');
-                flashBtn.disabled = false;
                 connectBtn.textContent = '✓ מחובר';
+                connectBtn.disabled = true;
+                runBtn.disabled = false;
+                
+                terminal.textContent = '>>> מחובר למיקרוביט!\n>>> לחץ "הרץ קוד" כדי לשלוח את הקוד\n';
+                showStatus('✅ התחברת בהצלחה למיקרוביט!', 'success');
+
+                // Start reading from serial
+                readFromSerial();
 
             } catch (error) {
                 console.error('Connection error:', error);
                 showStatus('שגיאה בחיבור: ' + error.message, 'error');
-                connectBtn.disabled = false;
             }
         });
 
-        // Flash to micro:bit
-        flashBtn.addEventListener('click', async () => {
+        async function readFromSerial() {
+            try {
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) {
+                        reader.releaseLock();
+                        break;
+                    }
+                    if (value) {
+                        writeToTerminal(value, false);
+                    }
+                }
+            } catch (error) {
+                console.error('Read error:', error);
+            }
+        }
+
+        // Run code
+        runBtn.addEventListener('click', async () => {
             if (!isConnected) {
                 showStatus('אנא התחבר למיקרוביט תחילה', 'error');
                 return;
             }
 
-            try {
-                flashBtn.disabled = true;
-                connectBtn.disabled = true;
+            const code = codeEditor.value;
+            if (!code.trim()) {
+                showStatus('אנא הכנס קוד לריצה', 'error');
+                return;
+            }
 
-                if (hexFileContent) {
-                    // Flash the uploaded hex file
-                    showStatus('צורב קובץ hex למיקרוביט...', 'info');
-                    await flashHexFile(hexFileContent);
-                } else {
-                    // Save Python code as a file
-                    const code = codeEditor.value.trim();
-                    if (!code) {
-                        showStatus('אנא הכנס קוד או העלה קובץ hex', 'error');
-                        flashBtn.disabled = false;
-                        connectBtn.disabled = false;
-                        return;
-                    }
-                    
-                    showStatus('⚠️ שימו לב: כדי לצרוב קוד Python למיקרוביט, צריך להמיר אותו לקובץ .hex תחילה', 'warning');
-                    showStatus('💡 המלצה: השתמש בעורך של micro:bit (makecode.microbit.org או python.microbit.org) כדי ליצור קובץ .hex, ואז העלה אותו כאן', 'info');
-                    
-                    // Offer to save as file
-                    const blob = new Blob([code], { type: 'text/plain' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = 'main.py';
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    
-                    showStatus('✅ הקוד נשמר כקובץ main.py במחשב שלך', 'success');
+            try {
+                isRunning = true;
+                runBtn.disabled = true;
+                stopBtn.disabled = false;
+
+                // Send Ctrl+C to stop any running code
+                await writer.write('\x03');
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                // Enter paste mode (Ctrl+E)
+                await writer.write('\x05');
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                // Send the code
+                const lines = code.split('\n');
+                for (const line of lines) {
+                    await writer.write(line + '\r\n');
+                    await new Promise(resolve => setTimeout(resolve, 10));
                 }
 
-                flashBtn.disabled = false;
-                connectBtn.disabled = false;
+                // Exit paste mode (Ctrl+D)
+                await writer.write('\x04');
+                
+                writeToTerminal('\n>>> שולח קוד למיקרוביט...', true);
+                showStatus('✅ הקוד נשלח למיקרוביט!', 'success');
 
             } catch (error) {
-                console.error('Flash error:', error);
-                hideProgress();
-                showStatus('שגיאה בצריבה: ' + error.message, 'error');
-                flashBtn.disabled = false;
-                connectBtn.disabled = false;
+                console.error('Run error:', error);
+                showStatus('שגיאה בהרצת קוד: ' + error.message, 'error');
+                runBtn.disabled = false;
+                stopBtn.disabled = true;
+                isRunning = false;
             }
         });
 
-        async function flashHexFile(hexContent) {
-            // This is a simplified version - actual flashing requires the DAPLink protocol
-            showStatus('⚠️ צריבת hex דרך WebUSB דורשת יישום מלא של פרוטוקול DAPLink', 'warning');
-            showStatus('💡 המלצה מעשית: גרור את קובץ ה-.hex ישירות לכונן MICROBIT שמופיע במחשב', 'info');
-            
-            // Alternative: Trigger download
-            const blob = new Blob([hexContent], { type: 'text/plain' });
+        // Stop code
+        stopBtn.addEventListener('click', async () => {
+            if (!isConnected) return;
+
+            try {
+                // Send Ctrl+C
+                await writer.write('\x03');
+                writeToTerminal('\n>>> עצור הרצה', true);
+                showStatus('✅ ההרצה נעצרה', 'success');
+                
+                runBtn.disabled = false;
+                stopBtn.disabled = true;
+                isRunning = false;
+
+            } catch (error) {
+                console.error('Stop error:', error);
+            }
+        });
+
+        // Clear terminal
+        clearBtn.addEventListener('click', () => {
+            terminal.textContent = '>>> טרמינל נוקה\n';
+        });
+
+        // Download file
+        downloadBtn.addEventListener('click', () => {
+            const code = codeEditor.value;
+            const blob = new Blob([code], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'microbit.hex';
+            a.download = 'microbit_code.py';
             a.click();
             URL.revokeObjectURL(url);
-            
-            showStatus('✅ קובץ ה-hex הורד. גרור אותו לכונן MICROBIT', 'success');
-        }
+            showStatus('✅ הקובץ הורד בהצלחה!', 'success');
+        });
+
+        // Open file
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    codeEditor.value = event.target.result;
+                    showStatus(`✅ קובץ ${file.name} נטען בהצלחה!`, 'success');
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // Handle page close
+        window.addEventListener('beforeunload', async () => {
+            if (port) {
+                await port.close();
+            }
+        });
     </script>
 </body>
 </html>
