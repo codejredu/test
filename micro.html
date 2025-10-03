@@ -118,8 +118,6 @@
         // ייבוא מפורש של הפונקציות והקבועים ישירות מהמודול, פותר את שגיאת ה-ReferenceError
         import { createWebUSBConnection, ConnectionStatus } from 'https://unpkg.com/@microbit/microbit-connection@latest/dist/microbit-connection.js';
         
-        // כל הלוגיקה רצה ישירות משום שסקריפטים מסוג module מופעלים רק לאחר שה-DOM נטען
-        
         const connectButton = document.getElementById('connectButton');
         const statusElement = document.getElementById('status');
 
@@ -151,9 +149,20 @@
                     }
 
                 } catch (error) {
+                    // *** הוספנו בדיקות מפורטות יותר לשגיאות אפשריות של WebUSB ***
                     if (error.message.includes('No device selected')) {
                          statusElement.innerHTML = 'סטטוס: ❌ <strong>החיבור בוטל על ידי המשתמש.</strong>';
-                    } else {
+                    } else if (error instanceof DOMException && error.name === 'NotAllowedError') {
+                        // שגיאה זו נזרקת אם המשתמש חסם את הרשאת ה-USB או אם האתר לא ב-HTTPS
+                        statusElement.innerHTML = 'סטטוס: 🔒 <strong>הרשאת USB נחסמה.</strong> אנא ודא שהרשאת ה-USB לא נחסמה עבור דף זה.';
+                    } else if (error instanceof DOMException && error.name === 'NotFoundError') {
+                         // שגיאה זו נזרקת אם לא נמצאו מכשירים רלוונטיים לאחר בקשת החיבור
+                        statusElement.innerHTML = 'סטטוס: 🔎 <strong>לא נמצא מכשיר מתאים.</strong> ודא שה-Micro:bit מחובר פיזית למחשב.';
+                    } else if (error.message.includes('A transfer error has occurred')) {
+                        // שגיאה נפוצה המתרחשת אם ה-Micro:bit מחובר אך עסוק או לא מוכן לתקשורת
+                        statusElement.innerHTML = 'סטטוס: ⚠️ <strong>שגיאת העברה.</strong> נתק וחבר שוב את המיקרוביט, ונסה להתחבר שוב.';
+                    }
+                    else {
                         statusElement.innerHTML = `סטטוס: 🚨 <strong>שגיאת חיבור חמורה:</strong> ${error.message}`;
                         console.error('Connection Error:', error);
                     }
