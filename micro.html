@@ -304,37 +304,50 @@ while True:
             }
 
             try {
-                showStatus('מכין קובץ hex...', 'info');
+                showStatus('מוריד MicroPython runtime...', 'info');
                 flashBtn.disabled = true;
                 connectBtn.disabled = true;
 
-                // Here you would need to convert the MicroPython code to a hex file
-                // This typically requires a MicroPython compiler service or pre-compiled runtime
-                // For this example, we'll show the process structure
+                // Import microbit-fs for creating hex files with Python code
+                const { MicropythonFsHex, microbitBoardId } = await import('@microbit/microbit-fs');
                 
+                // Download MicroPython runtime hex files for V1 and V2
+                showStatus('מוריד קבצי runtime...', 'info');
+                const hexV2Response = await fetch('https://cdn.jsdelivr.net/gh/microbit-foundation/python-editor-v3@main/public/microbit-micropython-v2.hex');
+                const hexV2 = await hexV2Response.text();
+                
+                const hexV1Response = await fetch('https://cdn.jsdelivr.net/gh/microbit-foundation/python-editor-v3@main/public/microbit-micropython.hex');
+                const hexV1 = await hexV1Response.text();
+
+                showStatus('יוצר מערכת קבצים עם הקוד שלך...', 'info');
+                
+                // Create MicroPython filesystem with the user's code
+                const micropythonFs = new MicropythonFsHex([
+                    { hex: hexV1, boardId: microbitBoardId.V1 },
+                    { hex: hexV2, boardId: microbitBoardId.V2 }
+                ]);
+
+                // Add the user's Python code as main.py
+                await micropythonFs.write('main.py', code);
+
                 showStatus('צורב קוד למיקרוביט... אל תנתק את הכרטיס!', 'info');
 
-                // This is a placeholder - actual implementation would need:
-                // 1. MicroPython runtime hex file
-                // 2. File system creation with the user's code
-                // 3. Combining them into a universal hex
+                // Get board version and flash appropriate hex
+                const { BoardId } = await import('@microbit/microbit-connection');
                 
-                // Example flash call (you'll need the actual hex data):
-                // await usbConnection.flash(hexData, {
-                //     partial: true,
-                //     progress: updateProgress
-                // });
-
-                showStatus('⚠️ שים לב: התכונה הזו דורשת שרת backend להמרת קוד Python ל-hex', 'error');
-                
-                // Simulated progress for demo
-                for (let i = 0; i <= 100; i += 10) {
-                    await new Promise(resolve => setTimeout(resolve, 200));
-                    updateProgress(i);
-                }
+                await usbConnection.flash(
+                    async (boardVersion) => {
+                        const boardId = BoardId.forVersion(boardVersion).id;
+                        return micropythonFs.getIntelHex(boardId);
+                    },
+                    {
+                        partial: false,
+                        progress: updateProgress
+                    }
+                );
 
                 hideProgress();
-                showStatus('✅ הצריבה הושלמה בהצלחה!', 'success');
+                showStatus('✅ הצריבה הושלמה בהצלחה! הקוד רץ על המיקרוביט', 'success');
                 flashBtn.disabled = false;
                 connectBtn.disabled = false;
 
