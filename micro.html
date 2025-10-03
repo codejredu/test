@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>צורב micro:bit 1פשוט (WebUSB)</title>
+    <title>צורב micro:bitSIM (WebUSB)</title>
     <!-- Tailwind CSS CDN for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -62,137 +62,131 @@ while True:
     <!-- JavaScript Module for WebUSB connection -->
     <script type="module">
         // Import the required functions from the microbit-connection library via unpkg CDN
-        // This requires the browser to support ES Modules.
+        // Note: The import happens here, but the event listeners are attached only after 'load'
         import { createWebUSBConnection, ConnectionStatus } from "https://unpkg.com/@microbit/microbit-connection@0.1.0-alpha.5/dist/microbit-connection.mjs";
 
-        // --- Global Variables and DOM Elements ---
-        const connectButton = document.getElementById('connect-button');
-        const flashButton = document.getElementById('flash-button');
-        const statusElement = document.getElementById('connection-status');
-        const statusContainer = document.getElementById('status-container');
-        const codeArea = document.getElementById('micropython-code');
-
+        // --- Global Variables ---
         let usbConnection = null;
+        let connectButton, flashButton, statusElement, codeArea;
 
-        // --- Utility Function to Update UI Status ---
         /**
          * @param {string} message 
          * @param {string} colorClass 
          * @param {boolean} isConnected 
          */
         function updateStatus(message, colorClass, isConnected = false) {
-            statusElement.innerHTML = `סטטוס חיבור: <span class="${colorClass} font-bold">${message}</span>`;
-            if (isConnected) {
-                connectButton.disabled = true;
-                flashButton.disabled = false;
-            } else {
-                connectButton.disabled = false;
-                flashButton.disabled = true;
+            if (statusElement && connectButton && flashButton) {
+                statusElement.innerHTML = `סטטוס חיבור: <span class="${colorClass} font-bold">${message}</span>`;
+                connectButton.disabled = isConnected;
+                flashButton.disabled = !isConnected;
             }
         }
 
-        // --- Connection Logic (Step 2) ---
-        connectButton.addEventListener('click', async () => {
-            // Check for WebUSB support first
-            if (!navigator.usb) {
-                updateStatus('שגיאה: WebUSB אינו נתמך בדפדפן זה.', 'text-red-600', false);
-                console.error("WebUSB API not available in this browser.");
-                return;
-            }
-
-            updateStatus('מתחבר...', 'text-yellow-600', false);
+        // --- Main Initialization and Event Listener Setup ---
+        window.addEventListener('load', () => {
+            // Get DOM elements after the page is fully loaded
+            connectButton = document.getElementById('connect-button');
+            flashButton = document.getElementById('flash-button');
+            statusElement = document.getElementById('connection-status');
+            codeArea = document.getElementById('micropython-code');
             
-            if (usbConnection === null) {
-                // 1. Initialize the WebUSB connection object
-                // We use 'try-catch' because the connection might fail or be rejected by the user.
-                try {
-                    usbConnection = createWebUSBConnection();
-                } catch (error) {
-                    console.error("Failed to create WebUSB connection object:", error);
-                    updateStatus('שגיאת אתחול WebUSB', 'text-red-600', false);
+            updateStatus('מנותק', 'text-red-500', false);
+            console.log("micro:bit Flasher Initialized and ready.");
+
+            // --- Connection Logic (Step 2) ---
+            connectButton.addEventListener('click', async () => {
+                // Check for WebUSB support first
+                if (!navigator.usb) {
+                    updateStatus('שגיאה: WebUSB אינו נתמך בדפדפן זה.', 'text-red-600', false);
+                    console.error("WebUSB API not available in this browser.");
                     return;
                 }
-            }
 
-            // 2. Attempt to connect (This is the call that triggers the browser's device selection dialog)
-            try {
-                const connectionStatus = await usbConnection.connect();
-                console.log("Connection Status:", connectionStatus);
-
-                if (connectionStatus === ConnectionStatus.CONNECTED) {
-                    updateStatus('מחובר (CONNECTED)', 'text-green-600', true);
-                } else if (connectionStatus === ConnectionStatus.NOT_FOUND) {
-                     updateStatus('לא נמצא (NOT_FOUND)', 'text-red-600', false);
-                } else if (connectionStatus === ConnectionStatus.DISCONNECTED) {
-                     // This often happens if the user cancels the dialog or permissions are denied
-                     updateStatus('החיבור בוטל/נותק.', 'text-red-600', false);
-                } else {
-                    updateStatus('חיבור נכשל', 'text-red-600', false);
+                updateStatus('מתחבר...', 'text-yellow-600', false);
+                
+                // Re-initialize connection object if null or disconnected
+                if (usbConnection === null || usbConnection.status === ConnectionStatus.DISCONNECTED) {
+                    try {
+                        usbConnection = createWebUSBConnection();
+                    } catch (error) {
+                        console.error("Failed to create WebUSB connection object:", error);
+                        updateStatus('שגיאת אתחול WebUSB', 'text-red-600', false);
+                        return;
+                    }
                 }
-            } catch (error) {
-                // Catch any permission or security error that prevents the dialog
-                console.error("Connection error (Could be canceled or blocked):", error);
-                // Check if the error is the common 'No device selected' or security issue
-                const errorMessage = error.message.includes('No device selected') ? 'המשתמש ביטל את הבחירה.' : 'שגיאת חיבור (בדוק קונסול)';
-                updateStatus(errorMessage, 'text-red-600', false);
-            }
-        });
 
-        // --- Flashing Logic (Step 3) ---
-        flashButton.addEventListener('click', async () => {
-            if (!usbConnection || usbConnection.status !== ConnectionStatus.CONNECTED) {
-                updateStatus('אנא התחבר קודם!', 'text-red-600', false);
-                return;
-            }
+                // 2. Attempt to connect (This is the call that triggers the browser's device selection dialog)
+                try {
+                    const connectionStatus = await usbConnection.connect();
+                    console.log("Connection Status:", connectionStatus);
 
-            const micropythonCode = codeArea.value;
-            // The connection library requires the universal hex data source creator.
-            // NOTE: We cannot include the actual MicroPython hex file (which is large)
-            // or the microbit-fs library to inject the user code in this simple file.
-            
-            // For demonstration, we use a placeholder function for the data source.
-            // IMPORTANT: In a production app, the value of 'universalHexString' MUST be a valid,
-            // full hex file string that contains the MicroPython runtime and the user's code.
-            const HexPlaceholder = "In a real app, this would be a large, valid micro:bit hex string containing the MicroPython runtime and your code.";
+                    if (connectionStatus === ConnectionStatus.CONNECTED) {
+                        updateStatus('מחובר (CONNECTED)', 'text-green-600', true);
+                    } else if (connectionStatus === ConnectionStatus.NOT_FOUND) {
+                         updateStatus('לא נמצא (NOT_FOUND)', 'text-red-600', false);
+                         usbConnection = null; // Reset
+                    } else if (connectionStatus === ConnectionStatus.DISCONNECTED) {
+                         updateStatus('החיבור בוטל/נותק.', 'text-red-600', false);
+                         usbConnection = null; // Reset
+                    } else {
+                        updateStatus('חיבור נכשל', 'text-red-600', false);
+                        usbConnection = null; // Reset
+                    }
+                } catch (error) {
+                    // Catch user cancellation (e.g., closing the dialog) or security errors
+                    console.error("Connection error:", error);
+                    
+                    const isUserCancelled = error.message.includes('No device selected') || error.name === 'NotFoundError';
 
-            updateStatus('מאחזר כלי צריבה...', 'text-yellow-600', true);
+                    const errorMessage = isUserCancelled ? 'המשתמש ביטל את הבחירה.' : 'שגיאת חיבור (בדוק קונסול)';
+                    updateStatus(errorMessage, 'text-red-600', false);
 
-            try {
-                // Use standard await import() inside the async function
-                const module = await import("https://unpkg.com/@microbit/microbit-connection@0.1.0-alpha.5/dist/microbit-connection.mjs");
-                const { createUniversalHexFlashDataSource } = module;
-                
+                    // Crucial: Reset connection object to allow the button to try again fresh
+                    usbConnection = null; 
+                }
+            });
+
+            // --- Flashing Logic (Step 3) ---
+            flashButton.addEventListener('click', async () => {
+                if (!usbConnection || usbConnection.status !== ConnectionStatus.CONNECTED) {
+                    updateStatus('אנא התחבר קודם!', 'text-red-600', false);
+                    return;
+                }
+
+                // IMPORTANT: The HexPlaceholder MUST be replaced with a real hex file string 
+                // containing the MicroPython runtime and the user's code for actual functionality.
+                const HexPlaceholder = "In a real app, this would be a large, valid micro:bit hex string containing the MicroPython runtime and your code.";
+
                 updateStatus('צורב... (0%)', 'text-yellow-600', true);
-                
-                // Start the flash process
-                await usbConnection.flash(createUniversalHexFlashDataSource(HexPlaceholder), {
-                    partial: true,
-                    progress: (percentage) => {
-                        const percent = percentage !== undefined ? Math.round(percentage * 100) : '...';
-                        updateStatus(`צורב... (${percent}%)`, 'text-yellow-600', true);
-                        console.log(`Flash progress: ${percent}%`);
-                    },
-                });
 
-                // If successful
-                updateStatus('הצריבה הסתיימה בהצלחה!', 'text-green-600', true);
-                console.log("Flash successful.");
-                
-            } catch (error) {
-                // Catch any error during import or flash process
-                console.error("Flashing or import error:", error);
-                updateStatus(`שגיאת צריבה: ${error.message || 'כללית'}`, 'text-red-600', true);
-            }
-        });
+                try {
+                    // Import the necessary function
+                    const module = await import("https://unpkg.com/@microbit/microbit-connection@0.1.0-alpha.5/dist/microbit-connection.mjs");
+                    const { createUniversalHexFlashDataSource } = module;
+                    
+                    // Start the flash process
+                    await usbConnection.flash(createUniversalHexFlashDataSource(HexPlaceholder), {
+                        partial: true,
+                        progress: (percentage) => {
+                            const percent = percentage !== undefined ? Math.round(percentage * 100) : '...';
+                            updateStatus(`צורב... (${percent}%)`, 'text-yellow-600', true);
+                            console.log(`Flash progress: ${percent}%`);
+                        },
+                    });
 
-        // Initial setup on load
-        window.addEventListener('load', () => {
-            updateStatus('מנותק', 'text-red-500', false);
-            console.log("micro:bit Flasher Initialized.");
+                    // If successful
+                    updateStatus('הצריבה הסתיימה בהצלחה!', 'text-green-600', true);
+                    console.log("Flash successful.");
+                    
+                } catch (error) {
+                    console.error("Flashing or import error:", error);
+                    updateStatus(`שגיאת צריבה: ${error.message || 'כללית'}`, 'text-red-600', true);
+                }
+            });
+            
             // Log for Firestore debugging (best practice, though not used here)
             if (typeof setLogLevel === 'function') { setLogLevel('Debug'); }
         });
-        
     </script>
 </body>
 </html>
