@@ -217,9 +217,19 @@ while True:
         <div class="status" id="status"></div>
     </div>
 
+    <!-- Import maps for ESM modules -->
+    <script type="importmap">
+    {
+        "imports": {
+            "@microbit/microbit-connection": "https://esm.sh/@microbit/microbit-connection@0.0.0-alpha.39",
+            "@microbit/microbit-fs": "https://esm.sh/@microbit/microbit-fs@0.0.0-alpha.16"
+        }
+    }
+    </script>
+
     <script type="module">
-        // Note: This requires the @microbit/microbit-connection library
-        // For GitHub Pages, you'll need to import it from a CDN or include it in your project
+        // Import the micro:bit connection library
+        import { createWebUSBConnection, createUniversalHexFlashDataSource } from '@microbit/microbit-connection';
         
         let usbConnection = null;
         let isConnected = false;
@@ -261,10 +271,7 @@ while True:
                     return;
                 }
 
-                // Import the library (you'll need to adjust this path based on your setup)
-                // For now, this is a placeholder - you'll need to include the actual library
-                const { createWebUSBConnection } = await import('https://cdn.jsdelivr.net/npm/@microbit/microbit-connection@latest/dist/esm/index.js');
-                
+                // Create USB connection
                 usbConnection = createWebUSBConnection();
                 const connectionStatus = await usbConnection.connect();
 
