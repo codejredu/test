@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>צורב micro:bit פשוט (WebUSB)</title>
+    <title>צורב micro:bit 1פשוט (WebUSB)</title>
     <!-- Tailwind CSS CDN for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -93,6 +93,13 @@ while True:
 
         // --- Connection Logic (Step 2) ---
         connectButton.addEventListener('click', async () => {
+            // Check for WebUSB support first
+            if (!navigator.usb) {
+                updateStatus('שגיאה: WebUSB אינו נתמך בדפדפן זה.', 'text-red-600', false);
+                console.error("WebUSB API not available in this browser.");
+                return;
+            }
+
             updateStatus('מתחבר...', 'text-yellow-600', false);
             
             if (usbConnection === null) {
@@ -107,7 +114,7 @@ while True:
                 }
             }
 
-            // 2. Attempt to connect
+            // 2. Attempt to connect (This is the call that triggers the browser's device selection dialog)
             try {
                 const connectionStatus = await usbConnection.connect();
                 console.log("Connection Status:", connectionStatus);
@@ -116,12 +123,18 @@ while True:
                     updateStatus('מחובר (CONNECTED)', 'text-green-600', true);
                 } else if (connectionStatus === ConnectionStatus.NOT_FOUND) {
                      updateStatus('לא נמצא (NOT_FOUND)', 'text-red-600', false);
+                } else if (connectionStatus === ConnectionStatus.DISCONNECTED) {
+                     // This often happens if the user cancels the dialog or permissions are denied
+                     updateStatus('החיבור בוטל/נותק.', 'text-red-600', false);
                 } else {
                     updateStatus('חיבור נכשל', 'text-red-600', false);
                 }
             } catch (error) {
-                console.error("Connection error:", error);
-                updateStatus('שגיאת חיבור (בדוק קונסול)', 'text-red-600', false);
+                // Catch any permission or security error that prevents the dialog
+                console.error("Connection error (Could be canceled or blocked):", error);
+                // Check if the error is the common 'No device selected' or security issue
+                const errorMessage = error.message.includes('No device selected') ? 'המשתמש ביטל את הבחירה.' : 'שגיאת חיבור (בדוק קונסול)';
+                updateStatus(errorMessage, 'text-red-600', false);
             }
         });
 
