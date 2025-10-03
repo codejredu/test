@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>כלי חיבור Micro:bit WebUSB</title>
     
-    <!-- הסקריפט החיצוני הוסר מכאן ועובר להיות מיובא כמודול בסוף הגוף (כדי לפתור את שגיאת ה-ReferenceError) -->
-    <!-- REMOVED: <script src="https://unpkg.com/@microbit/microbit-connection@latest/dist/microbit-connection.js"></script> -->
+    <!-- החזרת הסקריפט לטעינה גלובלית ב-HEAD כדי למנוע שגיאת CORS -->
+    <script src="https://unpkg.com/@microbit/microbit-connection@latest/dist/microbit-connection.js"></script>
 
     <style>
         /* סגנונות כלליים ו-RTL */
@@ -86,7 +86,7 @@
             padding-right: 20px; /* הזחה לרשימה ממוספרת ב-RTL */
             padding-left: 0;
         }
-        .instructions li {
+        li {
             margin-bottom: 8px;
         }
     </style>
@@ -113,67 +113,76 @@
         </div>
     </div>
 
-    <!-- שימוש ב-type="module" ו-import לטעינה נכונה של הספרייה -->
-    <script type="module">
-        // ייבוא מפורש של הפונקציות והקבועים ישירות מהמודול, פותר את שגיאת ה-ReferenceError
-        import { createWebUSBConnection, ConnectionStatus } from 'https://unpkg.com/@microbit/microbit-connection@latest/dist/microbit-connection.js';
-        
-        const connectButton = document.getElementById('connectButton');
-        const statusElement = document.getElementById('status');
+    <!-- שימוש בסקריפט רגיל והבטחת הרצה רק לאחר טעינת כל המשאבים (window.onload) -->
+    <script>
+        // עוטפים את כל הלוגיקה ב-window.onload כדי להבטיח ש-microbit_connection מוגדר
+        window.addEventListener('load', () => {
+            // גישה למשתנה הגלובלי microbit_connection שנוצר על ידי תגית <script>
+            // אנחנו משתמשים ב-typeof כדי לוודא ש-microbit_connection קיים לפני שננסה להשתמש בו.
+            if (typeof microbit_connection === 'undefined') {
+                document.getElementById('status').innerHTML = 'סטטוס: 🚨 <strong>שגיאה!</strong> הספרייה החיצונית (microbit-connection) לא נטענה עקב בעיה בשרת (ייתכן CORS).';
+                return;
+            }
 
-        // בדיקה אם הדפדפן תומך ב-WebUSB לפני הפעלת הלוגיקה
-        if (typeof navigator.usb === 'undefined') {
-            statusElement.innerHTML = 'סטטוס: 🚨 <strong>שגיאה!</strong> הדפדפן אינו תומך ב-WebUSB. אנא השתמש ב-Chrome או Edge.';
-            connectButton.disabled = true;
-        } else {
-            // יצירת מופע חיבור WebUSB
-            const usbConnection = createWebUSBConnection();
+            const { createWebUSBConnection, ConnectionStatus } = microbit_connection;
+            
+            const connectButton = document.getElementById('connectButton');
+            const statusElement = document.getElementById('status');
 
-            /**
-             * פונקציה המטפלת בלחיצה על כפתור החיבור
-             */
-            connectButton.addEventListener('click', async () => {
-                // *** עדכון סטטוס מיידי כדי לראות תגובה ללחיצה ***
-                statusElement.innerHTML = 'סטטוס: ⏳ מנסה להתחבר... אנא אשר בחלון הקופץ.';
-                
-                try {
-                    // ניסיון ליזום את תהליך החיבור WebUSB
-                    const connectionStatus = await usbConnection.connect();
+            // בדיקה אם הדפדפן תומך ב-WebUSB לפני הפעלת הלוגיקה
+            if (typeof navigator.usb === 'undefined') {
+                statusElement.innerHTML = 'סטטוס: 🚨 <strong>שגיאה!</strong> הדפדפן אינו תומך ב-WebUSB. אנא השתמש ב-Chrome או Edge.';
+                connectButton.disabled = true;
+            } else {
+                // יצירת מופע חיבור WebUSB
+                const usbConnection = createWebUSBConnection();
 
-                    if (connectionStatus === ConnectionStatus.CONNECTED) {
-                        statusElement.innerHTML = 'סטטוס: ✅ <strong>מחובר בהצלחה!</strong> כעת תוכל להעלות קוד או לקרוא נתונים.';
-                    } else if (connectionStatus === ConnectionStatus.DISCONNECTED) {
-                         statusElement.innerHTML = 'סטטוס: ❌ <strong>החיבור בוטל או נכשל.</strong> ייתכן שביטלת את החיבור בחלון הקופץ.';
-                    } else {
-                         statusElement.innerHTML = `סטטוס: ⚠️ <strong>נכשל חיבור.</strong> (קוד: ${connectionStatus})`;
+                /**
+                 * פונקציה המטפלת בלחיצה על כפתור החיבור
+                 */
+                connectButton.addEventListener('click', async () => {
+                    // עדכון סטטוס מיידי כדי לראות תגובה ללחיצה
+                    statusElement.innerHTML = 'סטטוס: ⏳ מנסה להתחבר... אנא אשר בחלון הקופץ.';
+                    
+                    try {
+                        // ניסיון ליזום את תהליך החיבור WebUSB
+                        const connectionStatus = await usbConnection.connect();
+
+                        if (connectionStatus === ConnectionStatus.CONNECTED) {
+                            statusElement.innerHTML = 'סטטוס: ✅ <strong>מחובר בהצלחה!</strong> כעת תוכל להעלות קוד או לקרוא נתונים.';
+                        } else if (connectionStatus === ConnectionStatus.DISCONNECTED) {
+                             statusElement.innerHTML = 'סטטוס: ❌ <strong>החיבור בוטל או נכשל.</strong> ייתכן שביטלת את החיבור בחלון הקופץ.';
+                        } else {
+                             statusElement.innerHTML = `סטטוס: ⚠️ <strong>נכשל חיבור.</strong> (קוד: ${connectionStatus})`;
+                        }
+
+                    } catch (error) {
+                        // לכידת שגיאות ועדכון סטטוס מפורט
+                        if (error.message.includes('No device selected')) {
+                             statusElement.innerHTML = 'סטטוס: ❌ <strong>החיבור בוטל על ידי המשתמש.</strong>';
+                        } else if (error instanceof DOMException && error.name === 'NotAllowedError') {
+                            statusElement.innerHTML = 'סטטוס: 🔒 <strong>הרשאת USB נחסמה.</strong> אנא ודא שהרשאת ה-USB לא נחסמה עבור דף זה.';
+                        } else if (error instanceof DOMException && error.name === 'NotFoundError') {
+                            statusElement.innerHTML = 'סטטוס: 🔎 <strong>לא נמצא מכשיר מתאים.</strong> ודא שה-Micro:bit מחובר פיזית למחשב.';
+                        } else if (error.message.includes('A transfer error has occurred')) {
+                            statusElement.innerHTML = 'סטטוס: ⚠️ <strong>שגיאת העברה.</strong> נתק וחבר שוב את המיקרוביט, ונסה להתחבר שוב.';
+                        }
+                        else {
+                            statusElement.innerHTML = `סטטוס: 🚨 <strong>שגיאת חיבור חמורה:</strong> ${error.message}`;
+                            console.error('Connection Error:', error);
+                        }
                     }
+                });
 
-                } catch (error) {
-                    // *** לכידת שגיאות ועדכון סטטוס מפורט ***
-                    if (error.message.includes('No device selected')) {
-                         statusElement.innerHTML = 'סטטוס: ❌ <strong>החיבור בוטל על ידי המשתמש.</strong>';
-                    } else if (error instanceof DOMException && error.name === 'NotAllowedError') {
-                        statusElement.innerHTML = 'סטטוס: 🔒 <strong>הרשאת USB נחסמה.</strong> אנא ודא שהרשאת ה-USB לא נחסמה עבור דף זה.';
-                    } else if (error instanceof DOMException && error.name === 'NotFoundError') {
-                        statusElement.innerHTML = 'סטטוס: 🔎 <strong>לא נמצא מכשיר מתאים.</strong> ודא שה-Micro:bit מחובר פיזית למחשב.';
-                    } else if (error.message.includes('A transfer error has occurred')) {
-                        statusElement.innerHTML = 'סטטוס: ⚠️ <strong>שגיאת העברה.</strong> נתק וחבר שוב את המיקרוביט, ונסה להתחבר שוב.';
-                    }
-                    else {
-                        statusElement.innerHTML = `סטטוס: 🚨 <strong>שגיאת חיבור חמורה:</strong> ${error.message}`;
-                        console.error('Connection Error:', error);
-                    }
-                }
-            });
-
-            /**
-             * מטפל באירוע ניתוק (כאשר המשתמש מנתק את הכבל)
-             */
-            usbConnection.on('disconnected', () => {
-                // מעדכן את הסטטוס שההתקן נותק
-                statusElement.innerHTML = 'סטטוס: 🛑 <strong>נותקת.</strong> אנא חבר שוב את המיקרוביט ולחץ על התחבר.';
-            });
-        }
+                /**
+                 * מטפל באירוע ניתוק (כאשר המשתמש מנתק את הכבל)
+                 */
+                usbConnection.on('disconnected', () => {
+                    // מעדכן את הסטטוס שההתקן נותק
+                    statusElement.innerHTML = 'סטטוס: 🛑 <strong>נותקת.</strong> אנא חבר שוב את המיקרוביט ולחץ על התחבר.';
+                });
+            }
+        });
     </script>
 </body>
 </html>
