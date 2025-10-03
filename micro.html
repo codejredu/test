@@ -238,20 +238,21 @@
         <div class="info-box">
             <h3>איך להשתמש:</h3>
             <ul>
-                <li>כתוב את קוד ה-Python בחלון העורך משמאל</li>
+                <li><strong>"הרץ עכשיו"</strong> - מריץ את הקוד באופן זמני (נעלם כשמאתחלים)</li>
+                <li><strong>"שמור למיקרוביט"</strong> - שומר את הקוד כ-main.py ומאתחל (רץ תמיד!)</li>
                 <li>לחץ "התחבר למיקרוביט" כדי להתחבר דרך Serial Port</li>
-                <li>לחץ "הרץ קוד" כדי לשלוח את הקוד למיקרוביט ולראות פלט בטרמינל</li>
-                <li>לחץ "הורד כקובץ" כדי לשמור את הקוד כקובץ .py במחשב</li>
-                <li>גרור קבצי .hex ישירות לכונן MICROBIT שמופיע במחשב כדי לצרוב</li>
+                <li>כתוב את קוד ה-Python בחלון העורך משמאל</li>
+                <li>הפלט והשגיאות יופיעו בטרמינל מימין</li>
             </ul>
         </div>
 
         <div class="button-group">
             <button class="btn-connect" id="connectBtn">🔌 התחבר למיקרוביט</button>
-            <button class="btn-run" id="runBtn" disabled>▶️ הרץ קוד</button>
+            <button class="btn-run" id="runBtn" disabled>▶️ הרץ עכשיו</button>
+            <button class="btn-download" id="saveBtn" disabled>💾 שמור למיקרוביט</button>
             <button class="btn-stop" id="stopBtn" disabled>⏹️ עצור</button>
             <button class="btn-clear" id="clearBtn">🗑️ נקה טרמינל</button>
-            <button class="btn-download" id="downloadBtn">💾 הורד כקובץ</button>
+            <button class="btn-download" id="downloadBtn">📥 הורד כקובץ</button>
             <div class="file-input-wrapper">
                 <label class="file-input-label" for="fileInput">📁 פתח קובץ</label>
                 <input type="file" id="fileInput" class="file-input" accept=".py,.txt">
@@ -296,6 +297,7 @@ while True:
 
         const connectBtn = document.getElementById('connectBtn');
         const runBtn = document.getElementById('runBtn');
+        const saveBtn = document.getElementById('saveBtn');
         const stopBtn = document.getElementById('stopBtn');
         const clearBtn = document.getElementById('clearBtn');
         const downloadBtn = document.getElementById('downloadBtn');
@@ -342,8 +344,9 @@ while True:
                 connectBtn.textContent = '✓ מחובר';
                 connectBtn.disabled = true;
                 runBtn.disabled = false;
+                saveBtn.disabled = false;
                 
-                terminal.textContent = '>>> מחובר למיקרוביט!\n>>> לחץ "הרץ קוד" כדי לשלוח את הקוד\n';
+                terminal.textContent = '>>> מחובר למיקרוביט!\n>>> לחץ "הרץ עכשיו" להרצה זמנית\n>>> לחץ "שמור למיקרוביט" כדי לשמור את הקוד לצמיתות\n';
                 showStatus('✅ התחברת בהצלחה למיקרוביט!', 'success');
 
                 // Start reading from serial
@@ -390,26 +393,51 @@ while True:
                 runBtn.disabled = true;
                 stopBtn.disabled = false;
 
-                // Send Ctrl+C to stop any running code
+                writeToTerminal('\n>>> עוצר תוכנית קודמת...', true);
+                
+                // Send Ctrl+C twice to stop any running code
                 await writer.write('\x03');
+                await new Promise(resolve => setTimeout(resolve, 200));
+                await writer.write('\x03');
+                await new Promise(resolve => setTimeout(resolve, 200));
+                
+                // Send Enter to get to clean prompt
+                await writer.write('\r\n');
                 await new Promise(resolve => setTimeout(resolve, 100));
 
-                // Enter paste mode (Ctrl+E)
-                await writer.write('\x05');
-                await new Promise(resolve => setTimeout(resolve, 100));
+                writeToTerminal('>>> נכנס למצב הדבקה...', true);
+                
+                // Enter raw REPL mode (Ctrl+A)
+                await writer.write('\x01');
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+                writeToTerminal('>>> שולח קוד...', true);
 
                 // Send the code
-                const lines = code.split('\n');
-                for (const line of lines) {
-                    await writer.write(line + '\r\n');
-                    await new Promise(resolve => setTimeout(resolve, 10));
-                }
+                const codeToSend = code + '\n';
+                await writer.write(codeToSend);
+                await new Promise(resolve => setTimeout(resolve, 100));
 
-                // Exit paste mode (Ctrl+D)
+                // Exit raw REPL and execute (Ctrl+D)
                 await writer.write('\x04');
-                
-                writeToTerminal('\n>>> שולח קוד למיקרוביט...', true);
-                showStatus('✅ הקוד נשלח למיקרוביט!', 'success');
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                writeToTerminal('>>> מריץ קוד על המיקרוביט!', true);
+                showStatus('✅ הקוד רץ על המיקרוביט!', 'success');
+
+                // Return to normal mode
+                setTimeout(async () => {
+                    try {
+                        await writer.write('\x02'); // Ctrl+B to exit raw mode
+                    } catch (e) {
+                        console.log('Already in normal mode');
+                    }
+                }, 1000);
+
+                setTimeout(() => {
+                    runBtn.disabled = false;
+                    stopBtn.disabled = false;
+                }, 1500);
 
             } catch (error) {
                 console.error('Run error:', error);
@@ -436,6 +464,72 @@ while True:
 
             } catch (error) {
                 console.error('Stop error:', error);
+            }
+        });
+
+        // Save code permanently to micro:bit
+        saveBtn.addEventListener('click', async () => {
+            if (!isConnected) {
+                showStatus('אנא התחבר למיקרוביט תחילה', 'error');
+                return;
+            }
+
+            const code = codeEditor.value;
+            if (!code.trim()) {
+                showStatus('אנא הכנס קוד לשמירה', 'error');
+                return;
+            }
+
+            try {
+                saveBtn.disabled = true;
+                writeToTerminal('\n>>> שומר קוד למיקרוביט...', true);
+
+                // Stop any running code
+                await writer.write('\x03');
+                await new Promise(resolve => setTimeout(resolve, 200));
+                await writer.write('\x03');
+                await new Promise(resolve => setTimeout(resolve, 200));
+
+                // Enter raw REPL mode
+                await writer.write('\x01');
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+                // Create command to write main.py
+                const escapedCode = code.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
+                const saveCommand = `
+with open('main.py', 'w') as f:
+    f.write('''${code}''')
+print('File saved!')
+`;
+
+                await writer.write(saveCommand);
+                await new Promise(resolve => setTimeout(resolve, 200));
+
+                // Execute
+                await writer.write('\x04');
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Reset micro:bit to run the saved code
+                writeToTerminal('>>> מאתחל מיקרוביט...', true);
+                const resetCommand = `
+import microbit
+microbit.reset()
+`;
+                await writer.write(resetCommand);
+                await new Promise(resolve => setTimeout(resolve, 100));
+                await writer.write('\x04');
+
+                writeToTerminal('>>> הקוד נשמר והמיקרוביט מאתחל!', true);
+                showStatus('✅ הקוד נשמר לצמיתות! המיקרוביט יריץ את הקוד בכל הפעלה', 'success');
+
+                setTimeout(() => {
+                    saveBtn.disabled = false;
+                }, 2000);
+
+            } catch (error) {
+                console.error('Save error:', error);
+                showStatus('שגיאה בשמירה: ' + error.message, 'error');
+                saveBtn.disabled = false;
             }
         });
 
