@@ -221,15 +221,16 @@ while True:
     <script type="importmap">
     {
         "imports": {
-            "@microbit/microbit-connection": "https://esm.sh/@microbit/microbit-connection@0.0.0-alpha.39",
-            "@microbit/microbit-fs": "https://esm.sh/@microbit/microbit-fs@0.0.0-alpha.16"
+            "@microbit/microbit-connection": "https://unpkg.com/@microbit/microbit-connection@0.0.0-alpha.39/dist/esm/index.js",
+            "@microbit/microbit-fs": "https://unpkg.com/@microbit/microbit-fs@0.0.0-alpha.16/dist/esm/index.js"
         }
     }
     </script>
 
     <script type="module">
         // Import the micro:bit connection library
-        import { createWebUSBConnection, createUniversalHexFlashDataSource } from '@microbit/microbit-connection';
+        import { createWebUSBConnection, createUniversalHexFlashDataSource, BoardId } from '@microbit/microbit-connection';
+        import { MicropythonFsHex, microbitBoardId } from '@microbit/microbit-fs';
         
         let usbConnection = null;
         let isConnected = false;
@@ -308,11 +309,8 @@ while True:
                 flashBtn.disabled = true;
                 connectBtn.disabled = true;
 
-                // Import microbit-fs for creating hex files with Python code
-                const { MicropythonFsHex, microbitBoardId } = await import('@microbit/microbit-fs');
-                
                 // Download MicroPython runtime hex files for V1 and V2
-                showStatus('מוריד קבצי runtime...', 'info');
+                showStatus('מוריד קבצי runtime... (עשוי לקחת מספר שניות)', 'info');
                 const hexV2Response = await fetch('https://cdn.jsdelivr.net/gh/microbit-foundation/python-editor-v3@main/public/microbit-micropython-v2.hex');
                 const hexV2 = await hexV2Response.text();
                 
@@ -333,8 +331,6 @@ while True:
                 showStatus('צורב קוד למיקרוביט... אל תנתק את הכרטיס!', 'info');
 
                 // Get board version and flash appropriate hex
-                const { BoardId } = await import('@microbit/microbit-connection');
-                
                 await usbConnection.flash(
                     async (boardVersion) => {
                         const boardId = BoardId.forVersion(boardVersion).id;
