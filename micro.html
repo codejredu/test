@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Micro:bit Web Editor</title>
+    <title>Python to HEX Converter - BBC micro:bit</title>
     <style>
         * {
             margin: 0;
@@ -21,451 +21,323 @@
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: white;
+            border-radius: 15px;
             padding: 30px;
-            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
         .header h1 {
+            color: #667eea;
             font-size: 2.5em;
             margin-bottom: 10px;
         }
 
         .header p {
-            opacity: 0.9;
+            color: #666;
             font-size: 1.1em;
         }
 
-        .controls {
-            padding: 20px 30px;
-            background: #f8f9fa;
-            border-bottom: 2px solid #e9ecef;
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            flex-wrap: wrap;
+        .main-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
         }
 
-        .btn {
-            padding: 12px 24px;
-            border: none;
+        .sidebar {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            height: fit-content;
+        }
+
+        .sidebar h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .example-btn {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f0f4ff;
+            border: 2px solid #667eea;
             border-radius: 8px;
-            font-size: 1em;
             cursor: pointer;
             transition: all 0.3s;
-            font-weight: bold;
+            font-size: 1em;
+            text-align: right;
         }
 
-        .btn-connect {
-            background: #28a745;
+        .example-btn:hover {
+            background: #667eea;
             color: white;
-        }
-
-        .btn-connect:hover {
-            background: #218838;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
         }
 
-        .btn-disconnect {
-            background: #dc3545;
-            color: white;
-        }
-
-        .btn-disconnect:hover {
-            background: #c82333;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
-        }
-
-        .btn-send {
-            background: #007bff;
-            color: white;
-        }
-
-        .btn-send:hover {
-            background: #0056b3;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
-        }
-
-        .btn-clear {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-clear:hover {
-            background: #5a6268;
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        .status {
-            margin-right: auto;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .status.connected {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status.disconnected {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        .status.connected .status-dot {
-            background: #28a745;
-            animation: pulse 2s infinite;
-        }
-
-        .status.disconnected .status-dot {
-            background: #dc3545;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .editor-section {
+        .main-content {
+            background: white;
+            border-radius: 15px;
             padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
-        .section-title {
+        .editor-label {
             font-size: 1.3em;
             color: #333;
             margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        #codeInput {
+            width: 100%;
+            height: 400px;
+            padding: 20px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+            direction: ltr;
+        }
+
+        #codeInput:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .char-count {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .clear-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .clear-btn:hover {
+            background: #ff3838;
+        }
+
+        .convert-section {
+            margin-top: 30px;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+
+        .convert-btn {
+            width: 100%;
+            padding: 20px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 10px;
         }
 
-        .section-title::before {
-            content: '📝';
-            font-size: 1.2em;
+        .convert-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
         }
 
-        #code-editor {
-            width: 100%;
-            min-height: 300px;
-            padding: 20px;
-            border: 2px solid #dee2e6;
+        .convert-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status-message {
+            margin-top: 20px;
+            padding: 15px;
             border-radius: 8px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 14px;
-            line-height: 1.6;
-            resize: vertical;
-            background: #f8f9fa;
-            direction: ltr;
-            text-align: left;
+            display: none;
         }
 
-        #code-editor:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
         }
 
-        .output-section {
-            padding: 30px;
-            background: #f8f9fa;
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
         }
 
-        .output-section .section-title::before {
-            content: '📟';
-        }
-
-        #output {
-            width: 100%;
-            min-height: 200px;
-            max-height: 400px;
-            padding: 20px;
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
-            background: #1e1e1e;
-            color: #00ff00;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 14px;
-            overflow-y: auto;
-            direction: ltr;
-            text-align: left;
-        }
-
-        .output-line {
-            margin-bottom: 5px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-
-        .output-line.sent {
-            color: #61dafb;
-        }
-
-        .output-line.received {
-            color: #00ff00;
-        }
-
-        .output-line.error {
-            color: #ff6b6b;
-        }
-
-        .output-line.info {
-            color: #ffd93d;
+        .status-message.processing {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
         }
 
         .instructions {
-            padding: 30px;
-            background: #e7f3ff;
-            border-top: 2px solid #b3d9ff;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
         }
 
         .instructions h3 {
-            color: #0056b3;
+            color: #667eea;
             margin-bottom: 15px;
         }
 
         .instructions ol {
-            margin-right: 20px;
-            line-height: 1.8;
+            padding-right: 20px;
         }
 
         .instructions li {
             margin-bottom: 10px;
+            line-height: 1.6;
         }
 
-        .instructions code {
-            background: #fff;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-family: monospace;
-            color: #d63384;
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎮 Micro:bit Web Editor</h1>
-            <p>עורך קוד MicroPython עם תקשורת Bluetooth</p>
+            <h1>🚀 Python to HEX Converter</h1>
+            <p>המר קוד Python לקובץ HEX עבור BBC micro:bit</p>
         </div>
 
-        <div class="controls">
-            <div class="status disconnected" id="status">
-                <span class="status-dot"></span>
-                <span id="status-text">לא מחובר</span>
+        <div class="main-grid">
+            <div class="sidebar">
+                <h2>📚 דוגמאות</h2>
+                <div id="examplesContainer">
+                    <p>טוען דוגמאות...</p>
+                </div>
+
+                <div class="warning" style="margin-top: 20px; font-size: 0.85em;">
+                    <strong>💡 טיפ:</strong> בחר דוגמה או הדבק קוד משלך
+                </div>
             </div>
-            <button class="btn btn-connect" id="connect-btn" onclick="connectToMicrobit()">התחבר ל-Micro:bit</button>
-            <button class="btn btn-disconnect" id="disconnect-btn" onclick="disconnectFromMicrobit()" disabled>התנתק</button>
-            <button class="btn btn-send" id="send-btn" onclick="sendCode()" disabled>שלח קוד</button>
-            <button class="btn btn-clear" onclick="clearOutput()">נקה פלט</button>
-        </div>
 
-        <div class="editor-section">
-            <div class="section-title">עורך הקוד</div>
-            <textarea id="code-editor" placeholder="הדבק או כתוב כאן את קוד ה-MicroPython שלך...
-דוגמה:
-from microbit import *
+            <div class="main-content">
+                <div class="editor-label">הדבק את קוד ה-Python שלך:</div>
+                <textarea 
+                    id="codeInput" 
+                    placeholder="from microbit import *&#10;&#10;display.scroll('Hello!')&#10;&#10;# הכנס את הקוד שלך כאן..."
+                ></textarea>
 
-while True:
-    display.show(Image.HEART)
-    sleep(1000)
-    display.show(Image.HAPPY)
-    sleep(1000)"></textarea>
-        </div>
+                <div class="controls">
+                    <span class="char-count" id="charCount">0 תווים</span>
+                    <button class="clear-btn" onclick="clearCode()">🗑️ נקה הכל</button>
+                </div>
 
-        <div class="output-section">
-            <div class="section-title">פלט מה-Micro:bit</div>
-            <div id="output"></div>
-        </div>
+                <div class="convert-section">
+                    <button class="convert-btn" id="convertBtn" onclick="convertCode()">
+                        <span id="btnText">⚡ המר והורד HEX</span>
+                    </button>
 
-        <div class="instructions">
-            <h3>📚 הוראות שימוש:</h3>
-            <ol>
-                <li>ודא שה-Micro:bit שלך מחובר ומופעל עם תוכנית Bluetooth</li>
-                <li>לחץ על <strong>"התחבר ל-Micro:bit"</strong> ובחר את המכשיר מהרשימה</li>
-                <li>כתוב או הדבק קוד MicroPython באזור העורך</li>
-                <li>לחץ על <strong>"שלח קוד"</strong> לשליחת הקוד ל-Micro:bit</li>
-                <li>צפה בתגובות ופלט באזור הפלט למטה</li>
-            </ol>
-            <p><strong>שים לב:</strong> ה-Micro:bit צריך להריץ תוכנית שתומכת ב-UART Bluetooth. ניתן להשתמש בקוד הדוגמה מהמאמר.</p>
+                    <div id="statusMessage" class="status-message"></div>
+                </div>
+
+                <div class="instructions">
+                    <h3>📋 הוראות שימוש</h3>
+                    <ol>
+                        <li>הדבק או כתוב את קוד ה-Python שלך בתיבה למעלה</li>
+                        <li>לחץ על "המר והורד HEX"</li>
+                        <li>חבר את ה-micro:bit למחשב דרך USB</li>
+                        <li>העתק את הקובץ שירד למכשיר (drag & drop)</li>
+                        <li>ה-micro:bit יאתחל ויריץ את הקוד שלך!</li>
+                    </ol>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Bluetooth UART Service UUIDs
-        const UART_SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
-        const UART_TX_CHARACTERISTIC_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
-        const UART_RX_CHARACTERISTIC_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
-
-        let uBitDevice = null;
-        let rxCharacteristic = null;
-        let txCharacteristic = null;
-
-        function addOutput(message, type = 'info') {
-            const output = document.getElementById('output');
-            const line = document.createElement('div');
-            line.className = `output-line ${type}`;
-            const timestamp = new Date().toLocaleTimeString('he-IL');
-            line.textContent = `[${timestamp}] ${message}`;
-            output.appendChild(line);
-            output.scrollTop = output.scrollHeight;
-        }
-
-        function clearOutput() {
-            document.getElementById('output').innerHTML = '';
-            addOutput('פלט נוקה', 'info');
-        }
-
-        function updateStatus(connected) {
-            const statusDiv = document.getElementById('status');
-            const statusText = document.getElementById('status-text');
-            const connectBtn = document.getElementById('connect-btn');
-            const disconnectBtn = document.getElementById('disconnect-btn');
-            const sendBtn = document.getElementById('send-btn');
-
-            if (connected) {
-                statusDiv.className = 'status connected';
-                statusText.textContent = 'מחובר ל-Micro:bit ✓';
-                connectBtn.disabled = true;
-                disconnectBtn.disabled = false;
-                sendBtn.disabled = false;
-            } else {
-                statusDiv.className = 'status disconnected';
-                statusText.textContent = 'לא מחובר';
-                connectBtn.disabled = false;
-                disconnectBtn.disabled = true;
-                sendBtn.disabled = true;
-            }
-        }
-
-        async function connectToMicrobit() {
+        // טעינת דוגמאות
+        async function loadExamples() {
             try {
-                addOutput('מחפש מכשירי Micro:bit...', 'info');
+                const response = await fetch('/examples');
+                const data = await response.json();
                 
-                uBitDevice = await navigator.bluetooth.requestDevice({
-                    filters: [{ namePrefix: "BBC micro:bit" }],
-                    optionalServices: [UART_SERVICE_UUID]
+                const container = document.getElementById('examplesContainer');
+                container.innerHTML = '';
+                
+                data.examples.forEach(example => {
+                    const btn = document.createElement('button');
+                    btn.className = 'example-btn';
+                    btn.textContent = example.name_he || example.name;
+                    btn.onclick = () => loadExample(example.code);
+                    container.appendChild(btn);
                 });
-
-                addOutput(`נמצא: ${uBitDevice.name}`, 'info');
-                addOutput('מתחבר לשרת GATT...', 'info');
-
-                const server = await uBitDevice.gatt.connect();
-                
-                addOutput('מקבל שירות UART...', 'info');
-                const service = await server.getPrimaryService(UART_SERVICE_UUID);
-
-                addOutput('מגדיר ערוצי תקשורת...', 'info');
-                
-                // TX - receiving from micro:bit
-                txCharacteristic = await service.getCharacteristic(UART_TX_CHARACTERISTIC_UUID);
-                await txCharacteristic.startNotifications();
-                txCharacteristic.addEventListener('characteristicvaluechanged', onDataReceived);
-
-                // RX - sending to micro:bit
-                rxCharacteristic = await service.getCharacteristic(UART_RX_CHARACTERISTIC_UUID);
-
-                uBitDevice.addEventListener('gattserverdisconnected', onDisconnected);
-
-                updateStatus(true);
-                addOutput('✓ התחברות הצליחה! מוכן לשליחת קוד', 'received');
-
             } catch (error) {
-                addOutput(`❌ שגיאת התחברות: ${error.message}`, 'error');
-                console.error(error);
-                updateStatus(false);
+                console.error('Error loading examples:', error);
             }
         }
 
-        function disconnectFromMicrobit() {
-            if (uBitDevice && uBitDevice.gatt.connected) {
-                uBitDevice.gatt.disconnect();
-                addOutput('התנתקות בוצעה', 'info');
-            }
+        // טעינת דוגמה
+        function loadExample(code) {
+            document.getElementById('codeInput').value = code;
+            updateCharCount();
+            hideStatus();
         }
 
-        function onDisconnected() {
-            updateStatus(false);
-            addOutput('⚠ Micro:bit התנתק', 'error');
-            uBitDevice = null;
-            rxCharacteristic = null;
-            txCharacteristic = null;
+        // ניקוי קוד
+        function clearCode() {
+            document.getElementById('codeInput').value = '';
+            updateCharCount();
+            hideStatus();
         }
 
-        function onDataReceived(event) {
-            let receivedData = [];
-            for (let i = 0; i < event.target.value.byteLength; i++) {
-                receivedData[i] = event.target.value.getUint8(i);
-            }
-            const receivedString = String.fromCharCode.apply(null, receivedData);
-            addOutput(`◀ התקבל: ${receivedString}`, 'received');
-        }
-
-        async function sendCode() {
-            if (!rxCharacteristic) {
-                addOutput('❌ לא מחובר ל-Micro:bit', 'error');
-                return;
-            }
-
-            const code = document.getElementById('code-editor').value;
-            if (!code.trim()) {
-                addOutput('⚠ אין קוד לשליחה', 'error');
-                return;
-            }
-
-            try {
-                const lines = code.split('\n');
-                addOutput(`שולח ${lines.length} שורות קוד...`, 'info');
-
-                for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i];
-                    if (line.trim()) {
-                        const encoder = new TextEncoder();
-                        const data = encoder.encode(line + '\n');
-                        await rxCharacteristic.writeValue(data);
-                        addOutput(`▶ נשלח: ${line}`, 'sent');
-                        // Small delay between lines
-                        await new Promise(resolve => setTimeout(resolve, 100));
-                    }
-                }
-
-                addOutput('✓ הקוד נשלח בהצלחה!', 'received');
-
-            } catch (error) {
-                addOutput(`❌ שגיאה בשליחה: ${error.message}`, 'error');
-                console.error(error);
-            }
-        }
-
-        // Initialize
-        addOutput('ברוך הבא ל-Micro:bit Web Editor!', 'info');
-        addOutput('לחץ על "התחבר ל-Micro:bit" כדי להתחיל', 'info');
-    </script>
-</body>
-</html>
+        // עדכון ספירת תווים
+        function updateCharCount() {
+            const code = document.getElementById('codeInput').value;
+            document.getElementByI
