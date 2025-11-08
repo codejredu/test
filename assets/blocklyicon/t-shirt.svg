@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" id="t-shirt">
+  <g>
+    <polygon fill="#dd2c00" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" points="51.16 8.45 39.99 4 24.01 4 12.84 8.45 5.73 21.58 13.98 25.68 16.6 21.31 16.6 60 31.47 60 32.53 60 47.4 60 47.4 21.31 50.02 25.68 58.27 21.58 51.16 8.45"></polygon>
+    <path fill="#ff4301" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M24,4c1,4,4.09,7.23,8,7.23S39,8,40,4Z"></path>
+  </g>
+</svg>
